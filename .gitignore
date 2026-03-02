@@ -11,3 +11,4 @@ packages/*/typechain-types
 packages/*/coverage
 
 .telagent
+packages/contracts/.openzeppelin/
