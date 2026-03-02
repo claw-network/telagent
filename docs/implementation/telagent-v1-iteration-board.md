@@ -157,7 +157,7 @@
 - 基线验证状态：提权复验后 `pnpm install && pnpm -r build && pnpm -r test` 已通过，`P0-PATCH-001` 已关闭。
 - 残余限制：受限沙箱环境仍可能出现 DNS/listen 限制，已作为执行环境说明归档，不再阻断 Phase 0 Gate。
 - 远端写入状态：已恢复，`git push` 成功（`2026-03-02`）。
-- 当前唯一放行阻塞：`P0-PATCH-002`（TL/PO/QA 实名签字待补齐）。
+- 签字状态：`P0-PATCH-002` 已关闭（TL/PO/QA 实名签字已补齐）。
 - 跟踪方式：统一纳入 `docs/implementation/gates/phase-0-gate.md` 与 `docs/implementation/gates/phase-0-risk-register.md`。
 
 ## 4.3 Definition of Done（每个任务统一标准）
@@ -171,7 +171,7 @@
 
 - `TA-P0-001` ~ `TA-P0-008`：WBS 状态已更新为 `DONE`。
 - 证据索引：`docs/implementation/phase-0/README.md`。
-- Gate 结论：`CONDITIONAL PASS`（补丁项未关闭前不进入 Phase 1）。
+- Gate 结论：`PASS`（Phase 0 补丁项已关闭，可按 Week 2 节奏进入 Phase 1）。
 
 ## 4.5 Week 1 收口执行（2026-03-03 ~ 2026-03-08）
 
