@@ -1,0 +1,21 @@
+
+> @telagent/node@0.1.0 test /Users/xiasenhai/Workspace/OpenClaw/telagent/packages/node
+> node --test dist/*.test.js dist/**/*.test.js
+
+✔ created response returns data envelope and Location header (91.011413ms)
+✔ list response returns paginated envelope shape (26.457869ms)
+✔ validation errors use RFC7807 shape and problem+json content type (26.683175ms)
+✔ not found uses RFC7807 shape (9.921512ms)
+✔ identities and groups endpoints are accessible with expected status codes (21.202043ms)
+✔ messages, attachments and federation endpoints are accessible (14.96069ms)
+✔ routes only serve /api/v1/* prefix (54.15548ms)
+✔ identity endpoint responds with data envelope (47.985268ms)
+✔ assertSufficient throws INSUFFICIENT_GAS_TOKEN_BALANCE when native balance is not enough (1.681533ms)
+ℹ tests 9
+ℹ suites 0
+ℹ pass 9
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 702.266621

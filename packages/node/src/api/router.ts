@@ -127,7 +127,7 @@ function matchPath(pathname: string, routeSegments: string[]): Record<string, st
 }
 
 async function parseBody(req: IncomingMessage): Promise<unknown> {
-  if (req.method === 'GET' || req.method === 'DELETE') {
+  if (req.method === 'GET') {
     return undefined;
   }
 

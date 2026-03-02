@@ -202,13 +202,13 @@
 - `TA-P1-011`：DONE（`docs/implementation/gates/phase-1-gate.md` 结论 `PASS`）。
 - 阶段结论：Phase 1 已正式关闭，可进入 Phase 2。
 
-## 4.7 Phase 2 启动快照（2026-03-02）
+## 4.7 Phase 2 收口快照（2026-03-02）
 
-- `TA-P2-001`：DONE（API Server 与 `/api/v1/*` 路由挂载完成并验收）。
-- `TA-P2-002`：DONE（单资源/列表/Location envelope 已验收）。
-- `TA-P2-003`：DONE（RFC7807 错误链路与 `application/problem+json` 已验收）。
-- 契约测试：`@telagent/node` API contract tests `6/6` 通过（日志已归档）。
-- 建议下一步：推进 `TA-P2-004` / `TA-P2-005`（IdentityAdapter + GasService 验收）。
+- `TA-P2-001` ~ `TA-P2-010`：DONE（代码、契约测试、真实链集成证据已归档）。
+- `TA-P2-009`：`@telagent/node` 合同测试 `9/9` 通过（`docs/implementation/phase-2/logs/2026-03-02-p2-node-test.txt`）。
+- `TA-P2-010`：真实测试链闭环通过（`create/invite/accept/remove` 四段 tx hash 已归档到 manifest）。
+- `TA-P2-011`：DONE（`docs/implementation/gates/phase-2-gate.md` 结论 `PASS`）。
+- 阶段结论：Phase 2 已正式关闭，允许进入 Phase 3。
 
 ## 5. 周会与 Gate 节奏建议
 

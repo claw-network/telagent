@@ -51,14 +51,14 @@ flowchart LR
 | TA-P2-001 | Phase 2 | 搭建 API Server 与路由挂载 | Backend Engineer | 1 | TA-P0-001 | API 框架代码 | 所有核心路由在 `/api/v1/*` | DONE |
 | TA-P2-002 | Phase 2 | 实现响应封装（单资源/列表/Location） | Backend Engineer | 1 | TA-P0-002, TA-P2-001 | response 模块 | 契约测试通过 | DONE |
 | TA-P2-003 | Phase 2 | 实现 RFC7807 错误处理链路 | Backend Engineer | 1 | TA-P0-003, TA-P2-001 | error/handler 模块 | 错误响应字段完整 | DONE |
-| TA-P2-004 | Phase 2 | 实现 IdentityAdapterService | Backend Engineer | 1 | TA-P0-004, TA-P1-009 | 身份适配服务 | active/controller 校验可用 | TODO |
-| TA-P2-005 | Phase 2 | 实现 GasService 与余额预检 | Backend Engineer | 1 | TA-P2-004 | gas 预检服务 | 余额不足返回标准错误 | TODO |
-| TA-P2-006 | Phase 2 | 实现 GroupService 链上写流程 | Backend Engineer | 2 | TA-P2-004, TA-P2-005 | group service | create/invite/accept/remove 可执行 | TODO |
-| TA-P2-007 | Phase 2 | 实现 `identities*` 与 `groups*` API | Backend Engineer | 1.5 | TA-P2-006 | route handlers | 所有必选接口可访问 | TODO |
-| TA-P2-008 | Phase 2 | 实现 messages/attachments/federation API 骨架 | Backend Engineer | 2 | TA-P2-002, TA-P2-003 | route handlers | 基础请求可收发 | TODO |
-| TA-P2-009 | Phase 2 | API 契约测试（路径+envelope+错误） | QA Engineer | 1.5 | TA-P2-007, TA-P2-008 | API test suite | 契约测试全绿 | TODO |
-| TA-P2-010 | Phase 2 | 集成测试（真实 ClawIdentity + 测试链） | QA + Backend | 2 | TA-P2-006, TA-P1-009 | integration tests | 建群到成员变更闭环通过 | TODO |
-| TA-P2-011 | Phase 2 | Node API 阶段 Gate 评审 | PM/Tech Lead | 0.5 | TA-P2-009, TA-P2-010 | Gate 结论 | Phase 2 正式关闭 | TODO |
+| TA-P2-004 | Phase 2 | 实现 IdentityAdapterService | Backend Engineer | 1 | TA-P0-004, TA-P1-009 | 身份适配服务 | active/controller 校验可用 | DONE |
+| TA-P2-005 | Phase 2 | 实现 GasService 与余额预检 | Backend Engineer | 1 | TA-P2-004 | gas 预检服务 | 余额不足返回标准错误 | DONE |
+| TA-P2-006 | Phase 2 | 实现 GroupService 链上写流程 | Backend Engineer | 2 | TA-P2-004, TA-P2-005 | group service | create/invite/accept/remove 可执行 | DONE |
+| TA-P2-007 | Phase 2 | 实现 `identities*` 与 `groups*` API | Backend Engineer | 1.5 | TA-P2-006 | route handlers | 所有必选接口可访问 | DONE |
+| TA-P2-008 | Phase 2 | 实现 messages/attachments/federation API 骨架 | Backend Engineer | 2 | TA-P2-002, TA-P2-003 | route handlers | 基础请求可收发 | DONE |
+| TA-P2-009 | Phase 2 | API 契约测试（路径+envelope+错误） | QA Engineer | 1.5 | TA-P2-007, TA-P2-008 | API test suite | 契约测试全绿 | DONE |
+| TA-P2-010 | Phase 2 | 集成测试（真实 ClawIdentity + 测试链） | QA + Backend | 2 | TA-P2-006, TA-P1-009 | integration tests | 建群到成员变更闭环通过 | DONE |
+| TA-P2-011 | Phase 2 | Node API 阶段 Gate 评审 | PM/Tech Lead | 0.5 | TA-P2-009, TA-P2-010 | Gate 结论 | Phase 2 正式关闭 | DONE |
 
 | TA-P3-001 | Phase 3 | 设计并创建索引存储表结构 | Backend Engineer | 1 | TA-P2-006 | DB schema | `groups/group_members/group_events` 就绪 | TODO |
 | TA-P3-002 | Phase 3 | 实现 GroupIndexer 事件订阅与解码 | Backend Engineer | 2 | TA-P1-009, TA-P3-001 | indexer service | 事件可持续入库 | TODO |
@@ -135,10 +135,18 @@ flowchart LR
 | TA-P1-009 | DONE | `docs/implementation/phase-1/ta-p1-009-abi-address-manifest-2026-03-02.md`, `docs/implementation/phase-1/manifests/2026-03-02-telagent-group-registry-abi.json`, `docs/implementation/phase-1/manifests/2026-03-02-local-deploy-manifest.json`, `docs/implementation/phase-1/manifests/2026-03-02-testnet-deploy-manifest.json`, `docs/implementation/phase-1/manifests/2026-03-02-deploy-manifest.json` | 无 | 如需继续，执行 `TA-P1-010`（可选）或直接进入 `TA-P1-011` |
 | TA-P1-011 | DONE | `docs/implementation/gates/phase-1-gate.md`, `docs/implementation/phase-1/README.md`, `docs/implementation/phase-1/manifests/2026-03-02-deploy-manifest.json` | 无 | Phase 1 已正式关闭，允许按 Gate 结论进入 Phase 2 |
 
-## 8. Phase 2 启动执行（2026-03-02）
+## 8. Phase 2 收口执行（2026-03-02）
 
 | Task ID | 状态 | 证据链接 | 阻塞项 | 下一步动作 |
 | --- | --- | --- | --- | --- |
 | TA-P2-001 | DONE | `docs/implementation/phase-2/ta-p2-001-api-server-route-mount-2026-03-02.md`, `packages/node/src/api/server.ts`, `packages/node/src/api/router.ts`, `packages/node/src/api-prefix.test.ts`, `docs/implementation/phase-2/logs/2026-03-02-p2-api-contract-test.txt` | 无 | 继续推进 `TA-P2-004` / `TA-P2-005` |
 | TA-P2-002 | DONE | `docs/implementation/phase-2/ta-p2-002-response-envelope-checkpoint-2026-03-02.md`, `packages/node/src/api/response.ts`, `packages/node/src/api/routes/messages.ts`, `packages/node/src/api/routes/groups.ts`, `packages/node/src/api-contract.test.ts` | 无 | 继续推进 `TA-P2-008`（消息/附件/联邦路由收口） |
 | TA-P2-003 | DONE | `docs/implementation/phase-2/ta-p2-003-rfc7807-error-pipeline-2026-03-02.md`, `packages/protocol/src/errors.ts`, `packages/node/src/api/route-utils.ts`, `packages/node/src/api/response.ts`, `packages/node/src/api-contract.test.ts` | 无 | 继续推进 `TA-P2-009` 契约测试扩展与汇总 |
+| TA-P2-004 | DONE | `docs/implementation/phase-2/ta-p2-004-identity-adapter-service-2026-03-02.md`, `packages/node/src/services/identity-adapter-service.ts`, `packages/node/src/api/routes/identities.ts` | 无 | 继续推进 `TA-P2-005` / `TA-P2-006` |
+| TA-P2-005 | DONE | `docs/implementation/phase-2/ta-p2-005-gas-service-preflight-2026-03-02.md`, `packages/node/src/services/gas-service.ts`, `packages/node/src/services/gas-service.test.ts`, `docs/implementation/phase-2/logs/2026-03-02-p2-node-test.txt` | 无 | 继续推进 `TA-P2-006` 链上流程联调 |
+| TA-P2-006 | DONE | `docs/implementation/phase-2/ta-p2-006-group-service-onchain-writeflow-2026-03-02.md`, `packages/node/src/services/group-service.ts`, `docs/implementation/phase-2/manifests/2026-03-02-p2-testnet-integration.json` | 无 | 继续推进 `TA-P2-007` / `TA-P2-010` |
+| TA-P2-007 | DONE | `docs/implementation/phase-2/ta-p2-007-identities-groups-api-2026-03-02.md`, `packages/node/src/api/routes/identities.ts`, `packages/node/src/api/routes/groups.ts`, `packages/node/src/api/router.ts` | 无 | 继续推进 `TA-P2-009` |
+| TA-P2-008 | DONE | `docs/implementation/phase-2/ta-p2-008-messages-attachments-federation-skeleton-2026-03-02.md`, `packages/node/src/api/routes/messages.ts`, `packages/node/src/api/routes/attachments.ts`, `packages/node/src/api/routes/federation.ts` | 无 | 继续推进 `TA-P2-009` |
+| TA-P2-009 | DONE | `docs/implementation/phase-2/ta-p2-009-api-contract-test-suite-2026-03-02.md`, `packages/node/src/api-contract.test.ts`, `packages/node/src/api-prefix.test.ts`, `packages/node/package.json`, `docs/implementation/phase-2/logs/2026-03-02-p2-node-build.txt`, `docs/implementation/phase-2/logs/2026-03-02-p2-node-test.txt` | 无 | 进入 `TA-P2-011` Gate 材料汇总 |
+| TA-P2-010 | DONE | `docs/implementation/phase-2/ta-p2-010-testnet-integration-2026-03-02.md`, `packages/node/scripts/run-phase2-testnet-integration.ts`, `docs/implementation/phase-2/logs/2026-03-02-p2-testnet-integration-run.txt`, `docs/implementation/phase-2/manifests/2026-03-02-p2-testnet-integration.json` | 无 | 进入 `TA-P2-011` Gate 评审 |
+| TA-P2-011 | DONE | `docs/implementation/gates/phase-2-gate.md`, `docs/implementation/phase-2/README.md` | 无 | Phase 2 已正式关闭，按 Gate 结论进入 Phase 3 |

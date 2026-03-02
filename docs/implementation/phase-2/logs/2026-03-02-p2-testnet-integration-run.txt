@@ -1,0 +1,47 @@
+{
+  "phase": "Phase 2",
+  "taskId": "TA-P2-010",
+  "network": {
+    "rpcUrl": "https://rpc.clawnetd.com",
+    "chainId": 7625,
+    "identityAddress": "0xee9B2D7eb0CD51e1d0a14278bCA32b02548D1149",
+    "tokenAddress": "0xE1cf20376ef0372E26CEE715F84A15348bdbB5c6",
+    "telagentGroupRegistryAddress": "0x30AF4A124e41da5551EBfA41904eaF676FC8fbB0"
+  },
+  "signer": "0xA9b95A4fDCD673f6aE0D2a873E0f4771CA7D0119",
+  "dids": {
+    "owner": {
+      "did": "did:claw:zP2Ownermm9e5otc8gfp",
+      "didHash": "0x6803a872f3a81c17b839d2fb471665a950604c29edf07200fcb9960b67725fee",
+      "created": true
+    },
+    "member": {
+      "did": "did:claw:zP2Membermm9e5otdak5x",
+      "didHash": "0x0fa057c7107efefff1c33ebbffb27208ce79224124dcc510e5e3e85f36319ac4",
+      "created": true
+    }
+  },
+  "flow": {
+    "groupId": "0x1db1ab93577ef636bd492dd58b101cadb08deeb917f9c72c66161cceaf3222eb",
+    "inviteId": "0x5ee7c8bf28157deec4b1e25b715bfe6e6fa03298b49b643563ca33c3e8c403d5",
+    "txHashes": {
+      "createGroup": "0xb96b15de390653a062d0aef10c69984fc7f86438a5663a3d1fbbc878df536698",
+      "inviteMember": "0x186fcca6456abb4d5dc9f213c0c43eee4e3b7c34feb96d66b37c45507e8d3d7c",
+      "acceptInvite": "0x6b7e00b8e90a2a7f84b5892658fe8dce41da6867998839276865cfa2fce0ea7f",
+      "removeMember": "0xb94b85fb97d4ac5806a5fde2ecd30d832cbfabb16750ab4999af9bbe38873552"
+    }
+  },
+  "viewChecks": {
+    "chainState": {
+      "groupId": "0x1db1ab93577ef636bd492dd58b101cadb08deeb917f9c72c66161cceaf3222eb",
+      "state": "ACTIVE",
+      "pendingTxHash": "0xb96b15de390653a062d0aef10c69984fc7f86438a5663a3d1fbbc878df536698",
+      "finalizedTxHash": "0xb96b15de390653a062d0aef10c69984fc7f86438a5663a3d1fbbc878df536698",
+      "blockNumber": 182903,
+      "updatedAtMs": 1772468817812
+    },
+    "finalizedMembersCount": 1,
+    "removedMembersCount": 1
+  },
+  "executedAt": "2026-03-02T16:27:19.166Z"
+}

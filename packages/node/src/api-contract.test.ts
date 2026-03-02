@@ -325,3 +325,131 @@ test('not found uses RFC7807 shape', async (t) => {
   assert.equal(body.code, 'NOT_FOUND');
   assert.match(body.type, /^https:\/\/telagent\.dev\/errors\/not-found$/);
 });
+
+test('identities and groups endpoints are accessible with expected status codes', async (t) => {
+  const { server, baseUrl } = await startTestServer();
+  t.after(async () => {
+    await server.stop();
+  });
+
+  const groupId = `0x${'b'.repeat(64)}`;
+  const inviteId = `0x${'c'.repeat(64)}`;
+  const did = 'did:claw:zM2';
+
+  const selfRes = await fetch(`${baseUrl}/api/v1/identities/self`);
+  assert.equal(selfRes.status, 200);
+
+  const resolveRes = await fetch(`${baseUrl}/api/v1/identities/${encodeURIComponent(did)}`);
+  assert.equal(resolveRes.status, 200);
+
+  const createGroupRes = await fetch(`${baseUrl}/api/v1/groups`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({
+      creatorDid: 'did:claw:zSelf',
+      groupId,
+      groupDomain: 'alpha.tel',
+      domainProofHash: `0x${'3'.repeat(64)}`,
+      initialMlsStateHash: `0x${'4'.repeat(64)}`,
+    }),
+  });
+  assert.equal(createGroupRes.status, 201);
+
+  const getGroupRes = await fetch(`${baseUrl}/api/v1/groups/${groupId}`);
+  assert.equal(getGroupRes.status, 200);
+
+  const membersRes = await fetch(`${baseUrl}/api/v1/groups/${groupId}/members?view=all&page=1&per_page=20`);
+  assert.equal(membersRes.status, 200);
+
+  const inviteRes = await fetch(`${baseUrl}/api/v1/groups/${groupId}/invites`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({
+      inviterDid: 'did:claw:zSelf',
+      inviteeDid: did,
+      inviteId,
+      mlsCommitHash: `0x${'5'.repeat(64)}`,
+    }),
+  });
+  assert.equal(inviteRes.status, 201);
+
+  const acceptRes = await fetch(`${baseUrl}/api/v1/groups/${groupId}/invites/${inviteId}/accept`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({
+      inviteeDid: did,
+      mlsWelcomeHash: `0x${'6'.repeat(64)}`,
+    }),
+  });
+  assert.equal(acceptRes.status, 201);
+
+  const removeRes = await fetch(`${baseUrl}/api/v1/groups/${groupId}/members/${encodeURIComponent(did)}`, {
+    method: 'DELETE',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({
+      operatorDid: 'did:claw:zSelf',
+      mlsCommitHash: `0x${'7'.repeat(64)}`,
+    }),
+  });
+  assert.equal(removeRes.status, 204);
+
+  const chainStateRes = await fetch(`${baseUrl}/api/v1/groups/${groupId}/chain-state`);
+  assert.equal(chainStateRes.status, 200);
+});
+
+test('messages, attachments and federation endpoints are accessible', async (t) => {
+  const { server, baseUrl } = await startTestServer();
+  t.after(async () => {
+    await server.stop();
+  });
+
+  const pullRes = await fetch(`${baseUrl}/api/v1/messages/pull?limit=20`);
+  assert.equal(pullRes.status, 200);
+
+  const initUploadRes = await fetch(`${baseUrl}/api/v1/attachments/init-upload`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({
+      filename: 'a.png',
+      contentType: 'image/png',
+      sizeBytes: 1024,
+      manifestHash: `0x${'8'.repeat(64)}`,
+    }),
+  });
+  assert.equal(initUploadRes.status, 201);
+
+  const completeUploadRes = await fetch(`${baseUrl}/api/v1/attachments/complete-upload`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({
+      objectKey: 'attachments/o1',
+      manifestHash: `0x${'8'.repeat(64)}`,
+      checksum: '0x12',
+    }),
+  });
+  assert.equal(completeUploadRes.status, 200);
+
+  const fedEnvelopeRes = await fetch(`${baseUrl}/api/v1/federation/envelopes`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ envelopeId: 'fed-1', sourceDomain: 'node-b.tel' }),
+  });
+  assert.equal(fedEnvelopeRes.status, 201);
+
+  const fedSyncRes = await fetch(`${baseUrl}/api/v1/federation/group-state/sync`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ groupId: `0x${'b'.repeat(64)}`, state: 'ACTIVE' }),
+  });
+  assert.equal(fedSyncRes.status, 201);
+
+  const fedReceiptRes = await fetch(`${baseUrl}/api/v1/federation/receipts`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ envelopeId: 'fed-1', status: 'delivered' }),
+  });
+  assert.equal(fedReceiptRes.status, 201);
+
+  const nodeInfoRes = await fetch(`${baseUrl}/api/v1/federation/node-info`);
+  assert.equal(nodeInfoRes.status, 200);
+});
