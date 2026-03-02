@@ -10,6 +10,7 @@
 4. [TelAgent v1 迭代看板（按周排期）](./implementation/telagent-v1-iteration-board.md)
 5. [TelAgent v1 Agent 接力启动清单（Day 1）](./implementation/telagent-v1-agent-handoff-day1.md)
 6. [Phase Gate 模板与记录](./implementation/gates/README.md)
+7. [TL 广播模板（给所有 agent）](./implementation/telagent-v1-tl-broadcast-template.md)
 
 ## 2) 文档用途
 
@@ -19,6 +20,7 @@
 - **迭代看板**：把 WBS 映射到周度执行节奏（日期、owner 建议、周交付、Gate）。
 - **接力启动清单**：新 agent 入场当天的执行脚本（角色分派、时序、收口标准）。
 - **Phase Gate 记录**：每阶段评审结论与补丁项归档，作为进入下一阶段的依据。
+- **TL 广播模板**：TL 面向所有 agent 的统一开工/日更/切阶段通知模板。
 
 ## 3) 执行规则
 
