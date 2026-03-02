@@ -29,7 +29,7 @@
 | 风险/阻塞 | 影响 | Owner | 截止日期 | 状态 |
 | --- | --- | --- | --- | --- |
 | `pnpm install` 无法访问 npm registry（`ENOTFOUND registry.npmjs.org`） | 无法完成 Day 1 本地 build/test 基线校验（日志：`docs/implementation/phase-0/day1-baseline-check.md`，复跑日志：`docs/implementation/phase-0/logs/2026-03-02-pnpm-install-rerun.log`，诊断：`docs/implementation/phase-0/logs/2026-03-02-network-diagnostics.log`） | Agent-TL | 2026-03-08 | Open |
-| `git push --dry-run` 失败（`could not read Username for https://github.com`） | 无法将规范冻结证据推送远端（不影响本地 Gate 判定） | Agent-TL | 2026-03-08 | Open |
+| `git push --dry-run` 失败（`could not read Username for https://github.com`） | 无法将规范冻结证据推送远端（不影响本地 Gate 判定） | Agent-TL | 2026-03-08 | Closed（已推送：`docs/implementation/phase-0/logs/2026-03-02-git-push-after-closeout.log`） |
 
 ## 4) 条件放行补丁项（仅 CONDITIONAL PASS 填写）
 

@@ -69,12 +69,14 @@ reason: getaddrinfo ENOTFOUND registry.npmjs.org
 - `docs/implementation/phase-0/logs/2026-03-02-network-diagnostics.log`
 - `docs/implementation/phase-0/logs/2026-03-02-git-ls-remote.log`
 - `docs/implementation/phase-0/logs/2026-03-02-git-push-dry-run.log`
+- `docs/implementation/phase-0/logs/2026-03-02-git-push-after-closeout.log`
 
 补充命令结果：
 
 1. 沙箱内 `curl -I https://registry.npmjs.org`：`Could not resolve host`
 2. 提权执行 `git ls-remote origin`：可读远端 refs
 3. 提权执行 `git push --dry-run`：`could not read Username for 'https://github.com'`
+4. 提权执行 `git push`（后续复验）：推送成功（`main -> main`）
 
 结论：
 

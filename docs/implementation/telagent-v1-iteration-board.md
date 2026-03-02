@@ -156,7 +156,7 @@
 
 - 外部网络阻塞：`pnpm install` 访问 `registry.npmjs.org` 失败（`ENOTFOUND`），导致 Day 1 本地 `build/test` 基线未完成。
 - 影响评估：不影响 Phase 0 规范冻结文档产出，但影响“环境可复现性”验证闭环。
-- 远端写入阻塞：`git push --dry-run` 失败（`could not read Username for https://github.com`），导致变更暂无法发布远端。
+- 远端写入状态：已恢复，`git push` 成功（`2026-03-02`）。
 - 跟踪方式：统一纳入 `docs/implementation/gates/phase-0-gate.md` 与 `docs/implementation/gates/phase-0-risk-register.md`。
 
 ## 4.3 Definition of Done（每个任务统一标准）

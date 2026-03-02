@@ -15,7 +15,7 @@
 | TA-P0-005 | DONE | `docs/implementation/phase-0/ta-p0-005-group-state-machine-rfc.md` | 无 | 保持冻结，不改状态机语义 |
 | TA-P0-006 | DONE | `docs/implementation/phase-0/ta-p0-006-domain-proof-v1-spec.md` | 无 | 保持冻结，不改 DomainProofV1 必填字段 |
 | TA-P0-007 | IN_PROGRESS | `docs/implementation/phase-0/day1-baseline-check.md`, `docs/implementation/phase-0/logs/2026-03-02-pnpm-install-rerun.log`, `docs/implementation/phase-0/logs/2026-03-02-network-diagnostics.log` | npm registry DNS 不可达，build/test 基线未闭环 | 网络恢复后继续补跑 `pnpm -r build && pnpm -r test` |
-| TA-P0-008 | IN_PROGRESS | `docs/implementation/gates/phase-0-gate.md`, `docs/implementation/gates/phase-0-risk-register.md`, `docs/implementation/phase-0/week1-closeout-execution-plan.md`, `docs/implementation/phase-0/logs/2026-03-02-git-push-dry-run.log` | Gate 实名签字未补齐；远端 push 凭据未配置 | 2026-03-08 复核前补齐实名签字与远端凭据 |
+| TA-P0-008 | IN_PROGRESS | `docs/implementation/gates/phase-0-gate.md`, `docs/implementation/gates/phase-0-risk-register.md`, `docs/implementation/phase-0/week1-closeout-execution-plan.md`, `docs/implementation/phase-0/logs/2026-03-02-git-push-after-closeout.log` | Gate 实名签字未补齐 | 2026-03-08 复核前补齐实名签字 |
 
 ## 备注
 
