@@ -36,10 +36,10 @@ flowchart LR
 | TA-P0-007 | Phase 0 | 冻结测试策略（合约/API/集成/E2E） | QA Engineer | 1 | TA-P0-003, TA-P0-005 | 测试策略文档 | 阶段 Gate 可执行 | DONE |
 | TA-P0-008 | Phase 0 | 建立阶段 Gate 模板与评审机制 | PM/Tech Lead | 0.5 | TA-P0-007 | Gate 模板 | 每阶段有明确通过条件 | DONE |
 
-| TA-P1-001 | Phase 1 | 合约接口审查与签字 | Chain Engineer | 0.5 | TA-P0-004, TA-P0-005 | 接口审查记录 | 函数签名冻结 | TODO |
-| TA-P1-002 | Phase 1 | 实现 `TelagentGroupRegistry` 核心存储/校验 | Chain Engineer | 2 | TA-P1-001 | 合约代码 | 核心流程可编译部署 | TODO |
-| TA-P1-003 | Phase 1 | 实现权限约束（active/controller/owner） | Chain Engineer | 1 | TA-P1-002 | 合约逻辑补齐 | 非法调用全部回退 | TODO |
-| TA-P1-004 | Phase 1 | 实现事件模型（可重建成员集） | Chain Engineer | 1 | TA-P1-002 | 事件定义 | 事件字段满足重建需求 | TODO |
+| TA-P1-001 | Phase 1 | 合约接口审查与签字 | Chain Engineer | 0.5 | TA-P0-004, TA-P0-005 | 接口审查记录 | 函数签名冻结 | DONE |
+| TA-P1-002 | Phase 1 | 实现 `TelagentGroupRegistry` 核心存储/校验 | Chain Engineer | 2 | TA-P1-001 | 合约代码 | 核心流程可编译部署 | DONE |
+| TA-P1-003 | Phase 1 | 实现权限约束（active/controller/owner） | Chain Engineer | 1 | TA-P1-002 | 合约逻辑补齐 | 非法调用全部回退 | DONE |
+| TA-P1-004 | Phase 1 | 实现事件模型（可重建成员集） | Chain Engineer | 1 | TA-P1-002 | 事件定义 | 事件字段满足重建需求 | DONE |
 | TA-P1-005 | Phase 1 | 编写合约单元测试：正向流程 | QA + Chain Engineer | 1.5 | TA-P1-003, TA-P1-004 | 合约测试用例 | create/invite/accept/remove 全绿 | TODO |
 | TA-P1-006 | Phase 1 | 编写合约单元测试：异常流程 | QA + Chain Engineer | 1.5 | TA-P1-003 | 合约测试用例 | 非 controller / revoked / 重复操作全绿 | TODO |
 | TA-P1-007 | Phase 1 | 编写部署脚本（local/testnet） | Chain Engineer | 1 | TA-P1-002 | deploy script | 可重复部署且输出地址 | TODO |
@@ -124,4 +124,7 @@ flowchart LR
 
 | Task ID | 状态 | 证据链接 | 阻塞项 | 下一步动作 |
 | --- | --- | --- | --- | --- |
-| TA-P1-001 | IN_PROGRESS | `docs/implementation/phase-1/ta-p1-001-contract-interface-review-template.md`, `docs/implementation/phase-1/README.md` | 无 | Week 2 启动时填写审查结果并完成签字 |
+| TA-P1-001 | DONE | `docs/implementation/phase-1/ta-p1-001-contract-interface-review-2026-03-02.md`, `docs/implementation/phase-1/README.md` | 无 | 启动 `TA-P1-002` 实现与最小验收闭环 |
+| TA-P1-002 | DONE | `docs/implementation/phase-1/ta-p1-002-implementation-checkpoint-2026-03-02.md`, `docs/implementation/phase-1/ta-p1-002-deploy-check-2026-03-02.md` | 无 | 进入 `TA-P1-003` / `TA-P1-004` 验收补齐 |
+| TA-P1-003 | DONE | `docs/implementation/phase-1/ta-p1-003-permission-constraint-checkpoint-2026-03-02.md`, `docs/implementation/phase-1/ta-p1-003-test-run-2026-03-02.md`, `packages/contracts/test/TelagentGroupRegistry.test.ts` | 无 | 进入 TA-P1-005/TA-P1-006 测试收敛 |
+| TA-P1-004 | DONE | `docs/implementation/phase-1/ta-p1-004-event-model-checkpoint-2026-03-02.md`, `docs/implementation/phase-1/ta-p1-001-contract-interface-review-2026-03-02.md` | 无 | 进入 TA-P1-005/TA-P1-006 测试收敛 |

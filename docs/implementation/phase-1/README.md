@@ -9,6 +9,12 @@
 | Task ID | 文档 | 说明 |
 | --- | --- | --- |
 | TA-P1-001 | `ta-p1-001-contract-interface-review-template.md` | 合约接口审查与签字模板（函数签名冻结） |
+| TA-P1-001 | `ta-p1-001-contract-interface-review-2026-03-02.md` | 合约接口审查记录（已签字，结论 PASS） |
+| TA-P1-002 | `ta-p1-002-implementation-checkpoint-2026-03-02.md` | 合约核心存储/校验实现检查点（已完成） |
+| TA-P1-002 | `ta-p1-002-deploy-check-2026-03-02.md` | 本地 hardhat 部署可用性验证 |
+| TA-P1-003 | `ta-p1-003-permission-constraint-checkpoint-2026-03-02.md` | 权限约束验收检查点（已完成） |
+| TA-P1-003 | `ta-p1-003-test-run-2026-03-02.md` | 权限相关测试执行记录（8 passing） |
+| TA-P1-004 | `ta-p1-004-event-model-checkpoint-2026-03-02.md` | 事件模型可重建性验收记录（已完成） |
 
 ## 2. 使用说明
 

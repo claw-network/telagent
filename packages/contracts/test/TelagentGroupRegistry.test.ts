@@ -150,4 +150,70 @@ describe('TelagentGroupRegistry', () => {
         .acceptInvite(groupId, inviteId, didHash(bobDid), ethers.id('welcome-2')),
     ).to.be.revertedWithCustomError(registry, 'InviteAlreadyAccepted');
   });
+
+  it('rejects invite and remove when caller is not group owner', async () => {
+    const { registry, alice, bob, aliceDid, bobDid } = await deployFixture();
+    const groupId = ethers.id('group-6');
+    const inviteId = ethers.id('invite-non-owner');
+
+    await registry
+      .connect(alice)
+      .createGroup(groupId, didHash(aliceDid), 'alpha.tel', ethers.id('proof'), ethers.id('mls0'));
+
+    await expect(
+      registry
+        .connect(bob)
+        .inviteMember(groupId, inviteId, didHash(bobDid), didHash(aliceDid), ethers.id('commit-non-owner')),
+    ).to.be.revertedWithCustomError(registry, 'NotGroupOwner');
+
+    await registry
+      .connect(alice)
+      .inviteMember(groupId, ethers.id('invite-owner'), didHash(aliceDid), didHash(bobDid), ethers.id('commit-owner'));
+    await registry
+      .connect(bob)
+      .acceptInvite(groupId, ethers.id('invite-owner'), didHash(bobDid), ethers.id('welcome-owner'));
+
+    await expect(
+      registry
+        .connect(bob)
+        .removeMember(groupId, didHash(bobDid), didHash(bobDid), ethers.id('commit-remove-non-owner')),
+    ).to.be.revertedWithCustomError(registry, 'NotGroupOwner');
+  });
+
+  it('rejects acceptInvite when caller is not the invited DID controller', async () => {
+    const { registry, alice, bob, charlie, aliceDid, bobDid, charlieDid, mockIdentity } = await deployFixture();
+    const groupId = ethers.id('group-7');
+    const inviteId = ethers.id('invite-target-check');
+
+    await registry
+      .connect(alice)
+      .createGroup(groupId, didHash(aliceDid), 'alpha.tel', ethers.id('proof'), ethers.id('mls0'));
+    await registry
+      .connect(alice)
+      .inviteMember(groupId, inviteId, didHash(aliceDid), didHash(bobDid), ethers.id('commit-1'));
+
+    // Make charlie active so mismatch is checked against invite target, not active status.
+    await mockIdentity.setDid(didHash(charlieDid), charlie.address, true);
+
+    await expect(
+      registry
+        .connect(charlie)
+        .acceptInvite(groupId, inviteId, didHash(charlieDid), ethers.id('welcome-charlie')),
+    ).to.be.revertedWithCustomError(registry, 'InviteeMismatch');
+  });
+
+  it('rejects removing group owner', async () => {
+    const { registry, alice, aliceDid } = await deployFixture();
+    const groupId = ethers.id('group-8');
+
+    await registry
+      .connect(alice)
+      .createGroup(groupId, didHash(aliceDid), 'alpha.tel', ethers.id('proof'), ethers.id('mls0'));
+
+    await expect(
+      registry
+        .connect(alice)
+        .removeMember(groupId, didHash(aliceDid), didHash(aliceDid), ethers.id('commit-remove-owner')),
+    ).to.be.revertedWithCustomError(registry, 'CannotRemoveOwner');
+  });
 });
