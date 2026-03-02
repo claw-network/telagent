@@ -48,6 +48,11 @@
 - 当前进展（已完成）：`docs/implementation/phase-1/ta-p1-002-implementation-checkpoint-2026-03-02.md`
 - 当前进展（已完成）：`docs/implementation/phase-1/ta-p1-003-permission-constraint-checkpoint-2026-03-02.md`
 - 当前进展（已完成）：`docs/implementation/phase-1/ta-p1-004-event-model-checkpoint-2026-03-02.md`
+- 当前进展（已完成）：`docs/implementation/phase-1/ta-p1-005-positive-test-report-2026-03-02.md`
+- 当前进展（已完成）：`docs/implementation/phase-1/ta-p1-006-negative-test-report-2026-03-02.md`
+- 当前进展（进行中）：`docs/implementation/phase-1/ta-p1-007-deploy-script-checkpoint-2026-03-02.md`
+- 当前进展（阻塞）：`docs/implementation/phase-1/ta-p1-008-rollback-runbook-2026-03-02.md`
+- 当前进展（进行中）：`docs/implementation/phase-1/ta-p1-009-abi-address-manifest-2026-03-02.md`
 - 周交付：
   - `TelagentGroupRegistry` 核心逻辑
   - 权限与事件模型定稿

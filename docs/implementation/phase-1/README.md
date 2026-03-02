@@ -15,6 +15,18 @@
 | TA-P1-003 | `ta-p1-003-permission-constraint-checkpoint-2026-03-02.md` | 权限约束验收检查点（已完成） |
 | TA-P1-003 | `ta-p1-003-test-run-2026-03-02.md` | 权限相关测试执行记录（8 passing） |
 | TA-P1-004 | `ta-p1-004-event-model-checkpoint-2026-03-02.md` | 事件模型可重建性验收记录（已完成） |
+| TA-P1-005 | `ta-p1-005-positive-test-report-2026-03-02.md` | 正向流程测试报告（已完成） |
+| TA-P1-006 | `ta-p1-006-negative-test-report-2026-03-02.md` | 异常流程测试报告（已完成） |
+| TA-P1-007 | `ta-p1-007-deploy-script-checkpoint-2026-03-02.md` | 部署脚本检查点（进行中） |
+| TA-P1-008 | `ta-p1-008-rollback-runbook-2026-03-02.md` | 回滚脚本与 Runbook（进行中，测试网演练阻塞） |
+| TA-P1-009 | `ta-p1-009-abi-address-manifest-2026-03-02.md` | ABI 与地址清单（进行中） |
+
+## 3. 产物目录
+
+- `manifests/2026-03-02-local-deploy-manifest.json`
+- `manifests/2026-03-02-local-rollback-drill.json`
+- `manifests/2026-03-02-testnet-deploy-attempt.txt`
+- `manifests/2026-03-02-telagent-group-registry-abi.json`
 
 ## 2. 使用说明
 

@@ -20,4 +20,5 @@ pnpm --filter @telagent/contracts test
 
 - `scripts/deploy-telagent-group-registry.ts`
 - `scripts/register-telagent-group-module.ts`
-
+- `scripts/rollback-telagent-group-registry.ts`
+- `scripts/rollback-drill-local.ts`

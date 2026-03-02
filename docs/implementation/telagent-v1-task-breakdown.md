@@ -40,11 +40,11 @@ flowchart LR
 | TA-P1-002 | Phase 1 | 实现 `TelagentGroupRegistry` 核心存储/校验 | Chain Engineer | 2 | TA-P1-001 | 合约代码 | 核心流程可编译部署 | DONE |
 | TA-P1-003 | Phase 1 | 实现权限约束（active/controller/owner） | Chain Engineer | 1 | TA-P1-002 | 合约逻辑补齐 | 非法调用全部回退 | DONE |
 | TA-P1-004 | Phase 1 | 实现事件模型（可重建成员集） | Chain Engineer | 1 | TA-P1-002 | 事件定义 | 事件字段满足重建需求 | DONE |
-| TA-P1-005 | Phase 1 | 编写合约单元测试：正向流程 | QA + Chain Engineer | 1.5 | TA-P1-003, TA-P1-004 | 合约测试用例 | create/invite/accept/remove 全绿 | TODO |
-| TA-P1-006 | Phase 1 | 编写合约单元测试：异常流程 | QA + Chain Engineer | 1.5 | TA-P1-003 | 合约测试用例 | 非 controller / revoked / 重复操作全绿 | TODO |
-| TA-P1-007 | Phase 1 | 编写部署脚本（local/testnet） | Chain Engineer | 1 | TA-P1-002 | deploy script | 可重复部署且输出地址 | TODO |
-| TA-P1-008 | Phase 1 | 编写回滚脚本与 Runbook | Chain Engineer | 1 | TA-P1-007 | rollback script + runbook | 在测试网完成回滚演练 | TODO |
-| TA-P1-009 | Phase 1 | 产出 ABI 与地址清单 | Chain Engineer | 0.5 | TA-P1-007 | ABI/manifest | 下游可直接集成调用 | TODO |
+| TA-P1-005 | Phase 1 | 编写合约单元测试：正向流程 | QA + Chain Engineer | 1.5 | TA-P1-003, TA-P1-004 | 合约测试用例 | create/invite/accept/remove 全绿 | DONE |
+| TA-P1-006 | Phase 1 | 编写合约单元测试：异常流程 | QA + Chain Engineer | 1.5 | TA-P1-003 | 合约测试用例 | 非 controller / revoked / 重复操作全绿 | DONE |
+| TA-P1-007 | Phase 1 | 编写部署脚本（local/testnet） | Chain Engineer | 1 | TA-P1-002 | deploy script | 可重复部署且输出地址 | IN_PROGRESS |
+| TA-P1-008 | Phase 1 | 编写回滚脚本与 Runbook | Chain Engineer | 1 | TA-P1-007 | rollback script + runbook | 在测试网完成回滚演练 | BLOCKED |
+| TA-P1-009 | Phase 1 | 产出 ABI 与地址清单 | Chain Engineer | 0.5 | TA-P1-007 | ABI/manifest | 下游可直接集成调用 | IN_PROGRESS |
 | TA-P1-010 | Phase 1 | （可选）注册 ClawRouter 模块 | Chain Engineer | 0.5 | TA-P1-009 | router 注册脚本 | 模块查询可见 | TODO |
 | TA-P1-011 | Phase 1 | 合约阶段 Gate 评审 | PM/Tech Lead | 0.5 | TA-P1-005, TA-P1-006, TA-P1-008 | Gate 结论 | Phase 1 正式关闭 | TODO |
 
@@ -128,3 +128,8 @@ flowchart LR
 | TA-P1-002 | DONE | `docs/implementation/phase-1/ta-p1-002-implementation-checkpoint-2026-03-02.md`, `docs/implementation/phase-1/ta-p1-002-deploy-check-2026-03-02.md` | 无 | 进入 `TA-P1-003` / `TA-P1-004` 验收补齐 |
 | TA-P1-003 | DONE | `docs/implementation/phase-1/ta-p1-003-permission-constraint-checkpoint-2026-03-02.md`, `docs/implementation/phase-1/ta-p1-003-test-run-2026-03-02.md`, `packages/contracts/test/TelagentGroupRegistry.test.ts` | 无 | 进入 TA-P1-005/TA-P1-006 测试收敛 |
 | TA-P1-004 | DONE | `docs/implementation/phase-1/ta-p1-004-event-model-checkpoint-2026-03-02.md`, `docs/implementation/phase-1/ta-p1-001-contract-interface-review-2026-03-02.md` | 无 | 进入 TA-P1-005/TA-P1-006 测试收敛 |
+| TA-P1-005 | DONE | `docs/implementation/phase-1/ta-p1-005-positive-test-report-2026-03-02.md`, `packages/contracts/test/TelagentGroupRegistry.test.ts` | 无 | 进入 TA-P1-007 部署阶段 |
+| TA-P1-006 | DONE | `docs/implementation/phase-1/ta-p1-006-negative-test-report-2026-03-02.md`, `docs/implementation/phase-1/ta-p1-003-test-run-2026-03-02.md` | 无 | 进入 TA-P1-007 部署阶段 |
+| TA-P1-007 | IN_PROGRESS | `packages/contracts/scripts/deploy-telagent-group-registry.ts`, `docs/implementation/phase-1/ta-p1-007-deploy-script-checkpoint-2026-03-02.md`, `docs/implementation/phase-1/manifests/2026-03-02-local-deploy-manifest.json`, `docs/implementation/phase-1/manifests/2026-03-02-testnet-deploy-attempt.txt` | testnet 部署账户余额不足 | 充值后复跑 testnet 部署并补齐 manifest |
+| TA-P1-008 | BLOCKED | `packages/contracts/scripts/rollback-telagent-group-registry.ts`, `packages/contracts/scripts/rollback-drill-local.ts`, `docs/implementation/phase-1/ta-p1-008-rollback-runbook-2026-03-02.md`, `docs/implementation/phase-1/manifests/2026-03-02-local-rollback-drill.json` | 依赖 testnet 部署可用和资金可用 | 先关闭 TA-P1-007 阻塞，再执行 testnet 回滚演练 |
+| TA-P1-009 | IN_PROGRESS | `docs/implementation/phase-1/ta-p1-009-abi-address-manifest-2026-03-02.md`, `docs/implementation/phase-1/manifests/2026-03-02-telagent-group-registry-abi.json`, `docs/implementation/phase-1/manifests/2026-03-02-local-deploy-manifest.json` | testnet 地址清单缺失 | TA-P1-007 完成后补齐 testnet 地址并转 DONE |
