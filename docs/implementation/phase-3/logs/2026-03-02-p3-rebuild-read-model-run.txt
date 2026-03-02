@@ -1,0 +1,9 @@
+{
+  "phase": "Phase 3",
+  "taskId": "TA-P3-005",
+  "dbPath": "/Users/xiasenhai/Workspace/OpenClaw/telagent/docs/implementation/phase-3/manifests/2026-03-02-p3-consistency.sqlite",
+  "replayedEvents": 4,
+  "toBlock": null,
+  "rebuiltGroups": 1,
+  "executedAt": "2026-03-02T16:55:58.968Z"
+}

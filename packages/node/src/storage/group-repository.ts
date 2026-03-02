@@ -52,9 +52,66 @@ CREATE TABLE IF NOT EXISTS group_events (
   created_at_ms INTEGER NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS indexer_state (
+  id INTEGER PRIMARY KEY CHECK(id = 1),
+  last_indexed_block INTEGER NOT NULL,
+  last_indexed_hash TEXT,
+  reorg_count INTEGER NOT NULL DEFAULT 0,
+  updated_at_ms INTEGER NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS indexed_blocks (
+  block_number INTEGER PRIMARY KEY,
+  block_hash TEXT NOT NULL,
+  parent_hash TEXT NOT NULL,
+  indexed_at_ms INTEGER NOT NULL
+);
+
 CREATE INDEX IF NOT EXISTS idx_group_members_group_id ON group_members(group_id);
 CREATE INDEX IF NOT EXISTS idx_group_events_group_id ON group_events(group_id);
 `;
+
+interface GroupEventRow {
+  id: number;
+  groupId: string;
+  eventName: string;
+  txHash: string | null;
+  blockNumber: number | null;
+  payloadJson: string;
+  createdAtMs: number;
+}
+
+interface GroupEventRowWithoutId {
+  eventName: string;
+  txHash: string | null;
+  blockNumber: number | null;
+  payloadJson: string;
+  createdAtMs: number;
+}
+
+export interface GroupEventRecord {
+  id: number;
+  groupId: string;
+  eventName: string;
+  txHash: string | null;
+  blockNumber: number | null;
+  payload: Record<string, unknown>;
+  createdAtMs: number;
+}
+
+export interface IndexedBlockRecord {
+  blockNumber: number;
+  blockHash: string;
+  parentHash: string;
+  indexedAtMs: number;
+}
+
+export interface IndexerStateRecord {
+  lastIndexedBlock: number;
+  lastIndexedHash: string | null;
+  reorgCount: number;
+  updatedAtMs: number;
+}
 
 export class GroupRepository {
   private readonly db: Database.Database;
@@ -111,6 +168,26 @@ export class GroupRepository {
       .get(groupId) as GroupRecord | undefined;
 
     return row ?? null;
+  }
+
+  listGroups(): GroupRecord[] {
+    return this.db
+      .prepare(
+        `SELECT
+          group_id AS groupId,
+          creator_did AS creatorDid,
+          creator_did_hash AS creatorDidHash,
+          group_domain AS groupDomain,
+          domain_proof_hash AS domainProofHash,
+          initial_mls_state_hash AS initialMlsStateHash,
+          state,
+          created_at_ms AS createdAtMs,
+          tx_hash AS txHash,
+          block_number AS blockNumber
+        FROM groups
+        ORDER BY created_at_ms ASC`,
+      )
+      .all() as GroupRecord[];
   }
 
   saveMember(record: GroupMemberRecord): void {
@@ -225,22 +302,83 @@ export class GroupRepository {
       );
   }
 
-  listEvents(groupId: string): Array<{ eventName: string; txHash: string | null; blockNumber: number | null; payload: Record<string, unknown> }> {
+  listEvents(groupId: string): Array<{
+    eventName: string;
+    txHash: string | null;
+    blockNumber: number | null;
+    payload: Record<string, unknown>;
+    createdAtMs: number;
+  }> {
     const rows = this.db
       .prepare(
-        `SELECT event_name AS eventName, tx_hash AS txHash, block_number AS blockNumber, payload_json AS payloadJson
+        `SELECT
+          event_name AS eventName,
+          tx_hash AS txHash,
+          block_number AS blockNumber,
+          payload_json AS payloadJson,
+          created_at_ms AS createdAtMs
          FROM group_events
          WHERE group_id = ?
          ORDER BY id ASC`,
       )
-      .all(groupId) as Array<{ eventName: string; txHash: string | null; blockNumber: number | null; payloadJson: string }>;
+      .all(groupId) as GroupEventRowWithoutId[];
 
     return rows.map((row) => ({
       eventName: row.eventName,
       txHash: row.txHash,
       blockNumber: row.blockNumber,
       payload: JSON.parse(row.payloadJson) as Record<string, unknown>,
+      createdAtMs: row.createdAtMs,
     }));
+  }
+
+  listAllEvents(toBlock?: number): GroupEventRecord[] {
+    const query = toBlock == null
+      ? `SELECT
+           id,
+           group_id AS groupId,
+           event_name AS eventName,
+           tx_hash AS txHash,
+           block_number AS blockNumber,
+           payload_json AS payloadJson,
+           created_at_ms AS createdAtMs
+         FROM group_events
+         ORDER BY id ASC`
+      : `SELECT
+           id,
+           group_id AS groupId,
+           event_name AS eventName,
+           tx_hash AS txHash,
+           block_number AS blockNumber,
+           payload_json AS payloadJson,
+           created_at_ms AS createdAtMs
+         FROM group_events
+         WHERE block_number IS NOT NULL AND block_number <= ?
+         ORDER BY id ASC`;
+
+    const rows = (toBlock == null
+      ? this.db.prepare(query).all()
+      : this.db.prepare(query).all(toBlock)) as GroupEventRow[];
+
+    return rows.map((row) => ({
+      id: row.id,
+      groupId: row.groupId,
+      eventName: row.eventName,
+      txHash: row.txHash,
+      blockNumber: row.blockNumber,
+      payload: JSON.parse(row.payloadJson) as Record<string, unknown>,
+      createdAtMs: row.createdAtMs,
+    }));
+  }
+
+  deleteEventsAfterBlock(blockNumber: number): void {
+    this.db
+      .prepare('DELETE FROM group_events WHERE block_number IS NOT NULL AND block_number > ?')
+      .run(blockNumber);
+  }
+
+  clearReadModel(): void {
+    this.db.exec('DELETE FROM groups; DELETE FROM group_members; DELETE FROM group_chain_state;');
   }
 
   updateGroupState(groupId: string, state: GroupState, txHash?: string, blockNumber?: number): void {
@@ -251,5 +389,70 @@ export class GroupRepository {
          WHERE group_id = ?`,
       )
       .run(state, txHash ?? null, blockNumber ?? null, groupId);
+  }
+
+  saveIndexerState(state: IndexerStateRecord): void {
+    this.db
+      .prepare(
+        `INSERT INTO indexer_state (id, last_indexed_block, last_indexed_hash, reorg_count, updated_at_ms)
+         VALUES (1, ?, ?, ?, ?)
+         ON CONFLICT(id) DO UPDATE SET
+           last_indexed_block = excluded.last_indexed_block,
+           last_indexed_hash = excluded.last_indexed_hash,
+           reorg_count = excluded.reorg_count,
+           updated_at_ms = excluded.updated_at_ms`,
+      )
+      .run(state.lastIndexedBlock, state.lastIndexedHash, state.reorgCount, state.updatedAtMs);
+  }
+
+  getIndexerState(): IndexerStateRecord | null {
+    const row = this.db
+      .prepare(
+        `SELECT
+           last_indexed_block AS lastIndexedBlock,
+           last_indexed_hash AS lastIndexedHash,
+           reorg_count AS reorgCount,
+           updated_at_ms AS updatedAtMs
+         FROM indexer_state
+         WHERE id = 1`,
+      )
+      .get() as IndexerStateRecord | undefined;
+
+    return row ?? null;
+  }
+
+  recordIndexedBlock(record: IndexedBlockRecord): void {
+    this.db
+      .prepare(
+        `INSERT INTO indexed_blocks (block_number, block_hash, parent_hash, indexed_at_ms)
+         VALUES (?, ?, ?, ?)
+         ON CONFLICT(block_number) DO UPDATE SET
+           block_hash = excluded.block_hash,
+           parent_hash = excluded.parent_hash,
+           indexed_at_ms = excluded.indexed_at_ms`,
+      )
+      .run(record.blockNumber, record.blockHash, record.parentHash, record.indexedAtMs);
+  }
+
+  getIndexedBlock(blockNumber: number): IndexedBlockRecord | null {
+    const row = this.db
+      .prepare(
+        `SELECT
+          block_number AS blockNumber,
+          block_hash AS blockHash,
+          parent_hash AS parentHash,
+          indexed_at_ms AS indexedAtMs
+        FROM indexed_blocks
+        WHERE block_number = ?`,
+      )
+      .get(blockNumber) as IndexedBlockRecord | undefined;
+
+    return row ?? null;
+  }
+
+  deleteIndexedBlocksAfter(blockNumber: number): void {
+    this.db
+      .prepare('DELETE FROM indexed_blocks WHERE block_number > ?')
+      .run(blockNumber);
   }
 }

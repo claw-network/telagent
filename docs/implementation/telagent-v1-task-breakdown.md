@@ -60,14 +60,14 @@ flowchart LR
 | TA-P2-010 | Phase 2 | 集成测试（真实 ClawIdentity + 测试链） | QA + Backend | 2 | TA-P2-006, TA-P1-009 | integration tests | 建群到成员变更闭环通过 | DONE |
 | TA-P2-011 | Phase 2 | Node API 阶段 Gate 评审 | PM/Tech Lead | 0.5 | TA-P2-009, TA-P2-010 | Gate 结论 | Phase 2 正式关闭 | DONE |
 
-| TA-P3-001 | Phase 3 | 设计并创建索引存储表结构 | Backend Engineer | 1 | TA-P2-006 | DB schema | `groups/group_members/group_events` 就绪 | TODO |
-| TA-P3-002 | Phase 3 | 实现 GroupIndexer 事件订阅与解码 | Backend Engineer | 2 | TA-P1-009, TA-P3-001 | indexer service | 事件可持续入库 | TODO |
-| TA-P3-003 | Phase 3 | 实现 pending/finalized 双视图查询 | Backend Engineer | 1.5 | TA-P3-002 | 查询逻辑/API | 同一群可切换两种视图 | TODO |
-| TA-P3-004 | Phase 3 | 实现 finalityDepth 处理逻辑 | Backend Engineer | 1 | TA-P3-002 | finality 逻辑 | 仅确认后写 finalized | TODO |
-| TA-P3-005 | Phase 3 | 实现 reorg 检测与回滚重放 | Backend Engineer | 2 | TA-P3-004 | rollback/replay 逻辑 | 重组后状态可一致恢复 | TODO |
-| TA-P3-006 | Phase 3 | 编写 reorg 注入测试 | QA Engineer | 1.5 | TA-P3-005 | reorg tests | 注入测试全绿 | TODO |
-| TA-P3-007 | Phase 3 | 一致性巡检脚本（链上 vs 读模型） | Backend Engineer | 1 | TA-P3-003, TA-P3-005 | consistency checker | 巡检误差率为 0 | TODO |
-| TA-P3-008 | Phase 3 | Indexer 阶段 Gate 评审 | PM/Tech Lead | 0.5 | TA-P3-006, TA-P3-007 | Gate 结论 | Phase 3 正式关闭 | TODO |
+| TA-P3-001 | Phase 3 | 设计并创建索引存储表结构 | Backend Engineer | 1 | TA-P2-006 | DB schema | `groups/group_members/group_events` 就绪 | DONE |
+| TA-P3-002 | Phase 3 | 实现 GroupIndexer 事件订阅与解码 | Backend Engineer | 2 | TA-P1-009, TA-P3-001 | indexer service | 事件可持续入库 | DONE |
+| TA-P3-003 | Phase 3 | 实现 pending/finalized 双视图查询 | Backend Engineer | 1.5 | TA-P3-002 | 查询逻辑/API | 同一群可切换两种视图 | DONE |
+| TA-P3-004 | Phase 3 | 实现 finalityDepth 处理逻辑 | Backend Engineer | 1 | TA-P3-002 | finality 逻辑 | 仅确认后写 finalized | DONE |
+| TA-P3-005 | Phase 3 | 实现 reorg 检测与回滚重放 | Backend Engineer | 2 | TA-P3-004 | rollback/replay 逻辑 | 重组后状态可一致恢复 | DONE |
+| TA-P3-006 | Phase 3 | 编写 reorg 注入测试 | QA Engineer | 1.5 | TA-P3-005 | reorg tests | 注入测试全绿 | DONE |
+| TA-P3-007 | Phase 3 | 一致性巡检脚本（链上 vs 读模型） | Backend Engineer | 1 | TA-P3-003, TA-P3-005 | consistency checker | 巡检误差率为 0 | DONE |
+| TA-P3-008 | Phase 3 | Indexer 阶段 Gate 评审 | PM/Tech Lead | 0.5 | TA-P3-006, TA-P3-007 | Gate 结论 | Phase 3 正式关闭 | DONE |
 
 | TA-P4-001 | Phase 4 | Signal/MLS 适配层接口冻结 | Protocol Owner | 1 | TA-P0-005 | 协议接口文档 | 参数与状态机一致 | TODO |
 | TA-P4-002 | Phase 4 | 实现 Envelope 序号生成与单调保障 | Backend Engineer | 1 | TA-P4-001 | seq allocator | 会话内 seq 单调递增 | TODO |
@@ -150,3 +150,16 @@ flowchart LR
 | TA-P2-009 | DONE | `docs/implementation/phase-2/ta-p2-009-api-contract-test-suite-2026-03-02.md`, `packages/node/src/api-contract.test.ts`, `packages/node/src/api-prefix.test.ts`, `packages/node/package.json`, `docs/implementation/phase-2/logs/2026-03-02-p2-node-build.txt`, `docs/implementation/phase-2/logs/2026-03-02-p2-node-test.txt` | 无 | 进入 `TA-P2-011` Gate 材料汇总 |
 | TA-P2-010 | DONE | `docs/implementation/phase-2/ta-p2-010-testnet-integration-2026-03-02.md`, `packages/node/scripts/run-phase2-testnet-integration.ts`, `docs/implementation/phase-2/logs/2026-03-02-p2-testnet-integration-run.txt`, `docs/implementation/phase-2/manifests/2026-03-02-p2-testnet-integration.json` | 无 | 进入 `TA-P2-011` Gate 评审 |
 | TA-P2-011 | DONE | `docs/implementation/gates/phase-2-gate.md`, `docs/implementation/phase-2/README.md` | 无 | Phase 2 已正式关闭，按 Gate 结论进入 Phase 3 |
+
+## 9. Phase 3 收口执行（2026-03-02）
+
+| Task ID | 状态 | 证据链接 | 阻塞项 | 下一步动作 |
+| --- | --- | --- | --- | --- |
+| TA-P3-001 | DONE | `docs/implementation/phase-3/ta-p3-001-storage-schema-2026-03-02.md`, `packages/node/src/storage/group-repository.ts`, `docs/implementation/phase-3/logs/2026-03-02-p3-node-build.txt` | 无 | 继续推进 `TA-P3-002` / `TA-P3-005` |
+| TA-P3-002 | DONE | `docs/implementation/phase-3/ta-p3-002-group-indexer-subscription-decode-2026-03-02.md`, `packages/node/src/indexer/group-indexer.ts`, `packages/node/src/indexer/group-indexer.test.ts` | 无 | 继续推进 `TA-P3-003` / `TA-P3-004` |
+| TA-P3-003 | DONE | `docs/implementation/phase-3/ta-p3-003-pending-finalized-dual-view-2026-03-02.md`, `packages/node/src/storage/group-repository.ts`, `packages/node/src/api/routes/groups.ts`, `packages/node/src/indexer/group-indexer.test.ts` | 无 | 继续推进 `TA-P3-007` |
+| TA-P3-004 | DONE | `docs/implementation/phase-3/ta-p3-004-finality-depth-2026-03-02.md`, `packages/node/src/indexer/group-indexer.ts`, `docs/implementation/phase-3/logs/2026-03-02-p3-node-test.txt` | 无 | 继续推进 `TA-P3-005` |
+| TA-P3-005 | DONE | `docs/implementation/phase-3/ta-p3-005-reorg-rollback-replay-2026-03-02.md`, `packages/node/src/indexer/group-indexer.ts`, `packages/node/scripts/rebuild-group-read-model.ts`, `docs/implementation/phase-3/logs/2026-03-02-p3-rebuild-read-model-run.txt` | 无 | 继续推进 `TA-P3-006` / `TA-P3-007` |
+| TA-P3-006 | DONE | `docs/implementation/phase-3/ta-p3-006-reorg-injection-test-2026-03-02.md`, `packages/node/src/indexer/group-indexer.test.ts`, `docs/implementation/phase-3/logs/2026-03-02-p3-node-test.txt` | 无 | 进入 `TA-P3-008` Gate 材料汇总 |
+| TA-P3-007 | DONE | `docs/implementation/phase-3/ta-p3-007-consistency-checker-2026-03-02.md`, `packages/node/scripts/run-phase3-consistency-check.ts`, `docs/implementation/phase-3/logs/2026-03-02-p3-consistency-check-run.txt`, `docs/implementation/phase-3/manifests/2026-03-02-p3-consistency-check.json` | 无 | 进入 `TA-P3-008` Gate 评审 |
+| TA-P3-008 | DONE | `docs/implementation/gates/phase-3-gate.md`, `docs/implementation/phase-3/README.md` | 无 | Phase 3 已正式关闭，按 Gate 结论进入 Phase 4 |

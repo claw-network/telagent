@@ -210,6 +210,14 @@
 - `TA-P2-011`：DONE（`docs/implementation/gates/phase-2-gate.md` 结论 `PASS`）。
 - 阶段结论：Phase 2 已正式关闭，允许进入 Phase 3。
 
+## 4.8 Phase 3 收口快照（2026-03-02）
+
+- `TA-P3-001` ~ `TA-P3-007`：DONE（Indexer、finality、reorg、一致性巡检能力已归档）。
+- `TA-P3-006`：reorg 注入测试通过（见 `docs/implementation/phase-3/logs/2026-03-02-p3-node-test.txt`）。
+- `TA-P3-007`：链上 vs 读模型巡检 `mismatchCount=0`（见 `docs/implementation/phase-3/manifests/2026-03-02-p3-consistency-check.json`）。
+- `TA-P3-008`：DONE（`docs/implementation/gates/phase-3-gate.md` 结论 `PASS`）。
+- 阶段结论：Phase 3 已正式关闭，允许进入 Phase 4。
+
 ## 5. 周会与 Gate 节奏建议
 
 - 每周一：Iteration Planning（30 分钟）
