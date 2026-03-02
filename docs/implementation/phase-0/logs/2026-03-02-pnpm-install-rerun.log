@@ -1,0 +1,31 @@
+Scope: all 5 workspace projects
+ WARN  Ignoring broken lockfile at /Users/xiasenhai/Workspace/OpenClaw/telagent: Lockfile /Users/xiasenhai/Workspace/OpenClaw/telagent/pnpm-lock.yaml not compatible with current pnpm
+ WARN  GET https://registry.npmjs.org/typescript error (ENOTFOUND). Will retry in 10 seconds. 2 retries left.
+ WARN  GET https://registry.npmjs.org/@nomicfoundation%2Fhardhat-toolbox error (ENOTFOUND). Will retry in 10 seconds. 2 retries left.
+ WARN  GET https://registry.npmjs.org/@openzeppelin%2Fcontracts error (ENOTFOUND). Will retry in 10 seconds. 2 retries left.
+ WARN  GET https://registry.npmjs.org/@openzeppelin%2Fcontracts-upgradeable error (ENOTFOUND). Will retry in 10 seconds. 2 retries left.
+ WARN  GET https://registry.npmjs.org/@openzeppelin%2Fhardhat-upgrades error (ENOTFOUND). Will retry in 10 seconds. 2 retries left.
+ WARN  GET https://registry.npmjs.org/@types%2Fmocha error (ENOTFOUND). Will retry in 10 seconds. 2 retries left.
+ WARN  GET https://registry.npmjs.org/@types%2Fnode error (ENOTFOUND). Will retry in 10 seconds. 2 retries left.
+ WARN  GET https://registry.npmjs.org/hardhat error (ENOTFOUND). Will retry in 10 seconds. 2 retries left.
+ WARN  GET https://registry.npmjs.org/ts-node error (ENOTFOUND). Will retry in 10 seconds. 2 retries left.
+ WARN  GET https://registry.npmjs.org/@types%2Fbetter-sqlite3 error (ENOTFOUND). Will retry in 10 seconds. 2 retries left.
+ WARN  GET https://registry.npmjs.org/tsx error (ENOTFOUND). Will retry in 10 seconds. 2 retries left.
+ WARN  GET https://registry.npmjs.org/better-sqlite3 error (ENOTFOUND). Will retry in 10 seconds. 2 retries left.
+ WARN  GET https://registry.npmjs.org/ethers error (ENOTFOUND). Will retry in 10 seconds. 2 retries left.
+ WARN  GET https://registry.npmjs.org/typescript error (ENOTFOUND). Will retry in 1 minute. 1 retries left.
+ WARN  GET https://registry.npmjs.org/@nomicfoundation%2Fhardhat-toolbox error (ENOTFOUND). Will retry in 1 minute. 1 retries left.
+ WARN  GET https://registry.npmjs.org/@openzeppelin%2Fcontracts error (ENOTFOUND). Will retry in 1 minute. 1 retries left.
+ WARN  GET https://registry.npmjs.org/@openzeppelin%2Fcontracts-upgradeable error (ENOTFOUND). Will retry in 1 minute. 1 retries left.
+ WARN  GET https://registry.npmjs.org/@openzeppelin%2Fhardhat-upgrades error (ENOTFOUND). Will retry in 1 minute. 1 retries left.
+ WARN  GET https://registry.npmjs.org/@types%2Fmocha error (ENOTFOUND). Will retry in 1 minute. 1 retries left.
+ WARN  GET https://registry.npmjs.org/@types%2Fnode error (ENOTFOUND). Will retry in 1 minute. 1 retries left.
+ WARN  GET https://registry.npmjs.org/hardhat error (ENOTFOUND). Will retry in 1 minute. 1 retries left.
+ WARN  GET https://registry.npmjs.org/ts-node error (ENOTFOUND). Will retry in 1 minute. 1 retries left.
+ WARN  GET https://registry.npmjs.org/@types%2Fbetter-sqlite3 error (ENOTFOUND). Will retry in 1 minute. 1 retries left.
+ WARN  GET https://registry.npmjs.org/tsx error (ENOTFOUND). Will retry in 1 minute. 1 retries left.
+ WARN  GET https://registry.npmjs.org/better-sqlite3 error (ENOTFOUND). Will retry in 1 minute. 1 retries left.
+ WARN  GET https://registry.npmjs.org/ethers error (ENOTFOUND). Will retry in 1 minute. 1 retries left.
+ ERR_PNPM_META_FETCH_FAIL  GET https://registry.npmjs.org/typescript: request to https://registry.npmjs.org/typescript failed, reason: getaddrinfo ENOTFOUND registry.npmjs.org
+
+This error happened while installing a direct dependency of /Users/xiasenhai/Workspace/OpenClaw/telagent

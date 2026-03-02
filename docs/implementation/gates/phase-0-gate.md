@@ -24,15 +24,20 @@
 
 ## 3) 风险与阻塞
 
+风险台账：`docs/implementation/gates/phase-0-risk-register.md`
+
 | 风险/阻塞 | 影响 | Owner | 截止日期 | 状态 |
 | --- | --- | --- | --- | --- |
-| `pnpm install` 无法访问 npm registry（`ENOTFOUND registry.npmjs.org`） | 无法完成 Day 1 本地 build/test 基线校验（日志：`docs/implementation/phase-0/day1-baseline-check.md`） | Agent-TL | 2026-03-08 | Open |
+| `pnpm install` 无法访问 npm registry（`ENOTFOUND registry.npmjs.org`） | 无法完成 Day 1 本地 build/test 基线校验（日志：`docs/implementation/phase-0/day1-baseline-check.md`，复跑日志：`docs/implementation/phase-0/logs/2026-03-02-pnpm-install-rerun.log`，诊断：`docs/implementation/phase-0/logs/2026-03-02-network-diagnostics.log`） | Agent-TL | 2026-03-08 | Open |
+| `git push --dry-run` 失败（`could not read Username for https://github.com`） | 无法将规范冻结证据推送远端（不影响本地 Gate 判定） | Agent-TL | 2026-03-08 | Open |
 
 ## 4) 条件放行补丁项（仅 CONDITIONAL PASS 填写）
 
+执行排程：`docs/implementation/phase-0/week1-closeout-execution-plan.md`
+
 | 补丁项 | Owner | 截止日期 | 验收标准 | 状态 |
 | --- | --- | --- | --- | --- |
-| 解除网络阻塞后重跑 `pnpm install && pnpm -r build && pnpm -r test` | Agent-TL / Agent-QA | 2026-03-08 | 三条命令执行完成并归档日志 | TODO |
+| 解除网络阻塞后重跑 `pnpm install && pnpm -r build && pnpm -r test` | Agent-TL / Agent-QA | 2026-03-08 | 三条命令执行完成并归档日志 | IN_PROGRESS |
 | 补齐真实成员签字（TL/PO/QA） | Agent-TL | 2026-03-08 | Gate 文档签字字段由 `<pending>` 变为实名 | TODO |
 
 ## 5) 结论说明

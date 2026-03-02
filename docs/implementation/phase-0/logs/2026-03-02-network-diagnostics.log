@@ -1,0 +1,22 @@
+=== Diagnostic Timestamp ===
+Mon Mar  2 21:50:23 CST 2026
+
+=== DNS check: registry.npmjs.org ===
+/AppleInternal/Library/BuildRoots/46298ee5-4a1c-11ef-a181-1aec23608739/Library/Caches/com.apple.xbs/Sources/bind9/bind9/lib/isc/unix/socket.c:5580: bind: Operation not permitted
+nslookup: isc_socket_bind: unexpected error
+
+=== HTTP check: registry.npmjs.org ===
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0curl: (6) Could not resolve host: registry.npmjs.org
+
+=== DNS check: github.com ===
+/AppleInternal/Library/BuildRoots/46298ee5-4a1c-11ef-a181-1aec23608739/Library/Caches/com.apple.xbs/Sources/bind9/bind9/lib/isc/unix/socket.c:5580: bind: Operation not permitted
+nslookup: isc_socket_bind: unexpected error
+
+=== Git remote check ===
+origin	https://github.com/claw-network/telagent.git (fetch)
+origin	https://github.com/claw-network/telagent.git (push)
+
+=== GitHub auth check (ls-remote) ===
+fatal: unable to access 'https://github.com/claw-network/telagent.git/': Could not resolve host: github.com

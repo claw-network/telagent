@@ -156,7 +156,8 @@
 
 - 外部网络阻塞：`pnpm install` 访问 `registry.npmjs.org` 失败（`ENOTFOUND`），导致 Day 1 本地 `build/test` 基线未完成。
 - 影响评估：不影响 Phase 0 规范冻结文档产出，但影响“环境可复现性”验证闭环。
-- 跟踪方式：纳入 `docs/implementation/gates/phase-0-gate.md` 的补丁项。
+- 远端写入阻塞：`git push --dry-run` 失败（`could not read Username for https://github.com`），导致变更暂无法发布远端。
+- 跟踪方式：统一纳入 `docs/implementation/gates/phase-0-gate.md` 与 `docs/implementation/gates/phase-0-risk-register.md`。
 
 ## 4.3 Definition of Done（每个任务统一标准）
 
@@ -170,6 +171,13 @@
 - `TA-P0-001` ~ `TA-P0-008`：WBS 状态已更新为 `DONE`。
 - 证据索引：`docs/implementation/phase-0/README.md`。
 - Gate 结论：`CONDITIONAL PASS`（补丁项未关闭前不进入 Phase 1）。
+
+## 4.5 Week 1 收口执行（2026-03-03 ~ 2026-03-08）
+
+- 执行排程：`docs/implementation/phase-0/week1-closeout-execution-plan.md`
+- 当日快照：`docs/implementation/phase-0/week1-progress-2026-03-02.md`
+- 核心目标：关闭 `P0-PATCH-001` 与 `P0-PATCH-002`
+- Gate 节点：`2026-03-08 18:00 (UTC+8)` 复核结论
 
 ## 5. 周会与 Gate 节奏建议
 

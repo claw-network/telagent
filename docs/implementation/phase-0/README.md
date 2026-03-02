@@ -20,6 +20,10 @@
 补充证据：
 
 - `day1-baseline-check.md`：Day 1 本地基线校验日志（install/build/test）
+- `week1-closeout-execution-plan.md`：Week 1 收口执行排程（2026-03-03 ~ 2026-03-08）
+- `week1-progress-2026-03-02.md`：当日执行进展快照（统一回报格式）
+- `logs/`：基线命令日志归档目录
+- `../gates/phase-0-risk-register.md`：Phase 0 风险与阻塞台账
 
 ## 2. 强约束复核
 
