@@ -1,0 +1,29 @@
+{
+  "contract": "TelagentGroupRegistry",
+  "generatedAt": "2026-03-02T15:11:26Z",
+  "abiPath": "docs/implementation/phase-1/manifests/2026-03-02-telagent-group-registry-abi.json",
+  "deployments": {
+    "hardhat": {
+      "contract": "TelagentGroupRegistry",
+      "networkName": "hardhat",
+      "chainId": 31337,
+      "deployer": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
+      "identityAddress": "0x0000000000000000000000000000000000000001",
+      "proxyAddress": "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512",
+      "implementationAddress": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
+      "deployTxHash": "0x8addcb43272a579171b4d16c20fe5ab66711693c362c23c72798bae6e3f75134",
+      "generatedAt": "2026-03-02T14:52:16.566Z"
+    },
+    "clawnetTestnet": {
+      "contract": "TelagentGroupRegistry",
+      "networkName": "clawnetTestnet",
+      "chainId": 7625,
+      "deployer": "0xA9b95A4fDCD673f6aE0D2a873E0f4771CA7D0119",
+      "identityAddress": "0xee9B2D7eb0CD51e1d0a14278bCA32b02548D1149",
+      "proxyAddress": "0x30AF4A124e41da5551EBfA41904eaF676FC8fbB0",
+      "implementationAddress": "0x8a0DF8503202828A7808C3cA2E0753ecb91A28C3",
+      "deployTxHash": "0x9836e554271f0a7e1eb9dc98a364c8209a52a31ec053ac3ea2053eb6001a2437",
+      "generatedAt": "2026-03-02T15:08:06.848Z"
+    }
+  }
+}

@@ -1,0 +1,6 @@
+Proxy: 0x0aBf742799711b0299E4c315c18149E25f044206
+Implementation before upgrade: 0x8a0DF8503202828A7808C3cA2E0753ecb91A28C3
+Implementation after upgrade: 0xB3DCf86e16d277F6f3A8068F0165b72A98B0dFd6
+Implementation after rollback: 0x8a0DF8503202828A7808C3cA2E0753ecb91A28C3
+Rollback success: true
+Rollback drill record written: /Users/xiasenhai/Workspace/OpenClaw/telagent/docs/implementation/phase-1/manifests/2026-03-02-testnet-rollback-drill.json

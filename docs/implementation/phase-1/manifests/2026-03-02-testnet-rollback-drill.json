@@ -1,0 +1,15 @@
+{
+  "contract": "TelagentGroupRegistry",
+  "networkName": "clawnetTestnet",
+  "deployer": "0xA9b95A4fDCD673f6aE0D2a873E0f4771CA7D0119",
+  "identityAddress": "0xee9B2D7eb0CD51e1d0a14278bCA32b02548D1149",
+  "proxyAddress": "0x0aBf742799711b0299E4c315c18149E25f044206",
+  "implBeforeUpgrade": "0x8a0DF8503202828A7808C3cA2E0753ecb91A28C3",
+  "implAfterUpgrade": "0xB3DCf86e16d277F6f3A8068F0165b72A98B0dFd6",
+  "upgradeTxHash": "0xec8901e56191d580aaeff02f079c26e4eaa78d09e53f038d97024375a7217905",
+  "implementationAfterUpgrade": "0xB3DCf86e16d277F6f3A8068F0165b72A98B0dFd6",
+  "rollbackTxHash": "0xaa3291c70d9523898d2edd05e5c474dc8d78fc9b5b87cb6388a7d26a0996b264",
+  "implementationAfterRollback": "0x8a0DF8503202828A7808C3cA2E0753ecb91A28C3",
+  "rollbackSucceeded": true,
+  "executedAt": "2026-03-02T15:10:35.040Z"
+}

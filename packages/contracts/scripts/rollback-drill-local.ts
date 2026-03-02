@@ -27,10 +27,12 @@ async function main() {
     redeployImplementation: 'always',
   });
 
-  await proxy.upgradeToAndCall(implAfterUpgrade, '0x');
+  const upgradeTx = await proxy.upgradeToAndCall(implAfterUpgrade, '0x');
+  await upgradeTx.wait();
   const implementationAfterUpgrade = await upgrades.erc1967.getImplementationAddress(proxyAddress);
 
-  await proxy.upgradeToAndCall(implBeforeUpgrade, '0x');
+  const rollbackTx = await proxy.upgradeToAndCall(implBeforeUpgrade, '0x');
+  await rollbackTx.wait();
   const implementationAfterRollback = await upgrades.erc1967.getImplementationAddress(proxyAddress);
 
   const rollbackSucceeded =
@@ -44,7 +46,9 @@ async function main() {
     proxyAddress,
     implBeforeUpgrade,
     implAfterUpgrade,
+    upgradeTxHash: upgradeTx.hash,
     implementationAfterUpgrade,
+    rollbackTxHash: rollbackTx.hash,
     implementationAfterRollback,
     rollbackSucceeded,
     executedAt: new Date().toISOString(),

@@ -2,7 +2,7 @@
 
 - Task ID：TA-P1-009
 - 阶段：Phase 1
-- 状态：IN_PROGRESS
+- 状态：DONE
 - 负责人角色：Chain Engineer
 
 ## 1. 目标
@@ -25,15 +25,23 @@
 
 ### 3.2 clawnetTestnet
 
-- 当前状态：未生成（部署阻塞）
-- 阻塞证据：`docs/implementation/phase-1/manifests/2026-03-02-testnet-deploy-attempt.txt`
+- Manifest：`docs/implementation/phase-1/manifests/2026-03-02-testnet-deploy-manifest.json`
+- 关键信息：
+  - `proxyAddress`: `0x30AF4A124e41da5551EBfA41904eaF676FC8fbB0`
+  - `implementationAddress`: `0x8a0DF8503202828A7808C3cA2E0753ecb91A28C3`
+  - `deployer`: `0xA9b95A4fDCD673f6aE0D2a873E0f4771CA7D0119`
+
+### 3.3 统一地址清单（local + testnet）
+
+- 汇总清单：`docs/implementation/phase-1/manifests/2026-03-02-deploy-manifest.json`
+- 用途：下游按 `deployments.<networkName>` 直接读取 proxy 与 implementation 地址。
 
 ## 4. 当前结论
 
 - ABI 已可供下游集成。
-- 地址清单已覆盖 local，testnet 待部署成功后补齐。
+- 地址清单已覆盖 local + testnet，`TA-P1-009` 关闭。
 
 ## 5. 下一步
 
-1. 解除 `TA-P1-007` 资金阻塞后补齐 testnet manifest。
-2. 生成统一 `deploy-manifest`（local + testnet）并转 DONE。
+1. 若执行 `TA-P1-010`（可选），复用本清单中的 testnet 地址进行 Router 注册。
+2. 进入 `TA-P1-011` Gate 评审。

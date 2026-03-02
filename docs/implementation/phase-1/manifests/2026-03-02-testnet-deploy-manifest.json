@@ -1,0 +1,11 @@
+{
+  "contract": "TelagentGroupRegistry",
+  "networkName": "clawnetTestnet",
+  "chainId": 7625,
+  "deployer": "0xA9b95A4fDCD673f6aE0D2a873E0f4771CA7D0119",
+  "identityAddress": "0xee9B2D7eb0CD51e1d0a14278bCA32b02548D1149",
+  "proxyAddress": "0x30AF4A124e41da5551EBfA41904eaF676FC8fbB0",
+  "implementationAddress": "0x8a0DF8503202828A7808C3cA2E0753ecb91A28C3",
+  "deployTxHash": "0x9836e554271f0a7e1eb9dc98a364c8209a52a31ec053ac3ea2053eb6001a2437",
+  "generatedAt": "2026-03-02T15:08:06.848Z"
+}

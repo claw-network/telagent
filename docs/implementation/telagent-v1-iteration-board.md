@@ -50,9 +50,9 @@
 - 当前进展（已完成）：`docs/implementation/phase-1/ta-p1-004-event-model-checkpoint-2026-03-02.md`
 - 当前进展（已完成）：`docs/implementation/phase-1/ta-p1-005-positive-test-report-2026-03-02.md`
 - 当前进展（已完成）：`docs/implementation/phase-1/ta-p1-006-negative-test-report-2026-03-02.md`
-- 当前进展（进行中）：`docs/implementation/phase-1/ta-p1-007-deploy-script-checkpoint-2026-03-02.md`
-- 当前进展（阻塞）：`docs/implementation/phase-1/ta-p1-008-rollback-runbook-2026-03-02.md`
-- 当前进展（进行中）：`docs/implementation/phase-1/ta-p1-009-abi-address-manifest-2026-03-02.md`
+- 当前进展（已完成）：`docs/implementation/phase-1/ta-p1-007-deploy-script-checkpoint-2026-03-02.md`
+- 当前进展（已完成）：`docs/implementation/phase-1/ta-p1-008-rollback-runbook-2026-03-02.md`
+- 当前进展（已完成）：`docs/implementation/phase-1/ta-p1-009-abi-address-manifest-2026-03-02.md`
 - 周交付：
   - `TelagentGroupRegistry` 核心逻辑
   - 权限与事件模型定稿
@@ -168,6 +168,7 @@
 - 残余限制：受限沙箱环境仍可能出现 DNS/listen 限制，已作为执行环境说明归档，不再阻断 Phase 0 Gate。
 - 远端写入状态：已恢复，`git push` 成功（`2026-03-02`）。
 - 签字状态：`P0-PATCH-002` 已关闭（TL/PO/QA 实名签字已补齐）。
+- Phase 1 合约阻塞状态：`TA-P1-007/008/009` 已在 testnet 完成复验并关闭。
 - 跟踪方式：统一纳入 `docs/implementation/gates/phase-0-gate.md` 与 `docs/implementation/gates/phase-0-risk-register.md`。
 
 ## 4.3 Definition of Done（每个任务统一标准）
@@ -189,6 +190,13 @@
 - 当日快照：`docs/implementation/phase-0/week1-progress-2026-03-02.md`
 - 核心目标：关闭 `P0-PATCH-001` 与 `P0-PATCH-002`
 - Gate 节点：`2026-03-08 18:00 (UTC+8)` 复核结论
+
+## 4.6 Phase 1 收口快照（2026-03-02）
+
+- `TA-P1-007`：DONE（testnet 部署成功，已生成 `2026-03-02-testnet-deploy-manifest.json`）。
+- `TA-P1-008`：DONE（testnet 升级回滚演练成功，`rollbackSucceeded=true`）。
+- `TA-P1-009`：DONE（ABI + local/testnet 统一地址清单已归档）。
+- 建议下一步：按计划进入 `TA-P1-011` Phase 1 Gate 评审。
 
 ## 5. 周会与 Gate 节奏建议
 
