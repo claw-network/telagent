@@ -9,8 +9,9 @@
 3. [TelAgent v1 任务拆解（WBS）](./implementation/telagent-v1-task-breakdown.md)
 4. [TelAgent v1 迭代看板（按周排期）](./implementation/telagent-v1-iteration-board.md)
 5. [TelAgent v1 Agent 接力启动清单（Day 1）](./implementation/telagent-v1-agent-handoff-day1.md)
-6. [Phase Gate 模板与记录](./implementation/gates/README.md)
-7. [TL 广播模板（给所有 agent）](./implementation/telagent-v1-tl-broadcast-template.md)
+6. [Phase 0 规范冻结产出（TA-P0-001 ~ TA-P0-008）](./implementation/phase-0/README.md)
+7. [Phase Gate 模板与记录](./implementation/gates/README.md)
+8. [TL 广播模板（给所有 agent）](./implementation/telagent-v1-tl-broadcast-template.md)
 
 ## 2) 文档用途
 

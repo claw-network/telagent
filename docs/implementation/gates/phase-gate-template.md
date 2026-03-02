@@ -27,6 +27,8 @@
 
 ## 3) 风险与阻塞
 
+> 维护方式建议：先复制 `docs/implementation/gates/risk-register-template.md`，再回填本表。
+
 | 风险/阻塞 | 影响 | Owner | 截止日期 | 状态 |
 | --- | --- | --- | --- | --- |
 | `<item>` | `<impact>` | `<owner>` | `YYYY-MM-DD` | Open/Closed |

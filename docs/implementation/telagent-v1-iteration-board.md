@@ -152,9 +152,11 @@
 - `TA-P0-007` 冻结测试策略（QA）
 - `TA-P0-008` Gate 模板与评审机制（TL）
 
-## 4.2 Blockers（默认）
+## 4.2 Blockers（2026-03-02 更新）
 
-- 无硬阻塞项（前提：团队确认本排期与角色映射）。
+- 外部网络阻塞：`pnpm install` 访问 `registry.npmjs.org` 失败（`ENOTFOUND`），导致 Day 1 本地 `build/test` 基线未完成。
+- 影响评估：不影响 Phase 0 规范冻结文档产出，但影响“环境可复现性”验证闭环。
+- 跟踪方式：纳入 `docs/implementation/gates/phase-0-gate.md` 的补丁项。
 
 ## 4.3 Definition of Done（每个任务统一标准）
 
@@ -162,6 +164,12 @@
 2. 验收标准有证据（测试结果或评审记录）。
 3. 依赖任务状态已满足（不跳依赖）。
 4. WBS 状态更新为 `DONE` 并附证据链接。
+
+## 4.4 Day 1 快照（2026-03-02）
+
+- `TA-P0-001` ~ `TA-P0-008`：WBS 状态已更新为 `DONE`。
+- 证据索引：`docs/implementation/phase-0/README.md`。
+- Gate 结论：`CONDITIONAL PASS`（补丁项未关闭前不进入 Phase 1）。
 
 ## 5. 周会与 Gate 节奏建议
 

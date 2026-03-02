@@ -14,6 +14,7 @@
 ## 2. 文件清单
 
 - `phase-gate-template.md`：通用模板（复制后填写）
+- `risk-register-template.md`：风险清单模板（Gate 会前/会后更新）
 - `phase-0-gate.md`：Phase 0 评审记录
 - `phase-1-gate.md`：Phase 1 评审记录
 - `phase-2-gate.md`：Phase 2 评审记录
