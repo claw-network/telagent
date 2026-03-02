@@ -154,9 +154,10 @@
 
 ## 4.2 Blockers（2026-03-02 更新）
 
-- 外部网络阻塞：`pnpm install` 访问 `registry.npmjs.org` 失败（`ENOTFOUND`），导致 Day 1 本地 `build/test` 基线未完成。
-- 影响评估：不影响 Phase 0 规范冻结文档产出，但影响“环境可复现性”验证闭环。
+- 基线验证状态：提权复验后 `pnpm install && pnpm -r build && pnpm -r test` 已通过，`P0-PATCH-001` 已关闭。
+- 残余限制：受限沙箱环境仍可能出现 DNS/listen 限制，已作为执行环境说明归档，不再阻断 Phase 0 Gate。
 - 远端写入状态：已恢复，`git push` 成功（`2026-03-02`）。
+- 当前唯一放行阻塞：`P0-PATCH-002`（TL/PO/QA 实名签字待补齐）。
 - 跟踪方式：统一纳入 `docs/implementation/gates/phase-0-gate.md` 与 `docs/implementation/gates/phase-0-risk-register.md`。
 
 ## 4.3 Definition of Done（每个任务统一标准）

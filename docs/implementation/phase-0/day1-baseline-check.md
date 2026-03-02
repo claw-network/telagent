@@ -81,4 +81,25 @@ reason: getaddrinfo ENOTFOUND registry.npmjs.org
 结论：
 
 - npm 依赖安装阻塞主要来自当前执行环境网络/DNS可达性；
-- 远端写入（push）还存在凭据配置问题，需和网络问题分开跟踪。
+- 远端写入（push）阻塞已关闭，见 push 成功日志。
+
+## 7. 提权基线复验（P0-PATCH-001，2026-03-02）
+
+执行命令：
+
+```bash
+pnpm install 2>&1 | tee docs/implementation/phase-0/logs/2026-03-02-pnpm-install-escalated.log
+pnpm -r build 2>&1 | tee docs/implementation/phase-0/logs/2026-03-02-pnpm-build-escalated.log
+pnpm -r test 2>&1 | tee docs/implementation/phase-0/logs/2026-03-02-pnpm-test-escalated-unrestricted.log
+```
+
+结果：
+
+1. `pnpm install`：通过
+2. `pnpm -r build`：通过
+3. `pnpm -r test`：通过
+
+说明：
+
+- 曾在受限沙箱内出现 `listen EPERM 127.0.0.1`（见 `2026-03-02-pnpm-test-escalated.log`），在无沙箱限制复验中已通过。
+- 按 Gate 补丁验收标准，“三条命令执行完成并归档日志”已满足。

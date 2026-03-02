@@ -1,0 +1,37 @@
+Scope: 4 of 5 workspace projects
+packages/contracts test$ hardhat test
+packages/protocol test$ node --test dist/**/*.test.js
+packages/web test$ echo 'no tests for web package'
+packages/web test: no tests for web package
+packages/web test: Done
+packages/protocol test: ✔ isDidClaw validates did:claw format (6.629316ms)
+packages/protocol test: ✔ hashDid is deterministic bytes32 hex (2.140433ms)
+packages/protocol test: ℹ tests 2
+packages/protocol test: ℹ suites 0
+packages/protocol test: ℹ pass 2
+packages/protocol test: ℹ fail 0
+packages/protocol test: ℹ cancelled 0
+packages/protocol test: ℹ skipped 0
+packages/protocol test: ℹ todo 0
+packages/protocol test: ℹ duration_ms 490.984564
+packages/protocol test: Done
+packages/contracts test:   TelagentGroupRegistry
+packages/contracts test:     ✔ creates group when caller controls active DID (1078ms)
+packages/contracts test:     ✔ rejects createGroup if caller is not DID controller (53ms)
+packages/contracts test:     ✔ enforces member invite/accept/remove lifecycle (52ms)
+packages/contracts test:     ✔ rejects revoked DID participation (62ms)
+packages/contracts test:     ✔ rejects duplicate invite and duplicate accept (90ms)
+packages/contracts test:   5 passing (1s)
+packages/contracts test: Done
+packages/node test$ node --test dist/**/*.test.js
+packages/node test: ✔ routes only serve /api/v1/* prefix (297.178041ms)
+packages/node test: ✔ identity endpoint responds with data envelope (17.693206ms)
+packages/node test: ℹ tests 2
+packages/node test: ℹ suites 0
+packages/node test: ℹ pass 2
+packages/node test: ℹ fail 0
+packages/node test: ℹ cancelled 0
+packages/node test: ℹ skipped 0
+packages/node test: ℹ todo 0
+packages/node test: ℹ duration_ms 1242.477987
+packages/node test: Done

@@ -1,0 +1,65 @@
+Scope: 4 of 5 workspace projects
+packages/contracts test$ hardhat test
+packages/protocol test$ node --test dist/**/*.test.js
+packages/web test$ echo 'no tests for web package'
+packages/web test: no tests for web package
+packages/web test: Done
+packages/protocol test: ✔ isDidClaw validates did:claw format (1.412064ms)
+packages/protocol test: ✔ hashDid is deterministic bytes32 hex (3.476448ms)
+packages/protocol test: ℹ tests 2
+packages/protocol test: ℹ suites 0
+packages/protocol test: ℹ pass 2
+packages/protocol test: ℹ fail 0
+packages/protocol test: ℹ cancelled 0
+packages/protocol test: ℹ skipped 0
+packages/protocol test: ℹ todo 0
+packages/protocol test: ℹ duration_ms 376.790428
+packages/protocol test: Done
+packages/contracts test:   TelagentGroupRegistry
+packages/contracts test:     ✔ creates group when caller controls active DID (2099ms)
+packages/contracts test:     ✔ rejects createGroup if caller is not DID controller (59ms)
+packages/contracts test:     ✔ enforces member invite/accept/remove lifecycle (69ms)
+packages/contracts test:     ✔ rejects revoked DID participation (62ms)
+packages/contracts test:     ✔ rejects duplicate invite and duplicate accept (62ms)
+packages/contracts test:   5 passing (2s)
+packages/contracts test: Done
+packages/node test$ node --test dist/**/*.test.js
+packages/node test: ✖ routes only serve /api/v1/* prefix (9.218304ms)
+packages/node test: ✖ identity endpoint responds with data envelope (2.050458ms)
+packages/node test: ℹ tests 2
+packages/node test: ℹ suites 0
+packages/node test: ℹ pass 0
+packages/node test: ℹ fail 2
+packages/node test: ℹ cancelled 0
+packages/node test: ℹ skipped 0
+packages/node test: ℹ todo 0
+packages/node test: ℹ duration_ms 311.229685
+packages/node test: ✖ failing tests:
+packages/node test: test at dist/api-prefix.test.js:142:1
+packages/node test: ✖ routes only serve /api/v1/* prefix (9.218304ms)
+packages/node test:   Error: listen EPERM: operation not permitted 127.0.0.1
+packages/node test:       at Server.setupListenHandle [as _listen2] (node:net:1918:21)
+packages/node test:       at listenInCluster (node:net:1997:12)
+packages/node test:       at node:net:2206:7
+packages/node test:       at process.processTicksAndRejections (node:internal/process/task_queues:89:21) {
+packages/node test:     code: 'EPERM',
+packages/node test:     errno: -1,
+packages/node test:     syscall: 'listen',
+packages/node test:     address: '127.0.0.1'
+packages/node test:   }
+packages/node test: test at dist/api-prefix.test.js:154:1
+packages/node test: ✖ identity endpoint responds with data envelope (2.050458ms)
+packages/node test:   Error: listen EPERM: operation not permitted 127.0.0.1
+packages/node test:       at Server.setupListenHandle [as _listen2] (node:net:1918:21)
+packages/node test:       at listenInCluster (node:net:1997:12)
+packages/node test:       at node:net:2206:7
+packages/node test:       at process.processTicksAndRejections (node:internal/process/task_queues:89:21) {
+packages/node test:     code: 'EPERM',
+packages/node test:     errno: -1,
+packages/node test:     syscall: 'listen',
+packages/node test:     address: '127.0.0.1'
+packages/node test:   }
+packages/node test: Failed
+/Users/xiasenhai/Workspace/OpenClaw/telagent/packages/node:
+ ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL  @telagent/node@0.1.0 test: `node --test dist/**/*.test.js`
+Exit status 1

@@ -1,0 +1,13 @@
+Scope: 4 of 5 workspace projects
+packages/contracts build$ hardhat compile
+packages/protocol build$ tsc -p tsconfig.json
+packages/web build$ node scripts/build.mjs
+packages/web build: web assets copied to dist
+packages/web build: Done
+packages/protocol build: Done
+packages/contracts build: Generating typings for: 19 artifacts in dir: typechain-types for target: ethers-v6
+packages/contracts build: Successfully generated 74 typings!
+packages/contracts build: Compiled 20 Solidity files successfully (evm target: london).
+packages/contracts build: Done
+packages/node build$ tsc -p tsconfig.json
+packages/node build: Done

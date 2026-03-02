@@ -11,11 +11,16 @@
 2. Gate：`CONDITIONAL PASS`，存在 2 项补丁待关闭。
 3. 硬约束：未关闭补丁前不得进入 Phase 1。
 
+执行更新（2026-03-02 晚间）：
+
+- `P0-PATCH-001` 已完成（install/build/test 复验通过并归档日志）
+- 当前剩余补丁：`P0-PATCH-002`
+
 ## 2. 补丁项关闭清单（必须全部 Closed）
 
 | Patch ID | 项目 | Owner | 截止日期 | 关闭标准 | 当前状态 |
 | --- | --- | --- | --- | --- | --- |
-| P0-PATCH-001 | 网络恢复后补跑 `pnpm install && pnpm -r build && pnpm -r test` | TL + QA | 2026-03-08 | 三条命令执行完成且日志归档 | Open |
+| P0-PATCH-001 | 网络恢复后补跑 `pnpm install && pnpm -r build && pnpm -r test` | TL + QA | 2026-03-08 | 三条命令执行完成且日志归档 | Closed（证据：`logs/2026-03-02-pnpm-install-escalated.log`、`logs/2026-03-02-pnpm-build-escalated.log`、`logs/2026-03-02-pnpm-test-escalated-unrestricted.log`） |
 | P0-PATCH-002 | Gate 签字由角色占位改为实名 | TL | 2026-03-08 | `phase-0-gate.md` 签字字段为实名 | Open |
 
 ## 3. 日程排程（直接执行版）
