@@ -1,7 +1,7 @@
 # TelAgent v1 Phase 1 执行产出
 
 - 文档版本：v1.0
-- 状态：合约实现与部署收口完成（`TA-P1-001` ~ `TA-P1-009`）
+- 状态：Phase 1 已 Gate 通过并关闭（`TA-P1-001` ~ `TA-P1-011`）
 - 最后更新：2026-03-02
 
 ## 1. 产出目录
@@ -20,6 +20,7 @@
 | TA-P1-007 | `ta-p1-007-deploy-script-checkpoint-2026-03-02.md` | 部署脚本检查点（已完成，含 testnet 成功部署） |
 | TA-P1-008 | `ta-p1-008-rollback-runbook-2026-03-02.md` | 回滚脚本与 Runbook（已完成，含 testnet 回滚演练） |
 | TA-P1-009 | `ta-p1-009-abi-address-manifest-2026-03-02.md` | ABI 与地址清单（已完成，含 local+testnet 清单） |
+| TA-P1-011 | `../gates/phase-1-gate.md` | Phase 1 Gate 评审结论（PASS） |
 
 ## 2. 产物目录
 

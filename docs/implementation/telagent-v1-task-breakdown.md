@@ -46,7 +46,7 @@ flowchart LR
 | TA-P1-008 | Phase 1 | 编写回滚脚本与 Runbook | Chain Engineer | 1 | TA-P1-007 | rollback script + runbook | 在测试网完成回滚演练 | DONE |
 | TA-P1-009 | Phase 1 | 产出 ABI 与地址清单 | Chain Engineer | 0.5 | TA-P1-007 | ABI/manifest | 下游可直接集成调用 | DONE |
 | TA-P1-010 | Phase 1 | （可选）注册 ClawRouter 模块 | Chain Engineer | 0.5 | TA-P1-009 | router 注册脚本 | 模块查询可见 | TODO |
-| TA-P1-011 | Phase 1 | 合约阶段 Gate 评审 | PM/Tech Lead | 0.5 | TA-P1-005, TA-P1-006, TA-P1-008 | Gate 结论 | Phase 1 正式关闭 | TODO |
+| TA-P1-011 | Phase 1 | 合约阶段 Gate 评审 | PM/Tech Lead | 0.5 | TA-P1-005, TA-P1-006, TA-P1-008 | Gate 结论 | Phase 1 正式关闭 | DONE |
 
 | TA-P2-001 | Phase 2 | 搭建 API Server 与路由挂载 | Backend Engineer | 1 | TA-P0-001 | API 框架代码 | 所有核心路由在 `/api/v1/*` | TODO |
 | TA-P2-002 | Phase 2 | 实现响应封装（单资源/列表/Location） | Backend Engineer | 1 | TA-P0-002, TA-P2-001 | response 模块 | 契约测试通过 | TODO |
@@ -133,3 +133,4 @@ flowchart LR
 | TA-P1-007 | DONE | `packages/contracts/scripts/deploy-telagent-group-registry.ts`, `docs/implementation/phase-1/ta-p1-007-deploy-script-checkpoint-2026-03-02.md`, `docs/implementation/phase-1/manifests/2026-03-02-local-deploy-manifest.json`, `docs/implementation/phase-1/manifests/2026-03-02-testnet-deploy-manifest.json`, `docs/implementation/phase-1/manifests/2026-03-02-testnet-deploy-success.txt` | 无 | 进入 `TA-P1-008`/`TA-P1-009` 收口与 Gate 准备 |
 | TA-P1-008 | DONE | `packages/contracts/scripts/rollback-telagent-group-registry.ts`, `packages/contracts/scripts/rollback-drill-local.ts`, `docs/implementation/phase-1/ta-p1-008-rollback-runbook-2026-03-02.md`, `docs/implementation/phase-1/manifests/2026-03-02-local-rollback-drill.json`, `docs/implementation/phase-1/manifests/2026-03-02-testnet-rollback-drill.json`, `docs/implementation/phase-1/manifests/2026-03-02-testnet-rollback-drill.txt` | 无 | 进入 `TA-P1-011` Gate 材料汇总 |
 | TA-P1-009 | DONE | `docs/implementation/phase-1/ta-p1-009-abi-address-manifest-2026-03-02.md`, `docs/implementation/phase-1/manifests/2026-03-02-telagent-group-registry-abi.json`, `docs/implementation/phase-1/manifests/2026-03-02-local-deploy-manifest.json`, `docs/implementation/phase-1/manifests/2026-03-02-testnet-deploy-manifest.json`, `docs/implementation/phase-1/manifests/2026-03-02-deploy-manifest.json` | 无 | 如需继续，执行 `TA-P1-010`（可选）或直接进入 `TA-P1-011` |
+| TA-P1-011 | DONE | `docs/implementation/gates/phase-1-gate.md`, `docs/implementation/phase-1/README.md`, `docs/implementation/phase-1/manifests/2026-03-02-deploy-manifest.json` | 无 | Phase 1 已正式关闭，允许按 Gate 结论进入 Phase 2 |
