@@ -22,10 +22,15 @@ function toJson(body: unknown): string {
   return JSON.stringify(body, (_, value: unknown) => (typeof value === 'bigint' ? value.toString() : value));
 }
 
-function send(res: ServerResponse, status: number, body: unknown): void {
+function send(
+  res: ServerResponse,
+  status: number,
+  body: unknown,
+  contentType = 'application/json; charset=utf-8',
+): void {
   const payload = toJson(body);
   res.writeHead(status, {
-    'Content-Type': 'application/json; charset=utf-8',
+    'Content-Type': contentType,
     'Content-Length': Buffer.byteLength(payload),
   });
   res.end(payload);
@@ -81,7 +86,7 @@ export function paginated<T>(
 }
 
 export function problem(res: ServerResponse, detail: ProblemDetail): void {
-  send(res, detail.status, detail);
+  send(res, detail.status, detail, 'application/problem+json; charset=utf-8');
 }
 
 export function parsePagination(searchParams: URLSearchParams): { page: number; perPage: number; offset: number } {

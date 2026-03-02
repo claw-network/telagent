@@ -73,6 +73,9 @@
 - 目标：完成 API 框架、响应/错误模型、身份与 gas 预检。
 - 计划任务：`TA-P2-001` `TA-P2-002` `TA-P2-003` `TA-P2-004` `TA-P2-005`
 - 建议 Owner：`BE-1(主)` + `SE(鉴权审查)` + `QA(契约草测)`
+- 当前进展（已完成）：`docs/implementation/phase-2/ta-p2-001-api-server-route-mount-2026-03-02.md`
+- 当前进展（已完成）：`docs/implementation/phase-2/ta-p2-002-response-envelope-checkpoint-2026-03-02.md`
+- 当前进展（已完成）：`docs/implementation/phase-2/ta-p2-003-rfc7807-error-pipeline-2026-03-02.md`
 - 周交付：
   - `/api/v1/*` 全量路由骨架
   - RFC7807 统一错误链路
@@ -198,6 +201,14 @@
 - `TA-P1-009`：DONE（ABI + local/testnet 统一地址清单已归档）。
 - `TA-P1-011`：DONE（`docs/implementation/gates/phase-1-gate.md` 结论 `PASS`）。
 - 阶段结论：Phase 1 已正式关闭，可进入 Phase 2。
+
+## 4.7 Phase 2 启动快照（2026-03-02）
+
+- `TA-P2-001`：DONE（API Server 与 `/api/v1/*` 路由挂载完成并验收）。
+- `TA-P2-002`：DONE（单资源/列表/Location envelope 已验收）。
+- `TA-P2-003`：DONE（RFC7807 错误链路与 `application/problem+json` 已验收）。
+- 契约测试：`@telagent/node` API contract tests `6/6` 通过（日志已归档）。
+- 建议下一步：推进 `TA-P2-004` / `TA-P2-005`（IdentityAdapter + GasService 验收）。
 
 ## 5. 周会与 Gate 节奏建议
 

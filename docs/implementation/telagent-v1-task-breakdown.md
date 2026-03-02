@@ -48,9 +48,9 @@ flowchart LR
 | TA-P1-010 | Phase 1 | （可选）注册 ClawRouter 模块 | Chain Engineer | 0.5 | TA-P1-009 | router 注册脚本 | 模块查询可见 | TODO |
 | TA-P1-011 | Phase 1 | 合约阶段 Gate 评审 | PM/Tech Lead | 0.5 | TA-P1-005, TA-P1-006, TA-P1-008 | Gate 结论 | Phase 1 正式关闭 | DONE |
 
-| TA-P2-001 | Phase 2 | 搭建 API Server 与路由挂载 | Backend Engineer | 1 | TA-P0-001 | API 框架代码 | 所有核心路由在 `/api/v1/*` | TODO |
-| TA-P2-002 | Phase 2 | 实现响应封装（单资源/列表/Location） | Backend Engineer | 1 | TA-P0-002, TA-P2-001 | response 模块 | 契约测试通过 | TODO |
-| TA-P2-003 | Phase 2 | 实现 RFC7807 错误处理链路 | Backend Engineer | 1 | TA-P0-003, TA-P2-001 | error/handler 模块 | 错误响应字段完整 | TODO |
+| TA-P2-001 | Phase 2 | 搭建 API Server 与路由挂载 | Backend Engineer | 1 | TA-P0-001 | API 框架代码 | 所有核心路由在 `/api/v1/*` | DONE |
+| TA-P2-002 | Phase 2 | 实现响应封装（单资源/列表/Location） | Backend Engineer | 1 | TA-P0-002, TA-P2-001 | response 模块 | 契约测试通过 | DONE |
+| TA-P2-003 | Phase 2 | 实现 RFC7807 错误处理链路 | Backend Engineer | 1 | TA-P0-003, TA-P2-001 | error/handler 模块 | 错误响应字段完整 | DONE |
 | TA-P2-004 | Phase 2 | 实现 IdentityAdapterService | Backend Engineer | 1 | TA-P0-004, TA-P1-009 | 身份适配服务 | active/controller 校验可用 | TODO |
 | TA-P2-005 | Phase 2 | 实现 GasService 与余额预检 | Backend Engineer | 1 | TA-P2-004 | gas 预检服务 | 余额不足返回标准错误 | TODO |
 | TA-P2-006 | Phase 2 | 实现 GroupService 链上写流程 | Backend Engineer | 2 | TA-P2-004, TA-P2-005 | group service | create/invite/accept/remove 可执行 | TODO |
@@ -134,3 +134,11 @@ flowchart LR
 | TA-P1-008 | DONE | `packages/contracts/scripts/rollback-telagent-group-registry.ts`, `packages/contracts/scripts/rollback-drill-local.ts`, `docs/implementation/phase-1/ta-p1-008-rollback-runbook-2026-03-02.md`, `docs/implementation/phase-1/manifests/2026-03-02-local-rollback-drill.json`, `docs/implementation/phase-1/manifests/2026-03-02-testnet-rollback-drill.json`, `docs/implementation/phase-1/manifests/2026-03-02-testnet-rollback-drill.txt` | 无 | 进入 `TA-P1-011` Gate 材料汇总 |
 | TA-P1-009 | DONE | `docs/implementation/phase-1/ta-p1-009-abi-address-manifest-2026-03-02.md`, `docs/implementation/phase-1/manifests/2026-03-02-telagent-group-registry-abi.json`, `docs/implementation/phase-1/manifests/2026-03-02-local-deploy-manifest.json`, `docs/implementation/phase-1/manifests/2026-03-02-testnet-deploy-manifest.json`, `docs/implementation/phase-1/manifests/2026-03-02-deploy-manifest.json` | 无 | 如需继续，执行 `TA-P1-010`（可选）或直接进入 `TA-P1-011` |
 | TA-P1-011 | DONE | `docs/implementation/gates/phase-1-gate.md`, `docs/implementation/phase-1/README.md`, `docs/implementation/phase-1/manifests/2026-03-02-deploy-manifest.json` | 无 | Phase 1 已正式关闭，允许按 Gate 结论进入 Phase 2 |
+
+## 8. Phase 2 启动执行（2026-03-02）
+
+| Task ID | 状态 | 证据链接 | 阻塞项 | 下一步动作 |
+| --- | --- | --- | --- | --- |
+| TA-P2-001 | DONE | `docs/implementation/phase-2/ta-p2-001-api-server-route-mount-2026-03-02.md`, `packages/node/src/api/server.ts`, `packages/node/src/api/router.ts`, `packages/node/src/api-prefix.test.ts`, `docs/implementation/phase-2/logs/2026-03-02-p2-api-contract-test.txt` | 无 | 继续推进 `TA-P2-004` / `TA-P2-005` |
+| TA-P2-002 | DONE | `docs/implementation/phase-2/ta-p2-002-response-envelope-checkpoint-2026-03-02.md`, `packages/node/src/api/response.ts`, `packages/node/src/api/routes/messages.ts`, `packages/node/src/api/routes/groups.ts`, `packages/node/src/api-contract.test.ts` | 无 | 继续推进 `TA-P2-008`（消息/附件/联邦路由收口） |
+| TA-P2-003 | DONE | `docs/implementation/phase-2/ta-p2-003-rfc7807-error-pipeline-2026-03-02.md`, `packages/protocol/src/errors.ts`, `packages/node/src/api/route-utils.ts`, `packages/node/src/api/response.ts`, `packages/node/src/api-contract.test.ts` | 无 | 继续推进 `TA-P2-009` 契约测试扩展与汇总 |

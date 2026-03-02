@@ -1,0 +1,18 @@
+
+> @telagent/node@0.1.0 test /Users/xiasenhai/Workspace/OpenClaw/telagent/packages/node
+> node --test dist/**/*.test.js
+
+✔ created response returns data envelope and Location header (47.977018ms)
+✔ list response returns paginated envelope shape (9.925668ms)
+✔ validation errors use RFC7807 shape and problem+json content type (7.053054ms)
+✔ not found uses RFC7807 shape (4.063627ms)
+✔ routes only serve /api/v1/* prefix (43.552136ms)
+✔ identity endpoint responds with data envelope (9.244345ms)
+ℹ tests 6
+ℹ suites 0
+ℹ pass 6
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 367.997653
