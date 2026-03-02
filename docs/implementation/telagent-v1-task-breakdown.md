@@ -119,3 +119,9 @@ flowchart LR
 | TA-P0-006 | DONE | `docs/implementation/phase-0/ta-p0-006-domain-proof-v1-spec.md` | 无 | Phase 2/4 联邦和建群流程中实现域名一致性校验 |
 | TA-P0-007 | DONE | `docs/implementation/phase-0/ta-p0-007-test-strategy.md`, `docs/implementation/phase-0/day1-baseline-check.md`, `docs/implementation/phase-0/logs/2026-03-02-pnpm-install-escalated.log`, `docs/implementation/phase-0/logs/2026-03-02-pnpm-build-escalated.log`, `docs/implementation/phase-0/logs/2026-03-02-pnpm-test-escalated-unrestricted.log` | 无 | 维持日志归档，供 Gate 复核引用 |
 | TA-P0-008 | DONE | `docs/implementation/phase-0/ta-p0-008-gate-mechanism.md`, `docs/implementation/gates/phase-0-gate.md`, `docs/implementation/gates/phase-0-risk-register.md`, `docs/implementation/phase-0/week1-closeout-execution-plan.md`, `docs/implementation/phase-0/week1-progress-2026-03-02.md` | 无 | Week 2 按计划启动 `TA-P1-001`（不提前切阶段开发） |
+
+## 7. Phase 1 启动准备（2026-03-02）
+
+| Task ID | 状态 | 证据链接 | 阻塞项 | 下一步动作 |
+| --- | --- | --- | --- | --- |
+| TA-P1-001 | IN_PROGRESS | `docs/implementation/phase-1/ta-p1-001-contract-interface-review-template.md`, `docs/implementation/phase-1/README.md` | 无 | Week 2 启动时填写审查结果并完成签字 |

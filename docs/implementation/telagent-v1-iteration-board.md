@@ -43,6 +43,7 @@
 - 目标：完成合约核心实现与权限约束。
 - 计划任务：`TA-P1-001` `TA-P1-002` `TA-P1-003` `TA-P1-004`
 - 建议 Owner：`CE(主)` + `SE(审)` + `TL(评审)`
+- 启动模板：`docs/implementation/phase-1/ta-p1-001-contract-interface-review-template.md`
 - 周交付：
   - `TelagentGroupRegistry` 核心逻辑
   - 权限与事件模型定稿
