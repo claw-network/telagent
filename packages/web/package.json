@@ -1,0 +1,11 @@
+{
+  "name": "@telagent/web",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "typecheck": "echo 'no typecheck for web package'",
+    "test": "echo 'no tests for web package'"
+  }
+}

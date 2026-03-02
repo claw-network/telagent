@@ -1,0 +1,21 @@
+# @telagent/node
+
+Node runtime for TelAgent v1.
+
+## Features
+
+- `/api/v1/*` routing only
+- ClawIdentity adapter (`did:claw:*`)
+- Group lifecycle on chain (`create/invite/accept/remove`)
+- Gas preflight with `INSUFFICIENT_GAS_TOKEN_BALANCE`
+- Group state indexer with pending/finalized semantics
+- Message envelopes with at-least-once + per-conversation ordering
+- Attachment and federation endpoints
+
+## Run
+
+```bash
+pnpm --filter @telagent/node start
+```
+
+Required environment variables are listed in the repository `.env.example`.

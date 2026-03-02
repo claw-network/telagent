@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>TelAgent Console</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="bg-orb orb-a"></div>
+    <div class="bg-orb orb-b"></div>
+    <main class="layout">
+      <header>
+        <h1>TelAgent Control Deck</h1>
+        <p>ClawIdentity-backed group and message operations over <code>/api/v1/*</code>.</p>
+      </header>
+
+      <section class="panel">
+        <h2>Connection</h2>
+        <label>
+          API Base URL
+          <input id="api-base" value="http://127.0.0.1:9528" />
+        </label>
+      </section>
+
+      <section class="panel">
+        <h2>Identity</h2>
+        <button id="btn-self">GET /api/v1/identities/self</button>
+      </section>
+
+      <section class="panel">
+        <h2>Create Group</h2>
+        <div class="grid">
+          <label>Creator DID <input id="creator-did" placeholder="did:claw:..." /></label>
+          <label>Group ID (bytes32) <input id="group-id" placeholder="0x..." /></label>
+          <label>Domain <input id="group-domain" placeholder="example.org" /></label>
+          <label>Domain Proof Hash <input id="domain-proof-hash" placeholder="0x..." /></label>
+          <label>Initial MLS Hash <input id="mls-hash" placeholder="0x..." /></label>
+        </div>
+        <button id="btn-create-group">POST /api/v1/groups</button>
+      </section>
+
+      <section class="panel">
+        <h2>Invite Member</h2>
+        <div class="grid">
+          <label>Group ID <input id="invite-group-id" placeholder="0x..." /></label>
+          <label>Invite ID <input id="invite-id" placeholder="0x..." /></label>
+          <label>Inviter DID <input id="inviter-did" placeholder="did:claw:..." /></label>
+          <label>Invitee DID <input id="invitee-did" placeholder="did:claw:..." /></label>
+          <label>MLS Commit Hash <input id="invite-mls-hash" placeholder="0x..." /></label>
+        </div>
+        <button id="btn-invite">POST /api/v1/groups/:groupId/invites</button>
+      </section>
+
+      <section class="panel">
+        <h2>Send Message</h2>
+        <div class="grid">
+          <label>Sender DID <input id="sender-did" placeholder="did:claw:..." /></label>
+          <label>Conversation ID <input id="conversation-id" placeholder="group:0x..." /></label>
+          <label>Type
+            <select id="conversation-type">
+              <option value="group">group</option>
+              <option value="direct">direct</option>
+            </select>
+          </label>
+          <label>Target Domain <input id="target-domain" placeholder="relay.example.org" /></label>
+          <label>Mailbox Key <input id="mailbox-key" placeholder="mbx-1" /></label>
+          <label>Sealed Header (hex) <input id="sealed-header" placeholder="0x..." /></label>
+          <label>Ciphertext (hex) <input id="ciphertext" placeholder="0x..." /></label>
+          <label>Content Type
+            <select id="content-type">
+              <option value="text">text</option>
+              <option value="image">image</option>
+              <option value="file">file</option>
+            </select>
+          </label>
+        </div>
+        <button id="btn-send-message">POST /api/v1/messages</button>
+      </section>
+
+      <section class="panel">
+        <h2>Output</h2>
+        <pre id="output">Ready.</pre>
+      </section>
+    </main>
+
+    <script type="module" src="./main.js"></script>
+  </body>
+</html>

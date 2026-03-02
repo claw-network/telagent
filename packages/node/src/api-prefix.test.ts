@@ -1,0 +1,181 @@
+import assert from 'node:assert/strict';
+import test from 'node:test';
+
+import { ApiServer } from './api/server.js';
+import type { RuntimeContext } from './api/types.js';
+
+class FakeIdentityService {
+  async getSelf() {
+    return {
+      did: 'did:claw:zSelf',
+      didHash: '0x' + '1'.repeat(64),
+      controller: '0x' + '1'.repeat(40),
+      publicKey: '0x11',
+      isActive: true,
+      resolvedAtMs: Date.now(),
+    };
+  }
+
+  async resolve(did: string) {
+    if (!did.startsWith('did:claw:')) {
+      throw new Error('invalid did');
+    }
+    return {
+      did,
+      didHash: '0x' + '2'.repeat(64),
+      controller: '0x' + '2'.repeat(40),
+      publicKey: '0x22',
+      isActive: true,
+      resolvedAtMs: Date.now(),
+    };
+  }
+}
+
+class FakeGroupService {
+  createGroup() {
+    throw new Error('not used');
+  }
+  inviteMember() {
+    throw new Error('not used');
+  }
+  acceptInvite() {
+    throw new Error('not used');
+  }
+  removeMember() {
+    throw new Error('not used');
+  }
+  getGroup(groupId: string) {
+    return {
+      groupId,
+      creatorDid: 'did:claw:zSelf',
+      creatorDidHash: '0x' + '1'.repeat(64),
+      groupDomain: 'alpha.tel',
+      domainProofHash: '0x' + '3'.repeat(64),
+      initialMlsStateHash: '0x' + '4'.repeat(64),
+      state: 'ACTIVE',
+      createdAtMs: Date.now(),
+      txHash: '0x' + '5'.repeat(64),
+      blockNumber: 100,
+    };
+  }
+  listMembers() {
+    return [];
+  }
+  getChainState(groupId: string) {
+    return {
+      groupId,
+      state: 'ACTIVE',
+      finalizedTxHash: '0x' + '5'.repeat(64),
+      blockNumber: 100,
+      updatedAtMs: Date.now(),
+    };
+  }
+}
+
+class FakeGasService {
+  async getNativeGasBalance() {
+    return 1_000_000n;
+  }
+  async getTokenBalance() {
+    return 1_000_000n;
+  }
+}
+
+class FakeMessageService {
+  send() {
+    throw new Error('not used');
+  }
+  pull() {
+    return { items: [], nextCursor: null };
+  }
+}
+
+class FakeAttachmentService {
+  initUpload() {
+    return {
+      objectKey: 'o1',
+      uploadUrl: 'https://u',
+      expiresInSec: 900,
+    };
+  }
+  completeUpload() {
+    return {
+      objectKey: 'o1',
+      manifestHash: '0x' + '1'.repeat(64),
+      checksum: '0x11',
+      completedAtMs: Date.now(),
+    };
+  }
+}
+
+class FakeFederationService {
+  receiveEnvelope() {
+    return { accepted: true, id: 'f1' };
+  }
+  syncGroupState() {
+    return { synced: true, updatedAtMs: Date.now() };
+  }
+  recordReceipt() {
+    return { accepted: true };
+  }
+  nodeInfo() {
+    return {
+      protocolVersion: 'v1',
+      capabilities: ['identity'],
+      envelopeCount: 0,
+      receiptCount: 0,
+    };
+  }
+}
+
+async function startTestServer() {
+  const context: RuntimeContext = {
+    config: { host: '127.0.0.1', port: 0 },
+    identityService: new FakeIdentityService() as unknown as RuntimeContext['identityService'],
+    groupService: new FakeGroupService() as unknown as RuntimeContext['groupService'],
+    gasService: new FakeGasService() as unknown as RuntimeContext['gasService'],
+    messageService: new FakeMessageService() as unknown as RuntimeContext['messageService'],
+    attachmentService: new FakeAttachmentService() as unknown as RuntimeContext['attachmentService'],
+    federationService: new FakeFederationService() as unknown as RuntimeContext['federationService'],
+  };
+
+  const server = new ApiServer(context);
+  await server.start();
+
+  const address = server.httpServer?.address();
+  if (!address || typeof address === 'string') {
+    throw new Error('Expected TCP address');
+  }
+
+  return {
+    server,
+    baseUrl: `http://127.0.0.1:${address.port}`,
+  };
+}
+
+test('routes only serve /api/v1/* prefix', async (t) => {
+  const { server, baseUrl } = await startTestServer();
+  t.after(async () => {
+    await server.stop();
+  });
+
+  const apiRes = await fetch(`${baseUrl}/api/v1/node`);
+  assert.equal(apiRes.status, 200);
+  const apiBody = (await apiRes.json()) as { data: { service: string } };
+  assert.equal(apiBody.data.service, 'telagent-node');
+
+  const noPrefixRes = await fetch(`${baseUrl}/v1/node`);
+  assert.equal(noPrefixRes.status, 404);
+});
+
+test('identity endpoint responds with data envelope', async (t) => {
+  const { server, baseUrl } = await startTestServer();
+  t.after(async () => {
+    await server.stop();
+  });
+
+  const response = await fetch(`${baseUrl}/api/v1/identities/self`);
+  assert.equal(response.status, 200);
+  const body = (await response.json()) as { data: { did: string } };
+  assert.equal(body.data.did, 'did:claw:zSelf');
+});
