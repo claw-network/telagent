@@ -1,0 +1,8 @@
+2026-03-03-p12-audit-snapshot-check.json	TA-P12-002	PASS
+2026-03-03-p12-candidate-pool-freeze.json	TA-P12-001	PASS
+2026-03-03-p12-federation-slo-automation-check.json	TA-P12-004	PASS
+2026-03-03-p12-key-rotation-orchestrator-check.json	TA-P12-007	PASS
+2026-03-03-p12-python-sdk-quickstart-check.json	TA-P12-005	PASS
+2026-03-03-p12-revoked-did-isolation-check.json	TA-P12-003	PASS
+2026-03-03-p12-web-console-v21-check.json	TA-P12-006	PASS
+summary	total=7	failed=0

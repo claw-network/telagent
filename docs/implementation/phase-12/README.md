@@ -1,7 +1,7 @@
 # TelAgent v1 Phase 12 执行产出（v1.2 候选能力冻结）
 
 - 文档版本：v1.0
-- 状态：Phase 12 执行中（`TA-P12-001` ~ `TA-P12-007` 已完成，`TA-P12-008` 待执行）
+- 状态：Phase 12 已关闭（Gate=PASS，`TA-P12-001` ~ `TA-P12-008` 全部完成）
 - 最后更新：2026-03-03
 
 ## 1. 产出目录
@@ -15,6 +15,7 @@
 | TA-P12-005 | `ta-p12-005-agent-sdk-python-beta-2026-03-03.md` | Agent SDK Python Beta |
 | TA-P12-006 | `ta-p12-006-web-console-v21-ops-emergency-panel-2026-03-03.md` | Web Console v2.1 运营与应急面板 |
 | TA-P12-007 | `ta-p12-007-multi-node-key-rotation-orchestrator-2026-03-03.md` | 多节点密钥轮换编排脚本 |
+| TA-P12-008 | `ta-p12-008-phase12-gate-review-2026-03-03.md` | Phase 12 Gate 评审与收口 |
 
 ## 2. 当前证据目录
 
@@ -26,6 +27,8 @@
   - `ta-p12-005-agent-sdk-python-beta-2026-03-03.md`
   - `ta-p12-006-web-console-v21-ops-emergency-panel-2026-03-03.md`
   - `ta-p12-007-multi-node-key-rotation-orchestrator-2026-03-03.md`
+  - `ta-p12-008-phase12-gate-review-2026-03-03.md`
+  - `../gates/phase-12-gate.md`
 - 机读清单：
   - `manifests/2026-03-03-p12-candidate-pool-freeze.json`
   - `manifests/2026-03-03-p12-audit-snapshot-check.json`
@@ -47,6 +50,7 @@
   - `logs/2026-03-03-p12-web-test.txt`
   - `logs/2026-03-03-p12-web-console-v21-check-run.txt`
   - `logs/2026-03-03-p12-key-rotation-orchestrator-check-run.txt`
+  - `logs/2026-03-03-p12-gate-manifest-summary.txt`
 
 ## 3. 当前进展
 
@@ -57,5 +61,5 @@
 - `TA-P12-005`：DONE
 - `TA-P12-006`：DONE
 - `TA-P12-007`：DONE
-- `TA-P12-008`：TODO
-- 下一步：进入 `TA-P12-008`（Phase 12 Gate 收口）。
+- `TA-P12-008`：DONE
+- 下一步：Phase 12 已关闭，等待下一阶段规划/排期。
