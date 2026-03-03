@@ -1,0 +1,55 @@
+{
+  "phase": "Phase 11",
+  "taskId": "TA-P11-006",
+  "generatedAt": "2026-03-03T08:24:28.266Z",
+  "summary": {
+    "rotateGraceAccepted": true,
+    "rotatedOldKeyBlocked": true,
+    "newKeyActive": true,
+    "revokedKeyBlocked": true,
+    "recoveredKeyActive": true,
+    "messageSendWithRecoveredKey": true
+  },
+  "decision": "PASS",
+  "details": {
+    "did": "did:claw:zLifecycle",
+    "keyStates": [
+      {
+        "did": "did:claw:zLifecycle",
+        "suite": "signal",
+        "keyId": "signal-key-v1",
+        "publicKey": "0x1111111111111111111111111111111111111111111111111111111111111111",
+        "state": "ROTATING",
+        "createdAtMs": 1772582400000,
+        "activatedAtMs": 1772582400000,
+        "rotationGraceUntilMs": 1772582460000,
+        "rotatedToKeyId": "signal-key-v2"
+      },
+      {
+        "did": "did:claw:zLifecycle",
+        "suite": "signal",
+        "keyId": "signal-key-v2",
+        "publicKey": "0x2222222222222222222222222222222222222222222222222222222222222222",
+        "state": "RECOVERED",
+        "createdAtMs": 1772582400000,
+        "activatedAtMs": 1772582400000,
+        "rotatedFromKeyId": "signal-key-v1",
+        "revokedAtMs": 1772582461000,
+        "revokeReason": "device reset",
+        "recoveredAtMs": 1772582461000,
+        "recoveredToKeyId": "signal-key-v3"
+      },
+      {
+        "did": "did:claw:zLifecycle",
+        "suite": "signal",
+        "keyId": "signal-key-v3",
+        "publicKey": "0x3333333333333333333333333333333333333333333333333333333333333333",
+        "state": "ACTIVE",
+        "createdAtMs": 1772582461000,
+        "activatedAtMs": 1772582461000,
+        "recoveredFromKeyId": "signal-key-v2"
+      }
+    ],
+    "clockNow": 1772582461000
+  }
+}
