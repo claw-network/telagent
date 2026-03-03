@@ -1,0 +1,44 @@
+{
+  "phase": "Phase 16",
+  "taskId": "TA-P16-002",
+  "generatedAt": "2026-03-03T16:22:19.069Z",
+  "summary": {
+    "sessionRuntimeReady": true,
+    "cursorResetAndRetryReady": true,
+    "sendRetryReady": true,
+    "sessionsStatusPanelReady": true,
+    "testsReady": true,
+    "requiredTokensChecked": 20
+  },
+  "decision": "PASS",
+  "details": {
+    "mainChecks": [
+      "sessionRuntimeByConversation",
+      "Refresh From Start",
+      "Retry Last Pull",
+      "Retry Last Failed Send",
+      "async function retryLastPull()",
+      "async function retryLastSend()",
+      "recordPullFailure",
+      "recordSendFailure",
+      "reason: 'refresh-from-start'"
+    ],
+    "sessionDomainChecks": [
+      "export function createSessionRuntime()",
+      "export function mergeMessagesByEnvelope(existingItems, incomingItems)",
+      "export function recordPullSuccess(runtime, { cursor, loadedCount, action })",
+      "export function recordSendFailure(runtime, errorMessage, payload)",
+      "export function resetPullCursor(runtime)"
+    ],
+    "cssChecks": [
+      ".session-status-card",
+      ".status-grid",
+      ".status-row"
+    ],
+    "testChecks": [
+      "ensureSessionRuntime creates and reuses runtime by conversation",
+      "mergeMessagesByEnvelope dedupes by envelope and sorts by seq",
+      "recordSendFailure and recordSendSuccess update retry payload"
+    ]
+  }
+}

@@ -5,6 +5,16 @@ import {
   isDidClaw,
   toCiphertextHex,
 } from './core/api-client.js';
+import {
+  ensureSessionRuntime,
+  formatIsoOrDash,
+  mergeMessagesByEnvelope,
+  recordPullFailure,
+  recordPullSuccess,
+  recordSendFailure,
+  recordSendSuccess,
+  resetPullCursor,
+} from './core/session-domain.js';
 
 const STORAGE_API_BASE_KEY = 'telagent.web.apiBase.v1';
 const DEFAULT_API_BASE = 'http://127.0.0.1:9528';
@@ -29,7 +39,7 @@ const state = {
     { id: 'direct:alice-bob', label: 'Direct: Alice/Bob' },
   ],
   messagesByConversation: new Map(),
-  cursorsByConversation: new Map(),
+  sessionRuntimeByConversation: new Map(),
   groupForm: createInitialGroupForm(),
   selfIdentity: null,
   resolvedIdentity: null,
@@ -159,12 +169,17 @@ function getCurrentMessages() {
   return state.messagesByConversation.get(state.activeConversationId) || [];
 }
 
+function getSessionRuntime(conversationId = state.activeConversationId) {
+  return ensureSessionRuntime(state.sessionRuntimeByConversation, conversationId);
+}
+
 function setActiveConversation(conversationId) {
   const clean = (conversationId || '').trim();
   if (!clean) {
     return;
   }
   state.activeConversationId = clean;
+  getSessionRuntime(clean);
   const existing = state.conversations.find((entry) => entry.id === clean);
   if (!existing) {
     state.conversations.unshift({ id: clean, label: clean });
@@ -224,49 +239,47 @@ async function refreshSelfIdentity() {
   }
 }
 
-async function pullMessages() {
+async function pullMessages({ resetCursorFirst = false, clearTimeline = false, reason = 'manual' } = {}) {
   if (!state.activeConversationId) {
     setBanner('warn', 'please set a conversation id');
     render();
     return;
   }
 
+  const runtime = getSessionRuntime();
+  if (resetCursorFirst) {
+    resetPullCursor(runtime);
+    if (clearTimeline) {
+      state.messagesByConversation.set(state.activeConversationId, []);
+    }
+  }
+
   setBusy('messages:pull', true);
   clearBanner();
 
   try {
-    const nextCursor = state.cursorsByConversation.get(state.activeConversationId);
     const result = await apiClient.pullMessages({
       conversationId: state.activeConversationId,
       limit: 40,
-      cursor: nextCursor,
+      cursor: runtime.cursor,
     });
 
     const items = Array.isArray(result?.items) ? result.items : [];
-    const existing = getCurrentMessages();
-    const indexByEnvelope = new Map(existing.map((entry) => [entry.envelopeId, entry]));
+    const merged = mergeMessagesByEnvelope(getCurrentMessages(), items);
+    state.messagesByConversation.set(state.activeConversationId, merged);
 
-    for (const item of items) {
-      if (item && typeof item.envelopeId === 'string') {
-        indexByEnvelope.set(item.envelopeId, item);
-      }
-    }
-
-    const merged = [...indexByEnvelope.values()].sort((left, right) => {
-      const leftSeq = Number(left.seq || 0);
-      const rightSeq = Number(right.seq || 0);
-      return leftSeq - rightSeq;
+    recordPullSuccess(runtime, {
+      cursor: typeof result?.cursor === 'string' ? result.cursor : runtime.cursor,
+      loadedCount: items.length,
+      action: reason,
     });
 
-    state.messagesByConversation.set(state.activeConversationId, merged);
-    if (typeof result?.cursor === 'string') {
-      state.cursorsByConversation.set(state.activeConversationId, result.cursor);
-    }
-
     updateConversationFromMessages(items);
-    addLog('ok', 'messages:pull', `loaded ${items.length} item(s)`);
+    addLog('ok', 'messages:pull', `loaded ${items.length} item(s), cursor=${runtime.cursor || 'null'}`);
     setLastResponse('messages:pull', result);
   } catch (error) {
+    const detail = error instanceof Error ? error.message : String(error);
+    recordPullFailure(runtime, detail);
     handleError('messages:pull', error);
   } finally {
     setBusy('messages:pull', false);
@@ -274,8 +287,25 @@ async function pullMessages() {
   }
 }
 
-async function sendMessage() {
-  const senderDid = state.senderDid.trim();
+function buildSendPayloadFromDraft() {
+  return {
+    envelopeId: createEnvelopeId(),
+    senderDid: state.senderDid.trim(),
+    conversationId: state.activeConversationId.trim(),
+    conversationType: state.activeConversationId.startsWith('direct:') ? 'direct' : 'group',
+    targetDomain: state.targetDomain.trim() || 'alpha.tel',
+    mailboxKeyId: state.mailboxKeyId.trim() || 'mailbox-main',
+    sealedHeader: '0x11',
+    ciphertext: toCiphertextHex(state.draftMessage),
+    contentType: 'text',
+    ttlSec: 2_592_000,
+  };
+}
+
+async function sendMessage({ payload: payloadOverride, reason = 'send' } = {}) {
+  const senderDid = typeof payloadOverride?.senderDid === 'string'
+    ? payloadOverride.senderDid.trim()
+    : state.senderDid.trim();
   if (!isDidClaw(senderDid)) {
     setBanner('error', 'sender did must match did:claw:*');
     render();
@@ -290,32 +320,60 @@ async function sendMessage() {
   setBusy('messages:send', true);
   clearBanner();
 
-  try {
-    const payload = {
-      envelopeId: createEnvelopeId(),
-      senderDid,
-      conversationId: state.activeConversationId.trim(),
-      conversationType: state.activeConversationId.startsWith('direct:') ? 'direct' : 'group',
-      targetDomain: state.targetDomain.trim() || 'alpha.tel',
-      mailboxKeyId: state.mailboxKeyId.trim() || 'mailbox-main',
-      sealedHeader: '0x11',
-      ciphertext: toCiphertextHex(state.draftMessage),
-      contentType: 'text',
-      ttlSec: 2_592_000,
-    };
+  const runtime = getSessionRuntime();
+  const payload = payloadOverride && typeof payloadOverride === 'object'
+    ? { ...payloadOverride }
+    : buildSendPayloadFromDraft();
 
+  try {
     const envelope = await apiClient.sendMessage(payload);
-    state.draftMessage = '';
-    addLog('ok', 'messages:send', `sent envelope ${envelope?.envelopeId || 'n/a'}`);
+    recordSendSuccess(runtime, payload.envelopeId);
+    if (!payloadOverride) {
+      state.draftMessage = '';
+    }
+    addLog('ok', 'messages:send', `sent envelope ${envelope?.envelopeId || payload.envelopeId || 'n/a'} (${reason})`);
     setLastResponse('messages:send', envelope);
 
-    await pullMessages();
+    await pullMessages({ reason: 'after-send' });
   } catch (error) {
+    const detail = error instanceof Error ? error.message : String(error);
+    recordSendFailure(runtime, detail, payload);
     handleError('messages:send', error);
   } finally {
     setBusy('messages:send', false);
     render();
   }
+}
+
+async function retryLastSend() {
+  const runtime = getSessionRuntime();
+  if (!runtime.lastFailedEnvelope) {
+    setBanner('warn', 'no failed send payload to retry');
+    render();
+    return;
+  }
+  await sendMessage({
+    payload: runtime.lastFailedEnvelope,
+    reason: 'retry-last-send',
+  });
+}
+
+async function refreshFromStart() {
+  await pullMessages({
+    resetCursorFirst: true,
+    clearTimeline: true,
+    reason: 'refresh-from-start',
+  });
+}
+
+async function retryLastPull() {
+  const runtime = getSessionRuntime();
+  if (!runtime.lastPullError) {
+    setBanner('warn', 'no failed pull to retry');
+    render();
+    return;
+  }
+  await pullMessages({ reason: 'retry-last-pull' });
 }
 
 async function createGroup() {
@@ -473,6 +531,7 @@ function renderNavItem(label, routeName) {
 }
 
 function renderSessions() {
+  const runtime = getSessionRuntime();
   const rows = state.conversations
     .map((conversation) => {
       const active = conversation.id === state.activeConversationId ? 'is-selected' : '';
@@ -502,10 +561,30 @@ function renderSessions() {
     })
     .join('');
 
+  const statusBadges = [
+    { label: 'Cursor', value: runtime.cursor || 'null' },
+    { label: 'Last Pull', value: formatIsoOrDash(runtime.lastPullAt) },
+    { label: 'Last Pull Count', value: String(runtime.lastPullCount) },
+    { label: 'Pull Failures', value: String(runtime.pullFailures) },
+    { label: 'Last Pull Error', value: runtime.lastPullError || '-' },
+    { label: 'Last Send', value: formatIsoOrDash(runtime.lastSendAt) },
+    { label: 'Send Failures', value: String(runtime.sendFailures) },
+    { label: 'Last Send Error', value: runtime.lastSendError || '-' },
+  ]
+    .map(
+      (entry) => `
+        <div class="status-row">
+          <span>${escapeHtml(entry.label)}</span>
+          <code>${escapeHtml(entry.value)}</code>
+        </div>
+      `,
+    )
+    .join('');
+
   return `
     <section class="card">
       <h2>Sessions</h2>
-      <p class="card-subtitle">Core flow entry: pull and send in a selected conversation.</p>
+      <p class="card-subtitle">Core flow entry: pull/send with cursor visibility, retry and refresh controls.</p>
 
       <div class="toolbar-grid">
         <label>
@@ -528,8 +607,16 @@ function renderSessions() {
 
       <div class="button-row">
         <button id="btn-open-conversation">Open Conversation</button>
-        <button id="btn-pull-messages" ${isBusy('messages:pull') ? 'disabled' : ''}>Pull Messages</button>
+        <button id="btn-pull-messages" ${isBusy('messages:pull') ? 'disabled' : ''}>Pull Next Page</button>
+        <button id="btn-refresh-from-start" ${isBusy('messages:pull') ? 'disabled' : ''}>Refresh From Start</button>
+        <button id="btn-retry-pull" ${isBusy('messages:pull') || !runtime.lastPullError ? 'disabled' : ''}>Retry Last Pull</button>
+        <button id="btn-reset-cursor" ${isBusy('messages:pull') ? 'disabled' : ''}>Reset Cursor</button>
       </div>
+
+      <article class="session-status-card">
+        <h3>Session Runtime Status</h3>
+        <div class="status-grid">${statusBadges}</div>
+      </article>
 
       <div class="session-layout">
         <aside class="session-list-wrap">
@@ -550,6 +637,7 @@ function renderSessions() {
 
           <div class="button-row">
             <button id="btn-send-message" ${isBusy('messages:send') ? 'disabled' : ''}>Send Message</button>
+            <button id="btn-retry-send" ${isBusy('messages:send') || !runtime.lastFailedEnvelope ? 'disabled' : ''}>Retry Last Failed Send</button>
             <button id="btn-refresh-self" ${isBusy('identity:self') ? 'disabled' : ''}>Refresh Self Identity</button>
           </div>
         </section>
@@ -767,11 +855,31 @@ function bindEvents() {
   });
 
   appRoot.querySelector('#btn-pull-messages')?.addEventListener('click', () => {
-    void pullMessages();
+    void pullMessages({ reason: 'pull-next-page' });
+  });
+
+  appRoot.querySelector('#btn-refresh-from-start')?.addEventListener('click', () => {
+    void refreshFromStart();
+  });
+
+  appRoot.querySelector('#btn-retry-pull')?.addEventListener('click', () => {
+    void retryLastPull();
+  });
+
+  appRoot.querySelector('#btn-reset-cursor')?.addEventListener('click', () => {
+    const runtime = getSessionRuntime();
+    resetPullCursor(runtime);
+    runtime.lastPullError = null;
+    addLog('ok', 'messages:cursor', `cursor reset for ${state.activeConversationId}`);
+    render();
   });
 
   appRoot.querySelector('#btn-send-message')?.addEventListener('click', () => {
     void sendMessage();
+  });
+
+  appRoot.querySelector('#btn-retry-send')?.addEventListener('click', () => {
+    void retryLastSend();
   });
 
   appRoot.querySelector('#btn-create-group')?.addEventListener('click', () => {

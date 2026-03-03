@@ -235,7 +235,8 @@
 - 已完成：`TA-P15-006`（WebApp 客户端质量体系与发布门禁冻结）
 - 已完成：`TA-P15-007`（Phase 15 Gate 收口，阶段关闭）
 - 已完成：`TA-P16-001`（Web App 路由化壳层 + 统一 API Client + RFC7807 + Web 单测基线）
-- 下一批 Ready：`TA-P16-002`（会话域增强：稳定刷新、游标体验、失败重试状态）。
+- 已完成：`TA-P16-002`（会话域增强：游标可视化、刷新重置、失败重试与状态提示）
+- 下一批 Ready：`TA-P16-003`（群组域增强：建群/邀请/接受链路校验与链状态联动视图）。
 
 ## 4.2 Blockers（2026-03-03 更新）
 
@@ -448,7 +449,13 @@
   - `docs/implementation/phase-16/logs/2026-03-03-p16-web-build.txt`
   - `docs/implementation/phase-16/logs/2026-03-03-p16-web-test.txt`
   - `docs/implementation/phase-16/logs/2026-03-03-p16-web-runtime-shell-check-run.txt`
-- 阶段状态：Phase 16 执行中，下一步进入 `TA-P16-002`。
+- `TA-P16-002`：DONE（会话域增强已完成，见 `docs/implementation/phase-16/ta-p16-002-sessions-domain-stability-retry-2026-03-03.md`）。
+- `TA-P16-002` 机读清单：`docs/implementation/phase-16/manifests/2026-03-03-p16-sessions-domain-check.json`。
+- `TA-P16-002` 验证日志：
+  - `docs/implementation/phase-16/logs/2026-03-03-p16-web-build-ta-p16-002.txt`
+  - `docs/implementation/phase-16/logs/2026-03-03-p16-web-test-ta-p16-002.txt`
+  - `docs/implementation/phase-16/logs/2026-03-03-p16-sessions-domain-check-run.txt`
+- 阶段状态：Phase 16 执行中，下一步进入 `TA-P16-003`。
 
 ## 5. 周会与 Gate 节奏建议
 

@@ -1,0 +1,8 @@
+[TA-P16-002] sessionRuntimeReady=true
+[TA-P16-002] cursorResetAndRetryReady=true
+[TA-P16-002] sendRetryReady=true
+[TA-P16-002] sessionsStatusPanelReady=true
+[TA-P16-002] testsReady=true
+[TA-P16-002] requiredTokensChecked=20
+[TA-P16-002] decision=PASS
+[TA-P16-002] output=/Users/xiasenhai/Workspace/OpenClaw/telagent/docs/implementation/phase-16/manifests/2026-03-03-p16-sessions-domain-check.json
