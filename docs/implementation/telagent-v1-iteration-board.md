@@ -178,7 +178,9 @@
 - 已完成：`TA-RLS-002`（`v0.1.0` tag 已创建并推送）
 - 已完成：`TA-P6-001`（离线邮箱持久化，重启丢消息风险已修复）
 - 已完成：`TA-P6-002`（多实例共享 mailbox state 方案设计）
-- 下一批 Ready：`TA-P6-003`（store adapter + Postgres backend 实现）
+- 已完成：`TA-P6-003`（store adapter + Postgres backend 实现）
+- 已完成：`TA-P6-004`（发布后稳定性回归与 Gate 收口）
+- 下一批 Ready：Phase 6 已关闭，进入 Phase 7 规划
 
 ## 4.2 Blockers（2026-03-03 更新）
 
@@ -258,17 +260,21 @@
 - `TA-RLS-002`：DONE（`v0.1.0` 标签与 Release Note 已归档，见 `docs/implementation/release/ta-rls-002-v0.1.0-tag-and-release-note-2026-03-03.md`）。
 - `TA-P6-001`：DONE（离线邮箱持久化 + 重启恢复校验通过，见 `docs/implementation/phase-6/ta-p6-001-mailbox-persistence-2026-03-03.md`）。
 - `TA-P6-002`：DONE（多实例共享状态 ADR 已冻结，见 `docs/implementation/phase-6/ta-p6-002-mailbox-multi-instance-adr-2026-03-03.md`）。
+- `TA-P6-003`：DONE（store adapter + Postgres backend 已实现，见 `docs/implementation/phase-6/ta-p6-003-mailbox-store-adapter-postgres-2026-03-03.md`）。
+- `TA-P6-004`：DONE（Phase 6 Gate=PASS，见 `docs/implementation/phase-6/ta-p6-004-phase6-gate-review-2026-03-03.md`）。
 - 构建结果：`@telagent/web` build 通过（日志：`docs/implementation/phase-5/logs/2026-03-03-p5-web-build.txt`）。
 - 回归结果：`@telagent/node` 与 workspace tests 通过（日志：`docs/implementation/phase-5/logs/2026-03-03-p5-node-test.txt`, `docs/implementation/phase-5/logs/2026-03-03-p5-workspace-test.txt`）。
-- 阶段状态：Phase 5 已关闭（Gate=PASS），Phase 6 发布后改进已启动并完成首项风险收口。
+- 阶段状态：Phase 5 已关闭（Gate=PASS），Phase 6 发布后改进已完成并关闭（Gate=PASS）。
 
 ## 4.11 Phase 6 发布后改进快照（2026-03-03）
 
 - `TA-P6-001`：DONE（mailbox 从内存切换到 SQLite 持久化，重启后消息可恢复，见 `docs/implementation/phase-6/ta-p6-001-mailbox-persistence-2026-03-03.md`）。
 - `TA-P6-002`：DONE（Postgres 首选 + SQLite fallback ADR 冻结，见 `docs/implementation/phase-6/ta-p6-002-mailbox-multi-instance-adr-2026-03-03.md`）。
+- `TA-P6-003`：DONE（MailboxStore 适配层 + Postgres backend 代码落地，见 `docs/implementation/phase-6/ta-p6-003-mailbox-store-adapter-postgres-2026-03-03.md`）。
+- `TA-P6-004`：DONE（发布后回归与 Gate 收口通过，见 `docs/implementation/phase-6/ta-p6-004-phase6-gate-review-2026-03-03.md`）。
 - 验证脚本：`packages/node/scripts/run-phase6-mailbox-persistence-check.ts`（清单：`docs/implementation/phase-6/manifests/2026-03-03-p6-mailbox-persistence-check.json`）。
-- 回归结果：`@telagent/node` `31/31` 通过（日志：`docs/implementation/phase-6/logs/2026-03-03-p6-node-test.txt`）。
-- 下一批任务：`TA-P6-003`（store adapter + Postgres backend 实现）。
+- 回归结果：`@telagent/node` `35/35` 通过（日志：`docs/implementation/phase-6/logs/2026-03-03-p6-node-test.txt`）。
+- 下一批任务：进入 Phase 7（Postgres 集群压测与故障演练）。
 
 ## 5. 周会与 Gate 节奏建议
 

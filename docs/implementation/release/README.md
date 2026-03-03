@@ -25,4 +25,4 @@
 - `TA-RLS-001`：DONE
 - `TA-RLS-002`：DONE
 - 发布状态：`v0.1.0` 已创建并推送远端。
-- 下一步：Phase 6 已完成 `TA-P6-001`、`TA-P6-002`，继续推进 `TA-P6-003`（store adapter + Postgres backend）。
+- 下一步：Phase 6 已完成并关闭（Gate=PASS），进入 Phase 7（Postgres 集群压测与故障演练）。

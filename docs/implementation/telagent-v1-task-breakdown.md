@@ -92,8 +92,8 @@ flowchart LR
 | TA-RLS-002 | Release | 创建 `v0.1.0` 标签与发布说明 | Release Owner | 0.5 | TA-RLS-001 | tag + release note | 标签推送成功并归档证据 | DONE |
 | TA-P6-001 | Phase 6 | 离线邮箱持久化（修复重启丢消息风险） | Backend Engineer | 1 | TA-RLS-002 | mailbox repository + checks | 重启后消息可读且序号连续 | DONE |
 | TA-P6-002 | Phase 6 | 多实例共享 mailbox state 方案设计 | Backend Engineer + SRE | 1 | TA-P6-001 | ADR + rollout plan | 明确存储/锁/一致性策略 | DONE |
-| TA-P6-003 | Phase 6 | mailbox store 外置化实现（SQLite->Postgres 可选） | Backend Engineer | 2 | TA-P6-002 | storage adapter | 多实例读写一致性验证通过 | TODO |
-| TA-P6-004 | Phase 6 | 发布后稳定性回归与 Gate | QA + TL | 0.5 | TA-P6-003 | regression report + gate | Phase 6 风险收口关闭 | TODO |
+| TA-P6-003 | Phase 6 | mailbox store 外置化实现（SQLite->Postgres 可选） | Backend Engineer | 2 | TA-P6-002 | storage adapter | 多实例读写一致性验证通过 | DONE |
+| TA-P6-004 | Phase 6 | 发布后稳定性回归与 Gate | QA + TL | 0.5 | TA-P6-003 | regression report + gate | Phase 6 风险收口关闭 | DONE |
 
 ## 4. 执行节奏建议（按部就班）
 
@@ -206,3 +206,5 @@ flowchart LR
 | --- | --- | --- | --- | --- |
 | TA-P6-001 | DONE | `docs/implementation/phase-6/ta-p6-001-mailbox-persistence-2026-03-03.md`, `packages/node/src/storage/message-repository.ts`, `packages/node/src/services/message-service.ts`, `packages/node/src/services/message-service.test.ts`, `packages/node/scripts/run-phase6-mailbox-persistence-check.ts`, `docs/implementation/phase-6/manifests/2026-03-03-p6-mailbox-persistence-check.json`, `docs/implementation/phase-6/logs/2026-03-03-p6-node-test.txt`, `docs/implementation/phase-6/logs/2026-03-03-p6-mailbox-persistence-check-run.txt` | 无 | 进入 `TA-P6-002` 多实例共享状态方案设计 |
 | TA-P6-002 | DONE | `docs/implementation/phase-6/ta-p6-002-mailbox-multi-instance-adr-2026-03-03.md`, `docs/implementation/phase-6/manifests/2026-03-03-p6-mailbox-multi-instance-adr.json`, `docs/implementation/phase-6/README.md` | 无 | 进入 `TA-P6-003`（store adapter + Postgres backend 实现） |
+| TA-P6-003 | DONE | `docs/implementation/phase-6/ta-p6-003-mailbox-store-adapter-postgres-2026-03-03.md`, `packages/node/src/storage/mailbox-store.ts`, `packages/node/src/storage/postgres-message-repository.ts`, `packages/node/src/config.ts`, `packages/node/src/app.ts`, `packages/node/src/services/message-service.ts`, `packages/node/src/config.test.ts`, `packages/node/scripts/run-phase6-store-backend-check.ts`, `docs/implementation/phase-6/manifests/2026-03-03-p6-store-backend-check.json`, `docs/implementation/phase-6/logs/2026-03-03-p6-store-backend-check-run.txt` | 无 | 进入 `TA-P6-004`（发布后稳定性回归与 Gate） |
+| TA-P6-004 | DONE | `docs/implementation/phase-6/ta-p6-004-phase6-gate-review-2026-03-03.md`, `docs/implementation/gates/phase-6-gate.md`, `docs/implementation/phase-6/README.md`, `docs/implementation/phase-6/logs/2026-03-03-p6-workspace-test.txt` | 无 | Phase 6 已关闭，进入 Phase 7 规划 |
