@@ -1,0 +1,40 @@
+{
+  "phase": "Phase 14",
+  "taskId": "TA-P14-003",
+  "generatedAt": "2026-03-03T14:41:43.610Z",
+  "summary": {
+    "conversationCursorStableAfterCleanup": true,
+    "globalCursorTokenFormat": true,
+    "globalCursorStableAfterCleanup": true,
+    "legacyOffsetRejectedInGlobalPull": true,
+    "rejectedErrorCode": "VALIDATION_ERROR"
+  },
+  "decision": "PASS",
+  "details": {
+    "conversation": {
+      "page1EnvelopeIds": [
+        "p14-conv-1",
+        "p14-conv-2"
+      ],
+      "page1NextCursor": "2",
+      "page2EnvelopeIds": [
+        "p14-conv-3"
+      ],
+      "page2NextCursor": null
+    },
+    "global": {
+      "page1EnvelopeIds": [
+        "p14-global-1",
+        "p14-global-2"
+      ],
+      "page1NextCursor": "g1.eyJzZW50QXRNcyI6MTc3MjU4MjUwMDEwMCwiY29udmVyc2F0aW9uSWQiOiJkaXJlY3Q6cDE0LWdsb2JhbC1iIiwic2VxIjoiMSIsImVudmVsb3BlSWQiOiJwMTQtZ2xvYmFsLTIifQ",
+      "page2EnvelopeIds": [
+        "p14-global-3"
+      ],
+      "page2NextCursor": null
+    },
+    "globalLegacyCursorRejection": {
+      "rejectedErrorCode": "VALIDATION_ERROR"
+    }
+  }
+}

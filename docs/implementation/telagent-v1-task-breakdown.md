@@ -147,7 +147,7 @@ flowchart LR
 | TA-P13-007 | Phase 13 | Phase 13 Gate 评审与收口 | TL + QA | 0.5 | TA-P13-002, TA-P13-003, TA-P13-004, TA-P13-005, TA-P13-006 | gate 结论文档 | Phase 13 正式关闭 | DONE |
 | TA-P14-001 | Phase 14 | 冻结产品聚焦边界（回归核心 P2P 应用） | TL + BE + FE + QA | 0.5 | TA-P13-007 | boundary decision doc | Phase 14 范围与 Phase 15 分工冻结 | DONE |
 | TA-P14-002 | Phase 14 | 删除默认 Web 运维面板，保留核心聊天流程 | Frontend | 1 | TA-P14-001 | web app cleanup + build log | 默认界面仅保留核心链路入口，构建通过 | DONE |
-| TA-P14-003 | Phase 14 | 消息拉取稳定游标改造（替代 offset 风险） | Backend + QA | 1.5 | TA-P14-001 | pull cursor upgrade + tests | 清理/撤回场景下分页稳定无重复/跳项 | TODO |
+| TA-P14-003 | Phase 14 | 消息拉取稳定游标改造（替代 offset 风险） | Backend + QA | 1.5 | TA-P14-001 | pull cursor upgrade + tests | 清理/撤回场景下分页稳定无重复/跳项 | DONE |
 | TA-P14-004 | Phase 14 | direct 会话访问控制强化（参与方约束） | Backend + Security | 1.5 | TA-P14-001 | direct ACL guard + tests | 非参与方消息写入被拒绝并返回 RFC7807 | TODO |
 | TA-P14-005 | Phase 14 | TS/Python SDK 核心行为收敛 | DX + Backend + QA | 1 | TA-P14-003, TA-P14-004 | sdk parity extension + checks | 参数、错误语义、返回结构一致 | TODO |
 | TA-P14-006 | Phase 14 | Phase 14 Gate 评审与收口 | TL + QA | 0.5 | TA-P14-002, TA-P14-003, TA-P14-004, TA-P14-005 | gate 结论文档 | Phase 14 正式关闭 | TODO |
@@ -356,8 +356,8 @@ flowchart LR
 | --- | --- | --- | --- | --- |
 | TA-P14-001 | DONE | `docs/implementation/phase-14/ta-p14-001-phase14-product-focus-boundary-2026-03-03.md`, `docs/implementation/phase-14/README.md` | 无 | 进入 `TA-P14-002`（删除默认 Web 运维面板） |
 | TA-P14-002 | DONE | `docs/implementation/phase-14/ta-p14-002-web-ops-panel-removal-2026-03-03.md`, `packages/web/src/index.html`, `packages/web/src/main.js` | 无 | 进入 `TA-P14-003`（消息拉取稳定游标改造） |
-| TA-P14-003 | TODO | `docs/implementation/phase-14/README.md` | 无 | 实施 pull cursor 稳定化改造并补齐测试 |
-| TA-P14-004 | TODO | `docs/implementation/phase-14/README.md` | 无 | 实施 direct 会话参与方访问控制 |
+| TA-P14-003 | DONE | `docs/implementation/phase-14/ta-p14-003-stable-pull-cursor-2026-03-03.md`, `packages/node/src/services/message-service.ts`, `packages/node/src/storage/message-repository.ts`, `packages/node/src/storage/postgres-message-repository.ts`, `packages/node/src/services/message-service.test.ts`, `packages/node/src/phase4-e2e.test.ts`, `packages/node/scripts/run-phase14-stable-pull-cursor-check.ts`, `docs/implementation/phase-14/logs/2026-03-03-p14-node-build.txt`, `docs/implementation/phase-14/logs/2026-03-03-p14-node-test.txt`, `docs/implementation/phase-14/logs/2026-03-03-p14-stable-pull-cursor-check-run.txt`, `docs/implementation/phase-14/manifests/2026-03-03-p14-stable-pull-cursor-check.json` | 无 | 进入 `TA-P14-004`（direct 会话参与方访问控制） |
+| TA-P14-004 | TODO | `docs/implementation/phase-14/README.md` | 无 | 实施 direct 会话参与方访问控制并补齐测试 |
 | TA-P14-005 | TODO | `docs/implementation/phase-14/README.md` | 无 | TS/Python SDK 行为与错误语义收敛 |
 | TA-P14-006 | TODO | `docs/implementation/phase-14/README.md` | 无 | 阶段回归与 Gate 收口 |
 

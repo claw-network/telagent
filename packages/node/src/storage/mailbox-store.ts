@@ -12,6 +12,13 @@ export interface StoredEnvelopeRecord {
   idempotencySignature: string;
 }
 
+export interface EnvelopeCursorKey {
+  sentAtMs: number;
+  conversationId: string;
+  seq: bigint;
+  envelopeId: string;
+}
+
 export interface MailboxStore {
   init?(): Promise<void>;
   close?(): Promise<void>;
@@ -21,7 +28,12 @@ export interface MailboxStore {
   getIdempotencySignature(envelopeId: string): Promise<string | null>;
   getRetraction(envelopeId: string): Promise<ProvisionalRetractionRecord | null>;
   countEnvelopes(conversationId?: string): Promise<number>;
-  listEnvelopes(params: { conversationId?: string; offset: number; limit: number }): Promise<Envelope[]>;
+  listEnvelopes(params: {
+    conversationId?: string;
+    limit: number;
+    afterSeq?: bigint;
+    afterKey?: EnvelopeCursorKey;
+  }): Promise<Envelope[]>;
   listProvisionalGroupRecords(): Promise<StoredEnvelopeRecord[]>;
   retractEnvelope(params: {
     envelope: Envelope;

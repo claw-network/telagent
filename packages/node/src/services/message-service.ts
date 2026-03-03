@@ -117,6 +117,15 @@ export interface MessageAuditSnapshot {
   retractionScanLimit: number;
 }
 
+interface GlobalPullCursorKey {
+  sentAtMs: number;
+  conversationId: string;
+  seq: bigint;
+  envelopeId: string;
+}
+
+const GLOBAL_PULL_CURSOR_PREFIX = 'g1.';
+
 export class MessageService {
   private envelopes: Envelope[] = [];
   private readonly envelopeById = new Map<string, Envelope>();
@@ -275,20 +284,25 @@ export class MessageService {
     await this.runMaintenance();
 
     const limit = Math.min(100, Math.max(1, params.limit ?? 20));
-    const offset = params.cursor ? Number.parseInt(params.cursor, 10) : 0;
-    const safeOffset = Number.isFinite(offset) && offset >= 0 ? offset : 0;
-
-    const total = await this.countEnvelopes(params.conversationId);
-    const items = await this.listEnvelopes({
+    const cursor = this.parsePullCursor(params.cursor, params.conversationId);
+    const itemsWithProbe = await this.listEnvelopes({
       conversationId: params.conversationId,
-      offset: safeOffset,
-      limit,
+      limit: limit + 1,
+      afterSeq: cursor.afterSeq,
+      afterKey: cursor.afterKey,
     });
-    const nextOffset = safeOffset + items.length;
+    const hasMore = itemsWithProbe.length > limit;
+    const items = hasMore ? itemsWithProbe.slice(0, limit) : itemsWithProbe;
+    const tail = items[items.length - 1];
 
     return {
       items,
-      nextCursor: nextOffset < total ? String(nextOffset) : null,
+      nextCursor:
+        hasMore && tail
+          ? params.conversationId
+            ? tail.seq.toString()
+            : this.encodeGlobalPullCursor(tail)
+          : null,
     };
   }
 
@@ -666,7 +680,12 @@ export class MessageService {
     return this.envelopes.filter((item) => item.conversationId === conversationId).length;
   }
 
-  private async listEnvelopes(params: { conversationId?: string; offset: number; limit: number }): Promise<Envelope[]> {
+  private async listEnvelopes(params: {
+    conversationId?: string;
+    limit: number;
+    afterSeq?: bigint;
+    afterKey?: GlobalPullCursorKey;
+  }): Promise<Envelope[]> {
     if (this.repository) {
       return this.repository.listEnvelopes(params);
     }
@@ -678,14 +697,131 @@ export class MessageService {
       return true;
     });
 
-    const sorted = filtered.sort((a, b) => {
-      if (a.conversationId === b.conversationId) {
-        return a.seq < b.seq ? -1 : a.seq > b.seq ? 1 : 0;
+    const sorted = filtered.sort((left, right) => {
+      if (params.conversationId) {
+        if (left.seq !== right.seq) {
+          return left.seq < right.seq ? -1 : 1;
+        }
+        return left.envelopeId.localeCompare(right.envelopeId);
       }
-      return a.sentAtMs - b.sentAtMs;
+
+      if (left.sentAtMs !== right.sentAtMs) {
+        return left.sentAtMs - right.sentAtMs;
+      }
+      if (left.conversationId !== right.conversationId) {
+        return left.conversationId.localeCompare(right.conversationId);
+      }
+      if (left.seq !== right.seq) {
+        return left.seq < right.seq ? -1 : 1;
+      }
+      return left.envelopeId.localeCompare(right.envelopeId);
     });
 
-    return sorted.slice(params.offset, params.offset + params.limit);
+    const sliced = sorted.filter((item) => {
+      if (params.conversationId) {
+        if (typeof params.afterSeq === 'undefined') {
+          return true;
+        }
+        return item.seq > params.afterSeq;
+      }
+
+      if (!params.afterKey) {
+        return true;
+      }
+
+      if (item.sentAtMs !== params.afterKey.sentAtMs) {
+        return item.sentAtMs > params.afterKey.sentAtMs;
+      }
+      if (item.conversationId !== params.afterKey.conversationId) {
+        return item.conversationId > params.afterKey.conversationId;
+      }
+      if (item.seq !== params.afterKey.seq) {
+        return item.seq > params.afterKey.seq;
+      }
+      return item.envelopeId > params.afterKey.envelopeId;
+    });
+
+    return sliced.slice(0, params.limit);
+  }
+
+  private parsePullCursor(cursorRaw: string | undefined, conversationId?: string): {
+    afterSeq?: bigint;
+    afterKey?: GlobalPullCursorKey;
+  } {
+    if (!cursorRaw || !cursorRaw.trim()) {
+      return {};
+    }
+
+    const cursor = cursorRaw.trim();
+    if (conversationId) {
+      if (!/^\d+$/.test(cursor)) {
+        throw new TelagentError(
+          ErrorCodes.VALIDATION,
+          'cursor must be a non-negative integer sequence for conversation pull',
+        );
+      }
+      return {
+        afterSeq: BigInt(cursor),
+      };
+    }
+
+    if (!cursor.startsWith(GLOBAL_PULL_CURSOR_PREFIX)) {
+      throw new TelagentError(
+        ErrorCodes.VALIDATION,
+        'cursor must use keyset format when conversation_id is omitted',
+      );
+    }
+
+    const encoded = cursor.slice(GLOBAL_PULL_CURSOR_PREFIX.length);
+    if (!encoded) {
+      throw new TelagentError(ErrorCodes.VALIDATION, 'cursor payload is empty');
+    }
+
+    try {
+      const parsed = JSON.parse(Buffer.from(encoded, 'base64url').toString('utf8')) as Record<string, unknown>;
+      const sentAtMs = parsed.sentAtMs;
+      const cursorConversationId = parsed.conversationId;
+      const seq = parsed.seq;
+      const envelopeId = parsed.envelopeId;
+
+      if (typeof sentAtMs !== 'number' || !Number.isInteger(sentAtMs) || sentAtMs < 0) {
+        throw new TelagentError(ErrorCodes.VALIDATION, 'cursor.sentAtMs must be a non-negative integer');
+      }
+      if (typeof cursorConversationId !== 'string' || !cursorConversationId.trim()) {
+        throw new TelagentError(ErrorCodes.VALIDATION, 'cursor.conversationId must be a non-empty string');
+      }
+      if (typeof seq !== 'string' || !/^\d+$/.test(seq)) {
+        throw new TelagentError(ErrorCodes.VALIDATION, 'cursor.seq must be a non-negative integer string');
+      }
+      if (typeof envelopeId !== 'string' || !envelopeId.trim()) {
+        throw new TelagentError(ErrorCodes.VALIDATION, 'cursor.envelopeId must be a non-empty string');
+      }
+
+      return {
+        afterKey: {
+          sentAtMs,
+          conversationId: cursorConversationId,
+          seq: BigInt(seq),
+          envelopeId,
+        },
+      };
+    } catch (error) {
+      if (error instanceof TelagentError) {
+        throw error;
+      }
+      throw new TelagentError(ErrorCodes.VALIDATION, 'cursor is malformed');
+    }
+  }
+
+  private encodeGlobalPullCursor(envelope: Envelope): string {
+    const payload = {
+      sentAtMs: envelope.sentAtMs,
+      conversationId: envelope.conversationId,
+      seq: envelope.seq.toString(),
+      envelopeId: envelope.envelopeId,
+    };
+    const encoded = Buffer.from(JSON.stringify(payload), 'utf8').toString('base64url');
+    return `${GLOBAL_PULL_CURSOR_PREFIX}${encoded}`;
   }
 
   private async nextSequence(conversationId: string): Promise<bigint> {

@@ -1,0 +1,106 @@
+
+> @telagent/node@0.1.0 pretest /Users/xiasenhai/Workspace/OpenClaw/telagent/packages/node
+> pnpm build
+
+
+> @telagent/node@0.1.0 build /Users/xiasenhai/Workspace/OpenClaw/telagent/packages/node
+> tsc -p tsconfig.json
+
+
+> @telagent/node@0.1.0 test /Users/xiasenhai/Workspace/OpenClaw/telagent/packages/node
+> node --test dist/*.test.js dist/**/*.test.js
+
+✔ created response returns data envelope and Location header (193.075308ms)
+✔ list response returns paginated envelope shape (84.709043ms)
+✔ validation errors use RFC7807 shape and problem+json content type (89.958675ms)
+✔ node audit snapshot exports de-sensitized envelope and links.self (38.350977ms)
+✔ node audit snapshot rejects invalid query with RFC7807 response (48.846122ms)
+✔ TA-P12-003 revoked DID event isolates session and rejects message send with RFC7807 (13.799364ms)
+✔ TA-P12-004 node metrics exposes federation DLQ replay burn-rate section (3.517423ms)
+✔ not found uses RFC7807 shape (2.96806ms)
+✔ identities and groups endpoints are accessible with expected status codes (15.003963ms)
+✔ messages, attachments and federation endpoints are accessible (24.993854ms)
+✔ routes only serve /api/v1/* prefix (283.585335ms)
+✔ identity endpoint responds with data envelope (27.620449ms)
+✔ mailbox store defaults to sqlite backend (11.563549ms)
+✔ mailbox store parses postgres backend config (0.844643ms)
+✔ postgres backend requires connection url (0.684561ms)
+✔ mailbox backend rejects unsupported value (0.323177ms)
+✔ federation protocol defaults to v1 and supports self version (2.770112ms)
+✔ federation supported protocols auto-include self version (0.428246ms)
+✔ federation replay protection defaults are applied (0.377544ms)
+✔ federation replay protection accepts custom values (28.017496ms)
+✔ federation replay protection requires positive integer values (2.171158ms)
+✔ domain proof config defaults to enforced mode (0.861294ms)
+✔ domain proof config accepts report-only mode and custom values (0.418474ms)
+✔ domain proof mode rejects unsupported value (0.413848ms)
+✔ domain proof numeric settings require positive integers (0.37303ms)
+✔ federation pinning defaults to disabled mode (0.385626ms)
+✔ federation pinning parses current/next keys and cutover timestamp (0.529049ms)
+✔ federation pinning rejects invalid mode (0.380009ms)
+✔ federation pinning enabled requires key mappings (0.364314ms)
+✔ federation pinning map requires domain=keys format (0.405227ms)
+✔ federation SLO automation config defaults are applied (0.321265ms)
+✔ federation SLO automation config accepts custom values (0.320538ms)
+✔ federation SLO burn-rate thresholds require positive values (0.314032ms)
+✔ finalityDepth only materializes finalized blocks (47.864606ms)
+✔ reorg rollback replays canonical events and restores deterministic view (17.99717ms)
+✔ TA-P4-009 E2E main path: create -> invite -> accept -> group chat (text/image/file) (169.58791ms)
+✔ TA-P4-010 E2E offline 24h pull keeps dedupe and per-conversation order (163.01412ms)
+✔ TA-P14-003 E2E pull cursor stays stable when cleanup happens between pages (12.19717ms)
+✔ TA-P4-006 init-upload sanitizes filename and emits attachment objectKey (2.303927ms)
+✔ TA-P4-006 complete-upload enforces manifest and checksum integrity (0.735654ms)
+✔ TA-P4-006 complete-upload is idempotent and rejects checksum divergence (0.44287ms)
+✔ TA-P4-006 expired upload sessions are cleaned and cannot be completed (0.253666ms)
+✔ TA-P11-003 accepts valid domain proof challenge and canonical hash (17.979588ms)
+✔ TA-P11-003 rejects illegal domain challenge on malformed domain (0.887872ms)
+✔ TA-P11-003 rejects when canonical domainProofHash mismatches payload (55.257025ms)
+✔ TA-P11-003 rotates challenge nonce near expiry and accepts renewed domain proof (5.704762ms)
+✔ TA-P11-003 report-only mode returns warning without blocking create flow (0.441505ms)
+✔ TA-P4-007 federation envelopes support idempotent retries (2.171735ms)
+✔ TA-P4-007 federation auth token is enforced when configured (0.563806ms)
+✔ TA-P4-007 federation rate limit rejects burst traffic (0.2998ms)
+✔ TA-P4-008 group-state sync enforces domain consistency (0.349322ms)
+✔ TA-P8-002 group-state sync rejects stale stateVersion and records resilience counters (0.762015ms)
+✔ TA-P8-002 group-state sync detects split-brain on same stateVersion with different state (0.342534ms)
+✔ TA-P9-002 federation accepts compatible protocol versions and tracks usage stats (11.902944ms)
+✔ TA-P9-002 federation rejects unsupported protocol versions (0.263646ms)
+✔ TA-P11-004 federation pinning enforces sourceKeyId with current/next rotation (0.645247ms)
+✔ TA-P11-004 federation pinning report-only mode allows traffic but records warnings (0.332472ms)
+✔ TA-P11-005 federation DLQ captures failures and replays in sequence order (8.366413ms)
+✔ TA-P4-008 node-info publishes domain and federation security policy (0.239805ms)
+✔ TA-P13-005 federation replay applies backoff and opens circuit on repeated failures (0.86748ms)
+✔ TA-P13-005 federation replay protection validates backoff range (0.171509ms)
+✔ TA-P12-004 federation SLO runOnce auto-replays DLQ and records burn-rate metrics (4.456233ms)
+✔ TA-P12-004 federation SLO scheduler periodically replays DLQ (1102.179825ms)
+✔ assertSufficient throws INSUFFICIENT_GAS_TOKEN_BALANCE when native balance is not enough (1.795618ms)
+✔ TA-P11-006 rotate key keeps old key usable in grace window then expires (1.865939ms)
+✔ TA-P11-006 revoke and recover lifecycle is verifiable (0.560927ms)
+✔ TA-P11-006 rejects invalid did and malformed key id (0.409711ms)
+✔ TA-P12-007 orchestrator supports staged key rotation with rollback recovery (2.975709ms)
+✔ TA-P4-002 sequence allocator keeps per-conversation monotonic order (4.021015ms)
+✔ TA-P4-003 dedupe keeps idempotent writes for same envelopeId (0.841859ms)
+✔ TA-P4-003 duplicate envelopeId with different payload is rejected (0.875514ms)
+✔ TA-P4-004 cleanupExpired removes expired envelopes and releases dedupe key (1.004798ms)
+✔ TA-P14-003 conversation pull cursor stays stable after cleanup between pages (2.544622ms)
+✔ TA-P14-003 global pull cursor is keyset token and survives cleanup drift (0.933764ms)
+✔ TA-P4-005 provisional envelopes are retracted when group is reorged back (0.929405ms)
+✔ TA-P4-005 send is rejected when group chain state is REORGED_BACK (0.402014ms)
+✔ TA-P12-002 buildAuditSnapshot exports hashed retraction samples (1.06ms)
+✔ TA-P12-002 buildAuditSnapshot normalizes sample and scan bounds (0.394715ms)
+✔ TA-P12-003 revoked DID event isolates related sessions and evicts active sessions (1.526647ms)
+✔ TA-P12-003 buildAuditSnapshot includes revocation isolation evidence (0.508865ms)
+✔ TA-P6-001 mailbox persists messages and seq after service restart (21.84485ms)
+✔ TA-P11-006 message send validates signal/mls key lifecycle status (2.317835ms)
+✔ TA-P11-007 revoked DID cannot continue sending new messages (0.53192ms)
+✔ TA-P5-002 monitoring snapshot normalizes dynamic route segments and records counters (2.822989ms)
+✔ TA-P5-002 monitoring emits warning/critical alerts when thresholds are exceeded (0.505919ms)
+✔ TA-P12-004 federation DLQ burn-rate alert is emitted and tracked (1.033452ms)
+ℹ tests 86
+ℹ suites 0
+ℹ pass 86
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2496.051154

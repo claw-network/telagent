@@ -250,6 +250,97 @@ test('TA-P4-004 cleanupExpired removes expired envelopes and releases dedupe key
   assert.equal(resent.seq, 3n);
 });
 
+test('TA-P14-003 conversation pull cursor stays stable after cleanup between pages', async () => {
+  const { service, clock } = createMessageService(10_000);
+
+  await service.send(createDirectInput({
+    envelopeId: 'env-p14-cursor-conv-1',
+    conversationId: 'direct:p14-cursor-conv',
+    ttlSec: 1,
+  }));
+  clock.tick(100);
+
+  await service.send(createDirectInput({
+    envelopeId: 'env-p14-cursor-conv-2',
+    conversationId: 'direct:p14-cursor-conv',
+    ttlSec: 120,
+  }));
+  clock.tick(100);
+
+  await service.send(createDirectInput({
+    envelopeId: 'env-p14-cursor-conv-3',
+    conversationId: 'direct:p14-cursor-conv',
+    ttlSec: 120,
+  }));
+
+  const page1 = await service.pull({
+    conversationId: 'direct:p14-cursor-conv',
+    limit: 2,
+  });
+  assert.deepEqual(
+    page1.items.map((item) => item.envelopeId),
+    ['env-p14-cursor-conv-1', 'env-p14-cursor-conv-2'],
+  );
+  assert.equal(page1.nextCursor, '2');
+
+  clock.tick(1_100);
+
+  const page2 = await service.pull({
+    conversationId: 'direct:p14-cursor-conv',
+    limit: 2,
+    cursor: page1.nextCursor ?? undefined,
+  });
+  assert.deepEqual(
+    page2.items.map((item) => item.envelopeId),
+    ['env-p14-cursor-conv-3'],
+  );
+  assert.equal(page2.nextCursor, null);
+});
+
+test('TA-P14-003 global pull cursor is keyset token and survives cleanup drift', async () => {
+  const { service, clock } = createMessageService(20_000);
+
+  await service.send(createDirectInput({
+    envelopeId: 'env-p14-cursor-global-1',
+    conversationId: 'direct:p14-cursor-global-a',
+    ttlSec: 1,
+  }));
+  clock.tick(100);
+
+  await service.send(createDirectInput({
+    envelopeId: 'env-p14-cursor-global-2',
+    conversationId: 'direct:p14-cursor-global-b',
+    ttlSec: 120,
+  }));
+  clock.tick(100);
+
+  await service.send(createDirectInput({
+    envelopeId: 'env-p14-cursor-global-3',
+    conversationId: 'direct:p14-cursor-global-c',
+    ttlSec: 120,
+  }));
+
+  const page1 = await service.pull({ limit: 2 });
+  assert.deepEqual(
+    page1.items.map((item) => item.envelopeId),
+    ['env-p14-cursor-global-1', 'env-p14-cursor-global-2'],
+  );
+  assert.ok(page1.nextCursor);
+  assert.match(page1.nextCursor!, /^g1\./);
+
+  clock.tick(1_100);
+
+  const page2 = await service.pull({
+    limit: 2,
+    cursor: page1.nextCursor ?? undefined,
+  });
+  assert.deepEqual(
+    page2.items.map((item) => item.envelopeId),
+    ['env-p14-cursor-global-3'],
+  );
+  assert.equal(page2.nextCursor, null);
+});
+
 test('TA-P4-005 provisional envelopes are retracted when group is reorged back', async () => {
   const groupId = `0x${'a'.repeat(64)}`;
   const { service, setGroupState } = createGroupMessageService(groupId, 'PENDING_ONCHAIN', 5_000);

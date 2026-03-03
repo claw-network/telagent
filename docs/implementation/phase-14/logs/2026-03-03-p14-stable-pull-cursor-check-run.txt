@@ -1,0 +1,6 @@
+[TA-P14-003] conversationCursorStableAfterCleanup=true
+[TA-P14-003] globalCursorTokenFormat=true
+[TA-P14-003] globalCursorStableAfterCleanup=true
+[TA-P14-003] legacyOffsetRejectedInGlobalPull=true code=VALIDATION_ERROR
+[TA-P14-003] decision=PASS
+[TA-P14-003] output=/Users/xiasenhai/Workspace/OpenClaw/telagent/docs/implementation/phase-14/manifests/2026-03-03-p14-stable-pull-cursor-check.json

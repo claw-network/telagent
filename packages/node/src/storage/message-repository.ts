@@ -43,6 +43,7 @@ CREATE TABLE IF NOT EXISTS mailbox_sequences (
 
 CREATE INDEX IF NOT EXISTS idx_mailbox_envelopes_sent ON mailbox_envelopes(sent_at_ms, conversation_id);
 CREATE INDEX IF NOT EXISTS idx_mailbox_envelopes_conversation_seq ON mailbox_envelopes(conversation_id, seq);
+CREATE INDEX IF NOT EXISTS idx_mailbox_envelopes_pull_cursor ON mailbox_envelopes(sent_at_ms, conversation_id, seq, envelope_id);
 CREATE INDEX IF NOT EXISTS idx_mailbox_envelopes_expires ON mailbox_envelopes(expires_at_ms);
 CREATE INDEX IF NOT EXISTS idx_mailbox_envelopes_provisional ON mailbox_envelopes(conversation_type, provisional);
 CREATE INDEX IF NOT EXISTS idx_mailbox_retractions_time ON mailbox_retractions(retracted_at_ms DESC);
@@ -238,55 +239,148 @@ export class MessageRepository implements MailboxStore {
     return row.count;
   }
 
-  async listEnvelopes(params: { conversationId?: string; offset: number; limit: number }): Promise<Envelope[]> {
+  async listEnvelopes(params: {
+    conversationId?: string;
+    limit: number;
+    afterSeq?: bigint;
+    afterKey?: { sentAtMs: number; conversationId: string; seq: bigint; envelopeId: string };
+  }): Promise<Envelope[]> {
     const rows = params.conversationId
-      ? (this.db
-        .prepare(
-          `SELECT
-            envelope_id AS envelopeId,
-            conversation_id AS conversationId,
-            conversation_type AS conversationType,
-            target_domain AS targetDomain,
-            mailbox_key_id AS mailboxKeyId,
-            sealed_header AS sealedHeader,
-            seq,
-            epoch,
-            ciphertext,
-            content_type AS contentType,
-            attachment_manifest_hash AS attachmentManifestHash,
-            sent_at_ms AS sentAtMs,
-            ttl_sec AS ttlSec,
-            provisional,
-            idempotency_signature AS idempotencySignature
-          FROM mailbox_envelopes
-          WHERE conversation_id = ?
-          ORDER BY CAST(seq AS INTEGER) ASC
-          LIMIT ? OFFSET ?`,
-        )
-        .all(params.conversationId, params.limit, params.offset) as MailboxEnvelopeRow[])
-      : (this.db
-        .prepare(
-          `SELECT
-            envelope_id AS envelopeId,
-            conversation_id AS conversationId,
-            conversation_type AS conversationType,
-            target_domain AS targetDomain,
-            mailbox_key_id AS mailboxKeyId,
-            sealed_header AS sealedHeader,
-            seq,
-            epoch,
-            ciphertext,
-            content_type AS contentType,
-            attachment_manifest_hash AS attachmentManifestHash,
-            sent_at_ms AS sentAtMs,
-            ttl_sec AS ttlSec,
-            provisional,
-            idempotency_signature AS idempotencySignature
-          FROM mailbox_envelopes
-          ORDER BY sent_at_ms ASC, conversation_id ASC, CAST(seq AS INTEGER) ASC
-          LIMIT ? OFFSET ?`,
-        )
-        .all(params.limit, params.offset) as MailboxEnvelopeRow[]);
+      ? (() => {
+        if (typeof params.afterSeq !== 'undefined') {
+          return this.db
+            .prepare(
+              `SELECT
+                envelope_id AS envelopeId,
+                conversation_id AS conversationId,
+                conversation_type AS conversationType,
+                target_domain AS targetDomain,
+                mailbox_key_id AS mailboxKeyId,
+                sealed_header AS sealedHeader,
+                seq,
+                epoch,
+                ciphertext,
+                content_type AS contentType,
+                attachment_manifest_hash AS attachmentManifestHash,
+                sent_at_ms AS sentAtMs,
+                ttl_sec AS ttlSec,
+                provisional,
+                idempotency_signature AS idempotencySignature
+              FROM mailbox_envelopes
+              WHERE conversation_id = ?
+                AND CAST(seq AS INTEGER) > CAST(? AS INTEGER)
+              ORDER BY CAST(seq AS INTEGER) ASC, envelope_id ASC
+              LIMIT ?`,
+            )
+            .all(params.conversationId, params.afterSeq.toString(), params.limit) as MailboxEnvelopeRow[];
+        }
+
+        return this.db
+          .prepare(
+            `SELECT
+              envelope_id AS envelopeId,
+              conversation_id AS conversationId,
+              conversation_type AS conversationType,
+              target_domain AS targetDomain,
+              mailbox_key_id AS mailboxKeyId,
+              sealed_header AS sealedHeader,
+              seq,
+              epoch,
+              ciphertext,
+              content_type AS contentType,
+              attachment_manifest_hash AS attachmentManifestHash,
+              sent_at_ms AS sentAtMs,
+              ttl_sec AS ttlSec,
+              provisional,
+              idempotency_signature AS idempotencySignature
+            FROM mailbox_envelopes
+            WHERE conversation_id = ?
+            ORDER BY CAST(seq AS INTEGER) ASC, envelope_id ASC
+            LIMIT ?`,
+          )
+          .all(params.conversationId, params.limit) as MailboxEnvelopeRow[];
+      })()
+      : (() => {
+        if (params.afterKey) {
+          const key = params.afterKey;
+          return this.db
+            .prepare(
+              `SELECT
+                envelope_id AS envelopeId,
+                conversation_id AS conversationId,
+                conversation_type AS conversationType,
+                target_domain AS targetDomain,
+                mailbox_key_id AS mailboxKeyId,
+                sealed_header AS sealedHeader,
+                seq,
+                epoch,
+                ciphertext,
+                content_type AS contentType,
+                attachment_manifest_hash AS attachmentManifestHash,
+                sent_at_ms AS sentAtMs,
+                ttl_sec AS ttlSec,
+                provisional,
+                idempotency_signature AS idempotencySignature
+              FROM mailbox_envelopes
+              WHERE
+                sent_at_ms > ?
+                OR (
+                  sent_at_ms = ?
+                  AND conversation_id > ?
+                )
+                OR (
+                  sent_at_ms = ?
+                  AND conversation_id = ?
+                  AND CAST(seq AS INTEGER) > CAST(? AS INTEGER)
+                )
+                OR (
+                  sent_at_ms = ?
+                  AND conversation_id = ?
+                  AND CAST(seq AS INTEGER) = CAST(? AS INTEGER)
+                  AND envelope_id > ?
+                )
+              ORDER BY sent_at_ms ASC, conversation_id ASC, CAST(seq AS INTEGER) ASC, envelope_id ASC
+              LIMIT ?`,
+            )
+            .all(
+              key.sentAtMs,
+              key.sentAtMs,
+              key.conversationId,
+              key.sentAtMs,
+              key.conversationId,
+              key.seq.toString(),
+              key.sentAtMs,
+              key.conversationId,
+              key.seq.toString(),
+              key.envelopeId,
+              params.limit,
+            ) as MailboxEnvelopeRow[];
+        }
+
+        return this.db
+          .prepare(
+            `SELECT
+              envelope_id AS envelopeId,
+              conversation_id AS conversationId,
+              conversation_type AS conversationType,
+              target_domain AS targetDomain,
+              mailbox_key_id AS mailboxKeyId,
+              sealed_header AS sealedHeader,
+              seq,
+              epoch,
+              ciphertext,
+              content_type AS contentType,
+              attachment_manifest_hash AS attachmentManifestHash,
+              sent_at_ms AS sentAtMs,
+              ttl_sec AS ttlSec,
+              provisional,
+              idempotency_signature AS idempotencySignature
+            FROM mailbox_envelopes
+            ORDER BY sent_at_ms ASC, conversation_id ASC, CAST(seq AS INTEGER) ASC, envelope_id ASC
+            LIMIT ?`,
+          )
+          .all(params.limit) as MailboxEnvelopeRow[];
+      })();
 
     return rows.map((row) => this.toEnvelope(row));
   }

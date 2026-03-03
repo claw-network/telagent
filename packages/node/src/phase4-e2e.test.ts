@@ -684,3 +684,83 @@ test('TA-P4-010 E2E offline 24h pull keeps dedupe and per-conversation order', a
   );
   assert.ok(clock.now() - allItems[0].sentAtMs >= 86_400_000);
 });
+
+test('TA-P14-003 E2E pull cursor stays stable when cleanup happens between pages', async (t) => {
+  const { server, baseUrl, clock } = await startE2EServer(8_000);
+  t.after(async () => {
+    await server.stop();
+  });
+
+  const conversationId = 'direct:p14-e2e-cursor';
+  const senderDid = 'did:claw:zAlice';
+
+  const send1 = await postJson(baseUrl, '/api/v1/messages', {
+    envelopeId: 'env-p14-e2e-1',
+    senderDid,
+    conversationId,
+    conversationType: 'direct',
+    targetDomain: 'alpha.tel',
+    mailboxKeyId: 'mailbox-direct',
+    sealedHeader: '0x81',
+    ciphertext: '0x82',
+    contentType: 'text',
+    ttlSec: 1,
+  });
+  assert.equal(send1.status, 201);
+  clock.tick(100);
+
+  const send2 = await postJson(baseUrl, '/api/v1/messages', {
+    envelopeId: 'env-p14-e2e-2',
+    senderDid,
+    conversationId,
+    conversationType: 'direct',
+    targetDomain: 'alpha.tel',
+    mailboxKeyId: 'mailbox-direct',
+    sealedHeader: '0x83',
+    ciphertext: '0x84',
+    contentType: 'text',
+    ttlSec: 120,
+  });
+  assert.equal(send2.status, 201);
+  clock.tick(100);
+
+  const send3 = await postJson(baseUrl, '/api/v1/messages', {
+    envelopeId: 'env-p14-e2e-3',
+    senderDid,
+    conversationId,
+    conversationType: 'direct',
+    targetDomain: 'alpha.tel',
+    mailboxKeyId: 'mailbox-direct',
+    sealedHeader: '0x85',
+    ciphertext: '0x86',
+    contentType: 'text',
+    ttlSec: 120,
+  });
+  assert.equal(send3.status, 201);
+
+  const pullPage1Res = await getJson(
+    baseUrl,
+    `/api/v1/messages/pull?conversation_id=${encodeURIComponent(conversationId)}&limit=2`,
+  );
+  assert.equal(pullPage1Res.status, 200);
+  const pullPage1 = (await pullPage1Res.json()) as DataEnvelope<{ items: JsonEnvelope[]; cursor: string | null }>;
+  assert.deepEqual(
+    pullPage1.data.items.map((item) => item.envelopeId),
+    ['env-p14-e2e-1', 'env-p14-e2e-2'],
+  );
+  assert.equal(pullPage1.data.cursor, '2');
+
+  clock.tick(1_100);
+
+  const pullPage2Res = await getJson(
+    baseUrl,
+    `/api/v1/messages/pull?conversation_id=${encodeURIComponent(conversationId)}&limit=2&cursor=${pullPage1.data.cursor}`,
+  );
+  assert.equal(pullPage2Res.status, 200);
+  const pullPage2 = (await pullPage2Res.json()) as DataEnvelope<{ items: JsonEnvelope[]; cursor: string | null }>;
+  assert.deepEqual(
+    pullPage2.data.items.map((item) => item.envelopeId),
+    ['env-p14-e2e-3'],
+  );
+  assert.equal(pullPage2.data.cursor, null);
+});

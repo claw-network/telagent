@@ -109,6 +109,9 @@ export class PostgresMessageRepository implements MailboxStore {
       `CREATE INDEX IF NOT EXISTS idx_mailbox_envelopes_conversation_seq ON ${this.table('mailbox_envelopes')}(conversation_id, seq)`,
     );
     await this.pool.query(
+      `CREATE INDEX IF NOT EXISTS idx_mailbox_envelopes_pull_cursor ON ${this.table('mailbox_envelopes')}(sent_at_ms, conversation_id, seq, envelope_id)`,
+    );
+    await this.pool.query(
       `CREATE INDEX IF NOT EXISTS idx_mailbox_envelopes_expires ON ${this.table('mailbox_envelopes')}(expires_at_ms)`,
     );
     await this.pool.query(
@@ -267,53 +270,112 @@ export class PostgresMessageRepository implements MailboxStore {
     return Number.parseInt(result.rows[0]?.count ?? '0', 10);
   }
 
-  async listEnvelopes(params: { conversationId?: string; offset: number; limit: number }): Promise<Envelope[]> {
+  async listEnvelopes(params: {
+    conversationId?: string;
+    limit: number;
+    afterSeq?: bigint;
+    afterKey?: { sentAtMs: number; conversationId: string; seq: bigint; envelopeId: string };
+  }): Promise<Envelope[]> {
     const result = params.conversationId
-      ? await this.pool.query<MailboxEnvelopeRow>(
-        `SELECT
-           envelope_id,
-           conversation_id,
-           conversation_type,
-           target_domain,
-           mailbox_key_id,
-           sealed_header,
-           seq::text AS seq,
-           epoch,
-           ciphertext,
-           content_type,
-           attachment_manifest_hash,
-           sent_at_ms::text AS sent_at_ms,
-           ttl_sec,
-           provisional,
-           idempotency_signature
-         FROM ${this.table('mailbox_envelopes')}
-         WHERE conversation_id = $1
-         ORDER BY seq ASC
-         LIMIT $2 OFFSET $3`,
-        [params.conversationId, params.limit, params.offset],
-      )
-      : await this.pool.query<MailboxEnvelopeRow>(
-        `SELECT
-           envelope_id,
-           conversation_id,
-           conversation_type,
-           target_domain,
-           mailbox_key_id,
-           sealed_header,
-           seq::text AS seq,
-           epoch,
-           ciphertext,
-           content_type,
-           attachment_manifest_hash,
-           sent_at_ms::text AS sent_at_ms,
-           ttl_sec,
-           provisional,
-           idempotency_signature
-         FROM ${this.table('mailbox_envelopes')}
-         ORDER BY sent_at_ms ASC, conversation_id ASC, seq ASC
-         LIMIT $1 OFFSET $2`,
-        [params.limit, params.offset],
-      );
+      ? typeof params.afterSeq !== 'undefined'
+        ? await this.pool.query<MailboxEnvelopeRow>(
+          `SELECT
+             envelope_id,
+             conversation_id,
+             conversation_type,
+             target_domain,
+             mailbox_key_id,
+             sealed_header,
+             seq::text AS seq,
+             epoch,
+             ciphertext,
+             content_type,
+             attachment_manifest_hash,
+             sent_at_ms::text AS sent_at_ms,
+             ttl_sec,
+             provisional,
+             idempotency_signature
+           FROM ${this.table('mailbox_envelopes')}
+           WHERE conversation_id = $1 AND seq > $2
+           ORDER BY seq ASC, envelope_id ASC
+           LIMIT $3`,
+          [params.conversationId, params.afterSeq.toString(), params.limit],
+        )
+        : await this.pool.query<MailboxEnvelopeRow>(
+          `SELECT
+             envelope_id,
+             conversation_id,
+             conversation_type,
+             target_domain,
+             mailbox_key_id,
+             sealed_header,
+             seq::text AS seq,
+             epoch,
+             ciphertext,
+             content_type,
+             attachment_manifest_hash,
+             sent_at_ms::text AS sent_at_ms,
+             ttl_sec,
+             provisional,
+             idempotency_signature
+           FROM ${this.table('mailbox_envelopes')}
+           WHERE conversation_id = $1
+           ORDER BY seq ASC, envelope_id ASC
+           LIMIT $2`,
+          [params.conversationId, params.limit],
+        )
+      : params.afterKey
+        ? await this.pool.query<MailboxEnvelopeRow>(
+          `SELECT
+             envelope_id,
+             conversation_id,
+             conversation_type,
+             target_domain,
+             mailbox_key_id,
+             sealed_header,
+             seq::text AS seq,
+             epoch,
+             ciphertext,
+             content_type,
+             attachment_manifest_hash,
+             sent_at_ms::text AS sent_at_ms,
+             ttl_sec,
+             provisional,
+             idempotency_signature
+           FROM ${this.table('mailbox_envelopes')}
+           WHERE (sent_at_ms, conversation_id, seq, envelope_id) > ($1, $2, $3, $4)
+           ORDER BY sent_at_ms ASC, conversation_id ASC, seq ASC, envelope_id ASC
+           LIMIT $5`,
+          [
+            params.afterKey.sentAtMs,
+            params.afterKey.conversationId,
+            params.afterKey.seq.toString(),
+            params.afterKey.envelopeId,
+            params.limit,
+          ],
+        )
+        : await this.pool.query<MailboxEnvelopeRow>(
+          `SELECT
+             envelope_id,
+             conversation_id,
+             conversation_type,
+             target_domain,
+             mailbox_key_id,
+             sealed_header,
+             seq::text AS seq,
+             epoch,
+             ciphertext,
+             content_type,
+             attachment_manifest_hash,
+             sent_at_ms::text AS sent_at_ms,
+             ttl_sec,
+             provisional,
+             idempotency_signature
+           FROM ${this.table('mailbox_envelopes')}
+           ORDER BY sent_at_ms ASC, conversation_id ASC, seq ASC, envelope_id ASC
+           LIMIT $1`,
+          [params.limit],
+        );
 
     return result.rows.map((row) => this.toEnvelope(row));
   }
