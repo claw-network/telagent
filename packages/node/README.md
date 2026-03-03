@@ -13,6 +13,7 @@ Node runtime for TelAgent v1.
 - Provisional group message retraction on `REORGED_BACK`
 - Offline mailbox TTL cleanup task (`TELAGENT_MAILBOX_CLEANUP_INTERVAL_SEC`)
 - Attachment upload session hardening (manifest/checksum validation + idempotent complete)
+- Federation hardening (source-domain auth/rate-limit/retry-safe dedupe + node-info domain policy)
 - Attachment and federation endpoints
 
 ## Run

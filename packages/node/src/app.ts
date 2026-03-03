@@ -33,7 +33,7 @@ export class TelagentNode {
     this.groupService = new GroupService(this.contracts, this.identityService, this.gasService, this.repo);
     this.messageService = new MessageService(this.groupService);
     this.attachmentService = new AttachmentService();
-    this.federationService = new FederationService();
+    this.federationService = new FederationService(config.federation);
 
     this.indexer = new GroupIndexer(this.contracts, this.repo, {
       finalityDepth: config.chain.finalityDepth,

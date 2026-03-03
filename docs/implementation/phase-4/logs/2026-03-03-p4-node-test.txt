@@ -10,32 +10,37 @@
 > @telagent/node@0.1.0 test /Users/xiasenhai/workspace/private-repo/Bots/telagent/packages/node
 > node --test dist/*.test.js dist/**/*.test.js
 
-✔ created response returns data envelope and Location header (31.423125ms)
-✔ list response returns paginated envelope shape (6.834542ms)
-✔ validation errors use RFC7807 shape and problem+json content type (3.589083ms)
-✔ not found uses RFC7807 shape (2.214458ms)
-✔ identities and groups endpoints are accessible with expected status codes (9.605625ms)
-✔ messages, attachments and federation endpoints are accessible (5.4025ms)
-✔ routes only serve /api/v1/* prefix (25.571791ms)
-✔ identity endpoint responds with data envelope (5.826667ms)
-✔ finalityDepth only materializes finalized blocks (30.601334ms)
-✔ reorg rollback replays canonical events and restores deterministic view (10.639084ms)
-✔ TA-P4-006 init-upload sanitizes filename and emits attachment objectKey (0.971708ms)
-✔ TA-P4-006 complete-upload enforces manifest and checksum integrity (0.3775ms)
-✔ TA-P4-006 complete-upload is idempotent and rejects checksum divergence (0.127292ms)
-✔ TA-P4-006 expired upload sessions are cleaned and cannot be completed (0.107417ms)
-✔ assertSufficient throws INSUFFICIENT_GAS_TOKEN_BALANCE when native balance is not enough (0.886292ms)
-✔ TA-P4-002 sequence allocator keeps per-conversation monotonic order (1.541ms)
-✔ TA-P4-003 dedupe keeps idempotent writes for same envelopeId (0.219083ms)
-✔ TA-P4-003 duplicate envelopeId with different payload is rejected (0.310167ms)
-✔ TA-P4-004 cleanupExpired removes expired envelopes and releases dedupe key (0.142ms)
-✔ TA-P4-005 provisional envelopes are retracted when group is reorged back (1.348125ms)
-✔ TA-P4-005 send is rejected when group chain state is REORGED_BACK (0.469208ms)
-ℹ tests 21
+✔ created response returns data envelope and Location header (57.113292ms)
+✔ list response returns paginated envelope shape (8.400125ms)
+✔ validation errors use RFC7807 shape and problem+json content type (5.535333ms)
+✔ not found uses RFC7807 shape (4.14575ms)
+✔ identities and groups endpoints are accessible with expected status codes (14.901417ms)
+✔ messages, attachments and federation endpoints are accessible (7.446ms)
+✔ routes only serve /api/v1/* prefix (30.693833ms)
+✔ identity endpoint responds with data envelope (8.439125ms)
+✔ finalityDepth only materializes finalized blocks (48.906875ms)
+✔ reorg rollback replays canonical events and restores deterministic view (49.85175ms)
+✔ TA-P4-006 init-upload sanitizes filename and emits attachment objectKey (3.984ms)
+✔ TA-P4-006 complete-upload enforces manifest and checksum integrity (0.516333ms)
+✔ TA-P4-006 complete-upload is idempotent and rejects checksum divergence (0.144375ms)
+✔ TA-P4-006 expired upload sessions are cleaned and cannot be completed (0.117ms)
+✔ TA-P4-007 federation envelopes support idempotent retries (2.043584ms)
+✔ TA-P4-007 federation auth token is enforced when configured (0.371ms)
+✔ TA-P4-007 federation rate limit rejects burst traffic (0.15825ms)
+✔ TA-P4-008 group-state sync enforces domain consistency (0.16875ms)
+✔ TA-P4-008 node-info publishes domain and federation security policy (0.438458ms)
+✔ assertSufficient throws INSUFFICIENT_GAS_TOKEN_BALANCE when native balance is not enough (2.626834ms)
+✔ TA-P4-002 sequence allocator keeps per-conversation monotonic order (1.013125ms)
+✔ TA-P4-003 dedupe keeps idempotent writes for same envelopeId (0.174792ms)
+✔ TA-P4-003 duplicate envelopeId with different payload is rejected (0.286917ms)
+✔ TA-P4-004 cleanupExpired removes expired envelopes and releases dedupe key (0.459083ms)
+✔ TA-P4-005 provisional envelopes are retracted when group is reorged back (1.9665ms)
+✔ TA-P4-005 send is rejected when group chain state is REORGED_BACK (0.559416ms)
+ℹ tests 26
 ℹ suites 0
-ℹ pass 21
+ℹ pass 26
 ℹ fail 0
 ℹ cancelled 0
 ℹ skipped 0
 ℹ todo 0
-ℹ duration_ms 258.092708
+ℹ duration_ms 414.755291

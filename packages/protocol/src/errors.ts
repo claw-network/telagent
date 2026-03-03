@@ -9,6 +9,7 @@ export const ErrorCodes = {
   NOT_FOUND: 'NOT_FOUND',
   CONFLICT: 'CONFLICT',
   UNPROCESSABLE: 'UNPROCESSABLE_ENTITY',
+  TOO_MANY_REQUESTS: 'TOO_MANY_REQUESTS',
   INTERNAL: 'INTERNAL_ERROR',
   INSUFFICIENT_GAS_TOKEN_BALANCE: 'INSUFFICIENT_GAS_TOKEN_BALANCE',
 } as const;
@@ -22,6 +23,7 @@ const ERROR_TYPE_MAP: Record<ErrorCode, string> = {
   NOT_FOUND: `${ERROR_BASE_URL}/not-found`,
   CONFLICT: `${ERROR_BASE_URL}/conflict`,
   UNPROCESSABLE_ENTITY: `${ERROR_BASE_URL}/unprocessable-entity`,
+  TOO_MANY_REQUESTS: `${ERROR_BASE_URL}/too-many-requests`,
   INTERNAL_ERROR: `${ERROR_BASE_URL}/internal-error`,
   INSUFFICIENT_GAS_TOKEN_BALANCE: `${ERROR_BASE_URL}/insufficient-gas-token-balance`,
 };
@@ -33,6 +35,7 @@ const ERROR_STATUS_MAP: Record<ErrorCode, number> = {
   NOT_FOUND: 404,
   CONFLICT: 409,
   UNPROCESSABLE_ENTITY: 422,
+  TOO_MANY_REQUESTS: 429,
   INTERNAL_ERROR: 500,
   INSUFFICIENT_GAS_TOKEN_BALANCE: 422,
 };
@@ -73,6 +76,8 @@ export class TelagentError extends Error {
       case ErrorCodes.UNPROCESSABLE:
       case ErrorCodes.INSUFFICIENT_GAS_TOKEN_BALANCE:
         return 'Unprocessable Entity';
+      case ErrorCodes.TOO_MANY_REQUESTS:
+        return 'Too Many Requests';
       default:
         return 'Internal Server Error';
     }

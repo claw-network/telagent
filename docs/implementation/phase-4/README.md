@@ -1,7 +1,7 @@
 # TelAgent v1 Phase 4 执行产出
 
 - 文档版本：v1.0
-- 状态：Phase 4 进行中（已完成 `TA-P4-001` ~ `TA-P4-006`）
+- 状态：Phase 4 进行中（已完成 `TA-P4-001` ~ `TA-P4-008`）
 - 最后更新：2026-03-03
 
 ## 1. 产出目录
@@ -15,6 +15,8 @@
 | TA-P4-004 | `ta-p4-004-mailbox-ttl-cleanup-task-2026-03-03.md` | 离线邮箱 TTL 清理任务 |
 | TA-P4-005 | `ta-p4-005-provisional-mark-retract-2026-03-03.md` | provisional 消息标记/剔除逻辑 |
 | TA-P4-006 | `ta-p4-006-attachment-manifest-validation-2026-03-03.md` | 附件清单校验与会话幂等收口 |
+| TA-P4-007 | `ta-p4-007-federation-auth-rate-limit-retry-2026-03-03.md` | 联邦接口鉴权/限流/重试收口 |
+| TA-P4-008 | `ta-p4-008-node-info-domain-consistency-2026-03-03.md` | node-info 域名一致性校验 |
 
 ## 2. 证据目录
 
@@ -27,5 +29,5 @@
 
 ## 3. 阶段进展
 
-- `TA-P4-001` ~ `TA-P4-006`：DONE
-- 下一个执行任务：`TA-P4-007`、`TA-P4-008`
+- `TA-P4-001` ~ `TA-P4-008`：DONE
+- 下一个执行任务：`TA-P4-009`、`TA-P4-010`、`TA-P4-011`、`TA-P4-012`

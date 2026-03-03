@@ -162,24 +162,41 @@ class FakeAttachmentService {
 }
 
 class FakeFederationService {
-  receiveEnvelope() {
-    return { accepted: true, id: 'fed-1' };
+  receiveEnvelope(_payload: Record<string, unknown>, _meta: { sourceDomain: string; authToken?: string }) {
+    return { accepted: true, id: 'fed-1', deduplicated: false, retryable: true };
   }
 
-  syncGroupState() {
-    return { synced: true, updatedAtMs: Date.now() };
+  syncGroupState(
+    _payload: { groupId: string; state: string; groupDomain?: string },
+    _meta: { sourceDomain: string; authToken?: string },
+  ) {
+    return { synced: true, updatedAtMs: Date.now(), deduplicated: false };
   }
 
-  recordReceipt() {
-    return { accepted: true };
+  recordReceipt(
+    _payload: { envelopeId: string; status: 'delivered' | 'read' },
+    _meta: { sourceDomain: string; authToken?: string },
+  ) {
+    return { accepted: true, deduplicated: false, retryable: true };
   }
 
   nodeInfo() {
     return {
       protocolVersion: 'v1',
+      domain: 'node-a.tel',
       capabilities: ['identity', 'groups', 'messages', 'attachments', 'federation'],
       envelopeCount: 0,
       receiptCount: 0,
+      groupStateSyncCount: 0,
+      security: {
+        authMode: 'none',
+        allowedSourceDomains: [],
+        rateLimitPerMinute: {
+          envelopes: 600,
+          'group-state-sync': 300,
+          receipts: 600,
+        },
+      },
     };
   }
 }
@@ -439,14 +456,14 @@ test('messages, attachments and federation endpoints are accessible', async (t) 
   const fedSyncRes = await fetch(`${baseUrl}/api/v1/federation/group-state/sync`, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ groupId: `0x${'b'.repeat(64)}`, state: 'ACTIVE' }),
+    body: JSON.stringify({ groupId: `0x${'b'.repeat(64)}`, state: 'ACTIVE', sourceDomain: 'node-b.tel' }),
   });
   assert.equal(fedSyncRes.status, 201);
 
   const fedReceiptRes = await fetch(`${baseUrl}/api/v1/federation/receipts`, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ envelopeId: 'fed-1', status: 'delivered' }),
+    body: JSON.stringify({ envelopeId: 'fed-1', status: 'delivered', sourceDomain: 'node-b.tel' }),
   });
   assert.equal(fedReceiptRes.status, 201);
 
