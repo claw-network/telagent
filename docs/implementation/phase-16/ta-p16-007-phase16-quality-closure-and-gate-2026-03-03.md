@@ -16,7 +16,7 @@
 ## 2. 实现摘要
 
 1. 质量门禁复跑（针对 Phase 16 收口）：
-   - `@telagent/web` typecheck/build/test 全部通过；
+   - `@telagent/console` typecheck/build/test 全部通过；
    - 测试结果 `4 files / 23 tests` 全绿。
 2. 新增 `run-phase16-quality-gate-check.mjs`：
    - 汇总 `TA-P16-004/005/006` manifests 与 `TA-P16-007` 质量门禁日志；
@@ -33,9 +33,9 @@
 
 ## 4. 验证
 
-1. `corepack pnpm --filter @telagent/web typecheck`
-2. `corepack pnpm --filter @telagent/web build`
-3. `corepack pnpm --filter @telagent/web test`
+1. `corepack pnpm --filter @telagent/console typecheck`
+2. `corepack pnpm --filter @telagent/console build`
+3. `corepack pnpm --filter @telagent/console test`
 4. `node packages/web/scripts/run-phase16-quality-gate-check.mjs`
 
 ## 5. 证据

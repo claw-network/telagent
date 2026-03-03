@@ -33,7 +33,8 @@ import {
   buildNodeRuntimeDiagnostics,
 } from './core/identity-node-diagnostics';
 
-const STORAGE_API_BASE_KEY = 'telagent.web.apiBase.v2';
+const STORAGE_API_BASE_KEY = 'telagent.console.apiBase.v3';
+const LEGACY_STORAGE_API_BASE_KEY = 'telagent.web.apiBase.v2';
 const DEFAULT_API_BASE = 'http://127.0.0.1:9528';
 const DEFAULT_DID = 'did:claw:zAlice';
 
@@ -103,12 +104,16 @@ function createInitialGroupForm(): GroupFormState {
 }
 
 export function App() {
-  const [apiBase, setApiBase] = useState<string>(localStorage.getItem(STORAGE_API_BASE_KEY) || DEFAULT_API_BASE);
+  const [apiBase, setApiBase] = useState<string>(
+    localStorage.getItem(STORAGE_API_BASE_KEY)
+      || localStorage.getItem(LEGACY_STORAGE_API_BASE_KEY)
+      || DEFAULT_API_BASE,
+  );
   const [senderDid, setSenderDid] = useState<string>(DEFAULT_DID);
   const [targetDomain, setTargetDomain] = useState<string>('alpha.tel');
   const [mailboxKeyId, setMailboxKeyId] = useState<string>('mailbox-main');
   const [activeConversationId, setActiveConversationId] = useState<string>('group:demo-room');
-  const [draftMessage, setDraftMessage] = useState<string>('Hello from TelAgent Web App (TS/React)');
+  const [draftMessage, setDraftMessage] = useState<string>('Hello from TelAgent Console (TS/React)');
   const [conversations, setConversations] = useState<Array<{ id: string; label: string }>>([
     { id: 'group:demo-room', label: 'Demo Group' },
     { id: 'direct:alice-bob', label: 'Direct: Alice/Bob' },
@@ -573,7 +578,7 @@ export function App() {
       <div className="bg-grid" />
       <main className="shell">
         <aside className="nav-panel card">
-          <p className="eyebrow">Web App (React + TypeScript)</p>
+          <p className="eyebrow">Console (React + TypeScript)</p>
           <h1>TelAgent</h1>
           <p className="card-subtitle">Modernized client shell with typed domain modules and unified /api/v1/* client.</p>
 

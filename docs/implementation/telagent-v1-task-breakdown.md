@@ -30,8 +30,8 @@ flowchart LR
   P11 --> P12["Phase 12\nv1.2 候选池冻结与执行排程"]
   P12 --> P13["Phase 13\nv0.2.0 稳定化与可运营增强"]
   P13 --> P14["Phase 14\n产品聚焦与缺陷收敛"]
-  P14 --> P15["Phase 15\nWeb App 工业级设计与多平台建设"]
-  P15 --> P16["Phase 16\nWeb App 实装冲刺"]
+  P14 --> P15["Phase 15\nConsole 工业级设计与多平台建设"]
+  P15 --> P16["Phase 16\nConsole 实装冲刺"]
 ```
 
 ## 3. 分阶段任务清单
@@ -147,25 +147,25 @@ flowchart LR
 | TA-P13-006 | Phase 13 | SDK TS/Python 核心能力一致性校验 | DX + Backend + QA | 1 | TA-P13-001 | sdk parity check script + manifest | 核心方法、API 前缀、错误模型一致 | DONE |
 | TA-P13-007 | Phase 13 | Phase 13 Gate 评审与收口 | TL + QA | 0.5 | TA-P13-002, TA-P13-003, TA-P13-004, TA-P13-005, TA-P13-006 | gate 结论文档 | Phase 13 正式关闭 | DONE |
 | TA-P14-001 | Phase 14 | 冻结产品聚焦边界（回归核心 P2P 应用） | TL + BE + FE + QA | 0.5 | TA-P13-007 | boundary decision doc | Phase 14 范围与 Phase 15 分工冻结 | DONE |
-| TA-P14-002 | Phase 14 | 删除默认 Web 运维面板，保留核心聊天流程 | Frontend | 1 | TA-P14-001 | web app cleanup + build log | 默认界面仅保留核心链路入口，构建通过 | DONE |
+| TA-P14-002 | Phase 14 | 删除默认 Console 运维面板，保留核心聊天流程 | Frontend | 1 | TA-P14-001 | console cleanup + build log | 默认界面仅保留核心链路入口，构建通过 | DONE |
 | TA-P14-003 | Phase 14 | 消息拉取稳定游标改造（替代 offset 风险） | Backend + QA | 1.5 | TA-P14-001 | pull cursor upgrade + tests | 清理/撤回场景下分页稳定无重复/跳项 | DONE |
 | TA-P14-004 | Phase 14 | direct 会话访问控制强化（参与方约束） | Backend + Security | 1.5 | TA-P14-001 | direct ACL guard + tests | 非参与方消息写入被拒绝并返回 RFC7807 | DONE |
 | TA-P14-005 | Phase 14 | TS/Python SDK 核心行为收敛 | DX + Backend + QA | 1 | TA-P14-003, TA-P14-004 | sdk parity extension + checks | 参数、错误语义、返回结构一致 | DONE |
 | TA-P14-006 | Phase 14 | Phase 14 Gate 评审与收口 | TL + QA | 0.5 | TA-P14-002, TA-P14-003, TA-P14-004, TA-P14-005 | gate 结论文档 | Phase 14 正式关闭 | DONE |
-| TA-P15-001 | Phase 15 | Web App 工业级规划总纲冻结 | TL + FE + BE + QA + DX | 1 | TA-P14-001 | industrial planning doc | 功能/架构/平台/质量主线冻结 | DONE |
+| TA-P15-001 | Phase 15 | Console 工业级规划总纲冻结 | TL + FE + BE + QA + DX | 1 | TA-P14-001 | industrial planning doc | 功能/架构/平台/质量主线冻结 | DONE |
 | TA-P15-002 | Phase 15 | 功能域与 IA 设计（会话/消息/群组/身份） | FE + Product + BE | 2 | TA-P15-001 | IA + feature matrix | 关键用户旅程与页面结构冻结 | DONE |
 | TA-P15-003 | Phase 15 | 设计系统与组件规范 | FE + Design | 2 | TA-P15-001 | design tokens + component spec | 主题、组件、可访问性基线可复用 | DONE |
 | TA-P15-004 | Phase 15 | 多平台架构（Web/PWA/Desktop/Mobile） | FE + DX + BE | 2 | TA-P15-001 | platform architecture doc | 共享核心层与平台适配边界冻结 | DONE |
 | TA-P15-005 | Phase 15 | 离线同步与冲突解决策略 | FE + BE + QA | 2 | TA-P15-004 | offline-sync strategy + test plan | 离线队列、重放、冲突策略可验证 | DONE |
 | TA-P15-006 | Phase 15 | 客户端质量体系与发布门禁 | QA + FE + SRE | 1.5 | TA-P15-002, TA-P15-003, TA-P15-004, TA-P15-005 | quality gates + release checklist | 单测/E2E/性能/崩溃门禁成体系 | DONE |
 | TA-P15-007 | Phase 15 | Phase 15 Gate 评审与收口 | TL + QA | 0.5 | TA-P15-006 | gate 结论文档 | Phase 15 正式关闭 | DONE |
-| TA-P16-001 | Phase 16 | Web App 路由化壳层 + 统一 API Client + RFC7807 错误处理 + Web 单测基线（JS 原型） | Frontend + QA | 2 | TA-P15-007 | legacy js runtime prototype | 形成首轮端到端 JS 原型 | DONE |
+| TA-P16-001 | Phase 16 | Console 路由化壳层 + 统一 API Client + RFC7807 错误处理 + Web 单测基线（JS 原型） | Frontend + QA | 2 | TA-P15-007 | legacy js runtime prototype | 形成首轮端到端 JS 原型 | DONE |
 | TA-P16-002 | Phase 16 | 会话域增强（JS 原型） | Frontend + QA | 1.5 | TA-P16-001 | legacy js sessions improvements | 会话拉取/发送交互在 JS 原型上可验证 | DONE |
 | TA-P16-003 | Phase 16 | 群组域增强（JS 原型） | Frontend + Backend + QA | 1.5 | TA-P16-001 | legacy js groups improvements | 群组链路在 JS 原型上可验证 | DONE |
-| TA-P16-004 | Phase 16 | Web App 技术栈重规划（TypeScript + React + Vite） | Frontend + DX + QA | 1.5 | TA-P16-003 | ts/react/vite baseline + migration evidence | JS 原型下线，TS 框架基线可 typecheck/build/test | DONE |
+| TA-P16-004 | Phase 16 | Console 技术栈重规划（TypeScript + React + Vite） | Frontend + DX + QA | 1.5 | TA-P16-003 | ts/react/vite baseline + migration evidence | JS 原型下线，TS 框架基线可 typecheck/build/test | DONE |
 | TA-P16-005 | Phase 16 | 身份与节点诊断增强（TS 基线） | Frontend + Backend | 1 | TA-P16-004 | identity/settings enhancements | 自身份、DID 解析、节点状态展示可验证 | DONE |
-| TA-P16-006 | Phase 16 | Web 契约回归与异常语义测试增强 | QA + Frontend | 1 | TA-P16-004, TA-P16-005 | web contract/e2e checks + manifest | `/api/v1/*`、RFC7807、DID 约束均回归通过 | DONE |
-| TA-P16-007 | Phase 16 | Web 质量收口与 Phase 16 Gate 评审 | Frontend + QA + DX + TL | 1.5 | TA-P16-006 | quality checklist + gate + manifests | Web 交付门禁可重复执行且阶段 Gate PASS | DONE |
+| TA-P16-006 | Phase 16 | Console 契约回归与异常语义测试增强 | QA + Frontend | 1 | TA-P16-004, TA-P16-005 | web contract/e2e checks + manifest | `/api/v1/*`、RFC7807、DID 约束均回归通过 | DONE |
+| TA-P16-007 | Phase 16 | Console 质量收口与 Phase 16 Gate 评审 | Frontend + QA + DX + TL | 1.5 | TA-P16-006 | quality checklist + gate + manifests | Web 交付门禁可重复执行且阶段 Gate PASS | DONE |
 
 ## 4. 执行节奏建议（按部就班）
 
@@ -362,14 +362,14 @@ flowchart LR
 
 | Task ID | 状态 | 证据链接 | 阻塞项 | 下一步动作 |
 | --- | --- | --- | --- | --- |
-| TA-P14-001 | DONE | `docs/implementation/phase-14/ta-p14-001-phase14-product-focus-boundary-2026-03-03.md`, `docs/implementation/phase-14/README.md` | 无 | 进入 `TA-P14-002`（删除默认 Web 运维面板） |
+| TA-P14-001 | DONE | `docs/implementation/phase-14/ta-p14-001-phase14-product-focus-boundary-2026-03-03.md`, `docs/implementation/phase-14/README.md` | 无 | 进入 `TA-P14-002`（删除默认 Console 运维面板） |
 | TA-P14-002 | DONE | `docs/implementation/phase-14/ta-p14-002-web-ops-panel-removal-2026-03-03.md`, `packages/web/src/index.html`, `packages/web/src/main.js` | 无 | 进入 `TA-P14-003`（消息拉取稳定游标改造） |
 | TA-P14-003 | DONE | `docs/implementation/phase-14/ta-p14-003-stable-pull-cursor-2026-03-03.md`, `packages/node/src/services/message-service.ts`, `packages/node/src/storage/message-repository.ts`, `packages/node/src/storage/postgres-message-repository.ts`, `packages/node/src/services/message-service.test.ts`, `packages/node/src/phase4-e2e.test.ts`, `packages/node/scripts/run-phase14-stable-pull-cursor-check.ts`, `docs/implementation/phase-14/logs/2026-03-03-p14-node-build.txt`, `docs/implementation/phase-14/logs/2026-03-03-p14-node-test.txt`, `docs/implementation/phase-14/logs/2026-03-03-p14-stable-pull-cursor-check-run.txt`, `docs/implementation/phase-14/manifests/2026-03-03-p14-stable-pull-cursor-check.json` | 无 | 进入 `TA-P14-004`（direct 会话参与方访问控制） |
 | TA-P14-004 | DONE | `docs/implementation/phase-14/ta-p14-004-direct-session-acl-2026-03-03.md`, `packages/node/src/services/message-service.ts`, `packages/node/src/storage/message-repository.ts`, `packages/node/src/storage/postgres-message-repository.ts`, `packages/node/src/services/message-service.test.ts`, `packages/node/src/phase4-e2e.test.ts`, `packages/node/scripts/run-phase14-direct-session-acl-check.ts`, `docs/implementation/phase-14/logs/2026-03-03-p14-node-build-ta-p14-004.txt`, `docs/implementation/phase-14/logs/2026-03-03-p14-node-test-ta-p14-004.txt`, `docs/implementation/phase-14/logs/2026-03-03-p14-direct-session-acl-check-run.txt`, `docs/implementation/phase-14/manifests/2026-03-03-p14-direct-session-acl-check.json` | 无 | 进入 `TA-P14-005`（TS/Python SDK 行为收敛） |
 | TA-P14-005 | DONE | `docs/implementation/phase-14/ta-p14-005-sdk-parity-and-error-semantics-2026-03-03.md`, `packages/sdk/src/index.test.ts`, `packages/sdk-python/telagent_sdk/client.py`, `packages/sdk-python/tests/test_client.py`, `packages/node/scripts/run-phase14-sdk-parity-check.ts`, `docs/implementation/phase-14/logs/2026-03-03-p14-sdk-ts-test.txt`, `docs/implementation/phase-14/logs/2026-03-03-p14-sdk-python-test.txt`, `docs/implementation/phase-14/logs/2026-03-03-p14-sdk-parity-check-run.txt`, `docs/implementation/phase-14/manifests/2026-03-03-p14-sdk-parity-check.json` | 无 | 进入 `TA-P14-006`（Phase 14 Gate 收口） |
 | TA-P14-006 | DONE | `docs/implementation/phase-14/ta-p14-006-phase14-gate-review-2026-03-03.md`, `docs/implementation/gates/phase-14-gate.md`, `docs/implementation/phase-14/logs/2026-03-03-p14-gate-web-build.txt`, `docs/implementation/phase-14/logs/2026-03-03-p14-gate-node-build.txt`, `docs/implementation/phase-14/logs/2026-03-03-p14-gate-node-test.txt`, `docs/implementation/phase-14/logs/2026-03-03-p14-gate-sdk-ts-test.txt`, `docs/implementation/phase-14/logs/2026-03-03-p14-gate-sdk-python-test.txt`, `docs/implementation/phase-14/logs/2026-03-03-p14-gate-manifest-summary.txt` | 无 | Phase 14 已关闭（PASS），进入 Phase 15 执行准备 |
 
-## 21. Phase 15 Web App 工业级设计与多平台建设（2026-03-03）
+## 21. Phase 15 Console 工业级设计与多平台建设（2026-03-03）
 
 | Task ID | 状态 | 证据链接 | 阻塞项 | 下一步动作 |
 | --- | --- | --- | --- | --- |
@@ -381,7 +381,7 @@ flowchart LR
 | TA-P15-006 | DONE | `docs/implementation/phase-15/ta-p15-006-webapp-quality-gates-and-release-readiness-2026-03-03.md`, `docs/implementation/phase-15/README.md`, `docs/implementation/phase-15/logs/2026-03-03-p15-web-build-ta-p15-006.txt`, `docs/implementation/phase-15/logs/2026-03-03-p15-web-test-ta-p15-006.txt`, `docs/implementation/phase-15/logs/2026-03-03-p15-node-build-ta-p15-006.txt`, `docs/implementation/phase-15/logs/2026-03-03-p15-node-test-ta-p15-006.txt`, `docs/implementation/phase-15/logs/2026-03-03-p15-sdk-ts-test-ta-p15-006.txt`, `docs/implementation/phase-15/logs/2026-03-03-p15-sdk-python-test-ta-p15-006.txt`, `docs/implementation/phase-15/logs/2026-03-03-p15-quality-gates-check-run.txt`, `docs/implementation/phase-15/manifests/2026-03-03-p15-quality-gates-check.json` | 无 | 进入 `TA-P15-007`（Phase 15 Gate 评审与收口） |
 | TA-P15-007 | DONE | `docs/implementation/phase-15/ta-p15-007-phase15-gate-review-2026-03-03.md`, `docs/implementation/gates/phase-15-gate.md`, `docs/implementation/phase-15/logs/2026-03-03-p15-gate-web-build.txt`, `docs/implementation/phase-15/logs/2026-03-03-p15-gate-web-test.txt`, `docs/implementation/phase-15/logs/2026-03-03-p15-gate-node-build.txt`, `docs/implementation/phase-15/logs/2026-03-03-p15-gate-node-test.txt`, `docs/implementation/phase-15/logs/2026-03-03-p15-gate-sdk-ts-test.txt`, `docs/implementation/phase-15/logs/2026-03-03-p15-gate-sdk-python-test.txt`, `docs/implementation/phase-15/logs/2026-03-03-p15-gate-manifest-summary.txt` | 无 | Phase 15 已关闭（PASS），进入 Phase 16 实装冲刺 |
 
-## 22. Phase 16 Web App 实装冲刺（2026-03-03）
+## 22. Phase 16 Console 实装冲刺（2026-03-03）
 
 | Task ID | 状态 | 证据链接 | 阻塞项 | 下一步动作 |
 | --- | --- | --- | --- | --- |
@@ -389,6 +389,6 @@ flowchart LR
 | TA-P16-002 | DONE（SUPERSEDED） | `docs/implementation/phase-16/ta-p16-002-sessions-domain-stability-retry-2026-03-03.md`, `docs/implementation/phase-16/README.md` | 无 | 该 JS 原型增强已被 `TA-P16-004` 技术栈重规划替代 |
 | TA-P16-003 | DONE（SUPERSEDED） | `docs/implementation/phase-16/ta-p16-003-groups-domain-validation-chain-state-linkage-2026-03-03.md`, `docs/implementation/phase-16/README.md` | 无 | 该 JS 原型增强已被 `TA-P16-004` 技术栈重规划替代 |
 | TA-P16-004 | DONE | `docs/implementation/phase-16/ta-p16-004-webapp-ts-react-vite-rebaseline-2026-03-03.md`, `docs/implementation/phase-16/README.md`, `packages/web/package.json`, `packages/web/tsconfig.json`, `packages/web/vite.config.ts`, `packages/web/index.html`, `packages/web/src/main.tsx`, `packages/web/src/App.tsx`, `packages/web/src/core/api-client.ts`, `packages/web/src/core/session-domain.ts`, `packages/web/src/core/group-domain.ts`, `packages/web/src/core/api-client.test.ts`, `packages/web/src/core/session-domain.test.ts`, `packages/web/src/core/group-domain.test.ts`, `packages/web/scripts/run-phase16-ts-framework-check.mjs`, `docs/implementation/phase-16/logs/2026-03-03-p16-web-typecheck-ta-p16-004.txt`, `docs/implementation/phase-16/logs/2026-03-03-p16-web-build-ta-p16-004.txt`, `docs/implementation/phase-16/logs/2026-03-03-p16-web-test-ta-p16-004.txt`, `docs/implementation/phase-16/logs/2026-03-03-p16-ts-framework-check-run.txt`, `docs/implementation/phase-16/manifests/2026-03-03-p16-ts-framework-check.json` | 无 | 进入 `TA-P16-005`（TS 基线下的身份与节点诊断增强） |
-| TA-P16-005 | DONE | `docs/implementation/phase-16/ta-p16-005-identity-node-diagnostics-ts-baseline-2026-03-03.md`, `packages/web/src/core/identity-node-diagnostics.ts`, `packages/web/src/core/identity-node-diagnostics.test.ts`, `packages/web/src/App.tsx`, `packages/web/src/core/api-client.ts`, `packages/web/scripts/run-phase16-identity-node-diagnostics-check.mjs`, `docs/implementation/phase-16/logs/2026-03-03-p16-web-typecheck-ta-p16-005.txt`, `docs/implementation/phase-16/logs/2026-03-03-p16-web-build-ta-p16-005.txt`, `docs/implementation/phase-16/logs/2026-03-03-p16-web-test-ta-p16-005.txt`, `docs/implementation/phase-16/logs/2026-03-03-p16-identity-node-diagnostics-check-run.txt`, `docs/implementation/phase-16/manifests/2026-03-03-p16-identity-node-diagnostics-check.json` | 无 | 进入 `TA-P16-006`（Web 契约回归与异常语义增强） |
+| TA-P16-005 | DONE | `docs/implementation/phase-16/ta-p16-005-identity-node-diagnostics-ts-baseline-2026-03-03.md`, `packages/web/src/core/identity-node-diagnostics.ts`, `packages/web/src/core/identity-node-diagnostics.test.ts`, `packages/web/src/App.tsx`, `packages/web/src/core/api-client.ts`, `packages/web/scripts/run-phase16-identity-node-diagnostics-check.mjs`, `docs/implementation/phase-16/logs/2026-03-03-p16-web-typecheck-ta-p16-005.txt`, `docs/implementation/phase-16/logs/2026-03-03-p16-web-build-ta-p16-005.txt`, `docs/implementation/phase-16/logs/2026-03-03-p16-web-test-ta-p16-005.txt`, `docs/implementation/phase-16/logs/2026-03-03-p16-identity-node-diagnostics-check-run.txt`, `docs/implementation/phase-16/manifests/2026-03-03-p16-identity-node-diagnostics-check.json` | 无 | 进入 `TA-P16-006`（Console 契约回归与异常语义增强） |
 | TA-P16-006 | DONE | `docs/implementation/phase-16/ta-p16-006-web-contract-regression-and-error-semantics-2026-03-03.md`, `packages/web/src/core/api-client.test.ts`, `packages/web/scripts/run-phase16-web-contract-regression-check.mjs`, `docs/implementation/phase-16/logs/2026-03-03-p16-web-test-ta-p16-006.txt`, `docs/implementation/phase-16/logs/2026-03-03-p16-web-contract-regression-check-run.txt`, `docs/implementation/phase-16/manifests/2026-03-03-p16-web-contract-regression-check.json` | 无 | 进入 `TA-P16-007`（质量收口与 Gate） |
 | TA-P16-007 | DONE | `docs/implementation/phase-16/ta-p16-007-phase16-quality-closure-and-gate-2026-03-03.md`, `packages/web/scripts/run-phase16-quality-gate-check.mjs`, `docs/implementation/phase-16/logs/2026-03-03-p16-web-typecheck-ta-p16-007.txt`, `docs/implementation/phase-16/logs/2026-03-03-p16-web-build-ta-p16-007.txt`, `docs/implementation/phase-16/logs/2026-03-03-p16-web-test-ta-p16-007.txt`, `docs/implementation/phase-16/logs/2026-03-03-p16-quality-gate-check-run.txt`, `docs/implementation/phase-16/logs/2026-03-03-p16-gate-manifest-summary.txt`, `docs/implementation/phase-16/manifests/2026-03-03-p16-quality-gate-check.json`, `docs/implementation/gates/phase-16-gate.md` | 无 | Phase 16 已关闭（PASS） |

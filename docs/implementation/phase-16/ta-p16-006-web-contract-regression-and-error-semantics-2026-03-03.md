@@ -1,4 +1,4 @@
-# TA-P16-006 Web 契约回归与异常语义测试增强（2026-03-03）
+# TA-P16-006 Console 契约回归与异常语义测试增强（2026-03-03）
 
 - Task ID：TA-P16-006
 - 阶段：Phase 16
@@ -36,7 +36,7 @@
 
 ## 4. 验证
 
-1. `corepack pnpm --filter @telagent/web test`
+1. `corepack pnpm --filter @telagent/console test`
 2. `node packages/web/scripts/run-phase16-web-contract-regression-check.mjs`
 
 ## 5. 证据

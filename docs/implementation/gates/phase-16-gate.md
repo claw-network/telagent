@@ -1,6 +1,6 @@
 # TelAgent v1 Phase 16 Gate
 
-- Phase：`Phase 16（Web App 实装冲刺）`
+- Phase：`Phase 16（Console 实装冲刺）`
 - Gate 编号：`TA-GATE-P16`
 - 实际评审日期：`2026-03-03`
 - 最近更新：`2026-03-03`
@@ -13,7 +13,7 @@
 - [x] WBS 中 `TA-P16-001` ~ `TA-P16-007` 已更新状态
 - [x] Phase 16 全量任务文档与日志已归档
 - [x] `manifests/` 全量机读清单结论为 `PASS`
-- [x] Web 端质量门禁与专项检查证据已归档
+- [x] Console 端质量门禁与专项检查证据已归档
 
 ## 2) Exit Criteria 核对
 
@@ -21,16 +21,16 @@
 | --- | --- | --- | --- |
 | JS -> TS/React/Vite 技术栈重规划完成（`TA-P16-004`） | PASS | `docs/implementation/phase-16/manifests/2026-03-03-p16-ts-framework-check.json` | `decision=PASS` |
 | 身份与节点诊断增强完成（`TA-P16-005`） | PASS | `docs/implementation/phase-16/manifests/2026-03-03-p16-identity-node-diagnostics-check.json` | DID 解析 + keccak hash + node metrics 诊断 |
-| Web 契约回归与异常语义增强完成（`TA-P16-006`） | PASS | `docs/implementation/phase-16/manifests/2026-03-03-p16-web-contract-regression-check.json` | `/api/v1/*` + RFC7807 + DID 约束 |
+| Console 契约回归与异常语义增强完成（`TA-P16-006`） | PASS | `docs/implementation/phase-16/manifests/2026-03-03-p16-web-contract-regression-check.json` | `/api/v1/*` + RFC7807 + DID 约束 |
 | Phase 16 质量收口完成（`TA-P16-007`） | PASS | `docs/implementation/phase-16/manifests/2026-03-03-p16-quality-gate-check.json` | qualityGateReady=true |
 | manifests 汇总校验通过 | PASS | `docs/implementation/phase-16/logs/2026-03-03-p16-gate-manifest-summary.txt` | `failed=0` |
-| Web 质量门禁通过 | PASS | `docs/implementation/phase-16/logs/2026-03-03-p16-web-typecheck-ta-p16-007.txt`, `docs/implementation/phase-16/logs/2026-03-03-p16-web-build-ta-p16-007.txt`, `docs/implementation/phase-16/logs/2026-03-03-p16-web-test-ta-p16-007.txt` | `typecheck/build/test` 全通过 |
+| Console 质量门禁通过 | PASS | `docs/implementation/phase-16/logs/2026-03-03-p16-web-typecheck-ta-p16-007.txt`, `docs/implementation/phase-16/logs/2026-03-03-p16-web-build-ta-p16-007.txt`, `docs/implementation/phase-16/logs/2026-03-03-p16-web-test-ta-p16-007.txt` | `typecheck/build/test` 全通过 |
 
 ## 3) 风险与阻塞
 
 | 风险/阻塞 | 影响 | Owner | 截止日期 | 状态 |
 | --- | --- | --- | --- | --- |
-| 当前 Web 端回归以 domain/client 单测为主，尚未引入浏览器级 E2E 回归 | UI 交互级回归覆盖度有限 | FE + QA | 下一阶段 | ACCEPTED |
+| 当前 Console 端回归以 domain/client 单测为主，尚未引入浏览器级 E2E 回归 | UI 交互级回归覆盖度有限 | FE + QA | 下一阶段 | ACCEPTED |
 | 无新增硬阻塞项 | - | - | - | N/A |
 
 ## 4) 条件放行补丁项（仅 CONDITIONAL PASS 填写）

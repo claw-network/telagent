@@ -40,9 +40,9 @@
 
 ## 4. 验证
 
-1. `corepack pnpm --filter @telagent/web typecheck`
-2. `corepack pnpm --filter @telagent/web build`
-3. `corepack pnpm --filter @telagent/web test`
+1. `corepack pnpm --filter @telagent/console typecheck`
+2. `corepack pnpm --filter @telagent/console build`
+3. `corepack pnpm --filter @telagent/console test`
 4. `node packages/web/scripts/run-phase16-identity-node-diagnostics-check.mjs`
 
 ## 5. 证据

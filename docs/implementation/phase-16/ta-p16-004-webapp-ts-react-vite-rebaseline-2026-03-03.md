@@ -1,4 +1,4 @@
-# TA-P16-004 Web App 技术栈重规划（TypeScript + React + Vite）（2026-03-03）
+# TA-P16-004 Console 技术栈重规划（TypeScript + React + Vite）（2026-03-03）
 
 - Task ID：TA-P16-004
 - 阶段：Phase 16
@@ -7,7 +7,7 @@
 
 ## 1. 背景与目标
 
-根据最新纠偏要求，Phase 16 已完成的 Web JS 方案不再作为后续基线，统一切换为：
+根据最新纠偏要求，Phase 16 已完成的 Console JS 方案不再作为后续基线，统一切换为：
 
 1. `TypeScript` 强类型代码基线；
 2. `React + Vite` 现代化前端框架与构建链；
@@ -16,7 +16,7 @@
 ## 2. 本次重构摘要
 
 1. 工程链路重建：
-   - `@telagent/web` 脚本改为 `vite` / `vitest` / `tsc`；
+   - `@telagent/console` 脚本改为 `vite` / `vitest` / `tsc`；
    - 新增 `tsconfig.json`、`vite.config.ts`、根 `index.html`。
 2. 代码迁移为 TS + React：
    - 入口与路由壳层迁移到 `main.tsx` + `App.tsx`；
@@ -53,9 +53,9 @@
 
 ## 5. 验证
 
-1. `corepack pnpm --filter @telagent/web typecheck`
-2. `corepack pnpm --filter @telagent/web build`
-3. `corepack pnpm --filter @telagent/web test`
+1. `corepack pnpm --filter @telagent/console typecheck`
+2. `corepack pnpm --filter @telagent/console build`
+3. `corepack pnpm --filter @telagent/console test`
 4. `node packages/web/scripts/run-phase16-ts-framework-check.mjs`
 
 ## 6. 证据

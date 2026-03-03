@@ -38,9 +38,9 @@
 | Phase 5 | 1 周 | MVP 验收 | SLO 达标、故障演练通过、readiness 完成 |
 | Phase 12 | 滚动 | v1.2 候选池冻结与执行排程 | 候选池冻结完成并进入首个 MUST 任务 |
 | Phase 13 | 滚动 | v0.2.0 稳定化与可运营增强 | 压测、灾备、审计归档、联邦重放保护、SDK 一致性全部通过 Gate |
-| Phase 14 | 滚动 | 产品聚焦与缺陷收敛 | 默认 Web 界面回归核心聊天流程，关键一致性缺陷进入收敛闭环 |
-| Phase 15 | 滚动 | Web App 工业级设计与多平台建设 | 功能域、架构、设计系统、多平台、质量门禁形成完整执行框架 |
-| Phase 16 | 滚动 | Web App 实装冲刺（核心交互与质量基线） | 路由化壳层、统一 API 客户端、RFC7807 错误链路、Web 自动化测试基线落地 |
+| Phase 14 | 滚动 | 产品聚焦与缺陷收敛 | 默认 Console 界面回归核心聊天流程，关键一致性缺陷进入收敛闭环 |
+| Phase 15 | 滚动 | Console 工业级设计与多平台建设 | 功能域、架构、设计系统、多平台、质量门禁形成完整执行框架 |
+| Phase 16 | 滚动 | Console 实装冲刺（核心交互与质量基线） | 路由化壳层、统一 API 客户端、RFC7807 错误链路、Web 自动化测试基线落地 |
 
 ## 5. 分阶段执行细节
 
@@ -232,7 +232,7 @@
 ### 关键工作
 
 1. 冻结 Phase 14 产品聚焦边界（`TA-P14-001`）；
-2. 从默认 Web App 删除运维面板，保留核心聊天流程（`TA-P14-002`）；
+2. 从默认 Console 删除运维面板，保留核心聊天流程（`TA-P14-002`）；
 3. 推进消息拉取稳定游标改造，修复 offset 光标在清理/撤回后不稳定风险（`TA-P14-003`）；
 4. 强化 direct 会话访问控制，限制非参与方写入（`TA-P14-004`）；
 5. 收敛 TS/Python SDK 高优先行为差异（`TA-P14-005`）；
@@ -247,16 +247,16 @@
 
 ### Exit Criteria
 
-- 默认 Web 界面不再包含运维面板；
+- 默认 Console 界面不再包含运维面板；
 - 核心聊天主路径可用（create/invite/accept/send/pull）；
 - `TA-P14-003` ~ `TA-P14-005` 验收通过；
 - Phase 14 Gate 结论为 `PASS`。
 
-## 5.10 Phase 15（Web App 工业级设计与多平台建设）
+## 5.10 Phase 15（Console 工业级设计与多平台建设）
 
 ### 关键工作
 
-1. 冻结 Web App 工业级规划总纲（`TA-P15-001`）；
+1. 冻结 Console 工业级规划总纲（`TA-P15-001`）；
 2. 定义功能域与信息架构（会话、消息、群组、身份、安全）；
 3. 定义设计系统（组件、令牌、主题、可访问性）；
 4. 定义多平台架构（Web/PWA/Desktop/Mobile）与共享核心层；
@@ -277,7 +277,7 @@
 - 风险项与依赖项完成归档并可追踪；
 - Phase 15 启动评审通过。
 
-## 5.11 Phase 16（Web App 实装冲刺）
+## 5.11 Phase 16（Console 实装冲刺）
 
 ### 关键工作
 
@@ -291,14 +291,14 @@
 ### 交付物
 
 - Phase 16 任务与证据文档（`docs/implementation/phase-16/`）；
-- Web 端 TS 代码基线（`packages/web/src/*` + `packages/web/scripts/*`）；
+- Console 端 TS 代码基线（`packages/web/src/*` + `packages/web/scripts/*`）；
 - Web 构建/测试日志与专项检查 manifest；
 - Phase 16 WBS 与迭代看板同步条目。
 
 ### Exit Criteria
 
 - `TA-P16-001` ~ `TA-P16-007` 全部完成并具备可验证证据；
-- Web API 调用路径仅使用 `/api/v1/*`；
+- Console API 调用路径仅使用 `/api/v1/*`；
 - DID 输入校验仅接受 `did:claw:*`；
 - RFC7807 错误链路可在 Web 侧稳定识别并展示；
 - Phase 16 Gate 结论为 `PASS`。
@@ -308,7 +308,7 @@
 - `TA-P16-001` ~ `TA-P16-003`：DONE（历史 JS 原型归档，已 superseded）；
 - `TA-P16-004`：DONE（TS/React/Vite 技术栈重规划）；
 - `TA-P16-005`：DONE（身份与节点诊断增强，含 `keccak256(utf8(did))` 诊断）；
-- `TA-P16-006`：DONE（Web 契约回归与异常语义增强）；
+- `TA-P16-006`：DONE（Console 契约回归与异常语义增强）；
 - `TA-P16-007`：DONE（质量门禁 + Gate 收口）；
 - Gate 结论：`docs/implementation/gates/phase-16-gate.md` = `PASS`。
 

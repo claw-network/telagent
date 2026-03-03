@@ -3,7 +3,7 @@
 - 文档版本：v1.0
 - 基线计划起始日：2026-03-02（周一）
 - 基线计划结束日：2026-05-17（周日）
-- 适用范围：Phase 0 -> Phase 16（发布后改进 + 联邦灰度兼容 + 自动化回滚 + v1.1/v1.2/v0.2.0 + WebApp 工业化增强 + WebApp 实装冲刺）
+- 适用范围：Phase 0 -> Phase 16（发布后改进 + 联邦灰度兼容 + 自动化回滚 + v1.1/v1.2/v0.2.0 + Console 工业化增强 + Console 实装冲刺）
 
 ## 1. 看板目的
 
@@ -222,24 +222,24 @@
 - 已完成：`TA-P13-006`（SDK TS/Python 一致性校验）
 - 已完成：`TA-P13-007`（Phase 13 Gate 评审与收口）
 - 已完成：`TA-P14-001`（Phase 14 产品聚焦边界冻结）
-- 已完成：`TA-P14-002`（默认 Web 运维面板下线，回归核心聊天流程）
+- 已完成：`TA-P14-002`（默认 Console 运维面板下线，回归核心聊天流程）
 - 已完成：`TA-P14-003`（消息拉取稳定游标改造，修复 cleanup/retraction 导致分页跳项风险）
 - 已完成：`TA-P14-004`（direct 会话参与方访问控制，非参与方写入返回 RFC7807）
 - 已完成：`TA-P14-005`（TS/Python SDK 行为与错误语义收敛，覆盖 FORBIDDEN direct ACL 场景）
 - 已完成：`TA-P14-006`（Phase 14 Gate 收口，阶段关闭）
-- 已完成：`TA-P15-001`（WebApp 工业级规划总纲冻结）
-- 已完成：`TA-P15-002`（WebApp 功能域与 IA 冻结）
-- 已完成：`TA-P15-003`（WebApp 设计系统与组件规范冻结）
-- 已完成：`TA-P15-004`（WebApp 多平台架构冻结）
-- 已完成：`TA-P15-005`（WebApp 离线同步与冲突策略冻结）
-- 已完成：`TA-P15-006`（WebApp 客户端质量体系与发布门禁冻结）
+- 已完成：`TA-P15-001`（Console 工业级规划总纲冻结）
+- 已完成：`TA-P15-002`（Console 功能域与 IA 冻结）
+- 已完成：`TA-P15-003`（Console 设计系统与组件规范冻结）
+- 已完成：`TA-P15-004`（Console 多平台架构冻结）
+- 已完成：`TA-P15-005`（Console 离线同步与冲突策略冻结）
+- 已完成：`TA-P15-006`（Console 客户端质量体系与发布门禁冻结）
 - 已完成：`TA-P15-007`（Phase 15 Gate 收口，阶段关闭）
-- 已完成：`TA-P16-001`（Web JS 原型壳层，后续由 TA-P16-004 替代）
-- 已完成：`TA-P16-002`（Web JS 原型会话增强，后续由 TA-P16-004 替代）
-- 已完成：`TA-P16-003`（Web JS 原型群组增强，后续由 TA-P16-004 替代）
-- 已完成：`TA-P16-004`（Web App 技术栈重规划：TypeScript + React + Vite）
+- 已完成：`TA-P16-001`（Console JS 原型壳层，后续由 TA-P16-004 替代）
+- 已完成：`TA-P16-002`（Console JS 原型会话增强，后续由 TA-P16-004 替代）
+- 已完成：`TA-P16-003`（Console JS 原型群组增强，后续由 TA-P16-004 替代）
+- 已完成：`TA-P16-004`（Console 技术栈重规划：TypeScript + React + Vite）
 - 已完成：`TA-P16-005`（TS 基线身份与节点诊断增强，含 DID hash 与节点运行态）
-- 已完成：`TA-P16-006`（Web 契约回归与异常语义测试增强）
+- 已完成：`TA-P16-006`（Console 契约回归与异常语义测试增强）
 - 已完成：`TA-P16-007`（质量收口与 Phase 16 Gate 评审）
 - 当前结论：Phase 16 已关闭（PASS）。
 
@@ -324,7 +324,7 @@
 - `TA-P6-002`：DONE（多实例共享状态 ADR 已冻结，见 `docs/implementation/phase-6/ta-p6-002-mailbox-multi-instance-adr-2026-03-03.md`）。
 - `TA-P6-003`：DONE（store adapter + Postgres backend 已实现，见 `docs/implementation/phase-6/ta-p6-003-mailbox-store-adapter-postgres-2026-03-03.md`）。
 - `TA-P6-004`：DONE（Phase 6 Gate=PASS，见 `docs/implementation/phase-6/ta-p6-004-phase6-gate-review-2026-03-03.md`）。
-- 构建结果：`@telagent/web` build 通过（日志：`docs/implementation/phase-5/logs/2026-03-03-p5-web-build.txt`）。
+- 构建结果：`@telagent/console` build 通过（日志：`docs/implementation/phase-5/logs/2026-03-03-p5-web-build.txt`）。
 - 回归结果：`@telagent/node` 与 workspace tests 通过（日志：`docs/implementation/phase-5/logs/2026-03-03-p5-node-test.txt`, `docs/implementation/phase-5/logs/2026-03-03-p5-workspace-test.txt`）。
 - 阶段状态：Phase 5 已关闭（Gate=PASS），Phase 6 发布后改进已完成并关闭（Gate=PASS）。
 
@@ -428,16 +428,16 @@
 ## 4.19 Phase 14 产品聚焦与缺陷收敛快照（2026-03-03）
 
 - `TA-P14-001`：DONE（产品聚焦边界冻结，见 `docs/implementation/phase-14/ta-p14-001-phase14-product-focus-boundary-2026-03-03.md`）。
-- `TA-P14-002`：DONE（默认 Web 运维面板下线，见 `docs/implementation/phase-14/ta-p14-002-web-ops-panel-removal-2026-03-03.md`）。
+- `TA-P14-002`：DONE（默认 Console 运维面板下线，见 `docs/implementation/phase-14/ta-p14-002-web-ops-panel-removal-2026-03-03.md`）。
 - `TA-P14-003`：DONE（消息拉取稳定游标改造，见 `docs/implementation/phase-14/ta-p14-003-stable-pull-cursor-2026-03-03.md`）。
 - `TA-P14-004`：DONE（direct 会话参与方访问控制，见 `docs/implementation/phase-14/ta-p14-004-direct-session-acl-2026-03-03.md`）。
 - `TA-P14-005`：DONE（TS/Python SDK 行为收敛，见 `docs/implementation/phase-14/ta-p14-005-sdk-parity-and-error-semantics-2026-03-03.md`）。
 - `TA-P14-006`：DONE（Phase 14 Gate 收口，见 `docs/implementation/phase-14/ta-p14-006-phase14-gate-review-2026-03-03.md` 与 `docs/implementation/gates/phase-14-gate.md`）。
 - 阶段状态：Phase 14 已关闭（Gate=PASS）。
 
-## 4.20 Phase 15 Web App 工业级设计与多平台快照（2026-03-03）
+## 4.20 Phase 15 Console 工业级设计与多平台快照（2026-03-03）
 
-- `TA-P15-001`：DONE（Web App 工业级规划总纲冻结，见 `docs/implementation/phase-15/ta-p15-001-webapp-industrial-program-2026-03-03.md`）。
+- `TA-P15-001`：DONE（Console 工业级规划总纲冻结，见 `docs/implementation/phase-15/ta-p15-001-webapp-industrial-program-2026-03-03.md`）。
 - `TA-P15-002`：DONE（功能域与 IA 冻结，见 `docs/implementation/phase-15/ta-p15-002-webapp-functional-ia-freeze-2026-03-03.md` 与 `docs/implementation/phase-15/manifests/2026-03-03-p15-functional-ia-check.json`）。
 - `TA-P15-003`：DONE（设计系统与组件规范冻结，见 `docs/implementation/phase-15/ta-p15-003-webapp-design-system-and-component-spec-2026-03-03.md` 与 `docs/implementation/phase-15/manifests/2026-03-03-p15-design-system-check.json`）。
 - `TA-P15-004`：DONE（多平台架构与共享核心层冻结，见 `docs/implementation/phase-15/ta-p15-004-webapp-multi-platform-architecture-2026-03-03.md` 与 `docs/implementation/phase-15/manifests/2026-03-03-p15-platform-architecture-check.json`）。
@@ -446,14 +446,14 @@
 - `TA-P15-007`：DONE（Phase 15 Gate 收口，见 `docs/implementation/phase-15/ta-p15-007-phase15-gate-review-2026-03-03.md` 与 `docs/implementation/gates/phase-15-gate.md`）。
 - 阶段状态：Phase 15 已关闭（PASS）。
 
-## 4.21 Phase 16 Web App 实装冲刺快照（2026-03-03）
+## 4.21 Phase 16 Console 实装冲刺快照（2026-03-03）
 
 - `TA-P16-001`：DONE（历史 JS 原型，已 superseded）。
 - `TA-P16-002`：DONE（历史 JS 原型增强，已 superseded）。
 - `TA-P16-003`：DONE（历史 JS 原型增强，已 superseded）。
 - `TA-P16-004`：DONE（技术栈重规划完成，见 `docs/implementation/phase-16/ta-p16-004-webapp-ts-react-vite-rebaseline-2026-03-03.md`）。
 - `TA-P16-005`：DONE（身份与节点诊断增强，见 `docs/implementation/phase-16/ta-p16-005-identity-node-diagnostics-ts-baseline-2026-03-03.md` 与 `docs/implementation/phase-16/manifests/2026-03-03-p16-identity-node-diagnostics-check.json`）。
-- `TA-P16-006`：DONE（Web 契约回归与异常语义增强，见 `docs/implementation/phase-16/ta-p16-006-web-contract-regression-and-error-semantics-2026-03-03.md` 与 `docs/implementation/phase-16/manifests/2026-03-03-p16-web-contract-regression-check.json`）。
+- `TA-P16-006`：DONE（Console 契约回归与异常语义增强，见 `docs/implementation/phase-16/ta-p16-006-web-contract-regression-and-error-semantics-2026-03-03.md` 与 `docs/implementation/phase-16/manifests/2026-03-03-p16-web-contract-regression-check.json`）。
 - `TA-P16-007`：DONE（质量收口与 Gate，见 `docs/implementation/phase-16/ta-p16-007-phase16-quality-closure-and-gate-2026-03-03.md`、`docs/implementation/phase-16/manifests/2026-03-03-p16-quality-gate-check.json`、`docs/implementation/gates/phase-16-gate.md`）。
 - Phase 16 manifests 汇总：`docs/implementation/phase-16/logs/2026-03-03-p16-gate-manifest-summary.txt`（`failed=0`）。
 - 阶段状态：Phase 16 已关闭（PASS）。
