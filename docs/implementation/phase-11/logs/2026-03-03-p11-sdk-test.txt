@@ -1,0 +1,23 @@
+.                                        |  WARN  Unsupported engine: wanted: {"node":">=22 <25"} (current: {"node":"v25.6.1","pnpm":"10.18.1"})
+
+> @telagent/sdk@0.1.0 pretest /Users/xiasenhai/workspace/private-repo/Bots/telagent/packages/sdk
+> pnpm build
+
+
+> @telagent/sdk@0.1.0 build /Users/xiasenhai/workspace/private-repo/Bots/telagent/packages/sdk
+> tsc -p tsconfig.json
+
+
+> @telagent/sdk@0.1.0 test /Users/xiasenhai/workspace/private-repo/Bots/telagent/packages/sdk
+> node --test dist/**/*.test.js
+
+✔ TA-P11-008 SDK quickstart covers create-group and send/pull message flow (35.762875ms)
+✔ TA-P11-008 SDK maps RFC7807 errors to TelagentSdkError (10.927917ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 2
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 218.186584

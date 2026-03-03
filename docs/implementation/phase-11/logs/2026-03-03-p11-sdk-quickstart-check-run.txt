@@ -1,0 +1,7 @@
+.                                        |  WARN  Unsupported engine: wanted: {"node":">=22 <25"} (current: {"node":"v25.6.1","pnpm":"10.18.1"})
+[TA-P11-008] createGroupOk=true
+[TA-P11-008] sendMessageOk=true
+[TA-P11-008] pullMessageOk=true
+[TA-P11-008] integratesWithin30Minutes=true elapsedMs=18
+[TA-P11-008] decision=PASS
+[TA-P11-008] output=/Users/xiasenhai/workspace/private-repo/Bots/telagent/docs/implementation/phase-11/manifests/2026-03-03-p11-sdk-quickstart-check.json
