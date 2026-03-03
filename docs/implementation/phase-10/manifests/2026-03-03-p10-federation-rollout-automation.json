@@ -1,0 +1,101 @@
+{
+  "phase": "Phase 10",
+  "taskId": "TA-P10-002",
+  "generatedAt": "2026-03-03T06:28:27.297Z",
+  "config": {
+    "currentProtocolVersion": "v2",
+    "targetProtocolVersion": "v3",
+    "supportedProtocolVersions": [
+      "v2",
+      "v3"
+    ],
+    "totalNodes": 8,
+    "canaryPercent": 20
+  },
+  "summary": {
+    "stages": 3,
+    "coveredNodes": 8,
+    "uniqueCoveredNodes": 8,
+    "duplicateAssignments": 0,
+    "missingAssignments": 0
+  },
+  "decision": "PASS",
+  "stages": [
+    {
+      "stageId": "P10-ROLLOUT-S1",
+      "description": "Canary 10-20% rollout",
+      "nodes": [
+        {
+          "domain": "node-a.tel",
+          "region": "cn-sh"
+        },
+        {
+          "domain": "node-b.tel",
+          "region": "cn-bj"
+        }
+      ],
+      "prechecks": [
+        "protocol compatibility check script PASS",
+        "per-node config backup completed",
+        "federation node-info baseline captured"
+      ],
+      "successCriteria": [
+        "no incompatibility spikes in 15 minutes",
+        "unsupportedProtocolRejected growth remains expected",
+        "federation health endpoints healthy"
+      ]
+    },
+    {
+      "stageId": "P10-ROLLOUT-S2",
+      "description": "Mid-wave rollout to 50% of remaining nodes",
+      "nodes": [
+        {
+          "domain": "node-c.tel",
+          "region": "sg"
+        },
+        {
+          "domain": "node-d.tel",
+          "region": "jp"
+        },
+        {
+          "domain": "node-e.tel",
+          "region": "eu-de"
+        }
+      ],
+      "prechecks": [
+        "Stage 1 canary approval signed by TL/SRE",
+        "rollback script dry-run completed"
+      ],
+      "successCriteria": [
+        "cross-region federation sync latency within SLO",
+        "no split-brain conflict anomalies"
+      ]
+    },
+    {
+      "stageId": "P10-ROLLOUT-S3",
+      "description": "Full rollout to remaining nodes",
+      "nodes": [
+        {
+          "domain": "node-f.tel",
+          "region": "us-va"
+        },
+        {
+          "domain": "node-g.tel",
+          "region": "us-ca"
+        },
+        {
+          "domain": "node-h.tel",
+          "region": "br-sp"
+        }
+      ],
+      "prechecks": [
+        "Stage 2 approval signed by TL/SRE",
+        "rollback guardrail enabled"
+      ],
+      "successCriteria": [
+        "all nodes on target protocol",
+        "rollback checkpoints archived"
+      ]
+    }
+  ]
+}

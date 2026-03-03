@@ -28,7 +28,7 @@
 
 | 风险/阻塞 | 影响 | Owner | 截止日期 | 状态 |
 | --- | --- | --- | --- | --- |
-| 灰度发布窗口缺少自动化编排与一键回滚剧本 | 影响多域升级操作稳定性 | SRE/BE | 2026-03-16 | Accepted（Phase 10 收口） |
+| 灰度发布窗口缺少自动化编排与一键回滚剧本 | 影响多域升级操作稳定性 | SRE/BE | 2026-03-16 | Closed（Phase 10 已收口，见 `docs/implementation/gates/phase-10-gate.md`） |
 
 ## 4) 条件放行补丁项（仅 CONDITIONAL PASS 填写）
 

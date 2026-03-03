@@ -6,7 +6,7 @@
 
 ## 1. 使用说明
 
-- **执行顺序**：按 `Phase 0 -> Phase 9` 串行推进，禁止跨 Gate 跳阶段。
+- **执行顺序**：按 `Phase 0 -> Phase 10` 串行推进，禁止跨 Gate 跳阶段。
 - **状态字段**：`TODO | IN_PROGRESS | BLOCKED | DONE`。
 - **估算单位**：人日（PD）。
 - **依赖格式**：`-` 表示无依赖；多个依赖用逗号分隔任务 ID。
@@ -25,6 +25,7 @@ flowchart LR
   P6 --> P7["Phase 7\nPostgres 压测与故障演练"]
   P7 --> P8["Phase 8\n联邦韧性与可观测增强"]
   P8 --> P9["Phase 9\n联邦灰度兼容矩阵"]
+  P9 --> P10["Phase 10\n联邦灰度发布自动化与回滚编排"]
 ```
 
 ## 3. 分阶段任务清单
@@ -110,6 +111,10 @@ flowchart LR
 | TA-P9-002 | Phase 9 | 实现 federation 协议版本兼容矩阵与拒绝策略 | Backend Engineer | 1.5 | TA-P9-001 | federation compatibility guard | 兼容版本放行，不兼容版本 RFC7807 拒绝 | DONE |
 | TA-P9-003 | Phase 9 | 灰度兼容脚本与机读清单（v1/v2/v3） | Backend Engineer + QA | 1 | TA-P9-002 | protocol check script + manifest | 4/4 场景 PASS，计数准确 | DONE |
 | TA-P9-004 | Phase 9 | Phase 9 Gate 评审与收口 | TL + QA | 0.5 | TA-P9-003 | gate 结论文档 | Phase 9 正式关闭 | DONE |
+| TA-P10-001 | Phase 10 | 冻结联邦灰度发布自动化与回滚演练边界/验收标准 | TL + BE + SRE + QA | 0.5 | TA-P9-004 | Phase 10 boundary doc | 范围、验收、证据模板冻结 | DONE |
+| TA-P10-002 | Phase 10 | 联邦灰度发布自动化编排脚本与机读清单 | Backend Engineer + SRE | 1 | TA-P10-001 | rollout automation script + manifest | 节点覆盖完整且 `decision=PASS` | DONE |
+| TA-P10-003 | Phase 10 | 联邦应急回滚演练脚本与机读清单 | Backend Engineer + QA | 1 | TA-P10-002 | rollback drill script + manifest | 演练结果 `decision=PASS` 且回滚步骤可复用 | DONE |
+| TA-P10-004 | Phase 10 | Phase 10 Gate 评审与收口 | TL + QA | 0.5 | TA-P10-003 | gate 结论文档 | Phase 10 正式关闭 | DONE |
 
 ## 4. 执行节奏建议（按部就班）
 
@@ -223,7 +228,7 @@ flowchart LR
 | TA-P6-001 | DONE | `docs/implementation/phase-6/ta-p6-001-mailbox-persistence-2026-03-03.md`, `packages/node/src/storage/message-repository.ts`, `packages/node/src/services/message-service.ts`, `packages/node/src/services/message-service.test.ts`, `packages/node/scripts/run-phase6-mailbox-persistence-check.ts`, `docs/implementation/phase-6/manifests/2026-03-03-p6-mailbox-persistence-check.json`, `docs/implementation/phase-6/logs/2026-03-03-p6-node-test.txt`, `docs/implementation/phase-6/logs/2026-03-03-p6-mailbox-persistence-check-run.txt` | 无 | 进入 `TA-P6-002` 多实例共享状态方案设计 |
 | TA-P6-002 | DONE | `docs/implementation/phase-6/ta-p6-002-mailbox-multi-instance-adr-2026-03-03.md`, `docs/implementation/phase-6/manifests/2026-03-03-p6-mailbox-multi-instance-adr.json`, `docs/implementation/phase-6/README.md` | 无 | 进入 `TA-P6-003`（store adapter + Postgres backend 实现） |
 | TA-P6-003 | DONE | `docs/implementation/phase-6/ta-p6-003-mailbox-store-adapter-postgres-2026-03-03.md`, `packages/node/src/storage/mailbox-store.ts`, `packages/node/src/storage/postgres-message-repository.ts`, `packages/node/src/config.ts`, `packages/node/src/app.ts`, `packages/node/src/services/message-service.ts`, `packages/node/src/config.test.ts`, `packages/node/scripts/run-phase6-store-backend-check.ts`, `docs/implementation/phase-6/manifests/2026-03-03-p6-store-backend-check.json`, `docs/implementation/phase-6/logs/2026-03-03-p6-store-backend-check-run.txt` | 无 | 进入 `TA-P6-004`（发布后稳定性回归与 Gate） |
-| TA-P6-004 | DONE | `docs/implementation/phase-6/ta-p6-004-phase6-gate-review-2026-03-03.md`, `docs/implementation/gates/phase-6-gate.md`, `docs/implementation/phase-6/README.md`, `docs/implementation/phase-6/logs/2026-03-03-p6-workspace-test.txt` | 无 | Phase 6 已关闭；Phase 7/Phase 8/Phase 9 已收口，进入 Phase 10 规划 |
+| TA-P6-004 | DONE | `docs/implementation/phase-6/ta-p6-004-phase6-gate-review-2026-03-03.md`, `docs/implementation/gates/phase-6-gate.md`, `docs/implementation/phase-6/README.md`, `docs/implementation/phase-6/logs/2026-03-03-p6-workspace-test.txt` | 无 | Phase 6 已关闭；Phase 7/Phase 8/Phase 9/Phase 10 已收口，进入联邦跨域常态运维 |
 
 ## 13. Phase 7 Postgres 集群压测与故障演练（2026-03-03）
 
@@ -232,7 +237,7 @@ flowchart LR
 | TA-P7-001 | DONE | `docs/implementation/phase-7/ta-p7-001-phase7-boundary-acceptance-2026-03-03.md`, `docs/implementation/phase-7/README.md` | 无 | 进入 `TA-P7-002` 多实例一致性校验 |
 | TA-P7-002 | DONE | `docs/implementation/phase-7/ta-p7-002-postgres-multi-instance-check-2026-03-03.md`, `packages/node/scripts/run-phase7-postgres-multi-instance-check.ts`, `docs/implementation/phase-7/manifests/2026-03-03-p7-postgres-multi-instance-check.json`, `docs/implementation/phase-7/logs/2026-03-03-p7-postgres-multi-instance-check-run.txt` | 无 | 进入 `TA-P7-003` 故障演练 |
 | TA-P7-003 | DONE | `docs/implementation/phase-7/ta-p7-003-postgres-fault-drill-2026-03-03.md`, `packages/node/scripts/run-phase7-postgres-fault-drill.ts`, `docs/implementation/phase-7/manifests/2026-03-03-p7-postgres-fault-drill.json`, `docs/implementation/phase-7/logs/2026-03-03-p7-postgres-fault-drill-run.txt` | 无 | 进入 `TA-P7-004` Gate 收口 |
-| TA-P7-004 | DONE | `docs/implementation/phase-7/ta-p7-004-phase7-gate-review-2026-03-03.md`, `docs/implementation/gates/phase-7-gate.md`, `docs/implementation/phase-7/logs/2026-03-03-p7-node-build.txt`, `docs/implementation/phase-7/logs/2026-03-03-p7-node-test.txt` | 无 | Phase 7 已关闭，Phase 8/Phase 9 已收口，进入 Phase 10 规划 |
+| TA-P7-004 | DONE | `docs/implementation/phase-7/ta-p7-004-phase7-gate-review-2026-03-03.md`, `docs/implementation/gates/phase-7-gate.md`, `docs/implementation/phase-7/logs/2026-03-03-p7-node-build.txt`, `docs/implementation/phase-7/logs/2026-03-03-p7-node-test.txt` | 无 | Phase 7 已关闭，Phase 8/Phase 9/Phase 10 已收口，进入联邦跨域常态运维 |
 
 ## 14. Phase 8 联邦韧性与可观测增强（2026-03-03）
 
@@ -241,7 +246,7 @@ flowchart LR
 | TA-P8-001 | DONE | `docs/implementation/phase-8/ta-p8-001-phase8-boundary-acceptance-2026-03-03.md`, `docs/implementation/phase-8/README.md` | 无 | 进入 `TA-P8-002` 联邦状态同步韧性改造 |
 | TA-P8-002 | DONE | `docs/implementation/phase-8/ta-p8-002-federation-state-version-guard-2026-03-03.md`, `packages/node/src/services/federation-service.ts`, `packages/node/src/services/federation-service.test.ts`, `packages/node/src/api/routes/federation.ts`, `packages/node/src/api-contract.test.ts` | 无 | 进入 `TA-P8-003` 脚本化演练 |
 | TA-P8-003 | DONE | `docs/implementation/phase-8/ta-p8-003-federation-resilience-check-2026-03-03.md`, `packages/node/scripts/run-phase8-federation-resilience-check.ts`, `docs/implementation/phase-8/manifests/2026-03-03-p8-federation-resilience-check.json`, `docs/implementation/phase-8/logs/2026-03-03-p8-federation-resilience-check-run.txt` | 无 | 进入 `TA-P8-004` Gate 收口 |
-| TA-P8-004 | DONE | `docs/implementation/phase-8/ta-p8-004-phase8-gate-review-2026-03-03.md`, `docs/implementation/gates/phase-8-gate.md`, `docs/implementation/phase-8/logs/2026-03-03-p8-node-build.txt`, `docs/implementation/phase-8/logs/2026-03-03-p8-node-test.txt`, `docs/implementation/phase-8/logs/2026-03-03-p8-workspace-test.txt` | 无 | Phase 8 已关闭，Phase 9 已收口，进入 Phase 10 规划 |
+| TA-P8-004 | DONE | `docs/implementation/phase-8/ta-p8-004-phase8-gate-review-2026-03-03.md`, `docs/implementation/gates/phase-8-gate.md`, `docs/implementation/phase-8/logs/2026-03-03-p8-node-build.txt`, `docs/implementation/phase-8/logs/2026-03-03-p8-node-test.txt`, `docs/implementation/phase-8/logs/2026-03-03-p8-workspace-test.txt` | 无 | Phase 8 已关闭，Phase 9/Phase 10 已收口，进入联邦跨域常态运维 |
 
 ## 15. Phase 9 联邦跨域运行手册与灰度兼容（2026-03-03）
 
@@ -250,4 +255,14 @@ flowchart LR
 | TA-P9-001 | DONE | `docs/implementation/phase-9/ta-p9-001-phase9-boundary-acceptance-2026-03-03.md`, `docs/implementation/phase-9/README.md` | 无 | 进入 `TA-P9-002` 兼容矩阵实现 |
 | TA-P9-002 | DONE | `docs/implementation/phase-9/ta-p9-002-federation-protocol-compatibility-2026-03-03.md`, `packages/node/src/services/federation-service.ts`, `packages/node/src/services/federation-service.test.ts`, `packages/node/src/api/routes/federation.ts`, `packages/node/src/api-contract.test.ts`, `packages/node/src/config.ts`, `packages/node/src/config.test.ts`, `.env.example` | 无 | 进入 `TA-P9-003` 脚本化校验 |
 | TA-P9-003 | DONE | `docs/implementation/phase-9/ta-p9-003-federation-protocol-compat-check-2026-03-03.md`, `packages/node/scripts/run-phase9-federation-protocol-compat-check.ts`, `docs/implementation/phase-9/manifests/2026-03-03-p9-federation-protocol-compat-check.json`, `docs/implementation/phase-9/logs/2026-03-03-p9-federation-protocol-compat-check-run.txt` | 无 | 进入 `TA-P9-004` Gate 收口 |
-| TA-P9-004 | DONE | `docs/implementation/phase-9/ta-p9-004-phase9-gate-review-2026-03-03.md`, `docs/implementation/gates/phase-9-gate.md`, `docs/implementation/phase-9/logs/2026-03-03-p9-node-build.txt`, `docs/implementation/phase-9/logs/2026-03-03-p9-node-test.txt`, `docs/implementation/phase-9/logs/2026-03-03-p9-workspace-test.txt` | 无 | Phase 9 已关闭，进入 Phase 10 规划 |
+| TA-P9-004 | DONE | `docs/implementation/phase-9/ta-p9-004-phase9-gate-review-2026-03-03.md`, `docs/implementation/gates/phase-9-gate.md`, `docs/implementation/phase-9/logs/2026-03-03-p9-node-build.txt`, `docs/implementation/phase-9/logs/2026-03-03-p9-node-test.txt`, `docs/implementation/phase-9/logs/2026-03-03-p9-workspace-test.txt` | 无 | Phase 9 已关闭，Phase 10 已收口并关闭 |
+
+## 16. Phase 10 联邦灰度发布自动化与应急回滚编排（2026-03-03）
+
+| Task ID | 状态 | 证据链接 | 阻塞项 | 下一步动作 |
+| --- | --- | --- | --- | --- |
+| TA-P10-001 | DONE | `docs/implementation/phase-10/ta-p10-001-phase10-boundary-acceptance-2026-03-03.md`, `docs/implementation/phase-10/README.md` | 无 | 进入 `TA-P10-002` 灰度发布自动化脚本落地 |
+| TA-P10-002 | DONE | `docs/implementation/phase-10/ta-p10-002-federation-rollout-automation-2026-03-03.md`, `packages/node/scripts/run-phase10-federation-rollout-automation.ts`, `docs/implementation/phase-10/manifests/2026-03-03-p10-federation-rollout-automation.json`, `docs/implementation/phase-10/logs/2026-03-03-p10-federation-rollout-automation-run.txt` | 无 | 进入 `TA-P10-003` 应急回滚演练 |
+| TA-P10-003 | DONE | `docs/implementation/phase-10/ta-p10-003-federation-rollback-drill-2026-03-03.md`, `packages/node/scripts/run-phase10-federation-rollback-drill.ts`, `docs/implementation/phase-10/manifests/2026-03-03-p10-federation-rollback-drill.json`, `docs/implementation/phase-10/logs/2026-03-03-p10-federation-rollback-drill-run.txt` | 无 | 进入 `TA-P10-004` Gate 收口 |
+| TA-P10-004 | DONE | `docs/implementation/phase-10/ta-p10-004-phase10-gate-review-2026-03-03.md`, `docs/implementation/gates/phase-10-gate.md`, `docs/implementation/phase-10/logs/2026-03-03-p10-node-build.txt`, `docs/implementation/phase-10/logs/2026-03-03-p10-node-test.txt`, `docs/implementation/phase-10/logs/2026-03-03-p10-workspace-test.txt` | 无 | Phase 10 已关闭，进入联邦跨域常态运维 |
+

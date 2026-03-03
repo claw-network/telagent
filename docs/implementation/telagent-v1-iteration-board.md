@@ -3,7 +3,7 @@
 - 文档版本：v1.0
 - 基线计划起始日：2026-03-02（周一）
 - 基线计划结束日：2026-05-17（周日）
-- 适用范围：Phase 0 -> Phase 9（发布后改进 + 联邦灰度兼容）
+- 适用范围：Phase 0 -> Phase 10（发布后改进 + 联邦灰度兼容 + 自动化回滚）
 
 ## 1. 看板目的
 
@@ -192,7 +192,11 @@
 - 已完成：`TA-P9-002`（联邦协议版本兼容矩阵与拒绝策略落地）
 - 已完成：`TA-P9-003`（联邦协议灰度兼容脚本与机读清单）
 - 已完成：`TA-P9-004`（Phase 9 Gate 评审与阶段关闭）
-- 下一批 Ready：进入 Phase 10 规划（联邦灰度发布自动化与应急回滚编排）
+- 已完成：`TA-P10-001`（Phase 10 边界与验收标准冻结）
+- 已完成：`TA-P10-002`（联邦灰度发布自动化编排脚本与机读清单）
+- 已完成：`TA-P10-003`（联邦应急回滚演练脚本与机读清单）
+- 已完成：`TA-P10-004`（Phase 10 Gate 评审与阶段关闭）
+- 下一批 Ready：进入联邦跨域常态运维与下一阶段需求池评审
 
 ## 4.2 Blockers（2026-03-03 更新）
 
@@ -286,7 +290,7 @@
 - `TA-P6-004`：DONE（发布后回归与 Gate 收口通过，见 `docs/implementation/phase-6/ta-p6-004-phase6-gate-review-2026-03-03.md`）。
 - 验证脚本：`packages/node/scripts/run-phase6-mailbox-persistence-check.ts`（清单：`docs/implementation/phase-6/manifests/2026-03-03-p6-mailbox-persistence-check.json`）。
 - 回归结果：`@telagent/node` `35/35` 通过（日志：`docs/implementation/phase-6/logs/2026-03-03-p6-node-test.txt`）。
-- 下一批任务：Phase 7 / Phase 8 / Phase 9 已关闭（见 `docs/implementation/phase-7/README.md`、`docs/implementation/phase-8/README.md`、`docs/implementation/phase-9/README.md`），进入 Phase 10 规划。
+- 下一批任务：Phase 7 / Phase 8 / Phase 9 / Phase 10 已关闭（见 `docs/implementation/phase-7/README.md`、`docs/implementation/phase-8/README.md`、`docs/implementation/phase-9/README.md`、`docs/implementation/phase-10/README.md`），进入联邦跨域常态运维。
 
 ## 4.12 Phase 7 Postgres 集群压测与故障演练快照（2026-03-03）
 
@@ -313,7 +317,16 @@
 - `TA-P9-003`：DONE（协议灰度兼容脚本校验通过，见 `docs/implementation/phase-9/ta-p9-003-federation-protocol-compat-check-2026-03-03.md`）。
 - `TA-P9-004`：DONE（Gate=PASS，见 `docs/implementation/phase-9/ta-p9-004-phase9-gate-review-2026-03-03.md`）。
 - 验证结果：协议兼容脚本 `scenarios=4/4, decision=PASS`（见 `docs/implementation/phase-9/manifests/2026-03-03-p9-federation-protocol-compat-check.json`）。
-- 阶段状态：Phase 9 已关闭（Gate=PASS），进入 Phase 10 规划。
+- 阶段状态：Phase 9 已关闭（Gate=PASS），Phase 10 已完成并关闭。
+
+## 4.15 Phase 10 联邦灰度发布自动化与应急回滚编排快照（2026-03-03）
+
+- `TA-P10-001`：DONE（边界与验收冻结，见 `docs/implementation/phase-10/ta-p10-001-phase10-boundary-acceptance-2026-03-03.md`）。
+- `TA-P10-002`：DONE（灰度发布自动化脚本与机读清单落地，见 `docs/implementation/phase-10/ta-p10-002-federation-rollout-automation-2026-03-03.md`）。
+- `TA-P10-003`：DONE（应急回滚演练脚本与机读清单落地，见 `docs/implementation/phase-10/ta-p10-003-federation-rollback-drill-2026-03-03.md`）。
+- `TA-P10-004`：DONE（Gate=PASS，见 `docs/implementation/phase-10/ta-p10-004-phase10-gate-review-2026-03-03.md`）。
+- 验证结果：灰度脚本 `stages=3, nodes=8/8, decision=PASS`；回滚演练 `decision=PASS`（见 `docs/implementation/phase-10/manifests/`）。
+- 阶段状态：Phase 10 已关闭（Gate=PASS），Phase 9 遗留风险已完成收口。
 
 ## 5. 周会与 Gate 节奏建议
 

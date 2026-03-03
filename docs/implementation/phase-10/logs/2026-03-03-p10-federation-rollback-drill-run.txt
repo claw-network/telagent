@@ -1,0 +1,4 @@
+[TA-P10-003] rolloutAcceptsTarget=true rolloutRejectsLegacy=true rollbackAcceptsLegacy=true rollbackRejectsTarget=true
+[TA-P10-003] rollbackStepsPrepared=true
+[TA-P10-003] decision=PASS
+[TA-P10-003] output=/Users/xiasenhai/workspace/private-repo/Bots/telagent/docs/implementation/phase-10/manifests/2026-03-03-p10-federation-rollback-drill.json

@@ -31,4 +31,4 @@
 - `TA-P9-002`：DONE
 - `TA-P9-003`：DONE
 - `TA-P9-004`：DONE（Phase 9 Gate=PASS）
-- 下一步：进入 Phase 10 规划（联邦跨域灰度发布自动化与应急回滚编排）。
+- 下一步：Phase 10 已完成并关闭（见 `docs/implementation/phase-10/README.md`），进入联邦跨域常态运维。

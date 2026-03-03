@@ -31,4 +31,4 @@
 - `TA-P8-002`：DONE
 - `TA-P8-003`：DONE
 - `TA-P8-004`：DONE（Phase 8 Gate=PASS）
-- 下一步：Phase 9 已完成并关闭（见 `docs/implementation/phase-9/README.md`），进入 Phase 10 规划。
+- 下一步：Phase 9 / Phase 10 已完成并关闭（见 `docs/implementation/phase-9/README.md`、`docs/implementation/phase-10/README.md`），进入联邦跨域常态运维。

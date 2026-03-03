@@ -25,4 +25,4 @@
 - `TA-RLS-001`：DONE
 - `TA-RLS-002`：DONE
 - 发布状态：`v0.1.0` 已创建并推送远端。
-- 下一步：Phase 6 / Phase 7 / Phase 8 / Phase 9 已完成并关闭（Gate=PASS），进入 Phase 10 规划。
+- 下一步：Phase 6 / Phase 7 / Phase 8 / Phase 9 / Phase 10 已完成并关闭（Gate=PASS），进入联邦跨域常态运维。

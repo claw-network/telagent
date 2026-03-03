@@ -1,0 +1,61 @@
+
+> @telagent/node@0.1.0 pretest /Users/xiasenhai/workspace/private-repo/Bots/telagent/packages/node
+> pnpm build
+
+
+> @telagent/node@0.1.0 build /Users/xiasenhai/workspace/private-repo/Bots/telagent/packages/node
+> tsc -p tsconfig.json
+
+
+> @telagent/node@0.1.0 test /Users/xiasenhai/workspace/private-repo/Bots/telagent/packages/node
+> node --test dist/*.test.js dist/**/*.test.js
+
+✔ created response returns data envelope and Location header (92.917667ms)
+✔ list response returns paginated envelope shape (11.290083ms)
+✔ validation errors use RFC7807 shape and problem+json content type (39.911417ms)
+✔ not found uses RFC7807 shape (28.733625ms)
+✔ identities and groups endpoints are accessible with expected status codes (58.53025ms)
+✔ messages, attachments and federation endpoints are accessible (29.009917ms)
+✔ routes only serve /api/v1/* prefix (85.788458ms)
+✔ identity endpoint responds with data envelope (63.519875ms)
+✔ mailbox store defaults to sqlite backend (10.468708ms)
+✔ mailbox store parses postgres backend config (1.344416ms)
+✔ postgres backend requires connection url (2.642667ms)
+✔ mailbox backend rejects unsupported value (0.3545ms)
+✔ federation protocol defaults to v1 and supports self version (2.58ms)
+✔ federation supported protocols auto-include self version (0.333166ms)
+✔ finalityDepth only materializes finalized blocks (58.929542ms)
+✔ reorg rollback replays canonical events and restores deterministic view (23.340959ms)
+✔ TA-P4-009 E2E main path: create -> invite -> accept -> group chat (text/image/file) (198.842708ms)
+✔ TA-P4-010 E2E offline 24h pull keeps dedupe and per-conversation order (23.906916ms)
+✔ TA-P4-006 init-upload sanitizes filename and emits attachment objectKey (2.4635ms)
+✔ TA-P4-006 complete-upload enforces manifest and checksum integrity (0.551083ms)
+✔ TA-P4-006 complete-upload is idempotent and rejects checksum divergence (0.160042ms)
+✔ TA-P4-006 expired upload sessions are cleaned and cannot be completed (0.138375ms)
+✔ TA-P4-007 federation envelopes support idempotent retries (6.308333ms)
+✔ TA-P4-007 federation auth token is enforced when configured (0.4545ms)
+✔ TA-P4-007 federation rate limit rejects burst traffic (0.244625ms)
+✔ TA-P4-008 group-state sync enforces domain consistency (0.266709ms)
+✔ TA-P8-002 group-state sync rejects stale stateVersion and records resilience counters (0.42575ms)
+✔ TA-P8-002 group-state sync detects split-brain on same stateVersion with different state (11.115334ms)
+✔ TA-P9-002 federation accepts compatible protocol versions and tracks usage stats (28.283542ms)
+✔ TA-P9-002 federation rejects unsupported protocol versions (0.265667ms)
+✔ TA-P4-008 node-info publishes domain and federation security policy (0.170958ms)
+✔ assertSufficient throws INSUFFICIENT_GAS_TOKEN_BALANCE when native balance is not enough (1.625583ms)
+✔ TA-P4-002 sequence allocator keeps per-conversation monotonic order (0.904625ms)
+✔ TA-P4-003 dedupe keeps idempotent writes for same envelopeId (0.224834ms)
+✔ TA-P4-003 duplicate envelopeId with different payload is rejected (0.44025ms)
+✔ TA-P4-004 cleanupExpired removes expired envelopes and releases dedupe key (0.261166ms)
+✔ TA-P4-005 provisional envelopes are retracted when group is reorged back (1.81125ms)
+✔ TA-P4-005 send is rejected when group chain state is REORGED_BACK (0.5025ms)
+✔ TA-P6-001 mailbox persists messages and seq after service restart (25.178584ms)
+✔ TA-P5-002 monitoring snapshot normalizes dynamic route segments and records counters (3.015792ms)
+✔ TA-P5-002 monitoring emits warning/critical alerts when thresholds are exceeded (0.354167ms)
+ℹ tests 41
+ℹ suites 0
+ℹ pass 41
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 773.693792
