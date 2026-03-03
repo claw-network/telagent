@@ -16,6 +16,7 @@ Node runtime for TelAgent v1.
 - Attachment upload session hardening (manifest/checksum validation + idempotent complete)
 - Federation hardening (source-domain auth/rate-limit/retry-safe dedupe + node-info domain policy)
 - Federation source-key pinning with staged rotation/cutover policy
+- Federation DLQ capture and ordered replay toolchain
 - Attachment and federation endpoints
 
 ## Run

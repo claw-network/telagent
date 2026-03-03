@@ -2,6 +2,7 @@ import { ErrorCodes, TelagentError } from '@telagent/protocol';
 
 type FederationScope = 'envelopes' | 'group-state-sync' | 'receipts';
 type FederationPinningMode = 'disabled' | 'enforced' | 'report-only';
+type FederationDlqStatus = 'PENDING' | 'REPLAYED';
 
 interface FederationEnvelope {
   envelopeId: string;
@@ -64,6 +65,56 @@ interface FederationPinningPolicy {
   next: Set<string>;
 }
 
+interface FederationDlqMeta {
+  sourceDomain: string;
+  protocolVersion?: string;
+  sourceKeyId?: string;
+}
+
+export interface FederationDlqEntry {
+  dlqId: string;
+  sequence: number;
+  scope: FederationScope;
+  status: FederationDlqStatus;
+  payload: Record<string, unknown>;
+  meta: FederationDlqMeta;
+  firstFailedAtMs: number;
+  lastFailedAtMs: number;
+  attemptCount: number;
+  replayAttemptCount: number;
+  replayedAtMs?: number;
+  lastErrorCode: string;
+  lastErrorMessage: string;
+}
+
+export interface ListFederationDlqOptions {
+  status?: FederationDlqStatus | 'ALL';
+  limit?: number;
+}
+
+export interface ReplayFederationDlqOptions {
+  ids?: string[];
+  maxItems?: number;
+  stopOnError?: boolean;
+}
+
+export interface FederationDlqReplayItem {
+  dlqId: string;
+  sequence: number;
+  scope: FederationScope;
+  status: 'REPLAYED' | 'FAILED';
+  replayedAtMs: number;
+  errorCode?: string;
+  errorMessage?: string;
+}
+
+export interface FederationDlqReplayReport {
+  processed: number;
+  replayed: number;
+  failed: number;
+  results: FederationDlqReplayItem[];
+}
+
 const SYSTEM_CLOCK: FederationServiceClock = {
   now: () => Date.now(),
 };
@@ -84,6 +135,10 @@ export class FederationService {
   private readonly pinningMode: FederationPinningMode;
   private readonly pinningPolicyByDomain: Map<string, FederationPinningPolicy>;
   private readonly pinningCutoverAtMs?: number;
+  private readonly dlqById = new Map<string, FederationDlqEntry>();
+  private dlqSequence = 0;
+  private dlqReplayFailed = 0;
+  private dlqReplaySuccess = 0;
   private readonly protocolVersion: string;
   private readonly supportedProtocolVersions: Set<string>;
   private readonly clock: FederationServiceClock;
@@ -274,6 +329,106 @@ export class FederationService {
     };
   }
 
+  recordDlqFailure(
+    scope: FederationScope,
+    payload: Record<string, unknown>,
+    meta: Partial<FederationRequestMeta> | undefined,
+    error: unknown,
+  ): FederationDlqEntry {
+    const now = this.clock.now();
+    const resolvedError = this.toTelagentError(error);
+    this.dlqSequence += 1;
+
+    const entry: FederationDlqEntry = {
+      dlqId: `dlq-${scope}-${now}-${this.dlqSequence}`,
+      sequence: this.dlqSequence,
+      scope,
+      status: 'PENDING',
+      payload: this.cloneRecord(payload),
+      meta: {
+        sourceDomain: this.normalizeDlqSourceDomain(meta?.sourceDomain),
+        protocolVersion: typeof meta?.protocolVersion === 'string' ? meta.protocolVersion : undefined,
+        sourceKeyId: typeof meta?.sourceKeyId === 'string' ? meta.sourceKeyId : undefined,
+      },
+      firstFailedAtMs: now,
+      lastFailedAtMs: now,
+      attemptCount: 1,
+      replayAttemptCount: 0,
+      lastErrorCode: resolvedError.code,
+      lastErrorMessage: resolvedError.message,
+    };
+
+    this.dlqById.set(entry.dlqId, entry);
+    return this.cloneDlqEntry(entry);
+  }
+
+  listDlqEntries(options: ListFederationDlqOptions = {}): FederationDlqEntry[] {
+    const status = options.status ?? 'PENDING';
+    const limit = typeof options.limit === 'number' ? Math.max(1, Math.floor(options.limit)) : undefined;
+    const entries = [...this.dlqById.values()]
+      .filter((entry) => status === 'ALL' || entry.status === status)
+      .sort((left, right) => left.sequence - right.sequence)
+      .map((entry) => this.cloneDlqEntry(entry));
+
+    if (typeof limit === 'number') {
+      return entries.slice(0, limit);
+    }
+    return entries;
+  }
+
+  replayDlq(options: ReplayFederationDlqOptions = {}): FederationDlqReplayReport {
+    const selected = this.selectReplayTargets(options);
+    const results: FederationDlqReplayItem[] = [];
+    let replayed = 0;
+    let failed = 0;
+
+    for (const entry of selected) {
+      const now = this.clock.now();
+      entry.replayAttemptCount += 1;
+      try {
+        this.executeReplay(entry);
+        entry.status = 'REPLAYED';
+        entry.replayedAtMs = now;
+        this.dlqReplaySuccess += 1;
+        replayed += 1;
+        results.push({
+          dlqId: entry.dlqId,
+          sequence: entry.sequence,
+          scope: entry.scope,
+          status: 'REPLAYED',
+          replayedAtMs: now,
+        });
+      } catch (error) {
+        const resolvedError = this.toTelagentError(error);
+        entry.lastFailedAtMs = now;
+        entry.attemptCount += 1;
+        entry.lastErrorCode = resolvedError.code;
+        entry.lastErrorMessage = resolvedError.message;
+        this.dlqReplayFailed += 1;
+        failed += 1;
+        results.push({
+          dlqId: entry.dlqId,
+          sequence: entry.sequence,
+          scope: entry.scope,
+          status: 'FAILED',
+          replayedAtMs: now,
+          errorCode: resolvedError.code,
+          errorMessage: resolvedError.message,
+        });
+        if (options.stopOnError) {
+          break;
+        }
+      }
+    }
+
+    return {
+      processed: results.length,
+      replayed,
+      failed,
+      results,
+    };
+  }
+
   nodeInfo(): {
     protocolVersion: string;
     domain: string;
@@ -313,7 +468,15 @@ export class FederationService {
       splitBrainGroupStateSyncDetected: number;
       totalGroupStateSyncConflicts: number;
     };
+    dlq: {
+      pendingCount: number;
+      replayedCount: number;
+      replaySuccessCount: number;
+      replayFailedCount: number;
+    };
   } {
+    const pendingCount = [...this.dlqById.values()].filter((entry) => entry.status === 'PENDING').length;
+    const replayedCount = [...this.dlqById.values()].filter((entry) => entry.status === 'REPLAYED').length;
     return {
       protocolVersion: this.protocolVersion,
       domain: this.selfDomain,
@@ -353,7 +516,64 @@ export class FederationService {
         splitBrainGroupStateSyncDetected: this.splitBrainGroupStateSyncDetected,
         totalGroupStateSyncConflicts: this.staleGroupStateSyncRejected + this.splitBrainGroupStateSyncDetected,
       },
+      dlq: {
+        pendingCount,
+        replayedCount,
+        replaySuccessCount: this.dlqReplaySuccess,
+        replayFailedCount: this.dlqReplayFailed,
+      },
     };
+  }
+
+  private selectReplayTargets(options: ReplayFederationDlqOptions): FederationDlqEntry[] {
+    const maxItems = typeof options.maxItems === 'number' ? Math.max(1, Math.floor(options.maxItems)) : undefined;
+    let entries: FederationDlqEntry[];
+    if (Array.isArray(options.ids) && options.ids.length > 0) {
+      const idSet = new Set(options.ids);
+      entries = [...this.dlqById.values()]
+        .filter((entry) => entry.status === 'PENDING' && idSet.has(entry.dlqId))
+        .sort((left, right) => left.sequence - right.sequence);
+    } else {
+      entries = [...this.dlqById.values()]
+        .filter((entry) => entry.status === 'PENDING')
+        .sort((left, right) => left.sequence - right.sequence);
+    }
+
+    if (typeof maxItems === 'number') {
+      return entries.slice(0, maxItems);
+    }
+    return entries;
+  }
+
+  private executeReplay(entry: FederationDlqEntry): void {
+    const replayMeta: FederationRequestMeta = {
+      sourceDomain: entry.meta.sourceDomain,
+      protocolVersion: entry.meta.protocolVersion,
+      sourceKeyId: entry.meta.sourceKeyId,
+      authToken: this.authToken,
+    };
+
+    if (entry.scope === 'envelopes') {
+      this.receiveEnvelope(this.cloneRecord(entry.payload), replayMeta);
+      return;
+    }
+
+    if (entry.scope === 'group-state-sync') {
+      const payload = {
+        groupId: String(entry.payload.groupId ?? ''),
+        state: String(entry.payload.state ?? ''),
+        groupDomain: typeof entry.payload.groupDomain === 'string' ? entry.payload.groupDomain : undefined,
+        stateVersion: typeof entry.payload.stateVersion === 'number' ? entry.payload.stateVersion : undefined,
+      };
+      this.syncGroupState(payload, replayMeta);
+      return;
+    }
+
+    const payload = {
+      envelopeId: String(entry.payload.envelopeId ?? ''),
+      status: entry.payload.status === 'read' ? 'read' : 'delivered',
+    } as { envelopeId: string; status: 'delivered' | 'read' };
+    this.recordReceipt(payload, replayMeta);
   }
 
   private assertRateLimit(scope: FederationScope, sourceDomain: string): void {
@@ -523,6 +743,40 @@ export class FederationService {
       return false;
     }
     return this.clock.now() >= this.pinningCutoverAtMs;
+  }
+
+  private normalizeDlqSourceDomain(value: unknown): string {
+    if (typeof value !== 'string' || !value.trim()) {
+      return this.selfDomain;
+    }
+
+    try {
+      return this.normalizeDomain(value, 'dlqSourceDomain');
+    } catch {
+      return value.trim().toLowerCase();
+    }
+  }
+
+  private toTelagentError(error: unknown): TelagentError {
+    if (error instanceof TelagentError) {
+      return error;
+    }
+    if (error instanceof Error) {
+      return new TelagentError(ErrorCodes.INTERNAL, error.message);
+    }
+    return new TelagentError(ErrorCodes.INTERNAL, 'Unexpected federation error');
+  }
+
+  private cloneRecord(record: Record<string, unknown>): Record<string, unknown> {
+    return JSON.parse(JSON.stringify(record)) as Record<string, unknown>;
+  }
+
+  private cloneDlqEntry(entry: FederationDlqEntry): FederationDlqEntry {
+    return {
+      ...entry,
+      payload: this.cloneRecord(entry.payload),
+      meta: { ...entry.meta },
+    };
   }
 
   private assertRequiredString(value: unknown, fieldName: string): string {

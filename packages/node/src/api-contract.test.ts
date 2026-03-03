@@ -164,14 +164,24 @@ class FakeAttachmentService {
 }
 
 class FakeFederationService {
+  private readonly dlqEntries: Array<{
+    dlqId: string;
+    sequence: number;
+    scope: 'envelopes' | 'group-state-sync' | 'receipts';
+    status: 'PENDING' | 'REPLAYED';
+  }> = [];
+
   receiveEnvelope(
-    _payload: Record<string, unknown>,
+    payload: Record<string, unknown>,
     meta: { sourceDomain: string; authToken?: string; protocolVersion?: string; sourceKeyId?: string },
   ) {
-    if (_payload.envelopeId === 'fed-pin-required' && !meta.sourceKeyId) {
+    if (payload.envelopeId === 'fed-pin-required' && !meta.sourceKeyId) {
       throw new TelagentError(ErrorCodes.UNAUTHORIZED, 'sourceKeyId is required');
     }
     this.assertProtocol(meta.protocolVersion);
+    if (payload.envelopeId === 'fed-force-error') {
+      throw new TelagentError(ErrorCodes.CONFLICT, 'forced federation conflict');
+    }
     return { accepted: true, id: 'fed-1', deduplicated: false, retryable: true };
   }
 
@@ -189,6 +199,59 @@ class FakeFederationService {
   ) {
     this.assertProtocol(meta.protocolVersion);
     return { accepted: true, deduplicated: false, retryable: true };
+  }
+
+  recordDlqFailure(
+    scope: 'envelopes' | 'group-state-sync' | 'receipts',
+    _payload: Record<string, unknown>,
+    _meta: { sourceDomain?: string; protocolVersion?: string; sourceKeyId?: string } | undefined,
+    _error: unknown,
+  ) {
+    const sequence = this.dlqEntries.length + 1;
+    const entry = {
+      dlqId: `dlq-test-${sequence}`,
+      sequence,
+      scope,
+      status: 'PENDING' as const,
+    };
+    this.dlqEntries.push(entry);
+    return entry;
+  }
+
+  listDlqEntries(options?: { status?: 'PENDING' | 'REPLAYED' | 'ALL' }) {
+    const status = options?.status ?? 'PENDING';
+    if (status === 'ALL') {
+      return [...this.dlqEntries];
+    }
+    return this.dlqEntries.filter((entry) => entry.status === status);
+  }
+
+  replayDlq(options?: { ids?: string[]; maxItems?: number; stopOnError?: boolean }) {
+    const candidates = this.listDlqEntries({ status: 'PENDING' });
+    const filtered = Array.isArray(options?.ids) && options.ids.length > 0
+      ? candidates.filter((entry) => options.ids!.includes(entry.dlqId))
+      : candidates;
+    const replayTargets = typeof options?.maxItems === 'number'
+      ? filtered.slice(0, options.maxItems)
+      : filtered;
+
+    const results = replayTargets.map((entry) => ({
+      dlqId: entry.dlqId,
+      sequence: entry.sequence,
+      scope: entry.scope,
+      status: 'REPLAYED' as const,
+      replayedAtMs: Date.now(),
+    }));
+    for (const entry of replayTargets) {
+      entry.status = 'REPLAYED';
+    }
+
+    return {
+      processed: replayTargets.length,
+      replayed: replayTargets.length,
+      failed: 0,
+      results,
+    };
   }
 
   nodeInfo() {
@@ -561,6 +624,35 @@ test('messages, attachments and federation endpoints are accessible', async (t) 
     body: JSON.stringify({ envelopeId: 'fed-1', status: 'delivered', sourceDomain: 'node-b.tel' }),
   });
   assert.equal(fedReceiptRes.status, 201);
+
+  const fedConflictRes = await fetch(`${baseUrl}/api/v1/federation/envelopes`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ envelopeId: 'fed-force-error', sourceDomain: 'node-b.tel' }),
+  });
+  assert.equal(fedConflictRes.status, 409);
+
+  const dlqListRes = await fetch(`${baseUrl}/api/v1/federation/dlq?status=pending`);
+  assert.equal(dlqListRes.status, 200);
+  const dlqListBody = (await dlqListRes.json()) as {
+    data: Array<{ dlqId: string; scope: string }>;
+    meta: { pagination: { total: number } };
+  };
+  assert.ok(dlqListBody.meta.pagination.total >= 1);
+  assert.ok(dlqListBody.data.some((entry) => entry.scope === 'envelopes'));
+
+  const dlqReplayRes = await fetch(`${baseUrl}/api/v1/federation/dlq/replay`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ maxItems: 1, stopOnError: true }),
+  });
+  assert.equal(dlqReplayRes.status, 200);
+  const dlqReplayBody = (await dlqReplayRes.json()) as {
+    data: { processed: number; replayed: number; failed: number };
+  };
+  assert.equal(dlqReplayBody.data.processed, 1);
+  assert.equal(dlqReplayBody.data.replayed, 1);
+  assert.equal(dlqReplayBody.data.failed, 0);
 
   const incompatibleProtocolRes = await fetch(`${baseUrl}/api/v1/federation/envelopes`, {
     method: 'POST',

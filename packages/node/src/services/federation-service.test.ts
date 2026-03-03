@@ -420,6 +420,61 @@ test('TA-P11-004 federation pinning report-only mode allows traffic but records 
   assert.equal(info.security.pinning.stats.rejected, 1);
 });
 
+test('TA-P11-005 federation DLQ captures failures and replays in sequence order', () => {
+  const service = new FederationService({
+    selfDomain: 'node-a.tel',
+  });
+
+  const first = service.recordDlqFailure(
+    'envelopes',
+    {
+      envelopeId: 'dlq-env-1',
+      sourceDomain: 'node-b.tel',
+      payload: 'ciphertext-1',
+    },
+    {
+      sourceDomain: 'node-b.tel',
+    },
+    new Error('upstream timeout'),
+  );
+  const second = service.recordDlqFailure(
+    'envelopes',
+    {
+      envelopeId: 'dlq-env-2',
+      sourceDomain: 'node-b.tel',
+      payload: 'ciphertext-2',
+    },
+    {
+      sourceDomain: 'node-b.tel',
+    },
+    new Error('network reset'),
+  );
+
+  const pending = service.listDlqEntries({ status: 'PENDING' });
+  assert.deepEqual(
+    pending.map((entry) => entry.dlqId),
+    [first.dlqId, second.dlqId],
+  );
+
+  const replay = service.replayDlq();
+  assert.equal(replay.processed, 2);
+  assert.equal(replay.replayed, 2);
+  assert.equal(replay.failed, 0);
+  assert.deepEqual(
+    replay.results.map((item) => item.dlqId),
+    [first.dlqId, second.dlqId],
+  );
+  assert.deepEqual(
+    replay.results.map((item) => item.status),
+    ['REPLAYED', 'REPLAYED'],
+  );
+
+  const pendingAfterReplay = service.listDlqEntries({ status: 'PENDING' });
+  assert.equal(pendingAfterReplay.length, 0);
+  const replayedEntries = service.listDlqEntries({ status: 'REPLAYED' });
+  assert.equal(replayedEntries.length, 2);
+});
+
 test('TA-P4-008 node-info publishes domain and federation security policy', () => {
   const service = new FederationService({
     selfDomain: 'node-a.tel',
@@ -439,6 +494,8 @@ test('TA-P4-008 node-info publishes domain and federation security policy', () =
   assert.equal(info.security.rateLimitPerMinute.receipts, 400);
   assert.equal(info.security.pinning.mode, 'disabled');
   assert.equal(info.security.pinning.cutoverAt, null);
+  assert.equal(info.dlq.pendingCount, 0);
+  assert.equal(info.dlq.replayedCount, 0);
   assert.equal(info.compatibility.protocolVersion, 'v1');
   assert.deepEqual(info.compatibility.supportedProtocolVersions, ['v1']);
   assert.equal(info.resilience.totalGroupStateSyncConflicts, 0);
