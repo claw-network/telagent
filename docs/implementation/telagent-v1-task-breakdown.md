@@ -84,7 +84,7 @@ flowchart LR
 
 | TA-P5-001 | Phase 5 | Web 管理台打通建群/邀请/接受/聊天 | Frontend Engineer | 2 | TA-P4-009 | Web 功能闭环 | 全流程可操作可演示 | DONE |
 | TA-P5-002 | Phase 5 | 监控面板与告警规则落地 | SRE/DevOps | 1.5 | TA-P4-011 | Dashboard + Alert | 指标/告警可用 | DONE |
-| TA-P5-003 | Phase 5 | 故障注入演练（链拥堵/reorg/联邦故障） | QA + SRE | 1.5 | TA-P5-002 | 演练报告 | 演练项全部可恢复 | TODO |
+| TA-P5-003 | Phase 5 | 故障注入演练（链拥堵/reorg/联邦故障） | QA + SRE | 1.5 | TA-P5-002 | 演练报告 | 演练项全部可恢复 | DONE |
 | TA-P5-004 | Phase 5 | 安全评审与上线检查清单 | Security Engineer | 1 | TA-P5-003 | Security checklist | 高危风险清零 | TODO |
 | TA-P5-005 | Phase 5 | 发布 Readiness 报告（Go/No-Go） | PM/Tech Lead | 1 | TA-P5-001, TA-P5-004 | readiness report | 审批通过可发布 | TODO |
 | TA-P5-006 | Phase 5 | MVP 验收签字与版本冻结 | PM/Tech Lead | 0.5 | TA-P5-005 | 验收记录 | Phase 5 正式关闭 | TODO |
@@ -187,3 +187,4 @@ flowchart LR
 | --- | --- | --- | --- | --- |
 | TA-P5-001 | DONE | `docs/implementation/phase-5/ta-p5-001-web-console-flow-2026-03-03.md`, `packages/web/src/index.html`, `packages/web/src/main.js`, `packages/web/src/styles.css`, `docs/implementation/phase-5/logs/2026-03-03-p5-web-build.txt`, `docs/implementation/phase-5/logs/2026-03-03-p5-workspace-test.txt` | 无 | 进入 `TA-P5-002` |
 | TA-P5-002 | DONE | `docs/implementation/phase-5/ta-p5-002-monitoring-dashboard-alerts-2026-03-03.md`, `packages/node/src/services/node-monitoring-service.ts`, `packages/node/src/services/node-monitoring-service.test.ts`, `packages/node/src/api/routes/node.ts`, `packages/node/src/api/server.ts`, `packages/web/src/index.html`, `packages/web/src/main.js`, `packages/web/src/styles.css`, `docs/implementation/phase-5/manifests/2026-03-03-p5-monitoring-dashboard.json`, `docs/implementation/phase-5/manifests/2026-03-03-p5-alert-rules.yaml`, `docs/implementation/phase-5/logs/2026-03-03-p5-node-test.txt`, `docs/implementation/phase-5/logs/2026-03-03-p5-workspace-test.txt` | 无 | 进入 `TA-P5-003` |
+| TA-P5-003 | DONE | `docs/implementation/phase-5/ta-p5-003-fault-injection-drill-2026-03-03.md`, `packages/node/scripts/run-phase5-fault-injection.ts`, `docs/implementation/phase-5/logs/2026-03-03-p5-fault-injection-run.txt`, `docs/implementation/phase-5/manifests/2026-03-03-p5-fault-injection-drill.json`, `docs/implementation/phase-5/logs/2026-03-03-p5-node-test.txt`, `docs/implementation/phase-5/logs/2026-03-03-p5-workspace-test.txt` | 无 | 进入 `TA-P5-004` |

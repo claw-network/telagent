@@ -1,0 +1,74 @@
+{
+  "phase": "Phase 5",
+  "taskId": "TA-P5-003",
+  "executedAt": "2026-03-03T02:41:10.267Z",
+  "scenarios": [
+    {
+      "name": "chain-congestion",
+      "passed": true,
+      "details": {
+        "firstAttemptError": "RPC_TIMEOUT_DURING_CONGESTION",
+        "recoveredLastIndexedBlock": 16,
+        "groupRecovered": true
+      }
+    },
+    {
+      "name": "reorg-recovery",
+      "passed": true,
+      "details": {
+        "pendingBefore": [
+          "0x8888888888888888888888888888888888888888888888888888888888888888"
+        ],
+        "pendingAfter": [
+          "0x9999999999999999999999999999999999999999999999999999999999999999"
+        ],
+        "reorgCount": 1
+      }
+    },
+    {
+      "name": "federation-failure",
+      "passed": true,
+      "details": {
+        "unauthorizedError": "UNAUTHORIZED",
+        "forbiddenSourceError": "FORBIDDEN",
+        "firstEnvelope": {
+          "accepted": true,
+          "id": "env-1",
+          "deduplicated": false,
+          "retryable": true
+        },
+        "dedupeEnvelope": {
+          "accepted": true,
+          "id": "env-1",
+          "deduplicated": true,
+          "retryable": true
+        },
+        "secondEnvelope": {
+          "accepted": true,
+          "id": "env-2",
+          "deduplicated": false,
+          "retryable": true
+        },
+        "rateLimitError": "TOO_MANY_REQUESTS",
+        "afterWindow": {
+          "accepted": true,
+          "id": "env-3",
+          "deduplicated": false,
+          "retryable": true
+        },
+        "domainMismatchError": "FORBIDDEN",
+        "syncRecovered": {
+          "synced": true,
+          "updatedAtMs": 1061000,
+          "deduplicated": false
+        }
+      }
+    }
+  ],
+  "summary": {
+    "total": 3,
+    "passed": 3,
+    "failed": 0,
+    "passRate": 1
+  }
+}

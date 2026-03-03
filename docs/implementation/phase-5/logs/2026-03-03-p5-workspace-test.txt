@@ -1,7 +1,7 @@
 Scope: 4 of 5 workspace projects
+packages/web test$ echo 'no tests for web package'
 packages/contracts test$ hardhat test
 packages/protocol pretest$ pnpm build
-packages/web test$ echo 'no tests for web package'
 packages/web test: no tests for web package
 packages/web test: Done
 packages/contracts test: WARNING: You are currently using Node.js v25.6.1, which is not supported by Hardhat. This can lead to unexpected behavior. See https://v2.hardhat.org/nodejs-versions
@@ -10,8 +10,8 @@ packages/protocol pretest: > tsc -p tsconfig.json
 packages/protocol pretest: Done
 packages/protocol test$ node --test dist/**/*.test.js
 packages/contracts test:   TelagentGroupRegistry
-packages/protocol test: ✔ isDidClaw validates did:claw format (0.92225ms)
-packages/protocol test: ✔ hashDid is deterministic bytes32 hex (1.195042ms)
+packages/protocol test: ✔ isDidClaw validates did:claw format (1.888458ms)
+packages/protocol test: ✔ hashDid is deterministic bytes32 hex (1.757166ms)
 packages/protocol test: ℹ tests 2
 packages/protocol test: ℹ suites 0
 packages/protocol test: ℹ pass 2
@@ -19,53 +19,53 @@ packages/protocol test: ℹ fail 0
 packages/protocol test: ℹ cancelled 0
 packages/protocol test: ℹ skipped 0
 packages/protocol test: ℹ todo 0
-packages/protocol test: ℹ duration_ms 138.222958
+packages/protocol test: ℹ duration_ms 327.862208
 packages/protocol test: Done
-packages/contracts test:     ✔ creates group when caller controls active DID (522ms)
-packages/contracts test:     ✔ rejects createGroup if caller is not DID controller
-packages/contracts test:     ✔ enforces member invite/accept/remove lifecycle
-packages/contracts test:     ✔ rejects revoked DID participation
-packages/contracts test:     ✔ rejects duplicate invite and duplicate accept
-packages/contracts test:     ✔ rejects invite and remove when caller is not group owner
+packages/contracts test:     ✔ creates group when caller controls active DID (1416ms)
+packages/contracts test:     ✔ rejects createGroup if caller is not DID controller (47ms)
+packages/contracts test:     ✔ enforces member invite/accept/remove lifecycle (44ms)
+packages/contracts test:     ✔ rejects revoked DID participation (55ms)
+packages/contracts test:     ✔ rejects duplicate invite and duplicate accept (176ms)
+packages/contracts test:     ✔ rejects invite and remove when caller is not group owner (64ms)
 packages/contracts test:     ✔ rejects acceptInvite when caller is not the invited DID controller
 packages/contracts test:     ✔ rejects removing group owner
-packages/contracts test:   8 passing (664ms)
+packages/contracts test:   8 passing (2s)
 packages/contracts test: Done
 packages/node pretest$ pnpm build
 packages/node pretest: > @telagent/node@0.1.0 build /Users/xiasenhai/workspace/private-repo/Bots/telagent/packages/node
 packages/node pretest: > tsc -p tsconfig.json
 packages/node pretest: Done
 packages/node test$ node --test dist/*.test.js dist/**/*.test.js
-packages/node test: ✔ created response returns data envelope and Location header (72.711834ms)
-packages/node test: ✔ list response returns paginated envelope shape (10.755542ms)
-packages/node test: ✔ validation errors use RFC7807 shape and problem+json content type (14.18925ms)
-packages/node test: ✔ not found uses RFC7807 shape (4.785291ms)
-packages/node test: ✔ identities and groups endpoints are accessible with expected status codes (23.541375ms)
-packages/node test: ✔ messages, attachments and federation endpoints are accessible (11.044167ms)
-packages/node test: ✔ routes only serve /api/v1/* prefix (63.114125ms)
-packages/node test: ✔ identity endpoint responds with data envelope (7.788167ms)
-packages/node test: ✔ finalityDepth only materializes finalized blocks (48.373334ms)
-packages/node test: ✔ reorg rollback replays canonical events and restores deterministic view (13.013ms)
-packages/node test: ✔ TA-P4-009 E2E main path: create -> invite -> accept -> group chat (text/image/file) (144.456708ms)
-packages/node test: ✔ TA-P4-010 E2E offline 24h pull keeps dedupe and per-conversation order (31.20575ms)
-packages/node test: ✔ TA-P4-006 init-upload sanitizes filename and emits attachment objectKey (1.430833ms)
-packages/node test: ✔ TA-P4-006 complete-upload enforces manifest and checksum integrity (1.442292ms)
-packages/node test: ✔ TA-P4-006 complete-upload is idempotent and rejects checksum divergence (0.774375ms)
-packages/node test: ✔ TA-P4-006 expired upload sessions are cleaned and cannot be completed (0.404792ms)
-packages/node test: ✔ TA-P4-007 federation envelopes support idempotent retries (0.856083ms)
-packages/node test: ✔ TA-P4-007 federation auth token is enforced when configured (0.29525ms)
-packages/node test: ✔ TA-P4-007 federation rate limit rejects burst traffic (0.154458ms)
-packages/node test: ✔ TA-P4-008 group-state sync enforces domain consistency (0.157375ms)
-packages/node test: ✔ TA-P4-008 node-info publishes domain and federation security policy (0.502ms)
-packages/node test: ✔ assertSufficient throws INSUFFICIENT_GAS_TOKEN_BALANCE when native balance is not enough (7.680916ms)
-packages/node test: ✔ TA-P4-002 sequence allocator keeps per-conversation monotonic order (1.224042ms)
-packages/node test: ✔ TA-P4-003 dedupe keeps idempotent writes for same envelopeId (0.16225ms)
-packages/node test: ✔ TA-P4-003 duplicate envelopeId with different payload is rejected (0.275333ms)
-packages/node test: ✔ TA-P4-004 cleanupExpired removes expired envelopes and releases dedupe key (0.125541ms)
-packages/node test: ✔ TA-P4-005 provisional envelopes are retracted when group is reorged back (1.218333ms)
-packages/node test: ✔ TA-P4-005 send is rejected when group chain state is REORGED_BACK (0.421083ms)
-packages/node test: ✔ TA-P5-002 monitoring snapshot normalizes dynamic route segments and records counters (6.946083ms)
-packages/node test: ✔ TA-P5-002 monitoring emits warning/critical alerts when thresholds are exceeded (2.266083ms)
+packages/node test: ✔ created response returns data envelope and Location header (49.675292ms)
+packages/node test: ✔ list response returns paginated envelope shape (9.45025ms)
+packages/node test: ✔ validation errors use RFC7807 shape and problem+json content type (7.908042ms)
+packages/node test: ✔ not found uses RFC7807 shape (2.937083ms)
+packages/node test: ✔ identities and groups endpoints are accessible with expected status codes (26.30975ms)
+packages/node test: ✔ messages, attachments and federation endpoints are accessible (20.633667ms)
+packages/node test: ✔ routes only serve /api/v1/* prefix (74.534125ms)
+packages/node test: ✔ identity endpoint responds with data envelope (13.857583ms)
+packages/node test: ✔ finalityDepth only materializes finalized blocks (74.839666ms)
+packages/node test: ✔ reorg rollback replays canonical events and restores deterministic view (16.618333ms)
+packages/node test: ✔ TA-P4-009 E2E main path: create -> invite -> accept -> group chat (text/image/file) (140.4195ms)
+packages/node test: ✔ TA-P4-010 E2E offline 24h pull keeps dedupe and per-conversation order (18.332125ms)
+packages/node test: ✔ TA-P4-006 init-upload sanitizes filename and emits attachment objectKey (1.846792ms)
+packages/node test: ✔ TA-P4-006 complete-upload enforces manifest and checksum integrity (0.933875ms)
+packages/node test: ✔ TA-P4-006 complete-upload is idempotent and rejects checksum divergence (0.216583ms)
+packages/node test: ✔ TA-P4-006 expired upload sessions are cleaned and cannot be completed (0.155458ms)
+packages/node test: ✔ TA-P4-007 federation envelopes support idempotent retries (0.885958ms)
+packages/node test: ✔ TA-P4-007 federation auth token is enforced when configured (0.321333ms)
+packages/node test: ✔ TA-P4-007 federation rate limit rejects burst traffic (0.166166ms)
+packages/node test: ✔ TA-P4-008 group-state sync enforces domain consistency (0.189208ms)
+packages/node test: ✔ TA-P4-008 node-info publishes domain and federation security policy (0.5755ms)
+packages/node test: ✔ assertSufficient throws INSUFFICIENT_GAS_TOKEN_BALANCE when native balance is not enough (1.960959ms)
+packages/node test: ✔ TA-P4-002 sequence allocator keeps per-conversation monotonic order (0.980958ms)
+packages/node test: ✔ TA-P4-003 dedupe keeps idempotent writes for same envelopeId (0.180125ms)
+packages/node test: ✔ TA-P4-003 duplicate envelopeId with different payload is rejected (0.341083ms)
+packages/node test: ✔ TA-P4-004 cleanupExpired removes expired envelopes and releases dedupe key (0.177833ms)
+packages/node test: ✔ TA-P4-005 provisional envelopes are retracted when group is reorged back (1.4745ms)
+packages/node test: ✔ TA-P4-005 send is rejected when group chain state is REORGED_BACK (0.579792ms)
+packages/node test: ✔ TA-P5-002 monitoring snapshot normalizes dynamic route segments and records counters (10.99275ms)
+packages/node test: ✔ TA-P5-002 monitoring emits warning/critical alerts when thresholds are exceeded (0.353583ms)
 packages/node test: ℹ tests 30
 packages/node test: ℹ suites 0
 packages/node test: ℹ pass 30
@@ -73,5 +73,5 @@ packages/node test: ℹ fail 0
 packages/node test: ℹ cancelled 0
 packages/node test: ℹ skipped 0
 packages/node test: ℹ todo 0
-packages/node test: ℹ duration_ms 547.011041
+packages/node test: ℹ duration_ms 637.512459
 packages/node test: Done

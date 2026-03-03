@@ -170,7 +170,8 @@
 - 已完成：`TA-P4-012`（Phase 4 Gate 评审与阶段关闭）
 - 已完成：`TA-P5-001`（Web 管理台建群/邀请/接受/聊天闭环）
 - 已完成：`TA-P5-002`（监控面板与告警规则落地）
-- 下一批 Ready：`TA-P5-003`、`TA-P5-004`、`TA-P5-005`、`TA-P5-006`
+- 已完成：`TA-P5-003`（链拥堵/reorg/联邦故障注入演练）
+- 下一批 Ready：`TA-P5-004`、`TA-P5-005`、`TA-P5-006`
 
 ## 4.2 Blockers（2026-03-03 更新）
 
@@ -242,9 +243,10 @@
 
 - `TA-P5-001`：DONE（Web 管理台闭环已打通，见 `docs/implementation/phase-5/ta-p5-001-web-console-flow-2026-03-03.md`）。
 - `TA-P5-002`：DONE（监控指标/告警规则/面板已落地，见 `docs/implementation/phase-5/ta-p5-002-monitoring-dashboard-alerts-2026-03-03.md`）。
+- `TA-P5-003`：DONE（故障注入 3/3 通过，见 `docs/implementation/phase-5/ta-p5-003-fault-injection-drill-2026-03-03.md`）。
 - 构建结果：`@telagent/web` build 通过（日志：`docs/implementation/phase-5/logs/2026-03-03-p5-web-build.txt`）。
 - 回归结果：`@telagent/node` 与 workspace tests 通过（日志：`docs/implementation/phase-5/logs/2026-03-03-p5-node-test.txt`, `docs/implementation/phase-5/logs/2026-03-03-p5-workspace-test.txt`）。
-- 阶段状态：Phase 5 进行中，允许继续推进 `TA-P5-003` ~ `TA-P5-006`。
+- 阶段状态：Phase 5 进行中，允许继续推进 `TA-P5-004` ~ `TA-P5-006`。
 
 ## 5. 周会与 Gate 节奏建议
 
