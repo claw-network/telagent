@@ -4,9 +4,14 @@
   "version": "0.1.0",
   "packageManager": "pnpm@10.18.1",
   "scripts": {
+    "check:runtime": "node scripts/check-runtime.mjs",
     "build": "pnpm -r build",
     "test": "pnpm -r test",
     "typecheck": "pnpm -r typecheck"
+  },
+  "engines": {
+    "node": ">=22 <25",
+    "pnpm": ">=10.18.1 <11"
   },
   "devDependencies": {
     "typescript": "^5.9.3"
