@@ -1,0 +1,5 @@
+.                                        |  WARN  Unsupported engine: wanted: {"node":">=22 <25"} (current: {"node":"v25.6.1","pnpm":"10.18.1"})
+[TA-P11-003] illegalDomainRejected=true validChallengeAccepted=true
+[TA-P11-003] staleNonceRejected=true rotatedNonceAccepted=true
+[TA-P11-003] decision=PASS
+[TA-P11-003] output=/Users/xiasenhai/workspace/private-repo/Bots/telagent/docs/implementation/phase-11/manifests/2026-03-03-p11-domain-proof-challenge-check.json

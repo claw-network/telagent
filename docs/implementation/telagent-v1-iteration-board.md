@@ -198,7 +198,8 @@
 - 已完成：`TA-P10-004`（Phase 10 Gate 评审与阶段关闭）
 - 已完成：`TA-P11-001`（Phase 11 边界与验收标准冻结）
 - 已完成：`TA-P11-002`（Node Runtime/CI 基线固化）
-- 下一批 Ready：继续 Phase 11 执行（优先 `TA-P11-003` ~ `TA-P11-005`）
+- 已完成：`TA-P11-003`（DomainProof 自动挑战与过期轮转）
+- 下一批 Ready：继续 Phase 11 执行（优先 `TA-P11-004` ~ `TA-P11-005`）
 
 ## 4.2 Blockers（2026-03-03 更新）
 
@@ -335,7 +336,7 @@
 
 - `TA-P11-001`：DONE（边界与验收冻结，见 `docs/implementation/phase-11/ta-p11-001-phase11-boundary-acceptance-2026-03-03.md`）。
 - `TA-P11-002`：DONE（Node Runtime/CI 基线固化，见 `docs/implementation/phase-11/ta-p11-002-runtime-ci-baseline-2026-03-03.md`）。
-- `TA-P11-003`：TODO（DomainProof 自动挑战与过期轮转）。
+- `TA-P11-003`：DONE（DomainProof 自动挑战与过期轮转，见 `docs/implementation/phase-11/ta-p11-003-domain-proof-auto-challenge-rotation-2026-03-03.md`）。
 - `TA-P11-004`：TODO（联邦互信 pinning 与轮换）。
 - `TA-P11-005`：TODO（联邦 DLQ 与重放工具链）。
 - `TA-P11-006`：TODO（Signal/MLS 密钥生命周期管理）。

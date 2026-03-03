@@ -1,0 +1,23 @@
+{
+  "phase": "Phase 11",
+  "taskId": "TA-P11-003",
+  "generatedAt": "2026-03-03T07:44:52.741Z",
+  "summary": {
+    "illegalDomainRejected": true,
+    "validChallengeAccepted": true,
+    "staleNonceRejected": true,
+    "rotatedNonceAccepted": true,
+    "canonicalHashMatched": true
+  },
+  "decision": "PASS",
+  "details": {
+    "groupId": "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "groupDomain": "phase11.tel",
+    "firstChallengeId": "0x42d5fe7485aaa9bf241569969f85e6f7f050671cee6005065e7700272a4f8ce0",
+    "rotatedChallengeId": "0x70ee791537d781b762f11d0cecec627549f7532b0bcee7b5e7d6b48bbe6017cb",
+    "firstHash": "0x741d58e2b7ed8c978d29853ead8ec307ba3782b798ae1df7a972da47b5e3d984",
+    "rotatedHash": "0x09632c3fe2bf37ab65d353696a0728af074b8866ced019279fdfa0a70bc9164a",
+    "illegalDomainErrorCode": "VALIDATION_ERROR",
+    "staleNonceErrorCode": "UNPROCESSABLE_ENTITY"
+  }
+}
