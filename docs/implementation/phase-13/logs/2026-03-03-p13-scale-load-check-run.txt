@@ -1,0 +1,5 @@
+[TA-P13-002] totalMessages=3200
+[TA-P13-002] throughputMps=14074.78
+[TA-P13-002] p95SendLatencyMs=0.111
+[TA-P13-002] decision=PASS
+[TA-P13-002] output=/Users/xiasenhai/Workspace/OpenClaw/telagent/docs/implementation/phase-13/manifests/2026-03-03-p13-scale-load-check.json

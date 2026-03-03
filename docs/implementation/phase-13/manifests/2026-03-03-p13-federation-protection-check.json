@@ -1,0 +1,103 @@
+{
+  "phase": "Phase 13",
+  "taskId": "TA-P13-005",
+  "generatedAt": "2026-03-03T13:49:35.471Z",
+  "summary": {
+    "backoffScheduledPass": true,
+    "circuitOpenedPass": true,
+    "blockedWhileOpenPass": true,
+    "recoveredAfterCooldownPass": true
+  },
+  "decision": "PASS",
+  "details": {
+    "firstReplay": {
+      "processed": 1,
+      "replayed": 0,
+      "failed": 1,
+      "results": [
+        {
+          "dlqId": "dlq-envelopes-1772591400000-1",
+          "sequence": 1,
+          "scope": "envelopes",
+          "status": "FAILED",
+          "replayedAtMs": 1772591400000,
+          "errorCode": "VALIDATION_ERROR",
+          "errorMessage": "envelopeId is required"
+        }
+      ]
+    },
+    "secondReplay": {
+      "processed": 1,
+      "replayed": 0,
+      "failed": 1,
+      "results": [
+        {
+          "dlqId": "dlq-envelopes-1772591400000-1",
+          "sequence": 1,
+          "scope": "envelopes",
+          "status": "FAILED",
+          "replayedAtMs": 1772591401000,
+          "errorCode": "VALIDATION_ERROR",
+          "errorMessage": "envelopeId is required"
+        }
+      ]
+    },
+    "blockedReplay": {
+      "processed": 1,
+      "replayed": 0,
+      "failed": 1,
+      "results": [
+        {
+          "dlqId": "dlq-envelopes-1772591401000-2",
+          "sequence": 2,
+          "scope": "envelopes",
+          "status": "FAILED",
+          "replayedAtMs": 1772591401000,
+          "errorCode": "TOO_MANY_REQUESTS",
+          "errorMessage": "replay circuit is open for sourceDomain(node-b.tel)"
+        }
+      ]
+    },
+    "replayAfterCooldown": {
+      "processed": 2,
+      "replayed": 1,
+      "failed": 1,
+      "results": [
+        {
+          "dlqId": "dlq-envelopes-1772591400000-1",
+          "sequence": 1,
+          "scope": "envelopes",
+          "status": "FAILED",
+          "replayedAtMs": 1772591421000,
+          "errorCode": "VALIDATION_ERROR",
+          "errorMessage": "envelopeId is required"
+        },
+        {
+          "dlqId": "dlq-envelopes-1772591401000-2",
+          "sequence": 2,
+          "scope": "envelopes",
+          "status": "REPLAYED",
+          "replayedAtMs": 1772591421000
+        }
+      ]
+    },
+    "infoAfterOpen": {
+      "replayBackoffBaseMs": 1000,
+      "replayBackoffMaxMs": 4000,
+      "circuitFailureThreshold": 2,
+      "circuitCooldownSec": 20,
+      "openSourceDomainCount": 1,
+      "totalOpenEvents": 1,
+      "blockedReplayCount": 0
+    },
+    "infoAfterCooldown": {
+      "replayBackoffBaseMs": 1000,
+      "replayBackoffMaxMs": 4000,
+      "circuitFailureThreshold": 2,
+      "circuitCooldownSec": 20,
+      "openSourceDomainCount": 0,
+      "totalOpenEvents": 1,
+      "blockedReplayCount": 1
+    }
+  }
+}

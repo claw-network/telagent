@@ -1,0 +1,6 @@
+[TA-P13-003] originalCount=120
+[TA-P13-003] restoredCount=120
+[TA-P13-003] rtoMs=3
+[TA-P13-003] rpoMessagesLost=0
+[TA-P13-003] decision=PASS
+[TA-P13-003] output=/Users/xiasenhai/Workspace/OpenClaw/telagent/docs/implementation/phase-13/manifests/2026-03-03-p13-dr-drill-check.json

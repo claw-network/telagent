@@ -1,0 +1,35 @@
+{
+  "phase": "Phase 13",
+  "taskId": "TA-P13-002",
+  "generatedAt": "2026-03-03T13:49:32.551Z",
+  "summary": {
+    "totalMessages": 3200,
+    "totalConversations": 40,
+    "throughputMps": 14074.779399714795,
+    "p95SendLatencyMs": 0.110862,
+    "seqMonotonicPass": true,
+    "dedupeStablePass": true,
+    "dedupeConflictPass": true,
+    "throughputPass": true,
+    "latencyPass": true
+  },
+  "decision": "PASS",
+  "details": {
+    "messagesPerConversation": 80,
+    "totalSendDurationMs": 227.357027,
+    "latency": {
+      "p50": 0.061498,
+      "p90": 0.08848,
+      "p95": 0.110862,
+      "p99": 0.213327,
+      "max": 2.43472
+    },
+    "sampledConversations": [
+      "group:0xa0783c06a6c7ecfe33f5aec5cc0e22586bd5b9132571aad89427826af93e0a84",
+      "group:0xe1fe7595ab1e5a062f4ba9cb1a0cc3629f71105fb6b5224c1173489b93a60bd5",
+      "group:0xeb6aa2348f6f0bbbaf0d4eb30dacb7ac30e68055405fb90d5f3b982ec882e1ae",
+      "group:0x50da369275e88350f31951549a0432280d2b0dae203e15eea011654f3bdb8cfd",
+      "group:0x9ea4757161633e04c6ca841fc1f11b258bc0853c337e59dab6282b814bb7a839"
+    ]
+  }
+}

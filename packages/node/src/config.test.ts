@@ -142,6 +142,56 @@ test('federation supported protocols auto-include self version', async () => {
   );
 });
 
+test('federation replay protection defaults are applied', async () => {
+  await withEnv(
+    {
+      TELAGENT_FEDERATION_REPLAY_BACKOFF_BASE_MS: undefined,
+      TELAGENT_FEDERATION_REPLAY_BACKOFF_MAX_MS: undefined,
+      TELAGENT_FEDERATION_REPLAY_CIRCUIT_BREAKER_FAIL_THRESHOLD: undefined,
+      TELAGENT_FEDERATION_REPLAY_CIRCUIT_BREAKER_COOLDOWN_SEC: undefined,
+    },
+    async () => {
+      const config = loadConfigFromEnv();
+      assert.equal(config.federation.replayBackoffBaseMs, 1000);
+      assert.equal(config.federation.replayBackoffMaxMs, 60000);
+      assert.equal(config.federation.replayCircuitBreakerFailureThreshold, 3);
+      assert.equal(config.federation.replayCircuitBreakerCooldownSec, 30);
+    },
+  );
+});
+
+test('federation replay protection accepts custom values', async () => {
+  await withEnv(
+    {
+      TELAGENT_FEDERATION_REPLAY_BACKOFF_BASE_MS: '500',
+      TELAGENT_FEDERATION_REPLAY_BACKOFF_MAX_MS: '15000',
+      TELAGENT_FEDERATION_REPLAY_CIRCUIT_BREAKER_FAIL_THRESHOLD: '4',
+      TELAGENT_FEDERATION_REPLAY_CIRCUIT_BREAKER_COOLDOWN_SEC: '45',
+    },
+    async () => {
+      const config = loadConfigFromEnv();
+      assert.equal(config.federation.replayBackoffBaseMs, 500);
+      assert.equal(config.federation.replayBackoffMaxMs, 15000);
+      assert.equal(config.federation.replayCircuitBreakerFailureThreshold, 4);
+      assert.equal(config.federation.replayCircuitBreakerCooldownSec, 45);
+    },
+  );
+});
+
+test('federation replay protection requires positive integer values', async () => {
+  await withEnv(
+    {
+      TELAGENT_FEDERATION_REPLAY_CIRCUIT_BREAKER_FAIL_THRESHOLD: '0',
+    },
+    async () => {
+      assert.throws(
+        () => loadConfigFromEnv(),
+        /TELAGENT_FEDERATION_REPLAY_CIRCUIT_BREAKER_FAIL_THRESHOLD must be a positive integer/,
+      );
+    },
+  );
+});
+
 test('domain proof config defaults to enforced mode', async () => {
   await withEnv(
     {

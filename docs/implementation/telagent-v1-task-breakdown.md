@@ -6,7 +6,7 @@
 
 ## 1. 使用说明
 
-- **执行顺序**：按 `Phase 0 -> Phase 12` 串行推进，禁止跨 Gate 跳阶段。
+- **执行顺序**：按 `Phase 0 -> Phase 13` 串行推进，禁止跨 Gate 跳阶段。
 - **状态字段**：`TODO | IN_PROGRESS | BLOCKED | DONE`。
 - **估算单位**：人日（PD）。
 - **依赖格式**：`-` 表示无依赖；多个依赖用逗号分隔任务 ID。
@@ -28,6 +28,7 @@ flowchart LR
   P9 --> P10["Phase 10\n联邦灰度发布自动化与回滚编排"]
   P10 --> P11["Phase 11\nv1.1 安全与运营能力增强"]
   P11 --> P12["Phase 12\nv1.2 候选池冻结与执行排程"]
+  P12 --> P13["Phase 13\nv0.2.0 稳定化与可运营增强"]
 ```
 
 ## 3. 分阶段任务清单
@@ -135,6 +136,13 @@ flowchart LR
 | TA-P12-006 | Phase 12 | Web Console v2.1 运营与应急面板 | Frontend + SRE | 2 | TA-P12-001 | ops dashboard v2.1 | 审计快照、DLQ 批量重放、风险看板可用 | DONE |
 | TA-P12-007 | Phase 12 | 多节点密钥轮换编排脚本 | Security + SRE | 1 | TA-P12-001 | key-rotation orchestrator + manifest | 分批轮换与回滚剧本可复现 | DONE |
 | TA-P12-008 | Phase 12 | Phase 12 Gate 评审与收口 | TL + QA | 0.5 | TA-P12-002, TA-P12-003, TA-P12-004, TA-P12-005, TA-P12-006, TA-P12-007 | gate 结论文档 | Phase 12 正式关闭 | DONE |
+| TA-P13-001 | Phase 13 | 冻结 v0.2.0 稳定化边界与验收标准 | TL + BE + SRE + Security + QA | 0.5 | TA-P12-008 | phase boundary doc + manifest | 边界、验收、证据模板冻结 | DONE |
+| TA-P13-002 | Phase 13 | 规模压测升级（消息 + 会话） | Backend + SRE + QA | 1.5 | TA-P13-001 | scale load check script + manifest | 吞吐/时延达标且序号/去重语义不退化 | DONE |
+| TA-P13-003 | Phase 13 | 灾备演练（备份/恢复/RTO-RPO） | SRE + Backend + QA | 1 | TA-P13-001 | DR drill script + manifest | `RTO<=2s`、`RPO=0`、恢复后序号连续 | DONE |
+| TA-P13-004 | Phase 13 | 审计快照签名归档与验签 | Security + Backend | 1 | TA-P13-001 | audit archive script + manifest | digest/signature 一致且可离线验签 | DONE |
+| TA-P13-005 | Phase 13 | 联邦重放保护增强（熔断 + 退避） | Backend + Security | 2 | TA-P13-001 | federation replay protection + tests + manifest | 重放失败具备退避/熔断/恢复能力且可观测 | DONE |
+| TA-P13-006 | Phase 13 | SDK TS/Python 核心能力一致性校验 | DX + Backend + QA | 1 | TA-P13-001 | sdk parity check script + manifest | 核心方法、API 前缀、错误模型一致 | DONE |
+| TA-P13-007 | Phase 13 | Phase 13 Gate 评审与收口 | TL + QA | 0.5 | TA-P13-002, TA-P13-003, TA-P13-004, TA-P13-005, TA-P13-006 | gate 结论文档 | Phase 13 正式关闭 | DONE |
 
 ## 4. 执行节奏建议（按部就班）
 
@@ -314,3 +322,15 @@ flowchart LR
 | TA-P12-006 | DONE | `docs/implementation/phase-12/ta-p12-006-web-console-v21-ops-emergency-panel-2026-03-03.md`, `packages/web/src/index.html`, `packages/web/src/main.js`, `packages/web/src/styles.css`, `packages/web/scripts/run-phase12-console-v21-check.mjs`, `docs/implementation/phase-12/logs/2026-03-03-p12-web-build.txt`, `docs/implementation/phase-12/logs/2026-03-03-p12-web-test.txt`, `docs/implementation/phase-12/logs/2026-03-03-p12-web-console-v21-check-run.txt`, `docs/implementation/phase-12/manifests/2026-03-03-p12-web-console-v21-check.json` | 无 | 进入 `TA-P12-007`（多节点密钥轮换编排脚本） |
 | TA-P12-007 | DONE | `docs/implementation/phase-12/ta-p12-007-multi-node-key-rotation-orchestrator-2026-03-03.md`, `packages/node/scripts/run-phase12-key-rotation-orchestrator-check.ts`, `packages/node/src/services/key-rotation-orchestrator.test.ts`, `docs/implementation/phase-12/logs/2026-03-03-p12-node-build.txt`, `docs/implementation/phase-12/logs/2026-03-03-p12-node-test.txt`, `docs/implementation/phase-12/logs/2026-03-03-p12-key-rotation-orchestrator-check-run.txt`, `docs/implementation/phase-12/manifests/2026-03-03-p12-key-rotation-orchestrator-check.json` | 无 | 收口证据已提交，见 `TA-P12-008` Gate 结论 |
 | TA-P12-008 | DONE | `docs/implementation/phase-12/ta-p12-008-phase12-gate-review-2026-03-03.md`, `docs/implementation/gates/phase-12-gate.md`, `docs/implementation/phase-12/logs/2026-03-03-p12-node-build.txt`, `docs/implementation/phase-12/logs/2026-03-03-p12-node-test.txt`, `docs/implementation/phase-12/logs/2026-03-03-p12-web-build.txt`, `docs/implementation/phase-12/logs/2026-03-03-p12-web-test.txt`, `docs/implementation/phase-12/logs/2026-03-03-p12-sdk-python-build.txt`, `docs/implementation/phase-12/logs/2026-03-03-p12-sdk-python-test.txt`, `docs/implementation/phase-12/logs/2026-03-03-p12-gate-manifest-summary.txt` | 无 | Phase 12 已关闭，等待下一阶段规划 |
+
+## 19. Phase 13 v0.2.0 稳定化与可运营增强（2026-03-03）
+
+| Task ID | 状态 | 证据链接 | 阻塞项 | 下一步动作 |
+| --- | --- | --- | --- | --- |
+| TA-P13-001 | DONE | `docs/implementation/phase-13/ta-p13-001-phase13-boundary-acceptance-2026-03-03.md`, `docs/implementation/phase-13/manifests/2026-03-03-p13-boundary-freeze.json`, `docs/implementation/phase-13/README.md` | 无 | 进入 `TA-P13-002`（规模压测升级） |
+| TA-P13-002 | DONE | `docs/implementation/phase-13/ta-p13-002-scale-load-upgrade-2026-03-03.md`, `packages/node/scripts/run-phase13-scale-load-check.ts`, `docs/implementation/phase-13/logs/2026-03-03-p13-scale-load-check-run.txt`, `docs/implementation/phase-13/manifests/2026-03-03-p13-scale-load-check.json` | 无 | 进入 `TA-P13-003`（灾备演练） |
+| TA-P13-003 | DONE | `docs/implementation/phase-13/ta-p13-003-dr-backup-restore-drill-2026-03-03.md`, `packages/node/scripts/run-phase13-dr-drill-check.ts`, `docs/implementation/phase-13/logs/2026-03-03-p13-dr-drill-check-run.txt`, `docs/implementation/phase-13/manifests/2026-03-03-p13-dr-drill-check.json` | 无 | 进入 `TA-P13-004`（审计归档验签） |
+| TA-P13-004 | DONE | `docs/implementation/phase-13/ta-p13-004-audit-archive-signing-2026-03-03.md`, `packages/node/scripts/run-phase13-audit-archive-check.ts`, `docs/implementation/phase-13/archives/2026-03-03-p13-audit-snapshot-archive.json`, `docs/implementation/phase-13/logs/2026-03-03-p13-audit-archive-check-run.txt`, `docs/implementation/phase-13/manifests/2026-03-03-p13-audit-archive-check.json` | 无 | 进入 `TA-P13-005`（联邦重放保护增强） |
+| TA-P13-005 | DONE | `docs/implementation/phase-13/ta-p13-005-federation-circuit-breaker-backoff-2026-03-03.md`, `packages/node/src/services/federation-service.ts`, `packages/node/src/services/federation-service.test.ts`, `packages/node/src/config.ts`, `packages/node/src/config.test.ts`, `packages/node/src/app.ts`, `.env.example`, `packages/node/scripts/run-phase13-federation-protection-check.ts`, `docs/implementation/phase-13/logs/2026-03-03-p13-federation-protection-check-run.txt`, `docs/implementation/phase-13/manifests/2026-03-03-p13-federation-protection-check.json` | 无 | 进入 `TA-P13-006`（SDK 一致性校验） |
+| TA-P13-006 | DONE | `docs/implementation/phase-13/ta-p13-006-sdk-ts-python-parity-2026-03-03.md`, `packages/node/scripts/run-phase13-sdk-parity-check.ts`, `packages/sdk/src/index.ts`, `packages/sdk-python/telagent_sdk/client.py`, `docs/implementation/phase-13/logs/2026-03-03-p13-sdk-parity-check-run.txt`, `docs/implementation/phase-13/manifests/2026-03-03-p13-sdk-parity-check.json` | 无 | 进入 `TA-P13-007`（Gate 收口） |
+| TA-P13-007 | DONE | `docs/implementation/phase-13/ta-p13-007-phase13-gate-review-2026-03-03.md`, `docs/implementation/gates/phase-13-gate.md`, `docs/implementation/phase-13/logs/2026-03-03-p13-node-build.txt`, `docs/implementation/phase-13/logs/2026-03-03-p13-node-test.txt`, `docs/implementation/phase-13/logs/2026-03-03-p13-gate-manifest-summary.txt` | 无 | Phase 13 已关闭（Gate=PASS），等待 Phase 14 规划 |

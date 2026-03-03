@@ -1,0 +1,23 @@
+{
+  "phase": "Phase 13",
+  "taskId": "TA-P13-004",
+  "generatedAt": "2026-03-03T13:49:34.551Z",
+  "summary": {
+    "archiveWrittenPass": true,
+    "digestVerifiedPass": true,
+    "signatureVerifiedPass": true,
+    "samplePresentPass": true
+  },
+  "decision": "PASS",
+  "details": {
+    "archivePath": "/Users/xiasenhai/Workspace/OpenClaw/telagent/docs/implementation/phase-13/archives/2026-03-03-p13-audit-snapshot-archive.json",
+    "digest": "02706c23ec268de6141e1c6eea6f011c33172f801c98f0e2725942296606f7e4",
+    "signature": "f5f943e445ede68a28a36431a480e15a9423fc4305bd80e83f285591fea88be1",
+    "keyHint": "env:P13_AUDIT_ARCHIVE_SIGNING_SECRET",
+    "snapshotMeta": {
+      "activeEnvelopeCount": 2,
+      "retractedCount": 0,
+      "revokedDidCount": 0
+    }
+  }
+}

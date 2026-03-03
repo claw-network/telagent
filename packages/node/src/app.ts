@@ -63,7 +63,24 @@ export class TelagentNode {
       identityService: this.identityService,
     });
     this.attachmentService = new AttachmentService();
-    this.federationService = new FederationService(config.federation);
+    this.federationService = new FederationService({
+      selfDomain: config.federation.selfDomain,
+      authToken: config.federation.authToken,
+      allowedSourceDomains: config.federation.allowedSourceDomains,
+      protocolVersion: config.federation.protocolVersion,
+      supportedProtocolVersions: config.federation.supportedProtocolVersions,
+      envelopeRateLimitPerMinute: config.federation.envelopeRateLimitPerMinute,
+      groupStateSyncRateLimitPerMinute: config.federation.groupStateSyncRateLimitPerMinute,
+      receiptRateLimitPerMinute: config.federation.receiptRateLimitPerMinute,
+      replayBackoffBaseMs: config.federation.replayBackoffBaseMs,
+      replayBackoffMaxMs: config.federation.replayBackoffMaxMs,
+      replayCircuitBreakerFailureThreshold: config.federation.replayCircuitBreakerFailureThreshold,
+      replayCircuitBreakerCooldownMs: config.federation.replayCircuitBreakerCooldownSec * 1000,
+      pinningMode: config.federation.pinningMode,
+      pinningCurrentKeysByDomain: config.federation.pinningCurrentKeysByDomain,
+      pinningNextKeysByDomain: config.federation.pinningNextKeysByDomain,
+      pinningCutoverAtMs: config.federation.pinningCutoverAtMs,
+    });
     this.monitoringService = new NodeMonitoringService({
       thresholds: {
         errorRateWarnRatio: config.monitoring.errorRateWarnRatio,

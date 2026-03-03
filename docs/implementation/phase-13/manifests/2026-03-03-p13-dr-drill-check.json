@@ -1,0 +1,28 @@
+{
+  "phase": "Phase 13",
+  "taskId": "TA-P13-003",
+  "generatedAt": "2026-03-03T13:49:33.594Z",
+  "summary": {
+    "originalCount": 120,
+    "restoredCount": 120,
+    "rtoMs": 3,
+    "rpoMessagesLost": 0,
+    "backupCreatedPass": true,
+    "restoreIntegrityPass": true,
+    "sequenceContinuesPass": true,
+    "rtoWithinSloPass": true
+  },
+  "decision": "PASS",
+  "details": {
+    "tempRoot": "/Users/xiasenhai/Workspace/OpenClaw/telagent/.tmp/phase13-dr-1772545773491",
+    "sourceDbPath": "/Users/xiasenhai/Workspace/OpenClaw/telagent/.tmp/phase13-dr-1772545773491/source/mailbox.sqlite",
+    "backupDbPath": "/Users/xiasenhai/Workspace/OpenClaw/telagent/.tmp/phase13-dr-1772545773491/backup/mailbox.sqlite",
+    "restoredDbPath": "/Users/xiasenhai/Workspace/OpenClaw/telagent/.tmp/phase13-dr-1772545773491/restore/mailbox.sqlite",
+    "copiedFiles": {
+      "sqlite": true,
+      "wal": true,
+      "shm": true
+    },
+    "restoredSendSeq": "121"
+  }
+}

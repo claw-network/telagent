@@ -1,0 +1,6 @@
+[TA-P13-005] backoffScheduledPass=true
+[TA-P13-005] circuitOpenedPass=true
+[TA-P13-005] blockedWhileOpenPass=true
+[TA-P13-005] recoveredAfterCooldownPass=true
+[TA-P13-005] decision=PASS
+[TA-P13-005] output=/Users/xiasenhai/Workspace/OpenClaw/telagent/docs/implementation/phase-13/manifests/2026-03-03-p13-federation-protection-check.json

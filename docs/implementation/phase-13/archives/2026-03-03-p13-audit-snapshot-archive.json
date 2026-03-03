@@ -1,0 +1,25 @@
+{
+  "archiveVersion": "v1",
+  "generatedAt": "2026-03-03T13:49:34.542Z",
+  "snapshot": {
+    "activeEnvelopeCount": 2,
+    "retractedCount": 0,
+    "retractedByReason": {
+      "REORGED_BACK": 0
+    },
+    "sampledRetractions": [],
+    "revokedDidCount": 0,
+    "isolatedConversationCount": 0,
+    "isolationEventCount": 0,
+    "sampledIsolations": [],
+    "sampledIsolationEvents": [],
+    "sampleSize": 10,
+    "retractionScanLimit": 500
+  },
+  "proof": {
+    "algorithm": "HMAC-SHA256",
+    "digest": "02706c23ec268de6141e1c6eea6f011c33172f801c98f0e2725942296606f7e4",
+    "signature": "f5f943e445ede68a28a36431a480e15a9423fc4305bd80e83f285591fea88be1",
+    "keyHint": "env:P13_AUDIT_ARCHIVE_SIGNING_SECRET"
+  }
+}

@@ -12,6 +12,10 @@ export interface FederationConfig {
   envelopeRateLimitPerMinute: number;
   groupStateSyncRateLimitPerMinute: number;
   receiptRateLimitPerMinute: number;
+  replayBackoffBaseMs: number;
+  replayBackoffMaxMs: number;
+  replayCircuitBreakerFailureThreshold: number;
+  replayCircuitBreakerCooldownSec: number;
   pinningMode: FederationPinningMode;
   pinningCurrentKeysByDomain: Record<string, string[]>;
   pinningNextKeysByDomain: Record<string, string[]>;
@@ -176,6 +180,26 @@ export function loadConfigFromEnv(): AppConfig {
       envelopeRateLimitPerMinute: Number(process.env.TELAGENT_FEDERATION_ENVELOPE_RATE_LIMIT_PER_MIN || 600),
       groupStateSyncRateLimitPerMinute: Number(process.env.TELAGENT_FEDERATION_SYNC_RATE_LIMIT_PER_MIN || 300),
       receiptRateLimitPerMinute: Number(process.env.TELAGENT_FEDERATION_RECEIPT_RATE_LIMIT_PER_MIN || 600),
+      replayBackoffBaseMs: parsePositiveInteger(
+        process.env.TELAGENT_FEDERATION_REPLAY_BACKOFF_BASE_MS,
+        1_000,
+        'TELAGENT_FEDERATION_REPLAY_BACKOFF_BASE_MS',
+      ),
+      replayBackoffMaxMs: parsePositiveInteger(
+        process.env.TELAGENT_FEDERATION_REPLAY_BACKOFF_MAX_MS,
+        60_000,
+        'TELAGENT_FEDERATION_REPLAY_BACKOFF_MAX_MS',
+      ),
+      replayCircuitBreakerFailureThreshold: parsePositiveInteger(
+        process.env.TELAGENT_FEDERATION_REPLAY_CIRCUIT_BREAKER_FAIL_THRESHOLD,
+        3,
+        'TELAGENT_FEDERATION_REPLAY_CIRCUIT_BREAKER_FAIL_THRESHOLD',
+      ),
+      replayCircuitBreakerCooldownSec: parsePositiveInteger(
+        process.env.TELAGENT_FEDERATION_REPLAY_CIRCUIT_BREAKER_COOLDOWN_SEC,
+        30,
+        'TELAGENT_FEDERATION_REPLAY_CIRCUIT_BREAKER_COOLDOWN_SEC',
+      ),
       pinningMode: federationPinningMode,
       pinningCurrentKeysByDomain: federationPinningCurrentKeysByDomain,
       pinningNextKeysByDomain: federationPinningNextKeysByDomain,

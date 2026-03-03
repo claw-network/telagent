@@ -1,0 +1,6 @@
+[TA-P13-006] coreMethodParityPass=true
+[TA-P13-006] apiPrefixParityPass=true
+[TA-P13-006] errorModelParityPass=true
+[TA-P13-006] pullConversationQueryParityPass=true
+[TA-P13-006] decision=PASS
+[TA-P13-006] output=/Users/xiasenhai/Workspace/OpenClaw/telagent/docs/implementation/phase-13/manifests/2026-03-03-p13-sdk-parity-check.json

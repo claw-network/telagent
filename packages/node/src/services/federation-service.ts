@@ -53,6 +53,10 @@ export interface FederationServiceOptions {
   envelopeRateLimitPerMinute?: number;
   groupStateSyncRateLimitPerMinute?: number;
   receiptRateLimitPerMinute?: number;
+  replayBackoffBaseMs?: number;
+  replayBackoffMaxMs?: number;
+  replayCircuitBreakerFailureThreshold?: number;
+  replayCircuitBreakerCooldownMs?: number;
   pinningMode?: FederationPinningMode;
   pinningCurrentKeysByDomain?: Record<string, string[]>;
   pinningNextKeysByDomain?: Record<string, string[]>;
@@ -82,6 +86,8 @@ export interface FederationDlqEntry {
   lastFailedAtMs: number;
   attemptCount: number;
   replayAttemptCount: number;
+  nextReplayAtMs: number;
+  consecutiveReplayFailures: number;
   replayedAtMs?: number;
   lastErrorCode: string;
   lastErrorMessage: string;
@@ -121,6 +127,15 @@ const SYSTEM_CLOCK: FederationServiceClock = {
 
 const VALID_GROUP_STATES = new Set(['PENDING_ONCHAIN', 'ACTIVE', 'REORGED_BACK']);
 
+interface FederationReplayCircuitState {
+  consecutiveFailures: number;
+  openUntilMs: number;
+  totalOpenEvents: number;
+  blockedReplayCount: number;
+  lastFailureCode?: string;
+  lastFailureAtMs?: number;
+}
+
 export class FederationService {
   private readonly envelopeById = new Map<string, FederationEnvelope>();
   private readonly receiptByKey = new Map<string, FederationReceipt>();
@@ -135,10 +150,17 @@ export class FederationService {
   private readonly pinningMode: FederationPinningMode;
   private readonly pinningPolicyByDomain: Map<string, FederationPinningPolicy>;
   private readonly pinningCutoverAtMs?: number;
+  private readonly replayBackoffBaseMs: number;
+  private readonly replayBackoffMaxMs: number;
+  private readonly replayCircuitBreakerFailureThreshold: number;
+  private readonly replayCircuitBreakerCooldownMs: number;
+  private readonly replayCircuitBySourceDomain = new Map<string, FederationReplayCircuitState>();
   private readonly dlqById = new Map<string, FederationDlqEntry>();
   private dlqSequence = 0;
   private dlqReplayFailed = 0;
   private dlqReplaySuccess = 0;
+  private replayCircuitOpenEvents = 0;
+  private replayCircuitBlocked = 0;
   private readonly protocolVersion: string;
   private readonly supportedProtocolVersions: Set<string>;
   private readonly clock: FederationServiceClock;
@@ -162,6 +184,32 @@ export class FederationService {
       options.pinningNextKeysByDomain ?? {},
     );
     this.pinningCutoverAtMs = this.normalizePinningCutoverAt(options.pinningCutoverAtMs);
+    this.replayBackoffBaseMs = this.normalizePositiveInteger(
+      options.replayBackoffBaseMs,
+      1_000,
+      'replayBackoffBaseMs',
+    );
+    this.replayBackoffMaxMs = this.normalizePositiveInteger(
+      options.replayBackoffMaxMs,
+      60_000,
+      'replayBackoffMaxMs',
+    );
+    if (this.replayBackoffMaxMs < this.replayBackoffBaseMs) {
+      throw new TelagentError(
+        ErrorCodes.VALIDATION,
+        'replayBackoffMaxMs must be greater than or equal to replayBackoffBaseMs',
+      );
+    }
+    this.replayCircuitBreakerFailureThreshold = this.normalizePositiveInteger(
+      options.replayCircuitBreakerFailureThreshold,
+      3,
+      'replayCircuitBreakerFailureThreshold',
+    );
+    this.replayCircuitBreakerCooldownMs = this.normalizePositiveInteger(
+      options.replayCircuitBreakerCooldownMs,
+      30_000,
+      'replayCircuitBreakerCooldownMs',
+    );
     this.protocolVersion = this.normalizeProtocolVersion(options.protocolVersion ?? 'v1', 'protocolVersion');
     this.supportedProtocolVersions = new Set(
       (options.supportedProtocolVersions ?? [this.protocolVersion]).map((item) =>
@@ -354,6 +402,8 @@ export class FederationService {
       lastFailedAtMs: now,
       attemptCount: 1,
       replayAttemptCount: 0,
+      nextReplayAtMs: now,
+      consecutiveReplayFailures: 0,
       lastErrorCode: resolvedError.code,
       lastErrorMessage: resolvedError.message,
     };
@@ -377,18 +427,42 @@ export class FederationService {
   }
 
   replayDlq(options: ReplayFederationDlqOptions = {}): FederationDlqReplayReport {
-    const selected = this.selectReplayTargets(options);
+    const selected = this.selectReplayTargets(options, this.clock.now());
     const results: FederationDlqReplayItem[] = [];
     let replayed = 0;
     let failed = 0;
 
     for (const entry of selected) {
       const now = this.clock.now();
+      if (this.isReplayCircuitOpen(entry.meta.sourceDomain, now)) {
+        const state = this.getReplayCircuitState(entry.meta.sourceDomain);
+        state.blockedReplayCount += 1;
+        this.replayCircuitBlocked += 1;
+        entry.nextReplayAtMs = Math.max(entry.nextReplayAtMs, state.openUntilMs);
+        failed += 1;
+        results.push({
+          dlqId: entry.dlqId,
+          sequence: entry.sequence,
+          scope: entry.scope,
+          status: 'FAILED',
+          replayedAtMs: now,
+          errorCode: ErrorCodes.TOO_MANY_REQUESTS,
+          errorMessage: `replay circuit is open for sourceDomain(${entry.meta.sourceDomain})`,
+        });
+        if (options.stopOnError) {
+          break;
+        }
+        continue;
+      }
+
       entry.replayAttemptCount += 1;
       try {
         this.executeReplay(entry);
         entry.status = 'REPLAYED';
         entry.replayedAtMs = now;
+        entry.nextReplayAtMs = now;
+        entry.consecutiveReplayFailures = 0;
+        this.recordReplaySuccess(entry.meta.sourceDomain);
         this.dlqReplaySuccess += 1;
         replayed += 1;
         results.push({
@@ -402,8 +476,15 @@ export class FederationService {
         const resolvedError = this.toTelagentError(error);
         entry.lastFailedAtMs = now;
         entry.attemptCount += 1;
+        entry.consecutiveReplayFailures += 1;
+        entry.nextReplayAtMs = now + this.computeReplayBackoffMs(entry.consecutiveReplayFailures);
         entry.lastErrorCode = resolvedError.code;
         entry.lastErrorMessage = resolvedError.message;
+        this.recordReplayFailure(entry.meta.sourceDomain, resolvedError, now);
+        const openUntil = this.getReplayCircuitOpenUntil(entry.meta.sourceDomain);
+        if (typeof openUntil === 'number' && entry.nextReplayAtMs < openUntil) {
+          entry.nextReplayAtMs = openUntil;
+        }
         this.dlqReplayFailed += 1;
         failed += 1;
         results.push({
@@ -467,6 +548,15 @@ export class FederationService {
       staleGroupStateSyncRejected: number;
       splitBrainGroupStateSyncDetected: number;
       totalGroupStateSyncConflicts: number;
+      replayProtection: {
+        replayBackoffBaseMs: number;
+        replayBackoffMaxMs: number;
+        circuitFailureThreshold: number;
+        circuitCooldownSec: number;
+        openSourceDomainCount: number;
+        totalOpenEvents: number;
+        blockedReplayCount: number;
+      };
     };
     dlq: {
       pendingCount: number;
@@ -475,6 +565,7 @@ export class FederationService {
       replayFailedCount: number;
     };
   } {
+    const now = this.clock.now();
     const pendingCount = [...this.dlqById.values()].filter((entry) => entry.status === 'PENDING').length;
     const replayedCount = [...this.dlqById.values()].filter((entry) => entry.status === 'REPLAYED').length;
     return {
@@ -515,6 +606,15 @@ export class FederationService {
         staleGroupStateSyncRejected: this.staleGroupStateSyncRejected,
         splitBrainGroupStateSyncDetected: this.splitBrainGroupStateSyncDetected,
         totalGroupStateSyncConflicts: this.staleGroupStateSyncRejected + this.splitBrainGroupStateSyncDetected,
+        replayProtection: {
+          replayBackoffBaseMs: this.replayBackoffBaseMs,
+          replayBackoffMaxMs: this.replayBackoffMaxMs,
+          circuitFailureThreshold: this.replayCircuitBreakerFailureThreshold,
+          circuitCooldownSec: Math.floor(this.replayCircuitBreakerCooldownMs / 1_000),
+          openSourceDomainCount: this.countOpenReplayCircuits(now),
+          totalOpenEvents: this.replayCircuitOpenEvents,
+          blockedReplayCount: this.replayCircuitBlocked,
+        },
       },
       dlq: {
         pendingCount,
@@ -525,17 +625,17 @@ export class FederationService {
     };
   }
 
-  private selectReplayTargets(options: ReplayFederationDlqOptions): FederationDlqEntry[] {
+  private selectReplayTargets(options: ReplayFederationDlqOptions, nowMs: number): FederationDlqEntry[] {
     const maxItems = typeof options.maxItems === 'number' ? Math.max(1, Math.floor(options.maxItems)) : undefined;
     let entries: FederationDlqEntry[];
     if (Array.isArray(options.ids) && options.ids.length > 0) {
       const idSet = new Set(options.ids);
       entries = [...this.dlqById.values()]
-        .filter((entry) => entry.status === 'PENDING' && idSet.has(entry.dlqId))
+        .filter((entry) => entry.status === 'PENDING' && idSet.has(entry.dlqId) && entry.nextReplayAtMs <= nowMs)
         .sort((left, right) => left.sequence - right.sequence);
     } else {
       entries = [...this.dlqById.values()]
-        .filter((entry) => entry.status === 'PENDING')
+        .filter((entry) => entry.status === 'PENDING' && entry.nextReplayAtMs <= nowMs)
         .sort((left, right) => left.sequence - right.sequence);
     }
 
@@ -705,6 +805,16 @@ export class FederationService {
     return value;
   }
 
+  private normalizePositiveInteger(value: number | undefined, fallback: number, fieldName: string): number {
+    if (typeof value === 'undefined') {
+      return fallback;
+    }
+    if (!Number.isFinite(value) || !Number.isInteger(value) || value <= 0) {
+      throw new TelagentError(ErrorCodes.VALIDATION, `${fieldName} must be a positive integer`);
+    }
+    return value;
+  }
+
   private createPinningPolicy(
     currentByDomain: Record<string, string[]>,
     nextByDomain: Record<string, string[]>,
@@ -821,6 +931,82 @@ export class FederationService {
       this.acceptedWithoutProtocolHint++;
     }
     this.protocolUsageCounts.set(protocolVersion, (this.protocolUsageCounts.get(protocolVersion) ?? 0) + 1);
+  }
+
+  private getReplayCircuitState(sourceDomain: string): FederationReplayCircuitState {
+    const existing = this.replayCircuitBySourceDomain.get(sourceDomain);
+    if (existing) {
+      return existing;
+    }
+
+    const created: FederationReplayCircuitState = {
+      consecutiveFailures: 0,
+      openUntilMs: 0,
+      totalOpenEvents: 0,
+      blockedReplayCount: 0,
+    };
+    this.replayCircuitBySourceDomain.set(sourceDomain, created);
+    return created;
+  }
+
+  private isReplayCircuitOpen(sourceDomain: string, nowMs: number): boolean {
+    const state = this.replayCircuitBySourceDomain.get(sourceDomain);
+    if (!state) {
+      return false;
+    }
+    if (state.openUntilMs <= nowMs) {
+      state.openUntilMs = 0;
+      return false;
+    }
+    return true;
+  }
+
+  private getReplayCircuitOpenUntil(sourceDomain: string): number | undefined {
+    const state = this.replayCircuitBySourceDomain.get(sourceDomain);
+    if (!state || state.openUntilMs <= this.clock.now()) {
+      return undefined;
+    }
+    return state.openUntilMs;
+  }
+
+  private recordReplayFailure(sourceDomain: string, error: TelagentError, nowMs: number): void {
+    const state = this.getReplayCircuitState(sourceDomain);
+    state.consecutiveFailures += 1;
+    state.lastFailureAtMs = nowMs;
+    state.lastFailureCode = error.code;
+
+    if (state.consecutiveFailures < this.replayCircuitBreakerFailureThreshold) {
+      return;
+    }
+
+    state.consecutiveFailures = 0;
+    state.openUntilMs = nowMs + this.replayCircuitBreakerCooldownMs;
+    state.totalOpenEvents += 1;
+    this.replayCircuitOpenEvents += 1;
+  }
+
+  private recordReplaySuccess(sourceDomain: string): void {
+    const state = this.replayCircuitBySourceDomain.get(sourceDomain);
+    if (!state) {
+      return;
+    }
+    state.consecutiveFailures = 0;
+  }
+
+  private computeReplayBackoffMs(consecutiveReplayFailures: number): number {
+    const exponent = Math.max(0, consecutiveReplayFailures - 1);
+    const candidate = this.replayBackoffBaseMs * (2 ** exponent);
+    return Math.min(this.replayBackoffMaxMs, candidate);
+  }
+
+  private countOpenReplayCircuits(nowMs: number): number {
+    let openCount = 0;
+    for (const state of this.replayCircuitBySourceDomain.values()) {
+      if (state.openUntilMs > nowMs) {
+        openCount += 1;
+      }
+    }
+    return openCount;
   }
 
   private parseStateVersion(value: unknown): number | undefined {

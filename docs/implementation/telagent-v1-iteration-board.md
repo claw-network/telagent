@@ -3,7 +3,7 @@
 - 文档版本：v1.0
 - 基线计划起始日：2026-03-02（周一）
 - 基线计划结束日：2026-05-17（周日）
-- 适用范围：Phase 0 -> Phase 12（发布后改进 + 联邦灰度兼容 + 自动化回滚 + v1.1/v1.2 增强）
+- 适用范围：Phase 0 -> Phase 13（发布后改进 + 联邦灰度兼容 + 自动化回滚 + v1.1/v1.2/v0.2.0 增强）
 
 ## 1. 看板目的
 
@@ -209,7 +209,19 @@
 - 已完成：`TA-P12-001`（Phase 12 候选池冻结）
 - 已完成：`TA-P12-002`（链上/链下审计快照导出（脱敏））
 - 已完成：`TA-P12-003`（revoked DID 实时会话隔离（订阅+驱逐））
-- 下一批 Ready：继续 Phase 12 执行（优先 `TA-P12-004`）
+- 已完成：`TA-P12-004`（联邦 SLO 自动化：DLQ 自动重放 + burn-rate 告警）
+- 已完成：`TA-P12-005`（Agent SDK Python Beta）
+- 已完成：`TA-P12-006`（Web Console v2.1 运营与应急面板）
+- 已完成：`TA-P12-007`（多节点密钥轮换编排脚本）
+- 已完成：`TA-P12-008`（Phase 12 Gate 评审与收口）
+- 已完成：`TA-P13-001`（Phase 13 边界与验收冻结）
+- 已完成：`TA-P13-002`（规模压测升级：消息+会话）
+- 已完成：`TA-P13-003`（灾备演练：备份/恢复/RTO-RPO）
+- 已完成：`TA-P13-004`（审计快照签名归档与验签）
+- 已完成：`TA-P13-005`（联邦重放保护增强：熔断+退避）
+- 已完成：`TA-P13-006`（SDK TS/Python 一致性校验）
+- 已完成：`TA-P13-007`（Phase 13 Gate 评审与收口）
+- 下一批 Ready：等待 Phase 14 规划与边界冻结（`TA-P14-001`）。
 
 ## 4.2 Blockers（2026-03-03 更新）
 
@@ -374,6 +386,24 @@
 - `TA-P12-007` 机读清单：`docs/implementation/phase-12/manifests/2026-03-03-p12-key-rotation-orchestrator-check.json`。
 - `TA-P12-008`：DONE（Gate=PASS，见 `docs/implementation/phase-12/ta-p12-008-phase12-gate-review-2026-03-03.md` 与 `docs/implementation/gates/phase-12-gate.md`）。
 - 阶段状态：Phase 12 已关闭（Gate=PASS）。
+
+## 4.18 Phase 13 v0.2.0 稳定化与可运营增强快照（2026-03-03）
+
+- `TA-P13-001`：DONE（边界与验收冻结，见 `docs/implementation/phase-13/ta-p13-001-phase13-boundary-acceptance-2026-03-03.md`）。
+- `TA-P13-001` 机读清单：`docs/implementation/phase-13/manifests/2026-03-03-p13-boundary-freeze.json`。
+- `TA-P13-002`：DONE（规模压测升级完成，见 `docs/implementation/phase-13/ta-p13-002-scale-load-upgrade-2026-03-03.md`）。
+- `TA-P13-002` 机读清单：`docs/implementation/phase-13/manifests/2026-03-03-p13-scale-load-check.json`。
+- `TA-P13-003`：DONE（灾备演练通过，见 `docs/implementation/phase-13/ta-p13-003-dr-backup-restore-drill-2026-03-03.md`）。
+- `TA-P13-003` 机读清单：`docs/implementation/phase-13/manifests/2026-03-03-p13-dr-drill-check.json`。
+- `TA-P13-004`：DONE（审计归档签名与验签通过，见 `docs/implementation/phase-13/ta-p13-004-audit-archive-signing-2026-03-03.md`）。
+- `TA-P13-004` 机读清单：`docs/implementation/phase-13/manifests/2026-03-03-p13-audit-archive-check.json`。
+- `TA-P13-005`：DONE（联邦重放保护增强：熔断+退避，见 `docs/implementation/phase-13/ta-p13-005-federation-circuit-breaker-backoff-2026-03-03.md`）。
+- `TA-P13-005` 机读清单：`docs/implementation/phase-13/manifests/2026-03-03-p13-federation-protection-check.json`。
+- `TA-P13-006`：DONE（SDK TS/Python 一致性校验通过，见 `docs/implementation/phase-13/ta-p13-006-sdk-ts-python-parity-2026-03-03.md`）。
+- `TA-P13-006` 机读清单：`docs/implementation/phase-13/manifests/2026-03-03-p13-sdk-parity-check.json`。
+- `TA-P13-007`：DONE（Gate=PASS，见 `docs/implementation/phase-13/ta-p13-007-phase13-gate-review-2026-03-03.md` 与 `docs/implementation/gates/phase-13-gate.md`）。
+- 汇总日志：`docs/implementation/phase-13/logs/2026-03-03-p13-gate-manifest-summary.txt`（`total=6`, `failed=0`）。
+- 阶段状态：Phase 13 已关闭（Gate=PASS）。
 
 ## 5. 周会与 Gate 节奏建议
 

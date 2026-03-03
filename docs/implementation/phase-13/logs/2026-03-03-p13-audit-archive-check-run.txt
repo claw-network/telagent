@@ -1,0 +1,5 @@
+[TA-P13-004] archivePath=/Users/xiasenhai/Workspace/OpenClaw/telagent/docs/implementation/phase-13/archives/2026-03-03-p13-audit-snapshot-archive.json
+[TA-P13-004] digestVerifiedPass=true
+[TA-P13-004] signatureVerifiedPass=true
+[TA-P13-004] decision=PASS
+[TA-P13-004] output=/Users/xiasenhai/Workspace/OpenClaw/telagent/docs/implementation/phase-13/manifests/2026-03-03-p13-audit-archive-check.json

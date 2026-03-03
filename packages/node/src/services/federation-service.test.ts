@@ -500,3 +500,96 @@ test('TA-P4-008 node-info publishes domain and federation security policy', () =
   assert.deepEqual(info.compatibility.supportedProtocolVersions, ['v1']);
   assert.equal(info.resilience.totalGroupStateSyncConflicts, 0);
 });
+
+test('TA-P13-005 federation replay applies backoff and opens circuit on repeated failures', () => {
+  const clock = createClock(50_000);
+  const service = new FederationService({
+    selfDomain: 'node-a.tel',
+    replayBackoffBaseMs: 1_000,
+    replayBackoffMaxMs: 4_000,
+    replayCircuitBreakerFailureThreshold: 2,
+    replayCircuitBreakerCooldownMs: 5_000,
+    clock,
+  });
+
+  service.recordDlqFailure(
+    'envelopes',
+    {
+      sourceDomain: 'node-b.tel',
+    },
+    {
+      sourceDomain: 'node-b.tel',
+    },
+    new Error('seed replay failure'),
+  );
+
+  const firstReplay = service.replayDlq();
+  assert.equal(firstReplay.processed, 1);
+  assert.equal(firstReplay.failed, 1);
+  assert.equal(firstReplay.replayed, 0);
+
+  const pendingAfterFirst = service.listDlqEntries({ status: 'PENDING' });
+  assert.equal(pendingAfterFirst.length, 1);
+  assert.equal(pendingAfterFirst[0]?.consecutiveReplayFailures, 1);
+  assert.equal(pendingAfterFirst[0]?.nextReplayAtMs, clock.now() + 1_000);
+
+  const skippedBeforeDue = service.replayDlq();
+  assert.equal(skippedBeforeDue.processed, 0);
+
+  clock.tick(1_000);
+  const secondReplay = service.replayDlq();
+  assert.equal(secondReplay.processed, 1);
+  assert.equal(secondReplay.failed, 1);
+  assert.equal(secondReplay.replayed, 0);
+
+  const pendingAfterSecond = service.listDlqEntries({ status: 'PENDING' });
+  assert.ok(pendingAfterSecond[0]?.nextReplayAtMs >= clock.now() + 5_000);
+
+  const infoWithOpenCircuit = service.nodeInfo();
+  assert.equal(infoWithOpenCircuit.resilience.replayProtection.openSourceDomainCount, 1);
+  assert.equal(infoWithOpenCircuit.resilience.replayProtection.totalOpenEvents, 1);
+
+  service.recordDlqFailure(
+    'envelopes',
+    {
+      envelopeId: 'fed-p13-replay-ok',
+      sourceDomain: 'node-b.tel',
+    },
+    {
+      sourceDomain: 'node-b.tel',
+    },
+    new Error('seed replay success case'),
+  );
+
+  const blockedReplay = service.replayDlq();
+  assert.equal(blockedReplay.processed, 1);
+  assert.equal(blockedReplay.failed, 1);
+  assert.equal(blockedReplay.results[0]?.errorCode, ErrorCodes.TOO_MANY_REQUESTS);
+
+  const infoAfterBlocked = service.nodeInfo();
+  assert.equal(infoAfterBlocked.resilience.replayProtection.blockedReplayCount, 1);
+
+  clock.tick(5_000);
+  const recoveredReplay = service.replayDlq({ maxItems: 5 });
+  assert.equal(recoveredReplay.replayed, 1);
+  assert.equal(recoveredReplay.failed, 1);
+
+  const infoAfterRecovery = service.nodeInfo();
+  assert.equal(infoAfterRecovery.resilience.replayProtection.openSourceDomainCount, 0);
+});
+
+test('TA-P13-005 federation replay protection validates backoff range', () => {
+  assert.throws(
+    () =>
+      new FederationService({
+        selfDomain: 'node-a.tel',
+        replayBackoffBaseMs: 5_000,
+        replayBackoffMaxMs: 1_000,
+      }),
+    (error) => {
+      assert.ok(error instanceof TelagentError);
+      assert.equal(error.code, ErrorCodes.VALIDATION);
+      return true;
+    },
+  );
+});
