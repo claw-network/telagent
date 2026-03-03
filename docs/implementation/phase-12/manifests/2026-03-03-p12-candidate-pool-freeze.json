@@ -1,0 +1,54 @@
+{
+  "phase": "Phase 12",
+  "taskId": "TA-P12-001",
+  "generatedAt": "2026-03-03T09:40:00.000Z",
+  "summary": {
+    "candidateCount": 6,
+    "mustDoCount": 3,
+    "shouldDoCount": 2,
+    "couldDoCount": 1,
+    "decision": "PASS"
+  },
+  "candidates": [
+    {
+      "taskId": "TA-P12-002",
+      "name": "链上/链下审计快照导出（脱敏）",
+      "priority": "MUST",
+      "acceptanceHint": "可导出 group/member/message/federation 审计摘要且不泄露明文"
+    },
+    {
+      "taskId": "TA-P12-003",
+      "name": "revoked DID 实时会话隔离（订阅+驱逐）",
+      "priority": "MUST",
+      "acceptanceHint": "撤销事件传播后，新旧会话均进入隔离态并记录审计日志"
+    },
+    {
+      "taskId": "TA-P12-004",
+      "name": "联邦 SLO 自动化（DLQ 自动重放 + burn-rate 告警）",
+      "priority": "MUST",
+      "acceptanceHint": "支持定时重放、失败重试预算与多级告警"
+    },
+    {
+      "taskId": "TA-P12-005",
+      "name": "Agent SDK Python Beta",
+      "priority": "SHOULD",
+      "acceptanceHint": "30 分钟内完成建群+发消息示例，错误映射与 TS SDK 对齐"
+    },
+    {
+      "taskId": "TA-P12-006",
+      "name": "Web Console v2.1 运营与应急面板",
+      "priority": "SHOULD",
+      "acceptanceHint": "新增审计快照查询、DLQ 批量重放、风险看板"
+    },
+    {
+      "taskId": "TA-P12-007",
+      "name": "多节点密钥轮换编排脚本",
+      "priority": "COULD",
+      "acceptanceHint": "支持分批轮换与回滚剧本，输出机读清单"
+    }
+  ],
+  "next": {
+    "immediateTask": "TA-P12-002",
+    "gateTask": "TA-P12-008"
+  }
+}

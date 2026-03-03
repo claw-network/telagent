@@ -70,4 +70,4 @@
 - `TA-P11-008`：DONE
 - `TA-P11-009`：DONE
 - `TA-P11-010`：DONE
-- 下一步：Phase 11 已关闭，进入下一阶段候选池规划。
+- 下一步：Phase 11 已关闭，进入 Phase 12（见 `../phase-12/README.md`）。

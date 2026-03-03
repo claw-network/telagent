@@ -3,7 +3,7 @@
 - 文档版本：v1.0
 - 基线计划起始日：2026-03-02（周一）
 - 基线计划结束日：2026-05-17（周日）
-- 适用范围：Phase 0 -> Phase 11（发布后改进 + 联邦灰度兼容 + 自动化回滚 + v1.1 增强）
+- 适用范围：Phase 0 -> Phase 12（发布后改进 + 联邦灰度兼容 + 自动化回滚 + v1.1/v1.2 增强）
 
 ## 1. 看板目的
 
@@ -25,7 +25,7 @@
 | FE | Frontend Engineer | Web 管理台闭环 | 60%（Phase 5 高峰） |
 | TL | Tech Lead/PM | Gate 主持、风险决策、上线审批 | 30% |
 
-## 3. 周度迭代计划（11 周 + 发布后改进窗口）
+## 3. 周度迭代计划（11 周 + 发布后滚动窗口）
 
 ## Week 1（2026-03-02 ~ 2026-03-08）- Phase 0
 
@@ -206,7 +206,8 @@
 - 已完成：`TA-P11-008`（Agent SDK TypeScript v0）
 - 已完成：`TA-P11-009`（Web Console v2 运营能力增强）
 - 已完成：`TA-P11-010`（Phase 11 Gate 评审与收口）
-- 下一批 Ready：进入下一阶段候选池规划（等待边界冻结）
+- 已完成：`TA-P12-001`（Phase 12 候选池冻结）
+- 下一批 Ready：继续 Phase 12 执行（优先 `TA-P12-002` ~ `TA-P12-004`）
 
 ## 4.2 Blockers（2026-03-03 更新）
 
@@ -352,6 +353,19 @@
 - `TA-P11-009`：DONE（Web Console v2 运营能力增强，见 `docs/implementation/phase-11/ta-p11-009-web-console-v2-ops-view-2026-03-03.md`）。
 - `TA-P11-010`：DONE（Phase 11 Gate 收口，见 `docs/implementation/phase-11/ta-p11-010-phase11-gate-review-2026-03-03.md` 与 `docs/implementation/gates/phase-11-gate.md`）。
 - 阶段状态：Phase 11 已关闭（Gate=PASS）。
+
+## 4.17 Phase 12 v1.2 候选池冻结快照（2026-03-03）
+
+- `TA-P12-001`：DONE（候选池与优先级冻结，见 `docs/implementation/phase-12/ta-p12-001-phase12-candidate-pool-freeze-2026-03-03.md`）。
+- 候选池机读清单：`docs/implementation/phase-12/manifests/2026-03-03-p12-candidate-pool-freeze.json`。
+- `TA-P12-002`：TODO（链上/链下审计快照导出（脱敏））。
+- `TA-P12-003`：TODO（revoked DID 实时会话隔离（订阅+驱逐））。
+- `TA-P12-004`：TODO（联邦 SLO 自动化）。
+- `TA-P12-005`：TODO（Agent SDK Python Beta）。
+- `TA-P12-006`：TODO（Web Console v2.1 运营与应急面板）。
+- `TA-P12-007`：TODO（多节点密钥轮换编排脚本）。
+- `TA-P12-008`：TODO（Phase 12 Gate 收口）。
+- 阶段状态：Phase 12 已启动，进入 `TA-P12-002`。
 
 ## 5. 周会与 Gate 节奏建议
 
