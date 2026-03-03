@@ -166,8 +166,11 @@ class FakeAttachmentService {
 class FakeFederationService {
   receiveEnvelope(
     _payload: Record<string, unknown>,
-    meta: { sourceDomain: string; authToken?: string; protocolVersion?: string },
+    meta: { sourceDomain: string; authToken?: string; protocolVersion?: string; sourceKeyId?: string },
   ) {
+    if (_payload.envelopeId === 'fed-pin-required' && !meta.sourceKeyId) {
+      throw new TelagentError(ErrorCodes.UNAUTHORIZED, 'sourceKeyId is required');
+    }
     this.assertProtocol(meta.protocolVersion);
     return { accepted: true, id: 'fed-1', deduplicated: false, retryable: true };
   }
@@ -569,6 +572,25 @@ test('messages, attachments and federation endpoints are accessible', async (t) 
   });
   assert.equal(incompatibleProtocolRes.status, 422);
   assert.match(incompatibleProtocolRes.headers.get('content-type') ?? '', /^application\/problem\+json/);
+
+  const pinRequiredNoHeaderRes = await fetch(`${baseUrl}/api/v1/federation/envelopes`, {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/json',
+    },
+    body: JSON.stringify({ envelopeId: 'fed-pin-required', sourceDomain: 'node-b.tel' }),
+  });
+  assert.equal(pinRequiredNoHeaderRes.status, 401);
+
+  const pinRequiredWithHeaderRes = await fetch(`${baseUrl}/api/v1/federation/envelopes`, {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/json',
+      'x-telagent-source-key-id': 'node-b-key-v1',
+    },
+    body: JSON.stringify({ envelopeId: 'fed-pin-required', sourceDomain: 'node-b.tel' }),
+  });
+  assert.equal(pinRequiredWithHeaderRes.status, 201);
 
   const nodeInfoRes = await fetch(`${baseUrl}/api/v1/federation/node-info`);
   assert.equal(nodeInfoRes.status, 200);

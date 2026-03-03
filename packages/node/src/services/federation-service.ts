@@ -1,6 +1,7 @@
 import { ErrorCodes, TelagentError } from '@telagent/protocol';
 
 type FederationScope = 'envelopes' | 'group-state-sync' | 'receipts';
+type FederationPinningMode = 'disabled' | 'enforced' | 'report-only';
 
 interface FederationEnvelope {
   envelopeId: string;
@@ -39,6 +40,7 @@ export interface FederationRequestMeta {
   sourceDomain: string;
   authToken?: string;
   protocolVersion?: string;
+  sourceKeyId?: string;
 }
 
 export interface FederationServiceOptions {
@@ -50,7 +52,16 @@ export interface FederationServiceOptions {
   envelopeRateLimitPerMinute?: number;
   groupStateSyncRateLimitPerMinute?: number;
   receiptRateLimitPerMinute?: number;
+  pinningMode?: FederationPinningMode;
+  pinningCurrentKeysByDomain?: Record<string, string[]>;
+  pinningNextKeysByDomain?: Record<string, string[]>;
+  pinningCutoverAtMs?: number;
   clock?: FederationServiceClock;
+}
+
+interface FederationPinningPolicy {
+  current: Set<string>;
+  next: Set<string>;
 }
 
 const SYSTEM_CLOCK: FederationServiceClock = {
@@ -70,6 +81,9 @@ export class FederationService {
   private readonly selfDomain: string;
   private readonly authToken?: string;
   private readonly allowedSourceDomains: Set<string>;
+  private readonly pinningMode: FederationPinningMode;
+  private readonly pinningPolicyByDomain: Map<string, FederationPinningPolicy>;
+  private readonly pinningCutoverAtMs?: number;
   private readonly protocolVersion: string;
   private readonly supportedProtocolVersions: Set<string>;
   private readonly clock: FederationServiceClock;
@@ -78,11 +92,21 @@ export class FederationService {
   private acceptedWithoutProtocolHint = 0;
   private acceptedWithProtocolHint = 0;
   private unsupportedProtocolRejected = 0;
+  private pinningAcceptedWithCurrent = 0;
+  private pinningAcceptedWithNext = 0;
+  private pinningRejected = 0;
+  private pinningReportOnlyWarnings = 0;
 
   constructor(options: FederationServiceOptions) {
     this.selfDomain = this.normalizeDomain(options.selfDomain, 'selfDomain');
     this.authToken = options.authToken;
     this.allowedSourceDomains = new Set((options.allowedSourceDomains ?? []).map((item) => this.normalizeDomain(item, 'allowedSourceDomains')));
+    this.pinningMode = this.normalizePinningMode(options.pinningMode ?? 'disabled');
+    this.pinningPolicyByDomain = this.createPinningPolicy(
+      options.pinningCurrentKeysByDomain ?? {},
+      options.pinningNextKeysByDomain ?? {},
+    );
+    this.pinningCutoverAtMs = this.normalizePinningCutoverAt(options.pinningCutoverAtMs);
     this.protocolVersion = this.normalizeProtocolVersion(options.protocolVersion ?? 'v1', 'protocolVersion');
     this.supportedProtocolVersions = new Set(
       (options.supportedProtocolVersions ?? [this.protocolVersion]).map((item) =>
@@ -104,6 +128,7 @@ export class FederationService {
   ): { accepted: boolean; id: string; deduplicated: boolean; retryable: boolean } {
     const sourceDomain = this.assertAndNormalizeSourceDomain(meta.sourceDomain);
     this.assertAuthorized(meta.authToken);
+    this.assertSourcePinning(sourceDomain, meta.sourceKeyId);
     const protocolVersion = this.assertAndResolveProtocolVersion(meta.protocolVersion);
     this.assertRateLimit('envelopes', sourceDomain);
 
@@ -146,6 +171,7 @@ export class FederationService {
   ): { synced: boolean; updatedAtMs: number; deduplicated: boolean; stateVersion: number } {
     const sourceDomain = this.assertAndNormalizeSourceDomain(meta.sourceDomain);
     this.assertAuthorized(meta.authToken);
+    this.assertSourcePinning(sourceDomain, meta.sourceKeyId);
     const protocolVersion = this.assertAndResolveProtocolVersion(meta.protocolVersion);
     this.assertRateLimit('group-state-sync', sourceDomain);
 
@@ -214,6 +240,7 @@ export class FederationService {
   ): { accepted: boolean; deduplicated: boolean; retryable: boolean } {
     const sourceDomain = this.assertAndNormalizeSourceDomain(meta.sourceDomain);
     this.assertAuthorized(meta.authToken);
+    this.assertSourcePinning(sourceDomain, meta.sourceKeyId);
     const protocolVersion = this.assertAndResolveProtocolVersion(meta.protocolVersion);
     this.assertRateLimit('receipts', sourceDomain);
 
@@ -268,6 +295,18 @@ export class FederationService {
       authMode: 'required' | 'none';
       allowedSourceDomains: string[];
       rateLimitPerMinute: Record<FederationScope, number>;
+      pinning: {
+        mode: FederationPinningMode;
+        cutoverAt: string | null;
+        cutoverReached: boolean;
+        configuredDomains: string[];
+        stats: {
+          acceptedWithCurrent: number;
+          acceptedWithNext: number;
+          rejected: number;
+          reportOnlyWarnings: number;
+        };
+      };
     };
     resilience: {
       staleGroupStateSyncRejected: number;
@@ -296,6 +335,18 @@ export class FederationService {
         authMode: this.authToken ? 'required' : 'none',
         allowedSourceDomains: [...this.allowedSourceDomains.values()],
         rateLimitPerMinute: { ...this.rateLimitConfig },
+        pinning: {
+          mode: this.pinningMode,
+          cutoverAt: typeof this.pinningCutoverAtMs === 'number' ? new Date(this.pinningCutoverAtMs).toISOString() : null,
+          cutoverReached: this.isPinningCutoverReached(),
+          configuredDomains: [...this.pinningPolicyByDomain.keys()].sort(),
+          stats: {
+            acceptedWithCurrent: this.pinningAcceptedWithCurrent,
+            acceptedWithNext: this.pinningAcceptedWithNext,
+            rejected: this.pinningRejected,
+            reportOnlyWarnings: this.pinningReportOnlyWarnings,
+          },
+        },
       },
       resilience: {
         staleGroupStateSyncRejected: this.staleGroupStateSyncRejected,
@@ -334,10 +385,75 @@ export class FederationService {
     }
   }
 
+  private assertSourcePinning(sourceDomain: string, sourceKeyId?: string): void {
+    if (this.pinningMode === 'disabled') {
+      return;
+    }
+
+    try {
+      this.assertSourcePinningStrict(sourceDomain, sourceKeyId);
+    } catch (error) {
+      if (error instanceof TelagentError) {
+        this.pinningRejected++;
+      }
+      if (this.pinningMode === 'report-only') {
+        this.pinningReportOnlyWarnings++;
+        return;
+      }
+      throw error;
+    }
+  }
+
+  private assertSourcePinningStrict(sourceDomain: string, sourceKeyId?: string): void {
+    const policy = this.pinningPolicyByDomain.get(sourceDomain);
+    if (!policy) {
+      throw new TelagentError(ErrorCodes.FORBIDDEN, `sourceDomain(${sourceDomain}) has no pinning policy`);
+    }
+
+    const normalizedKeyId = this.normalizeSourceKeyId(sourceKeyId, true);
+    const inCurrent = policy.current.has(normalizedKeyId);
+    const inNext = policy.next.has(normalizedKeyId);
+
+    if (this.isPinningCutoverReached() && policy.next.size > 0 && inCurrent && !inNext) {
+      throw new TelagentError(
+        ErrorCodes.FORBIDDEN,
+        `sourceKeyId(${normalizedKeyId}) expired after pinning cutover for sourceDomain(${sourceDomain})`,
+      );
+    }
+
+    if (inCurrent) {
+      this.pinningAcceptedWithCurrent++;
+      return;
+    }
+    if (inNext) {
+      this.pinningAcceptedWithNext++;
+      return;
+    }
+
+    throw new TelagentError(
+      ErrorCodes.FORBIDDEN,
+      `sourceKeyId(${normalizedKeyId}) is not pinned for sourceDomain(${sourceDomain})`,
+    );
+  }
+
   private assertAndNormalizeSourceDomain(sourceDomain: string): string {
     const normalized = this.normalizeDomain(sourceDomain, 'sourceDomain');
     if (this.allowedSourceDomains.size > 0 && !this.allowedSourceDomains.has(normalized)) {
       throw new TelagentError(ErrorCodes.FORBIDDEN, `sourceDomain(${normalized}) is not allowed`);
+    }
+    return normalized;
+  }
+
+  private normalizeSourceKeyId(sourceKeyId: string | undefined, required: boolean): string {
+    if (!sourceKeyId || !sourceKeyId.trim()) {
+      if (required) {
+        throw new TelagentError(ErrorCodes.UNAUTHORIZED, 'sourceKeyId is required when federation pinning is enabled');
+      }
+      return '';
+    }
+    const normalized = sourceKeyId.trim();
+    if (!/^[A-Za-z0-9._:-]{3,128}$/.test(normalized)) {
+      throw new TelagentError(ErrorCodes.VALIDATION, 'sourceKeyId is not a valid key fingerprint');
     }
     return normalized;
   }
@@ -350,6 +466,63 @@ export class FederationService {
       throw new TelagentError(ErrorCodes.VALIDATION, `${fieldName} is not a valid federation domain`);
     }
     return normalized;
+  }
+
+  private normalizePinningMode(input: string): FederationPinningMode {
+    if (input === 'disabled' || input === 'enforced' || input === 'report-only') {
+      return input;
+    }
+    throw new TelagentError(ErrorCodes.VALIDATION, `pinningMode(${input}) is invalid`);
+  }
+
+  private normalizePinningCutoverAt(value: number | undefined): number | undefined {
+    if (typeof value === 'undefined') {
+      return undefined;
+    }
+    if (!Number.isFinite(value) || value <= 0) {
+      throw new TelagentError(ErrorCodes.VALIDATION, 'pinningCutoverAtMs must be a positive number');
+    }
+    return value;
+  }
+
+  private createPinningPolicy(
+    currentByDomain: Record<string, string[]>,
+    nextByDomain: Record<string, string[]>,
+  ): Map<string, FederationPinningPolicy> {
+    const policy = new Map<string, FederationPinningPolicy>();
+    const merge = (domain: string, keys: string[], target: 'current' | 'next'): void => {
+      const normalizedDomain = this.normalizeDomain(domain, 'pinningDomain');
+      const normalizedKeys = keys.map((key) => this.normalizeSourceKeyId(key, true));
+      if (normalizedKeys.length === 0) {
+        return;
+      }
+      if (!policy.has(normalizedDomain)) {
+        policy.set(normalizedDomain, {
+          current: new Set<string>(),
+          next: new Set<string>(),
+        });
+      }
+      const bucket = policy.get(normalizedDomain)!;
+      for (const key of normalizedKeys) {
+        bucket[target].add(key);
+      }
+    };
+
+    for (const [domain, keys] of Object.entries(currentByDomain)) {
+      merge(domain, keys, 'current');
+    }
+    for (const [domain, keys] of Object.entries(nextByDomain)) {
+      merge(domain, keys, 'next');
+    }
+
+    return policy;
+  }
+
+  private isPinningCutoverReached(): boolean {
+    if (typeof this.pinningCutoverAtMs !== 'number') {
+      return false;
+    }
+    return this.clock.now() >= this.pinningCutoverAtMs;
   }
 
   private assertRequiredString(value: unknown, fieldName: string): string {

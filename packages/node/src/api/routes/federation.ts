@@ -18,6 +18,7 @@ export function federationRoutes(ctx: RuntimeContext): Router {
         sourceDomain: resolveSourceDomain(req, payload),
         authToken: resolveFederationToken(req),
         protocolVersion: resolveProtocolVersion(req, payload),
+        sourceKeyId: resolveSourceKeyId(req, payload),
       });
       created(res, result, { self: '/api/v1/federation/envelopes' });
     } catch (error) {
@@ -55,6 +56,7 @@ export function federationRoutes(ctx: RuntimeContext): Router {
           sourceDomain: resolveSourceDomain(req, payload),
           authToken: resolveFederationToken(req),
           protocolVersion: resolveProtocolVersion(req, payload),
+          sourceKeyId: resolveSourceKeyId(req, payload),
         },
       );
       created(res, result, { self: '/api/v1/federation/group-state/sync' });
@@ -80,6 +82,7 @@ export function federationRoutes(ctx: RuntimeContext): Router {
           sourceDomain: resolveSourceDomain(req, payload),
           authToken: resolveFederationToken(req),
           protocolVersion: resolveProtocolVersion(req, payload),
+          sourceKeyId: resolveSourceKeyId(req, payload),
         },
       );
       created(res, result, { self: '/api/v1/federation/receipts' });
@@ -144,6 +147,22 @@ function resolveProtocolVersion(
   const bodyVersion = payload.protocolVersion;
   if (typeof bodyVersion === 'string' && bodyVersion.trim()) {
     return bodyVersion;
+  }
+  return undefined;
+}
+
+function resolveSourceKeyId(
+  req: { headers: Record<string, string | string[] | undefined> },
+  payload: Record<string, unknown>,
+): string | undefined {
+  const headerKeyId = headerString(req.headers['x-telagent-source-key-id']);
+  if (headerKeyId) {
+    return headerKeyId;
+  }
+
+  const bodyKeyId = payload.sourceKeyId;
+  if (typeof bodyKeyId === 'string' && bodyKeyId.trim()) {
+    return bodyKeyId;
   }
   return undefined;
 }

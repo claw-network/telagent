@@ -12,6 +12,10 @@ export interface FederationConfig {
   envelopeRateLimitPerMinute: number;
   groupStateSyncRateLimitPerMinute: number;
   receiptRateLimitPerMinute: number;
+  pinningMode: FederationPinningMode;
+  pinningCurrentKeysByDomain: Record<string, string[]>;
+  pinningNextKeysByDomain: Record<string, string[]>;
+  pinningCutoverAtMs?: number;
 }
 
 export interface MonitoringConfig {
@@ -22,6 +26,8 @@ export interface MonitoringConfig {
   maintenanceStaleWarnSec: number;
   maintenanceStaleCriticalSec: number;
 }
+
+export type FederationPinningMode = 'disabled' | 'enforced' | 'report-only';
 
 export type MailboxStoreBackend = 'sqlite' | 'postgres';
 
@@ -121,6 +127,29 @@ export function loadConfigFromEnv(): AppConfig {
     };
   }
 
+  const federationPinningMode = parseFederationPinningMode(process.env.TELAGENT_FEDERATION_PINNING_MODE);
+  const federationPinningCurrentKeysByDomain = parsePinnedKeyMap(
+    process.env.TELAGENT_FEDERATION_PINNING_CURRENT_KEYS,
+    'TELAGENT_FEDERATION_PINNING_CURRENT_KEYS',
+  );
+  const federationPinningNextKeysByDomain = parsePinnedKeyMap(
+    process.env.TELAGENT_FEDERATION_PINNING_NEXT_KEYS,
+    'TELAGENT_FEDERATION_PINNING_NEXT_KEYS',
+  );
+  const federationPinningCutoverAtMs = parseOptionalTimestampMs(
+    process.env.TELAGENT_FEDERATION_PINNING_CUTOVER_AT,
+    'TELAGENT_FEDERATION_PINNING_CUTOVER_AT',
+  );
+  if (
+    federationPinningMode !== 'disabled'
+    && Object.keys(federationPinningCurrentKeysByDomain).length === 0
+    && Object.keys(federationPinningNextKeysByDomain).length === 0
+  ) {
+    throw new Error(
+      'federation pinning requires TELAGENT_FEDERATION_PINNING_CURRENT_KEYS or TELAGENT_FEDERATION_PINNING_NEXT_KEYS',
+    );
+  }
+
   return {
     host,
     port,
@@ -137,6 +166,10 @@ export function loadConfigFromEnv(): AppConfig {
       envelopeRateLimitPerMinute: Number(process.env.TELAGENT_FEDERATION_ENVELOPE_RATE_LIMIT_PER_MIN || 600),
       groupStateSyncRateLimitPerMinute: Number(process.env.TELAGENT_FEDERATION_SYNC_RATE_LIMIT_PER_MIN || 300),
       receiptRateLimitPerMinute: Number(process.env.TELAGENT_FEDERATION_RECEIPT_RATE_LIMIT_PER_MIN || 600),
+      pinningMode: federationPinningMode,
+      pinningCurrentKeysByDomain: federationPinningCurrentKeysByDomain,
+      pinningNextKeysByDomain: federationPinningNextKeysByDomain,
+      pinningCutoverAtMs: federationPinningCutoverAtMs,
     },
     monitoring: {
       errorRateWarnRatio: Number(process.env.TELAGENT_MONITOR_ERROR_RATE_WARN_RATIO || 0.02),
@@ -198,4 +231,72 @@ function parseDomainProofMode(raw: string | undefined): DomainProofMode {
     return normalized;
   }
   throw new Error('TELAGENT_DOMAIN_PROOF_MODE must be enforced or report-only');
+}
+
+function parseFederationPinningMode(raw: string | undefined): FederationPinningMode {
+  const normalized = (raw || 'disabled').trim().toLowerCase();
+  if (normalized === 'disabled' || normalized === 'enforced' || normalized === 'report-only') {
+    return normalized;
+  }
+  throw new Error('TELAGENT_FEDERATION_PINNING_MODE must be disabled, enforced, or report-only');
+}
+
+function parsePinnedKeyMap(raw: string | undefined, fieldName: string): Record<string, string[]> {
+  if (!raw || !raw.trim()) {
+    return {};
+  }
+
+  const result = new Map<string, Set<string>>();
+  const entries = raw
+    .split(',')
+    .map((item) => item.trim())
+    .filter(Boolean);
+
+  for (const entry of entries) {
+    const separatorIndex = entry.indexOf('=');
+    if (separatorIndex <= 0 || separatorIndex === entry.length - 1) {
+      throw new Error(`${fieldName} entry must use domain=key1|key2 format`);
+    }
+    const domain = entry.slice(0, separatorIndex).trim().toLowerCase();
+    const keys = entry
+      .slice(separatorIndex + 1)
+      .split('|')
+      .map((key) => key.trim())
+      .filter(Boolean);
+    if (!domain || keys.length === 0) {
+      throw new Error(`${fieldName} entry must provide domain and at least one key`);
+    }
+    if (!result.has(domain)) {
+      result.set(domain, new Set<string>());
+    }
+    const bucket = result.get(domain)!;
+    for (const key of keys) {
+      bucket.add(key);
+    }
+  }
+
+  return Object.fromEntries(
+    [...result.entries()].map(([domain, keySet]) => [domain, [...keySet.values()]]),
+  );
+}
+
+function parseOptionalTimestampMs(raw: string | undefined, fieldName: string): number | undefined {
+  if (!raw || !raw.trim()) {
+    return undefined;
+  }
+
+  const normalized = raw.trim();
+  if (/^[0-9]+$/.test(normalized)) {
+    const numeric = Number.parseInt(normalized, 10);
+    if (!Number.isFinite(numeric) || numeric <= 0) {
+      throw new Error(`${fieldName} must be a positive timestamp`);
+    }
+    return numeric >= 1_000_000_000_000 ? numeric : numeric * 1_000;
+  }
+
+  const parsed = Date.parse(normalized);
+  if (!Number.isFinite(parsed) || parsed <= 0) {
+    throw new Error(`${fieldName} must be a valid timestamp`);
+  }
+  return parsed;
 }

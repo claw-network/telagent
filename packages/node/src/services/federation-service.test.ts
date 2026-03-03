@@ -313,6 +313,113 @@ test('TA-P9-002 federation rejects unsupported protocol versions', () => {
   assert.equal(info.compatibility.stats.unsupportedProtocolRejected, 1);
 });
 
+test('TA-P11-004 federation pinning enforces sourceKeyId with current/next rotation', () => {
+  const clock = createClock(1_700_000_000_000);
+  const cutoverAtMs = clock.now() + 60_000;
+  const service = new FederationService({
+    selfDomain: 'node-a.tel',
+    pinningMode: 'enforced',
+    pinningCurrentKeysByDomain: {
+      'node-b.tel': ['node-b-key-v1'],
+    },
+    pinningNextKeysByDomain: {
+      'node-b.tel': ['node-b-key-v2'],
+    },
+    pinningCutoverAtMs: cutoverAtMs,
+    clock,
+  });
+
+  assert.throws(
+    () =>
+      service.receiveEnvelope(
+        {
+          envelopeId: 'fed-pin-missing-key',
+          sourceDomain: 'node-b.tel',
+        },
+        {
+          sourceDomain: 'node-b.tel',
+        },
+      ),
+    (error) => {
+      assert.ok(error instanceof TelagentError);
+      assert.equal(error.code, ErrorCodes.UNAUTHORIZED);
+      return true;
+    },
+  );
+
+  const currentResult = service.receiveEnvelope(
+    {
+      envelopeId: 'fed-pin-current',
+      sourceDomain: 'node-b.tel',
+    },
+    {
+      sourceDomain: 'node-b.tel',
+      sourceKeyId: 'node-b-key-v1',
+    },
+  );
+  assert.equal(currentResult.accepted, true);
+
+  const nextResult = service.receiveEnvelope(
+    {
+      envelopeId: 'fed-pin-next',
+      sourceDomain: 'node-b.tel',
+    },
+    {
+      sourceDomain: 'node-b.tel',
+      sourceKeyId: 'node-b-key-v2',
+    },
+  );
+  assert.equal(nextResult.accepted, true);
+
+  clock.tick(60_000);
+  assert.throws(
+    () =>
+      service.receiveEnvelope(
+        {
+          envelopeId: 'fed-pin-current-expired',
+          sourceDomain: 'node-b.tel',
+        },
+        {
+          sourceDomain: 'node-b.tel',
+          sourceKeyId: 'node-b-key-v1',
+        },
+      ),
+    (error) => {
+      assert.ok(error instanceof TelagentError);
+      assert.equal(error.code, ErrorCodes.FORBIDDEN);
+      assert.match(error.message, /cutover/i);
+      return true;
+    },
+  );
+});
+
+test('TA-P11-004 federation pinning report-only mode allows traffic but records warnings', () => {
+  const service = new FederationService({
+    selfDomain: 'node-a.tel',
+    pinningMode: 'report-only',
+    pinningCurrentKeysByDomain: {
+      'node-b.tel': ['node-b-key-v1'],
+    },
+  });
+
+  const result = service.receiveEnvelope(
+    {
+      envelopeId: 'fed-pin-report-only',
+      sourceDomain: 'node-b.tel',
+    },
+    {
+      sourceDomain: 'node-b.tel',
+      sourceKeyId: 'unknown-key',
+    },
+  );
+  assert.equal(result.accepted, true);
+
+  const info = service.nodeInfo();
+  assert.equal(info.security.pinning.mode, 'report-only');
+  assert.equal(info.security.pinning.stats.reportOnlyWarnings, 1);
+  assert.equal(info.security.pinning.stats.rejected, 1);
+});
+
 test('TA-P4-008 node-info publishes domain and federation security policy', () => {
   const service = new FederationService({
     selfDomain: 'node-a.tel',
@@ -330,6 +437,8 @@ test('TA-P4-008 node-info publishes domain and federation security policy', () =
   assert.equal(info.security.rateLimitPerMinute.envelopes, 500);
   assert.equal(info.security.rateLimitPerMinute['group-state-sync'], 250);
   assert.equal(info.security.rateLimitPerMinute.receipts, 400);
+  assert.equal(info.security.pinning.mode, 'disabled');
+  assert.equal(info.security.pinning.cutoverAt, null);
   assert.equal(info.compatibility.protocolVersion, 'v1');
   assert.deepEqual(info.compatibility.supportedProtocolVersions, ['v1']);
   assert.equal(info.resilience.totalGroupStateSyncConflicts, 0);

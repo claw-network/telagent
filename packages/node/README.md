@@ -15,6 +15,7 @@ Node runtime for TelAgent v1.
 - Offline mailbox TTL cleanup task (`TELAGENT_MAILBOX_CLEANUP_INTERVAL_SEC`)
 - Attachment upload session hardening (manifest/checksum validation + idempotent complete)
 - Federation hardening (source-domain auth/rate-limit/retry-safe dedupe + node-info domain policy)
+- Federation source-key pinning with staged rotation/cutover policy
 - Attachment and federation endpoints
 
 ## Run

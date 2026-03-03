@@ -205,3 +205,89 @@ test('domain proof numeric settings require positive integers', async () => {
     },
   );
 });
+
+test('federation pinning defaults to disabled mode', async () => {
+  await withEnv(
+    {
+      TELAGENT_FEDERATION_PINNING_MODE: undefined,
+      TELAGENT_FEDERATION_PINNING_CURRENT_KEYS: undefined,
+      TELAGENT_FEDERATION_PINNING_NEXT_KEYS: undefined,
+      TELAGENT_FEDERATION_PINNING_CUTOVER_AT: undefined,
+    },
+    async () => {
+      const config = loadConfigFromEnv();
+      assert.equal(config.federation.pinningMode, 'disabled');
+      assert.deepEqual(config.federation.pinningCurrentKeysByDomain, {});
+      assert.deepEqual(config.federation.pinningNextKeysByDomain, {});
+      assert.equal(config.federation.pinningCutoverAtMs, undefined);
+    },
+  );
+});
+
+test('federation pinning parses current/next keys and cutover timestamp', async () => {
+  await withEnv(
+    {
+      TELAGENT_FEDERATION_PINNING_MODE: 'enforced',
+      TELAGENT_FEDERATION_PINNING_CURRENT_KEYS: 'node-b.tel=node-b-key-v1|node-b-key-v1,node-c.tel=node-c-key-v1',
+      TELAGENT_FEDERATION_PINNING_NEXT_KEYS: 'node-b.tel=node-b-key-v2',
+      TELAGENT_FEDERATION_PINNING_CUTOVER_AT: '2026-03-10T09:00:00Z',
+    },
+    async () => {
+      const config = loadConfigFromEnv();
+      assert.equal(config.federation.pinningMode, 'enforced');
+      assert.deepEqual(config.federation.pinningCurrentKeysByDomain, {
+        'node-b.tel': ['node-b-key-v1'],
+        'node-c.tel': ['node-c-key-v1'],
+      });
+      assert.deepEqual(config.federation.pinningNextKeysByDomain, {
+        'node-b.tel': ['node-b-key-v2'],
+      });
+      assert.equal(config.federation.pinningCutoverAtMs, Date.parse('2026-03-10T09:00:00Z'));
+    },
+  );
+});
+
+test('federation pinning rejects invalid mode', async () => {
+  await withEnv(
+    {
+      TELAGENT_FEDERATION_PINNING_MODE: 'strict',
+    },
+    async () => {
+      assert.throws(
+        () => loadConfigFromEnv(),
+        /TELAGENT_FEDERATION_PINNING_MODE must be disabled, enforced, or report-only/,
+      );
+    },
+  );
+});
+
+test('federation pinning enabled requires key mappings', async () => {
+  await withEnv(
+    {
+      TELAGENT_FEDERATION_PINNING_MODE: 'enforced',
+      TELAGENT_FEDERATION_PINNING_CURRENT_KEYS: undefined,
+      TELAGENT_FEDERATION_PINNING_NEXT_KEYS: undefined,
+    },
+    async () => {
+      assert.throws(
+        () => loadConfigFromEnv(),
+        /federation pinning requires TELAGENT_FEDERATION_PINNING_CURRENT_KEYS or TELAGENT_FEDERATION_PINNING_NEXT_KEYS/,
+      );
+    },
+  );
+});
+
+test('federation pinning map requires domain=keys format', async () => {
+  await withEnv(
+    {
+      TELAGENT_FEDERATION_PINNING_MODE: 'report-only',
+      TELAGENT_FEDERATION_PINNING_CURRENT_KEYS: 'node-b.tel',
+    },
+    async () => {
+      assert.throws(
+        () => loadConfigFromEnv(),
+        /TELAGENT_FEDERATION_PINNING_CURRENT_KEYS entry must use domain=key1\|key2 format/,
+      );
+    },
+  );
+});
