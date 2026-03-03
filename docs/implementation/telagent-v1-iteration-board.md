@@ -164,7 +164,9 @@
 - 已完成：`TA-P4-006`（附件清单校验与会话幂等）
 - 已完成：`TA-P4-007`（联邦接口鉴权/限流/重试）
 - 已完成：`TA-P4-008`（node-info 域名一致性校验）
-- 下一批 Ready：`TA-P4-009`、`TA-P4-010`、`TA-P4-011`、`TA-P4-012`
+- 已完成：`TA-P4-009`（E2E 主链路：建群->邀请->接受->文本/图片/文件）
+- 已完成：`TA-P4-010`（E2E 离线 24h 拉取 + 去重排序）
+- 下一批 Ready：`TA-P4-011`、`TA-P4-012`
 
 ## 4.2 Blockers（2026-03-03 更新）
 
@@ -225,8 +227,10 @@
 - `TA-P4-006`：DONE（附件校验收口，见 `docs/implementation/phase-4/ta-p4-006-attachment-manifest-validation-2026-03-03.md`）。
 - `TA-P4-007`：DONE（联邦鉴权/限流/重试，见 `docs/implementation/phase-4/ta-p4-007-federation-auth-rate-limit-retry-2026-03-03.md`）。
 - `TA-P4-008`：DONE（域名一致性校验，见 `docs/implementation/phase-4/ta-p4-008-node-info-domain-consistency-2026-03-03.md`）。
-- 测试结果：`@telagent/node` `26/26` 通过（日志：`docs/implementation/phase-4/logs/2026-03-03-p4-node-test.txt`）。
-- 阶段状态：Phase 4 进行中，允许继续推进 `TA-P4-009` ~ `TA-P4-012`。
+- `TA-P4-009`：DONE（主链路 E2E，见 `docs/implementation/phase-4/ta-p4-009-e2e-main-path-2026-03-03.md`）。
+- `TA-P4-010`：DONE（离线 24h E2E，见 `docs/implementation/phase-4/ta-p4-010-e2e-offline-24h-dedupe-order-2026-03-03.md`）。
+- 测试结果：`@telagent/node` `28/28` 通过（日志：`docs/implementation/phase-4/logs/2026-03-03-p4-node-test.txt`）。
+- 阶段状态：Phase 4 进行中，允许继续推进 `TA-P4-011` ~ `TA-P4-012`。
 
 ## 5. 周会与 Gate 节奏建议
 
