@@ -31,4 +31,4 @@
 
 ## 5. 下一步
 
-进入 Phase 9 规划（联邦跨域运行手册与多节点灰度发布）。
+Phase 9 已完成并关闭（见 `docs/implementation/gates/phase-9-gate.md`），进入 Phase 10 规划。

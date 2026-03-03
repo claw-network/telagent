@@ -34,4 +34,4 @@
 - `TA-P6-002`：DONE
 - `TA-P6-003`：DONE
 - `TA-P6-004`：DONE（Phase 6 Gate=PASS）
-- 下一步：Phase 7 / Phase 8 已完成并关闭（见 `docs/implementation/phase-7/README.md`、`docs/implementation/phase-8/README.md`），进入 Phase 9 规划
+- 下一步：Phase 7 / Phase 8 / Phase 9 已完成并关闭（见 `docs/implementation/phase-7/README.md`、`docs/implementation/phase-8/README.md`、`docs/implementation/phase-9/README.md`），进入 Phase 10 规划

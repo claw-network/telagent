@@ -28,7 +28,7 @@
 
 | 风险/阻塞 | 影响 | Owner | 截止日期 | 状态 |
 | --- | --- | --- | --- | --- |
-| 未覆盖跨域节点在线升级时的版本兼容矩阵 | 影响灰度升级风险评估充分性 | SRE/BE | 2026-03-14 | Accepted（Phase 9 收口） |
+| 未覆盖跨域节点在线升级时的版本兼容矩阵 | 影响灰度升级风险评估充分性 | SRE/BE | 2026-03-14 | Closed（Phase 9 已收口，见 `docs/implementation/gates/phase-9-gate.md`） |
 
 ## 4) 条件放行补丁项（仅 CONDITIONAL PASS 填写）
 

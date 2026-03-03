@@ -32,4 +32,4 @@
 - `TA-P7-002`：DONE
 - `TA-P7-003`：DONE
 - `TA-P7-004`：DONE（Phase 7 Gate=PASS）
-- 下一步：Phase 8 已完成并关闭（见 `docs/implementation/phase-8/README.md`），进入 Phase 9 规划。
+- 下一步：Phase 8 / Phase 9 已完成并关闭（见 `docs/implementation/phase-8/README.md`、`docs/implementation/phase-9/README.md`），进入 Phase 10 规划。

@@ -3,7 +3,7 @@
 - 文档版本：v1.0
 - 基线计划起始日：2026-03-02（周一）
 - 基线计划结束日：2026-05-17（周日）
-- 适用范围：Phase 0 -> Phase 8（发布后改进 + 联邦韧性增强）
+- 适用范围：Phase 0 -> Phase 9（发布后改进 + 联邦灰度兼容）
 
 ## 1. 看板目的
 
@@ -188,7 +188,11 @@
 - 已完成：`TA-P8-002`（联邦 group-state 版本防回退与 split-brain 检测）
 - 已完成：`TA-P8-003`（跨 AZ 延迟/脑裂模拟脚本与机读清单）
 - 已完成：`TA-P8-004`（Phase 8 Gate 评审与阶段关闭）
-- 下一批 Ready：进入 Phase 9 规划（联邦跨域运行手册与多节点灰度发布）
+- 已完成：`TA-P9-001`（Phase 9 边界与验收标准冻结）
+- 已完成：`TA-P9-002`（联邦协议版本兼容矩阵与拒绝策略落地）
+- 已完成：`TA-P9-003`（联邦协议灰度兼容脚本与机读清单）
+- 已完成：`TA-P9-004`（Phase 9 Gate 评审与阶段关闭）
+- 下一批 Ready：进入 Phase 10 规划（联邦灰度发布自动化与应急回滚编排）
 
 ## 4.2 Blockers（2026-03-03 更新）
 
@@ -282,7 +286,7 @@
 - `TA-P6-004`：DONE（发布后回归与 Gate 收口通过，见 `docs/implementation/phase-6/ta-p6-004-phase6-gate-review-2026-03-03.md`）。
 - 验证脚本：`packages/node/scripts/run-phase6-mailbox-persistence-check.ts`（清单：`docs/implementation/phase-6/manifests/2026-03-03-p6-mailbox-persistence-check.json`）。
 - 回归结果：`@telagent/node` `35/35` 通过（日志：`docs/implementation/phase-6/logs/2026-03-03-p6-node-test.txt`）。
-- 下一批任务：Phase 7 / Phase 8 已关闭（见 `docs/implementation/phase-7/README.md`、`docs/implementation/phase-8/README.md`），进入 Phase 9 规划。
+- 下一批任务：Phase 7 / Phase 8 / Phase 9 已关闭（见 `docs/implementation/phase-7/README.md`、`docs/implementation/phase-8/README.md`、`docs/implementation/phase-9/README.md`），进入 Phase 10 规划。
 
 ## 4.12 Phase 7 Postgres 集群压测与故障演练快照（2026-03-03）
 
@@ -300,7 +304,16 @@
 - `TA-P8-003`：DONE（联邦韧性脚本校验通过，见 `docs/implementation/phase-8/ta-p8-003-federation-resilience-check-2026-03-03.md`）。
 - `TA-P8-004`：DONE（Gate=PASS，见 `docs/implementation/phase-8/ta-p8-004-phase8-gate-review-2026-03-03.md`）。
 - 验证结果：韧性脚本 `scenarios=4/4, decision=PASS`（见 `docs/implementation/phase-8/manifests/2026-03-03-p8-federation-resilience-check.json`）。
-- 阶段状态：Phase 8 已关闭（Gate=PASS），进入 Phase 9 规划。
+- 阶段状态：Phase 8 已关闭（Gate=PASS），并已由 Phase 9 灰度兼容能力补齐后续风险。
+
+## 4.14 Phase 9 联邦跨域运行手册与灰度兼容快照（2026-03-03）
+
+- `TA-P9-001`：DONE（边界与验收冻结，见 `docs/implementation/phase-9/ta-p9-001-phase9-boundary-acceptance-2026-03-03.md`）。
+- `TA-P9-002`：DONE（协议兼容矩阵与拒绝策略落地，见 `docs/implementation/phase-9/ta-p9-002-federation-protocol-compatibility-2026-03-03.md`）。
+- `TA-P9-003`：DONE（协议灰度兼容脚本校验通过，见 `docs/implementation/phase-9/ta-p9-003-federation-protocol-compat-check-2026-03-03.md`）。
+- `TA-P9-004`：DONE（Gate=PASS，见 `docs/implementation/phase-9/ta-p9-004-phase9-gate-review-2026-03-03.md`）。
+- 验证结果：协议兼容脚本 `scenarios=4/4, decision=PASS`（见 `docs/implementation/phase-9/manifests/2026-03-03-p9-federation-protocol-compat-check.json`）。
+- 阶段状态：Phase 9 已关闭（Gate=PASS），进入 Phase 10 规划。
 
 ## 5. 周会与 Gate 节奏建议
 
