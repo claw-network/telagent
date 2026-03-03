@@ -1,0 +1,48 @@
+{
+  "phase": "Phase 11",
+  "taskId": "TA-P11-005",
+  "generatedAt": "2026-03-03T08:10:36.076Z",
+  "summary": {
+    "capturedCount": 2,
+    "replayProcessed": 2,
+    "replayedCount": 2,
+    "failedCount": 0,
+    "orderPreserved": true,
+    "pendingAfterReplay": 0
+  },
+  "decision": "PASS",
+  "details": {
+    "firstDlqId": "dlq-envelopes-1772525436076-1",
+    "secondDlqId": "dlq-envelopes-1772525436076-2",
+    "capturedOrder": [
+      "dlq-envelopes-1772525436076-1",
+      "dlq-envelopes-1772525436076-2"
+    ],
+    "replayOrder": [
+      "dlq-envelopes-1772525436076-1",
+      "dlq-envelopes-1772525436076-2"
+    ],
+    "replayResults": [
+      {
+        "dlqId": "dlq-envelopes-1772525436076-1",
+        "sequence": 1,
+        "scope": "envelopes",
+        "status": "REPLAYED",
+        "replayedAtMs": 1772525436076
+      },
+      {
+        "dlqId": "dlq-envelopes-1772525436076-2",
+        "sequence": 2,
+        "scope": "envelopes",
+        "status": "REPLAYED",
+        "replayedAtMs": 1772525436076
+      }
+    ],
+    "nodeInfoDlq": {
+      "pendingCount": 0,
+      "replayedCount": 2,
+      "replaySuccessCount": 2,
+      "replayFailedCount": 0
+    }
+  }
+}

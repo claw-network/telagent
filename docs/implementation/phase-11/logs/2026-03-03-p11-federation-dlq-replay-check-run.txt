@@ -1,0 +1,6 @@
+.                                        |  WARN  Unsupported engine: wanted: {"node":">=22 <25"} (current: {"node":"v25.6.1","pnpm":"10.18.1"})
+[TA-P11-005] captured=2 replayProcessed=2
+[TA-P11-005] replayed=2 failed=0 orderPreserved=true
+[TA-P11-005] pendingAfterReplay=0
+[TA-P11-005] decision=PASS
+[TA-P11-005] output=/Users/xiasenhai/workspace/private-repo/Bots/telagent/docs/implementation/phase-11/manifests/2026-03-03-p11-federation-dlq-replay-check.json

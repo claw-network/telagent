@@ -200,7 +200,8 @@
 - 已完成：`TA-P11-002`（Node Runtime/CI 基线固化）
 - 已完成：`TA-P11-003`（DomainProof 自动挑战与过期轮转）
 - 已完成：`TA-P11-004`（联邦互信 pinning 与轮换策略）
-- 下一批 Ready：继续 Phase 11 执行（优先 `TA-P11-005` ~ `TA-P11-006`）
+- 已完成：`TA-P11-005`（联邦 DLQ 与重放工具链）
+- 下一批 Ready：继续 Phase 11 执行（优先 `TA-P11-006` ~ `TA-P11-007`）
 
 ## 4.2 Blockers（2026-03-03 更新）
 
@@ -339,7 +340,7 @@
 - `TA-P11-002`：DONE（Node Runtime/CI 基线固化，见 `docs/implementation/phase-11/ta-p11-002-runtime-ci-baseline-2026-03-03.md`）。
 - `TA-P11-003`：DONE（DomainProof 自动挑战与过期轮转，见 `docs/implementation/phase-11/ta-p11-003-domain-proof-auto-challenge-rotation-2026-03-03.md`）。
 - `TA-P11-004`：DONE（联邦互信 pinning 与轮换，见 `docs/implementation/phase-11/ta-p11-004-federation-pinning-rotation-2026-03-03.md`）。
-- `TA-P11-005`：TODO（联邦 DLQ 与重放工具链）。
+- `TA-P11-005`：DONE（联邦 DLQ 与重放工具链，见 `docs/implementation/phase-11/ta-p11-005-federation-dlq-replay-toolchain-2026-03-03.md`）。
 - `TA-P11-006`：TODO（Signal/MLS 密钥生命周期管理）。
 - `TA-P11-007`：TODO（revoked DID 会话失效链路）。
 - `TA-P11-008`：TODO（Agent SDK TypeScript v0）。
