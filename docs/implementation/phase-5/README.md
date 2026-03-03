@@ -45,4 +45,4 @@
 ## 3. 阶段进展
 
 - `TA-P5-001` ~ `TA-P5-006`：DONE（Phase 5 Gate=PASS）
-- 下一个执行任务：发布流程已完成（见 `docs/implementation/release/README.md`，`v0.1.0` 已发布），Phase 6 也已收口（见 `docs/implementation/phase-6/README.md`）
+- 下一个执行任务：发布流程已完成（见 `docs/implementation/release/README.md`，`v0.1.0` 已发布），Phase 6/Phase 7 已收口（见 `docs/implementation/phase-6/README.md`、`docs/implementation/phase-7/README.md`）

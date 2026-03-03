@@ -27,7 +27,7 @@
 
 | 风险/阻塞 | 影响 | Owner | 截止日期 | 状态 |
 | --- | --- | --- | --- | --- |
-| 尚未完成真实 Postgres 集群压测与故障演练 | 影响生产多实例容量与故障恢复信心 | BE/SRE | 2026-03-10 | Accepted（Phase 7 演练收口） |
+| 尚未完成真实 Postgres 集群压测与故障演练 | 影响生产多实例容量与故障恢复信心 | BE/SRE | 2026-03-10 | Closed（Phase 7 已完成，见 `docs/implementation/gates/phase-7-gate.md`） |
 
 ## 4) 条件放行补丁项（仅 CONDITIONAL PASS 填写）
 

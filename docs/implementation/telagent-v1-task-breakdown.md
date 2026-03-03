@@ -6,7 +6,7 @@
 
 ## 1. 使用说明
 
-- **执行顺序**：按 `Phase 0 -> Phase 5` 串行推进，禁止跨 Gate 跳阶段。
+- **执行顺序**：按 `Phase 0 -> Phase 7` 串行推进，禁止跨 Gate 跳阶段。
 - **状态字段**：`TODO | IN_PROGRESS | BLOCKED | DONE`。
 - **估算单位**：人日（PD）。
 - **依赖格式**：`-` 表示无依赖；多个依赖用逗号分隔任务 ID。
@@ -21,6 +21,8 @@ flowchart LR
   P2 --> P3["Phase 3\nIndexer 与确定性视图"]
   P3 --> P4["Phase 4\n消息通道"]
   P4 --> P5["Phase 5\nMVP 验收"]
+  P5 --> P6["Phase 6\n发布后改进"]
+  P6 --> P7["Phase 7\nPostgres 压测与故障演练"]
 ```
 
 ## 3. 分阶段任务清单
@@ -94,6 +96,10 @@ flowchart LR
 | TA-P6-002 | Phase 6 | 多实例共享 mailbox state 方案设计 | Backend Engineer + SRE | 1 | TA-P6-001 | ADR + rollout plan | 明确存储/锁/一致性策略 | DONE |
 | TA-P6-003 | Phase 6 | mailbox store 外置化实现（SQLite->Postgres 可选） | Backend Engineer | 2 | TA-P6-002 | storage adapter | 多实例读写一致性验证通过 | DONE |
 | TA-P6-004 | Phase 6 | 发布后稳定性回归与 Gate | QA + TL | 0.5 | TA-P6-003 | regression report + gate | Phase 6 风险收口关闭 | DONE |
+| TA-P7-001 | Phase 7 | 冻结 Postgres 集群压测与故障演练边界/验收标准 | TL + BE + SRE | 0.5 | TA-P6-004 | Phase 7 boundary doc | 范围、验收、证据模板冻结 | DONE |
+| TA-P7-002 | Phase 7 | 多实例并发一致性校验（共享 Postgres mailbox） | Backend Engineer + QA | 1.5 | TA-P7-001 | 多实例检查脚本+manifest | `duplicateSeqCount=0` 且 `missingSeqCount=0` | DONE |
+| TA-P7-003 | Phase 7 | Postgres 故障演练（重启恢复） | SRE + Backend | 1 | TA-P7-002 | 故障演练脚本+manifest | `persistedAcrossRestart=true` 且 `sequenceContinuesAfterRestart=true` | DONE |
+| TA-P7-004 | Phase 7 | Phase 7 Gate 评审与收口 | TL + QA | 0.5 | TA-P7-003 | gate 结论文档 | Phase 7 正式关闭 | DONE |
 
 ## 4. 执行节奏建议（按部就班）
 
@@ -207,4 +213,13 @@ flowchart LR
 | TA-P6-001 | DONE | `docs/implementation/phase-6/ta-p6-001-mailbox-persistence-2026-03-03.md`, `packages/node/src/storage/message-repository.ts`, `packages/node/src/services/message-service.ts`, `packages/node/src/services/message-service.test.ts`, `packages/node/scripts/run-phase6-mailbox-persistence-check.ts`, `docs/implementation/phase-6/manifests/2026-03-03-p6-mailbox-persistence-check.json`, `docs/implementation/phase-6/logs/2026-03-03-p6-node-test.txt`, `docs/implementation/phase-6/logs/2026-03-03-p6-mailbox-persistence-check-run.txt` | 无 | 进入 `TA-P6-002` 多实例共享状态方案设计 |
 | TA-P6-002 | DONE | `docs/implementation/phase-6/ta-p6-002-mailbox-multi-instance-adr-2026-03-03.md`, `docs/implementation/phase-6/manifests/2026-03-03-p6-mailbox-multi-instance-adr.json`, `docs/implementation/phase-6/README.md` | 无 | 进入 `TA-P6-003`（store adapter + Postgres backend 实现） |
 | TA-P6-003 | DONE | `docs/implementation/phase-6/ta-p6-003-mailbox-store-adapter-postgres-2026-03-03.md`, `packages/node/src/storage/mailbox-store.ts`, `packages/node/src/storage/postgres-message-repository.ts`, `packages/node/src/config.ts`, `packages/node/src/app.ts`, `packages/node/src/services/message-service.ts`, `packages/node/src/config.test.ts`, `packages/node/scripts/run-phase6-store-backend-check.ts`, `docs/implementation/phase-6/manifests/2026-03-03-p6-store-backend-check.json`, `docs/implementation/phase-6/logs/2026-03-03-p6-store-backend-check-run.txt` | 无 | 进入 `TA-P6-004`（发布后稳定性回归与 Gate） |
-| TA-P6-004 | DONE | `docs/implementation/phase-6/ta-p6-004-phase6-gate-review-2026-03-03.md`, `docs/implementation/gates/phase-6-gate.md`, `docs/implementation/phase-6/README.md`, `docs/implementation/phase-6/logs/2026-03-03-p6-workspace-test.txt` | 无 | Phase 6 已关闭，进入 Phase 7 规划 |
+| TA-P6-004 | DONE | `docs/implementation/phase-6/ta-p6-004-phase6-gate-review-2026-03-03.md`, `docs/implementation/gates/phase-6-gate.md`, `docs/implementation/phase-6/README.md`, `docs/implementation/phase-6/logs/2026-03-03-p6-workspace-test.txt` | 无 | Phase 6 已关闭；Phase 7 已收口，进入 Phase 8 规划 |
+
+## 13. Phase 7 Postgres 集群压测与故障演练（2026-03-03）
+
+| Task ID | 状态 | 证据链接 | 阻塞项 | 下一步动作 |
+| --- | --- | --- | --- | --- |
+| TA-P7-001 | DONE | `docs/implementation/phase-7/ta-p7-001-phase7-boundary-acceptance-2026-03-03.md`, `docs/implementation/phase-7/README.md` | 无 | 进入 `TA-P7-002` 多实例一致性校验 |
+| TA-P7-002 | DONE | `docs/implementation/phase-7/ta-p7-002-postgres-multi-instance-check-2026-03-03.md`, `packages/node/scripts/run-phase7-postgres-multi-instance-check.ts`, `docs/implementation/phase-7/manifests/2026-03-03-p7-postgres-multi-instance-check.json`, `docs/implementation/phase-7/logs/2026-03-03-p7-postgres-multi-instance-check-run.txt` | 无 | 进入 `TA-P7-003` 故障演练 |
+| TA-P7-003 | DONE | `docs/implementation/phase-7/ta-p7-003-postgres-fault-drill-2026-03-03.md`, `packages/node/scripts/run-phase7-postgres-fault-drill.ts`, `docs/implementation/phase-7/manifests/2026-03-03-p7-postgres-fault-drill.json`, `docs/implementation/phase-7/logs/2026-03-03-p7-postgres-fault-drill-run.txt` | 无 | 进入 `TA-P7-004` Gate 收口 |
+| TA-P7-004 | DONE | `docs/implementation/phase-7/ta-p7-004-phase7-gate-review-2026-03-03.md`, `docs/implementation/gates/phase-7-gate.md`, `docs/implementation/phase-7/logs/2026-03-03-p7-node-build.txt`, `docs/implementation/phase-7/logs/2026-03-03-p7-node-test.txt` | 无 | Phase 7 已关闭，进入 Phase 8 规划 |

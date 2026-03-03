@@ -34,4 +34,4 @@
 - `TA-P6-002`：DONE
 - `TA-P6-003`：DONE
 - `TA-P6-004`：DONE（Phase 6 Gate=PASS）
-- 下一步：进入 Phase 7（Postgres 集群压测与故障演练）
+- 下一步：Phase 7 已完成并关闭（见 `docs/implementation/phase-7/README.md`），进入 Phase 8 规划
