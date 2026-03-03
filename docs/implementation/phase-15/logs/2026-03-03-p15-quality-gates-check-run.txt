@@ -1,0 +1,137 @@
+[TA-P15-006] quality gates check run
+generated_at=2026-03-03T15:46:30Z
+doc=docs/implementation/phase-15/ta-p15-006-webapp-quality-gates-and-release-readiness-2026-03-03.md
+
+[check] section headers
+8:## 1. 目标
+12:## 2. 范围与约束
+20:## 3. 测试分层与执行层级
+22:## 3.1 测试分层（Client Quality Pyramid）
+32:## 3.2 执行层级（Pipeline Levels）
+38:## 4. 门禁规则（Quality Gates）
+40:## 4.1 必过门槛
+50:## 4.2 风险例外机制
+56:## 5. 观测与崩溃治理
+58:## 5.1 关键指标（Minimum Set）
+68:## 5.2 观测字段规范
+74:## 5.3 崩溃治理流程
+80:## 6. 发布与回滚清单（Release Readiness）
+82:## 6.1 发布前检查
+89:## 6.2 发布后检查
+95:## 6.3 回滚触发条件
+101:## 7. TA-P15-006 基线执行结果（2026-03-03）
+114:## 8. TA-P15-006 验收清单
+123:## 9. 证据
+135:## 10. 结论
+
+[check] constraints and quality keywords
+10:建立可执行的客户端质量门禁体系，覆盖测试分层、性能预算、崩溃与观测、发布与回滚检查清单，并固化 Gate 判定规则。
+15:2. API 边界：仅允许 `/api/v1/*`。
+16:3. DID 边界：仅允许 `did:claw:*`，DID hash 固定 `keccak256(utf8(did))`。
+17:4. 错误边界：错误语义统一 RFC7807（`application/problem+json`）。
+27:| L1 Contract | API 与错误契约一致性 | `corepack pnpm --filter @telagent/node test` | `/api/v1/*`、RFC7807、权限约束不回退 |
+38:## 4. 门禁规则（Quality Gates）
+42:| Gate | 条件 | 失败动作 |
+44:| G1 Build Gate | Web/Node 构建全部通过 | 阻断合入 |
+45:| G2 Contract Gate | `/api/v1/*` 契约、RFC7807、权限回归通过 | 阻断合入并触发回归修复 |
+46:| G3 SDK Gate | TS/Python SDK 一致性通过 | 阻断 release candidate |
+47:| G4 Offline Gate | 离线重放/冲突策略回放通过 | 阻断 release candidate |
+48:| G5 Reliability Gate | 崩溃率、恢复时延、关键路径成功率达标 | 阻断正式发布 |
+54:3. 任何豁免必须记录到 Gate 结论文档并可追踪关闭状态。
+62:| `clientCrashFreeRate` | `>= 99.5%` | 24h |
+63:| `criticalJourneySuccessRate` | `>= 99.0%` | 24h |
+66:| `deadLetterRate` | `< 0.5%` | 24h |
+71:2. 身份字段：禁止明文 DID 入日志，保留脱敏 DID 或 DID hash（`keccak256(utf8(did))`）。
+72:3. 错误字段：统一记录 RFC7807 `status/code/instance`。
+97:1. `clientCrashFreeRate < 99.0%`。
+98:2. `criticalJourneySuccessRate < 98.0%` 持续 30 分钟。
+111:1. 在 `TA-P15-007` Gate 收口中明确 web E2E 最小集是否作为放行前置条件。
+119:- [x] `/api/v1/*`、`did:claw:*`、DID hash、RFC7807 约束显式写入。
+125:- 任务文档：`docs/implementation/phase-15/ta-p15-006-webapp-quality-gates-and-release-readiness-2026-03-03.md`
+132:- 专项检查日志：`docs/implementation/phase-15/logs/2026-03-03-p15-quality-gates-check-run.txt`
+133:- 机读清单：`docs/implementation/phase-15/manifests/2026-03-03-p15-quality-gates-check.json`
+138:- 下一步：进入 `TA-P15-007`（Phase 15 Gate 评审与收口）。
+
+[check] execution logs summary
+web build:
+
+> @telagent/web@0.1.0 build /Users/xiasenhai/Workspace/OpenClaw/telagent/packages/web
+> node scripts/build.mjs
+
+web assets copied to dist
+web test:
+
+> @telagent/web@0.1.0 test /Users/xiasenhai/Workspace/OpenClaw/telagent/packages/web
+> echo 'no tests for web package'
+
+no tests for web package
+node build:
+
+> @telagent/node@0.1.0 build /Users/xiasenhai/Workspace/OpenClaw/telagent/packages/node
+> tsc -p tsconfig.json
+
+node test tail:
+✔ TA-P4-005 provisional envelopes are retracted when group is reorged back (0.883616ms)
+✔ TA-P4-005 send is rejected when group chain state is REORGED_BACK (0.438206ms)
+✔ TA-P12-002 buildAuditSnapshot exports hashed retraction samples (1.07652ms)
+✔ TA-P12-002 buildAuditSnapshot normalizes sample and scan bounds (0.207389ms)
+✔ TA-P12-003 revoked DID event isolates related sessions and evicts active sessions (1.601105ms)
+✔ TA-P12-003 buildAuditSnapshot includes revocation isolation evidence (0.638884ms)
+✔ TA-P6-001 mailbox persists messages and seq after service restart (14.055419ms)
+✔ TA-P11-006 message send validates signal/mls key lifecycle status (1.513357ms)
+✔ TA-P11-007 revoked DID cannot continue sending new messages (0.48601ms)
+✔ TA-P5-002 monitoring snapshot normalizes dynamic route segments and records counters (5.73948ms)
+✔ TA-P5-002 monitoring emits warning/critical alerts when thresholds are exceeded (0.538512ms)
+✔ TA-P12-004 federation DLQ burn-rate alert is emitted and tracked (1.02957ms)
+ℹ tests 89
+ℹ suites 0
+ℹ pass 89
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2509.055893
+sdk ts tail:
+
+> @telagent/sdk@0.1.0 build /Users/xiasenhai/Workspace/OpenClaw/telagent/packages/sdk
+> tsc -p tsconfig.json
+
+
+> @telagent/sdk@0.1.0 test /Users/xiasenhai/Workspace/OpenClaw/telagent/packages/sdk
+> node --test dist/**/*.test.js
+
+✔ TA-P11-008 SDK quickstart covers create-group and send/pull message flow (45.622433ms)
+✔ TA-P11-008 SDK maps RFC7807 errors to TelagentSdkError (11.63108ms)
+✔ TA-P14-005 SDK getIdentity encodes DID path segment (6.0297ms)
+✔ TA-P14-005 SDK maps direct ACL FORBIDDEN RFC7807 to TelagentSdkError (7.587955ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 4
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 244.118403
+sdk python tail:
+....
+----------------------------------------------------------------------
+Ran 4 tests in 2.024s
+
+OK
+
+[check] tracker rows
+docs/implementation/telagent-v1-iteration-board.md:231:- 下一批 Ready：执行 `TA-P15-007`（Phase 15 Gate 评审与收口）。
+docs/implementation/telagent-v1-iteration-board.md:432:- `TA-P15-006`：DONE（客户端质量体系与发布门禁冻结，见 `docs/implementation/phase-15/ta-p15-006-webapp-quality-gates-and-release-readiness-2026-03-03.md` 与 `docs/implementation/phase-15/manifests/2026-03-03-p15-quality-gates-check.json`）。
+docs/implementation/telagent-v1-iteration-board.md:433:- `TA-P15-007`：TODO（进入 Gate 收口阶段）。
+docs/implementation/telagent-v1-iteration-board.md:434:- 阶段状态：Phase 15 执行中（IN_PROGRESS），下一任务 `TA-P15-007`。
+docs/implementation/telagent-v1-task-breakdown.md:10:- **状态字段**：`TODO | IN_PROGRESS | BLOCKED | DONE`。
+docs/implementation/telagent-v1-task-breakdown.md:159:| TA-P15-006 | Phase 15 | 客户端质量体系与发布门禁 | QA + FE + SRE | 1.5 | TA-P15-002, TA-P15-003, TA-P15-004, TA-P15-005 | quality gates + release checklist | 单测/E2E/性能/崩溃门禁成体系 | DONE |
+docs/implementation/telagent-v1-task-breakdown.md:160:| TA-P15-007 | Phase 15 | Phase 15 Gate 评审与收口 | TL + QA | 0.5 | TA-P15-006 | gate 结论文档 | Phase 15 正式关闭 | TODO |
+docs/implementation/telagent-v1-task-breakdown.md:372:| TA-P15-005 | DONE | `docs/implementation/phase-15/ta-p15-005-webapp-offline-sync-conflict-performance-2026-03-03.md`, `docs/implementation/phase-15/README.md`, `docs/implementation/phase-15/logs/2026-03-03-p15-web-build-ta-p15-005.txt`, `docs/implementation/phase-15/logs/2026-03-03-p15-web-test-ta-p15-005.txt`, `docs/implementation/phase-15/logs/2026-03-03-p15-offline-sync-check-run.txt`, `docs/implementation/phase-15/manifests/2026-03-03-p15-offline-sync-check.json` | 无 | 进入 `TA-P15-006`（客户端质量体系与发布门禁） |
+docs/implementation/telagent-v1-task-breakdown.md:373:| TA-P15-006 | DONE | `docs/implementation/phase-15/ta-p15-006-webapp-quality-gates-and-release-readiness-2026-03-03.md`, `docs/implementation/phase-15/README.md`, `docs/implementation/phase-15/logs/2026-03-03-p15-web-build-ta-p15-006.txt`, `docs/implementation/phase-15/logs/2026-03-03-p15-web-test-ta-p15-006.txt`, `docs/implementation/phase-15/logs/2026-03-03-p15-node-build-ta-p15-006.txt`, `docs/implementation/phase-15/logs/2026-03-03-p15-node-test-ta-p15-006.txt`, `docs/implementation/phase-15/logs/2026-03-03-p15-sdk-ts-test-ta-p15-006.txt`, `docs/implementation/phase-15/logs/2026-03-03-p15-sdk-python-test-ta-p15-006.txt`, `docs/implementation/phase-15/logs/2026-03-03-p15-quality-gates-check-run.txt`, `docs/implementation/phase-15/manifests/2026-03-03-p15-quality-gates-check.json` | 无 | 进入 `TA-P15-007`（Phase 15 Gate 评审与收口） |
+docs/implementation/telagent-v1-task-breakdown.md:374:| TA-P15-007 | TODO | `docs/implementation/phase-15/README.md` | 无 | Phase 15 Gate 收口 |
+docs/implementation/phase-15/README.md:4:- 状态：IN_PROGRESS（`TA-P15-006` 已完成，推进 `TA-P15-007`）
+docs/implementation/phase-15/README.md:24:| TA-P15-006 | DONE | 客户端质量体系（测试/观测/发布） |
+docs/implementation/phase-15/README.md:25:| TA-P15-007 | TODO | Phase 15 Gate 评审与收口 |
+
+[result] PASS
