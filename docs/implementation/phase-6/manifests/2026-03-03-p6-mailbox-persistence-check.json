@@ -1,0 +1,43 @@
+{
+  "phase": "Phase 6",
+  "taskId": "TA-P6-001",
+  "generatedAt": "2026-03-03T03:30:29.873Z",
+  "summary": {
+    "persistedAcrossRestart": true,
+    "sequenceContinues": true,
+    "provisionalRetractedOnReorg": true,
+    "ttlCleanupWorksOnPersistentStore": true
+  },
+  "details": {
+    "firstDirectSeq": "1",
+    "secondDirectSeq": "2",
+    "directAfterRestartCount": 1,
+    "groupAfterRestartCount": 1,
+    "maintenance": {
+      "cleanup": {
+        "removed": 0,
+        "remaining": 3,
+        "sweptAtMs": 1000000
+      },
+      "retraction": {
+        "retracted": 1,
+        "checkedAtMs": 1000000
+      }
+    },
+    "cleanup": {
+      "removed": 1,
+      "remaining": 1,
+      "sweptAtMs": 1006000
+    },
+    "retractions": [
+      {
+        "envelopeId": "env-p6-group-1",
+        "conversationId": "group:0xcccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+        "reason": "REORGED_BACK",
+        "retractedAtMs": 1000000
+      }
+    ],
+    "directAfterCleanupCount": 1
+  },
+  "decision": "PASS"
+}

@@ -1,9 +1,13 @@
 import assert from 'node:assert/strict';
+import fs from 'node:fs/promises';
+import os from 'node:os';
+import path from 'node:path';
 import test from 'node:test';
 
 import { ErrorCodes, TelagentError, hashDid, type GroupState } from '@telagent/protocol';
 
 import { MessageService } from './message-service.js';
+import { MessageRepository } from '../storage/message-repository.js';
 
 interface MutableClock {
   now(): number;
@@ -241,4 +245,40 @@ test('TA-P4-005 send is rejected when group chain state is REORGED_BACK', () => 
       return true;
     },
   );
+});
+
+test('TA-P6-001 mailbox persists messages and seq after service restart', async (t) => {
+  const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'telagent-p6-mailbox-'));
+  t.after(async () => {
+    await fs.rm(tempDir, { recursive: true, force: true });
+  });
+
+  const dbPath = path.join(tempDir, 'mailbox.sqlite');
+  const clock = createClock(30_000);
+  const groups = {} as ConstructorParameters<typeof MessageService>[0];
+
+  const repoA = new MessageRepository(dbPath);
+  const firstService = new MessageService(groups, { clock, repository: repoA });
+  const first = firstService.send(createDirectInput({
+    envelopeId: 'env-persist-1',
+    conversationId: 'direct:persist',
+  }));
+  assert.equal(first.seq, 1n);
+
+  const repoB = new MessageRepository(dbPath);
+  const secondService = new MessageService(groups, { clock, repository: repoB });
+  const pulled = secondService.pull({
+    conversationId: 'direct:persist',
+    limit: 10,
+  });
+
+  assert.equal(pulled.items.length, 1);
+  assert.equal(pulled.items[0].envelopeId, 'env-persist-1');
+  assert.equal(pulled.items[0].seq, 1n);
+
+  const second = secondService.send(createDirectInput({
+    envelopeId: 'env-persist-2',
+    conversationId: 'direct:persist',
+  }));
+  assert.equal(second.seq, 2n);
 });

@@ -15,9 +15,10 @@
 9. [Phase 3 执行产出（TA-P3-*）](./implementation/phase-3/README.md)
 10. [Phase 4 执行产出（TA-P4-*）](./implementation/phase-4/README.md)
 11. [Phase 5 执行产出（TA-P5-*）](./implementation/phase-5/README.md)
-12. [Phase Gate 模板与记录](./implementation/gates/README.md)
-13. [TL 广播模板（给所有 agent）](./implementation/telagent-v1-tl-broadcast-template.md)
-14. [发布执行产出（TA-RLS-*）](./implementation/release/README.md)
+12. [Phase 6 执行产出（TA-P6-*）](./implementation/phase-6/README.md)
+13. [发布执行产出（TA-RLS-*）](./implementation/release/README.md)
+14. [Phase Gate 模板与记录](./implementation/gates/README.md)
+15. [TL 广播模板（给所有 agent）](./implementation/telagent-v1-tl-broadcast-template.md)
 
 ## 2) 文档用途
 

@@ -10,6 +10,7 @@ import {
 
 import type { GroupService } from './group-service.js';
 import { SequenceAllocator } from './sequence-allocator.js';
+import type { MessageRepository, StoredEnvelopeRecord } from '../storage/message-repository.js';
 
 export interface SendMessageInput {
   envelopeId?: string;
@@ -64,13 +65,15 @@ export class MessageService {
   private readonly retractedByEnvelopeId = new Map<string, ProvisionalRetractionRecord>();
   private readonly sequenceAllocator: SequenceAllocator;
   private readonly clock: MessageServiceClock;
+  private readonly repository?: MessageRepository;
 
   constructor(
     private readonly groups: GroupService,
-    options?: { sequenceAllocator?: SequenceAllocator; clock?: MessageServiceClock },
+    options?: { sequenceAllocator?: SequenceAllocator; clock?: MessageServiceClock; repository?: MessageRepository },
   ) {
     this.sequenceAllocator = options?.sequenceAllocator ?? new SequenceAllocator();
     this.clock = options?.clock ?? SystemClock;
+    this.repository = options?.repository;
   }
 
   send(input: SendMessageInput): Envelope {
@@ -80,9 +83,9 @@ export class MessageService {
     const envelopeId = input.envelopeId ?? randomUUID();
     const signature = this.buildIdempotencySignature(input);
 
-    const existing = this.envelopeById.get(envelopeId);
+    const existing = this.getEnvelopeById(envelopeId);
     if (existing) {
-      const existingSignature = this.idempotencySignatureByEnvelopeId.get(envelopeId);
+      const existingSignature = this.getIdempotencySignature(envelopeId);
       if (existingSignature !== signature) {
         throw new TelagentError(
           ErrorCodes.CONFLICT,
@@ -91,7 +94,7 @@ export class MessageService {
       }
       return existing;
     }
-    const existingSignature = this.idempotencySignatureByEnvelopeId.get(envelopeId);
+    const existingSignature = this.getIdempotencySignature(envelopeId);
     if (existingSignature) {
       if (existingSignature !== signature) {
         throw new TelagentError(
@@ -99,7 +102,7 @@ export class MessageService {
           `envelopeId(${envelopeId}) already exists with a different payload`,
         );
       }
-      const retracted = this.retractedByEnvelopeId.get(envelopeId);
+      const retracted = this.getRetraction(envelopeId);
       if (retracted) {
         throw new TelagentError(
           ErrorCodes.CONFLICT,
@@ -138,7 +141,7 @@ export class MessageService {
       }
     }
 
-    const seq = this.sequenceAllocator.next(input.conversationId);
+    const seq = this.nextSequence(input.conversationId);
 
     const envelope: Envelope = {
       envelopeId,
@@ -159,9 +162,10 @@ export class MessageService {
       provisional,
     };
 
-    this.envelopeById.set(envelope.envelopeId, envelope);
-    this.idempotencySignatureByEnvelopeId.set(envelope.envelopeId, signature);
-    this.envelopes.push(envelope);
+    this.persistEnvelope({
+      envelope,
+      idempotencySignature: signature,
+    });
 
     return envelope;
   }
@@ -176,26 +180,17 @@ export class MessageService {
     const offset = params.cursor ? Number.parseInt(params.cursor, 10) : 0;
     const safeOffset = Number.isFinite(offset) && offset >= 0 ? offset : 0;
 
-    const filtered = this.envelopes.filter((item) => {
-      if (params.conversationId && item.conversationId !== params.conversationId) {
-        return false;
-      }
-      return true;
+    const total = this.countEnvelopes(params.conversationId);
+    const items = this.listEnvelopes({
+      conversationId: params.conversationId,
+      offset: safeOffset,
+      limit,
     });
-
-    const sorted = filtered.sort((a, b) => {
-      if (a.conversationId === b.conversationId) {
-        return a.seq < b.seq ? -1 : a.seq > b.seq ? 1 : 0;
-      }
-      return a.sentAtMs - b.sentAtMs;
-    });
-
-    const items = sorted.slice(safeOffset, safeOffset + limit);
     const nextOffset = safeOffset + items.length;
 
     return {
       items,
-      nextCursor: nextOffset < sorted.length ? String(nextOffset) : null,
+      nextCursor: nextOffset < total ? String(nextOffset) : null,
     };
   }
 
@@ -207,12 +202,25 @@ export class MessageService {
   }
 
   listRetracted(limit = 50): ProvisionalRetractionRecord[] {
+    if (this.repository) {
+      return this.repository.listRetractions(limit);
+    }
+
     return Array.from(this.retractedByEnvelopeId.values())
       .sort((a, b) => b.retractedAtMs - a.retractedAtMs)
       .slice(0, Math.max(1, limit));
   }
 
   cleanupExpired(nowMs = this.clock.now()): CleanupReport {
+    if (this.repository) {
+      const result = this.repository.deleteExpired(nowMs);
+      return {
+        removed: result.removed,
+        remaining: result.remaining,
+        sweptAtMs: nowMs,
+      };
+    }
+
     let removed = 0;
     const retained: Envelope[] = [];
 
@@ -235,6 +243,32 @@ export class MessageService {
   }
 
   retractProvisionalOnReorg(nowMs = this.clock.now()): ProvisionalRetractionReport {
+    if (this.repository) {
+      let retracted = 0;
+      const provisionalRecords = this.repository.listProvisionalGroupRecords();
+
+      for (const record of provisionalRecords) {
+        const groupId = this.resolveGroupId(record.envelope.conversationId);
+        const chainState = this.groups.getChainState(groupId);
+        if (chainState.state !== 'REORGED_BACK') {
+          continue;
+        }
+
+        retracted++;
+        this.repository.retractEnvelope({
+          envelope: record.envelope,
+          idempotencySignature: record.idempotencySignature,
+          retractedAtMs: nowMs,
+          reason: 'REORGED_BACK',
+        });
+      }
+
+      return {
+        retracted,
+        checkedAtMs: nowMs,
+      };
+    }
+
     let retracted = 0;
     const retained: Envelope[] = [];
 
@@ -294,5 +328,77 @@ export class MessageService {
       return conversationId.slice('group:'.length);
     }
     return conversationId;
+  }
+
+  private persistEnvelope(record: StoredEnvelopeRecord): void {
+    if (this.repository) {
+      this.repository.saveEnvelope(record);
+      return;
+    }
+
+    this.envelopeById.set(record.envelope.envelopeId, record.envelope);
+    this.idempotencySignatureByEnvelopeId.set(record.envelope.envelopeId, record.idempotencySignature);
+    this.envelopes.push(record.envelope);
+  }
+
+  private getEnvelopeById(envelopeId: string): Envelope | null {
+    if (this.repository) {
+      return this.repository.getEnvelopeRecord(envelopeId)?.envelope ?? null;
+    }
+    return this.envelopeById.get(envelopeId) ?? null;
+  }
+
+  private getIdempotencySignature(envelopeId: string): string | null {
+    if (this.repository) {
+      return this.repository.getIdempotencySignature(envelopeId);
+    }
+    return this.idempotencySignatureByEnvelopeId.get(envelopeId) ?? null;
+  }
+
+  private getRetraction(envelopeId: string): ProvisionalRetractionRecord | null {
+    if (this.repository) {
+      return this.repository.getRetraction(envelopeId);
+    }
+    return this.retractedByEnvelopeId.get(envelopeId) ?? null;
+  }
+
+  private countEnvelopes(conversationId?: string): number {
+    if (this.repository) {
+      return this.repository.countEnvelopes(conversationId);
+    }
+
+    if (!conversationId) {
+      return this.envelopes.length;
+    }
+    return this.envelopes.filter((item) => item.conversationId === conversationId).length;
+  }
+
+  private listEnvelopes(params: { conversationId?: string; offset: number; limit: number }): Envelope[] {
+    if (this.repository) {
+      return this.repository.listEnvelopes(params);
+    }
+
+    const filtered = this.envelopes.filter((item) => {
+      if (params.conversationId && item.conversationId !== params.conversationId) {
+        return false;
+      }
+      return true;
+    });
+
+    const sorted = filtered.sort((a, b) => {
+      if (a.conversationId === b.conversationId) {
+        return a.seq < b.seq ? -1 : a.seq > b.seq ? 1 : 0;
+      }
+      return a.sentAtMs - b.sentAtMs;
+    });
+
+    return sorted.slice(params.offset, params.offset + params.limit);
+  }
+
+  private nextSequence(conversationId: string): bigint {
+    if (this.repository) {
+      return this.repository.nextSequence(conversationId);
+    }
+    return this.sequenceAllocator.next(conversationId);
   }
 }

@@ -11,11 +11,13 @@ import { IdentityAdapterService } from './services/identity-adapter-service.js';
 import { MessageService } from './services/message-service.js';
 import { NodeMonitoringService } from './services/node-monitoring-service.js';
 import { GroupRepository } from './storage/group-repository.js';
+import { MessageRepository } from './storage/message-repository.js';
 
 export class TelagentNode {
   private mailboxCleanupTimer: NodeJS.Timeout | null = null;
   private readonly contracts: ContractProvider;
   private readonly repo: GroupRepository;
+  private readonly messageRepo: MessageRepository;
   private readonly identityService: IdentityAdapterService;
   private readonly gasService: GasService;
   private readonly groupService: GroupService;
@@ -29,11 +31,14 @@ export class TelagentNode {
   constructor(private readonly config: AppConfig) {
     this.contracts = new ContractProvider(config.chain);
     this.repo = new GroupRepository(resolveDataPath(config.dataDir, 'group-indexer.sqlite'));
+    this.messageRepo = new MessageRepository(resolveDataPath(config.dataDir, 'mailbox.sqlite'));
 
     this.identityService = new IdentityAdapterService(this.contracts);
     this.gasService = new GasService(this.contracts);
     this.groupService = new GroupService(this.contracts, this.identityService, this.gasService, this.repo);
-    this.messageService = new MessageService(this.groupService);
+    this.messageService = new MessageService(this.groupService, {
+      repository: this.messageRepo,
+    });
     this.attachmentService = new AttachmentService();
     this.federationService = new FederationService(config.federation);
     this.monitoringService = new NodeMonitoringService({
