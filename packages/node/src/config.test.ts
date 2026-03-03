@@ -141,3 +141,67 @@ test('federation supported protocols auto-include self version', async () => {
     },
   );
 });
+
+test('domain proof config defaults to enforced mode', async () => {
+  await withEnv(
+    {
+      TELAGENT_DOMAIN_PROOF_MODE: undefined,
+      TELAGENT_DOMAIN_PROOF_CHALLENGE_TTL_SEC: undefined,
+      TELAGENT_DOMAIN_PROOF_ROTATE_BEFORE_EXPIRY_SEC: undefined,
+      TELAGENT_DOMAIN_PROOF_HTTP_TIMEOUT_MS: undefined,
+    },
+    async () => {
+      const config = loadConfigFromEnv();
+      assert.equal(config.domainProof.mode, 'enforced');
+      assert.equal(config.domainProof.challengeTtlSec, 86_400);
+      assert.equal(config.domainProof.rotateBeforeExpirySec, 900);
+      assert.equal(config.domainProof.requestTimeoutMs, 5_000);
+    },
+  );
+});
+
+test('domain proof config accepts report-only mode and custom values', async () => {
+  await withEnv(
+    {
+      TELAGENT_DOMAIN_PROOF_MODE: 'report-only',
+      TELAGENT_DOMAIN_PROOF_CHALLENGE_TTL_SEC: '7200',
+      TELAGENT_DOMAIN_PROOF_ROTATE_BEFORE_EXPIRY_SEC: '300',
+      TELAGENT_DOMAIN_PROOF_HTTP_TIMEOUT_MS: '2500',
+    },
+    async () => {
+      const config = loadConfigFromEnv();
+      assert.equal(config.domainProof.mode, 'report-only');
+      assert.equal(config.domainProof.challengeTtlSec, 7200);
+      assert.equal(config.domainProof.rotateBeforeExpirySec, 300);
+      assert.equal(config.domainProof.requestTimeoutMs, 2500);
+    },
+  );
+});
+
+test('domain proof mode rejects unsupported value', async () => {
+  await withEnv(
+    {
+      TELAGENT_DOMAIN_PROOF_MODE: 'disabled',
+    },
+    async () => {
+      assert.throws(
+        () => loadConfigFromEnv(),
+        /TELAGENT_DOMAIN_PROOF_MODE must be enforced or report-only/,
+      );
+    },
+  );
+});
+
+test('domain proof numeric settings require positive integers', async () => {
+  await withEnv(
+    {
+      TELAGENT_DOMAIN_PROOF_CHALLENGE_TTL_SEC: '0',
+    },
+    async () => {
+      assert.throws(
+        () => loadConfigFromEnv(),
+        /TELAGENT_DOMAIN_PROOF_CHALLENGE_TTL_SEC must be a positive integer/,
+      );
+    },
+  );
+});

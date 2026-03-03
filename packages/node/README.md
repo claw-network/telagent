@@ -7,6 +7,7 @@ Node runtime for TelAgent v1.
 - `/api/v1/*` routing only
 - ClawIdentity adapter (`did:claw:*`)
 - Group lifecycle on chain (`create/invite/accept/remove`)
+- DomainProof challenge validation with expiry-aware nonce rotation
 - Gas preflight with `INSUFFICIENT_GAS_TOKEN_BALANCE`
 - Group state indexer with pending/finalized semantics
 - Message envelopes with at-least-once + per-conversation ordering + envelopeId idempotency

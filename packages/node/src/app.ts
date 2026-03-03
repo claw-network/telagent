@@ -10,6 +10,7 @@ import { GroupService } from './services/group-service.js';
 import { IdentityAdapterService } from './services/identity-adapter-service.js';
 import { MessageService } from './services/message-service.js';
 import { NodeMonitoringService } from './services/node-monitoring-service.js';
+import { DomainProofChallengeService } from './services/domain-proof-challenge-service.js';
 import { GroupRepository } from './storage/group-repository.js';
 import { MessageRepository } from './storage/message-repository.js';
 import type { MailboxStore } from './storage/mailbox-store.js';
@@ -22,6 +23,7 @@ export class TelagentNode {
   private readonly mailboxStore: MailboxStore;
   private readonly identityService: IdentityAdapterService;
   private readonly gasService: GasService;
+  private readonly domainProofChallengeService: DomainProofChallengeService;
   private readonly groupService: GroupService;
   private readonly messageService: MessageService;
   private readonly attachmentService: AttachmentService;
@@ -37,7 +39,19 @@ export class TelagentNode {
 
     this.identityService = new IdentityAdapterService(this.contracts);
     this.gasService = new GasService(this.contracts);
-    this.groupService = new GroupService(this.contracts, this.identityService, this.gasService, this.repo);
+    this.domainProofChallengeService = new DomainProofChallengeService({
+      enforcementMode: config.domainProof.mode,
+      challengeTtlSec: config.domainProof.challengeTtlSec,
+      rotateBeforeExpirySec: config.domainProof.rotateBeforeExpirySec,
+      requestTimeoutMs: config.domainProof.requestTimeoutMs,
+    });
+    this.groupService = new GroupService(
+      this.contracts,
+      this.identityService,
+      this.gasService,
+      this.repo,
+      this.domainProofChallengeService,
+    );
     this.messageService = new MessageService(this.groupService, {
       repository: this.mailboxStore,
     });

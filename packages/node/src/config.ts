@@ -36,6 +36,15 @@ export interface MailboxStoreConfig {
   };
 }
 
+export type DomainProofMode = 'enforced' | 'report-only';
+
+export interface DomainProofConfig {
+  mode: DomainProofMode;
+  challengeTtlSec: number;
+  rotateBeforeExpirySec: number;
+  requestTimeoutMs: number;
+}
+
 export interface AppConfig {
   host: string;
   port: number;
@@ -45,6 +54,7 @@ export interface AppConfig {
   chain: ChainConfig;
   federation: FederationConfig;
   monitoring: MonitoringConfig;
+  domainProof: DomainProofConfig;
 }
 
 export function loadConfigFromEnv(): AppConfig {
@@ -136,6 +146,20 @@ export function loadConfigFromEnv(): AppConfig {
       maintenanceStaleWarnSec: Number(process.env.TELAGENT_MONITOR_MAINT_STALE_WARN_SEC || 180),
       maintenanceStaleCriticalSec: Number(process.env.TELAGENT_MONITOR_MAINT_STALE_CRITICAL_SEC || 300),
     },
+    domainProof: {
+      mode: parseDomainProofMode(process.env.TELAGENT_DOMAIN_PROOF_MODE),
+      challengeTtlSec: parsePositiveInteger(process.env.TELAGENT_DOMAIN_PROOF_CHALLENGE_TTL_SEC, 86_400, 'TELAGENT_DOMAIN_PROOF_CHALLENGE_TTL_SEC'),
+      rotateBeforeExpirySec: parsePositiveInteger(
+        process.env.TELAGENT_DOMAIN_PROOF_ROTATE_BEFORE_EXPIRY_SEC,
+        900,
+        'TELAGENT_DOMAIN_PROOF_ROTATE_BEFORE_EXPIRY_SEC',
+      ),
+      requestTimeoutMs: parsePositiveInteger(
+        process.env.TELAGENT_DOMAIN_PROOF_HTTP_TIMEOUT_MS,
+        5_000,
+        'TELAGENT_DOMAIN_PROOF_HTTP_TIMEOUT_MS',
+      ),
+    },
   };
 }
 
@@ -155,4 +179,23 @@ function parseBoolean(raw: string | undefined, fallback: boolean): boolean {
     return false;
   }
   throw new Error(`invalid boolean value: ${raw}`);
+}
+
+function parsePositiveInteger(raw: string | undefined, fallback: number, fieldName: string): number {
+  if (typeof raw === 'undefined' || !raw.trim()) {
+    return fallback;
+  }
+  const value = Number.parseInt(raw, 10);
+  if (!Number.isInteger(value) || value <= 0) {
+    throw new Error(`${fieldName} must be a positive integer`);
+  }
+  return value;
+}
+
+function parseDomainProofMode(raw: string | undefined): DomainProofMode {
+  const normalized = (raw || 'enforced').trim().toLowerCase();
+  if (normalized === 'enforced' || normalized === 'report-only') {
+    return normalized;
+  }
+  throw new Error('TELAGENT_DOMAIN_PROOF_MODE must be enforced or report-only');
 }
