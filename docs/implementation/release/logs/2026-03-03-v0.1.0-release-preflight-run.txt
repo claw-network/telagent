@@ -1,0 +1,3 @@
+[TA-RLS-001] checks: 6/6 PASS
+[TA-RLS-001] decision=READY_FOR_TAG
+[TA-RLS-001] output=/Users/xiasenhai/workspace/private-repo/Bots/telagent/docs/implementation/release/manifests/2026-03-03-v0.1.0-release-preflight.json

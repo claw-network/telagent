@@ -88,6 +88,7 @@ flowchart LR
 | TA-P5-004 | Phase 5 | 安全评审与上线检查清单 | Security Engineer | 1 | TA-P5-003 | Security checklist | 高危风险清零 | DONE |
 | TA-P5-005 | Phase 5 | 发布 Readiness 报告（Go/No-Go） | PM/Tech Lead | 1 | TA-P5-001, TA-P5-004 | readiness report | 审批通过可发布 | DONE |
 | TA-P5-006 | Phase 5 | MVP 验收签字与版本冻结 | PM/Tech Lead | 0.5 | TA-P5-005 | 验收记录 | Phase 5 正式关闭 | DONE |
+| TA-RLS-001 | Release | 发布前置检查（Tag 前校验） | Release Owner | 0.5 | TA-P5-006 | preflight report | 结论 READY_FOR_TAG | DONE |
 
 ## 4. 执行节奏建议（按部就班）
 
@@ -191,3 +192,4 @@ flowchart LR
 | TA-P5-004 | DONE | `docs/implementation/phase-5/ta-p5-004-security-review-checklist-2026-03-03.md`, `packages/node/scripts/run-phase5-security-review.ts`, `docs/implementation/phase-5/logs/2026-03-03-p5-security-review-run.txt`, `docs/implementation/phase-5/manifests/2026-03-03-p5-security-review.json` | 无 | 进入 `TA-P5-005` |
 | TA-P5-005 | DONE | `docs/implementation/phase-5/ta-p5-005-readiness-report-2026-03-03.md`, `docs/implementation/phase-5/manifests/2026-03-03-p5-readiness-report.json`, `docs/implementation/phase-5/README.md` | 无 | 进入 `TA-P5-006` |
 | TA-P5-006 | DONE | `docs/implementation/phase-5/ta-p5-006-mvp-signoff-version-freeze-2026-03-03.md`, `docs/implementation/phase-5/manifests/2026-03-03-p5-version-freeze.json`, `docs/implementation/gates/phase-5-gate.md` | 无 | Phase 5 已关闭，进入发布流程执行 |
+| TA-RLS-001 | DONE | `docs/implementation/release/ta-rls-001-release-preflight-2026-03-03.md`, `docs/implementation/release/manifests/2026-03-03-v0.1.0-release-preflight.json`, `docs/implementation/release/logs/2026-03-03-v0.1.0-release-preflight-run.txt`, `packages/node/scripts/run-release-preflight.ts` | 无 | 可执行 `v0.1.0` tag 与 release 发布 |

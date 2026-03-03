@@ -45,4 +45,4 @@
 ## 3. 阶段进展
 
 - `TA-P5-001` ~ `TA-P5-006`：DONE（Phase 5 Gate=PASS）
-- 下一个执行任务：按发布流程执行版本标签与发布编排（不再新增 Phase 5 范围内功能）
+- 下一个执行任务：已转入发布流程（见 `docs/implementation/release/README.md`，当前 Preflight=READY_FOR_TAG）

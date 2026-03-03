@@ -1,0 +1,104 @@
+{
+  "phase": "Release",
+  "taskId": "TA-RLS-001",
+  "generatedAt": "2026-03-03T03:02:28.749Z",
+  "release": {
+    "version": "0.1.0",
+    "targetTag": "v0.1.0",
+    "branch": "main",
+    "commit": "74c25c99ec39d28863b2cce62763e2477c8d0565"
+  },
+  "summary": {
+    "totalChecks": 6,
+    "passedChecks": 6,
+    "failedChecks": 0
+  },
+  "decision": "READY_FOR_TAG",
+  "checks": [
+    {
+      "id": "RLS-001",
+      "title": "Phase 5 Gate 已 PASS 且允许发布",
+      "status": "PASS",
+      "evidence": [
+        "docs/implementation/gates/phase-5-gate.md"
+      ],
+      "details": {
+        "gatePath": "/Users/xiasenhai/workspace/private-repo/Bots/telagent/docs/implementation/gates/phase-5-gate.md",
+        "pass": true
+      }
+    },
+    {
+      "id": "RLS-002",
+      "title": "Readiness 结论为 GO",
+      "status": "PASS",
+      "evidence": [
+        "docs/implementation/phase-5/manifests/2026-03-03-p5-readiness-report.json"
+      ],
+      "details": {
+        "goNoGo": "GO",
+        "rationale": "关键 E2E、SLO、故障注入与安全评审均通过，且无未关闭高危风险。"
+      }
+    },
+    {
+      "id": "RLS-003",
+      "title": "安全评审高危风险清零",
+      "status": "PASS",
+      "evidence": [
+        "docs/implementation/phase-5/manifests/2026-03-03-p5-security-review.json"
+      ],
+      "details": {
+        "decision": "PASS",
+        "totalChecks": 10,
+        "passedChecks": 10,
+        "criticalOpenCount": 0,
+        "highRiskOpenCount": 0
+      }
+    },
+    {
+      "id": "RLS-004",
+      "title": "故障注入演练通过",
+      "status": "PASS",
+      "evidence": [
+        "docs/implementation/phase-5/manifests/2026-03-03-p5-fault-injection-drill.json"
+      ],
+      "details": {
+        "total": 3,
+        "passed": 3,
+        "failed": 0,
+        "passRate": 1
+      }
+    },
+    {
+      "id": "RLS-005",
+      "title": "API 路由前缀维持 /api/v1/*",
+      "status": "PASS",
+      "evidence": [
+        "packages/node/src/api/server.ts"
+      ],
+      "details": {
+        "apiV1MountCount": 7,
+        "legacyV1MountCount": 0
+      }
+    },
+    {
+      "id": "RLS-006",
+      "title": "版本号一致且符合 v0.1.0 发布目标",
+      "status": "PASS",
+      "evidence": [
+        "package.json",
+        "packages/node/package.json",
+        "packages/protocol/package.json",
+        "packages/web/package.json"
+      ],
+      "details": {
+        "versions": [
+          "0.1.0",
+          "0.1.0",
+          "0.1.0",
+          "0.1.0"
+        ],
+        "target": "0.1.0"
+      }
+    }
+  ]
+}

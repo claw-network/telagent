@@ -7,7 +7,7 @@
     "version": "0.1.0",
     "sourceBranch": "main",
     "freezeMode": "DOC_AND_GATE_LOCKED",
-    "frozenCommit": "SET_BY_RELEASE_TAG",
+    "frozenCommit": "74c25c99ec39d28863b2cce62763e2477c8d0565",
     "requiredApiPrefix": "/api/v1/*",
     "requiredDidNamespace": "did:claw:*",
     "requiredErrorModel": "RFC7807"

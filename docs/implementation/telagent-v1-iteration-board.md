@@ -174,7 +174,8 @@
 - 已完成：`TA-P5-004`（安全评审与上线检查清单）
 - 已完成：`TA-P5-005`（Readiness 报告与 Go/No-Go 决策）
 - 已完成：`TA-P5-006`（MVP 验收签字与版本冻结）
-- 下一批 Ready：Phase 5 已关闭（按发布流程执行）
+- 已完成：`TA-RLS-001`（发布前置检查，READY_FOR_TAG）
+- 下一批 Ready：执行 `v0.1.0` tag 与 release note 发布
 
 ## 4.2 Blockers（2026-03-03 更新）
 
@@ -250,9 +251,10 @@
 - `TA-P5-004`：DONE（安全检查 10/10 通过，高危风险清零，见 `docs/implementation/phase-5/ta-p5-004-security-review-checklist-2026-03-03.md`）。
 - `TA-P5-005`：DONE（发布 Readiness 报告结论为 GO，见 `docs/implementation/phase-5/ta-p5-005-readiness-report-2026-03-03.md`）。
 - `TA-P5-006`：DONE（MVP 验收签字与版本冻结，Gate=PASS，见 `docs/implementation/phase-5/ta-p5-006-mvp-signoff-version-freeze-2026-03-03.md`）。
+- `TA-RLS-001`：DONE（发布前置检查 6/6 通过，Preflight=READY_FOR_TAG，见 `docs/implementation/release/ta-rls-001-release-preflight-2026-03-03.md`）。
 - 构建结果：`@telagent/web` build 通过（日志：`docs/implementation/phase-5/logs/2026-03-03-p5-web-build.txt`）。
 - 回归结果：`@telagent/node` 与 workspace tests 通过（日志：`docs/implementation/phase-5/logs/2026-03-03-p5-node-test.txt`, `docs/implementation/phase-5/logs/2026-03-03-p5-workspace-test.txt`）。
-- 阶段状态：Phase 5 已关闭（Gate=PASS，允许进入发布流程）。
+- 阶段状态：Phase 5 已关闭（Gate=PASS），发布流程已进入 tag 前置检查阶段。
 
 ## 5. 周会与 Gate 节奏建议
 
