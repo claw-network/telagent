@@ -25,4 +25,4 @@
 - `TA-RLS-001`：DONE
 - `TA-RLS-002`：DONE
 - 发布状态：`v0.1.0` 已创建并推送远端。
-- 下一步：Phase 6 已完成 `TA-P6-001`（离线邮箱持久化），继续推进 `TA-P6-002`（多实例扩展方案）。
+- 下一步：Phase 6 已完成 `TA-P6-001`、`TA-P6-002`，继续推进 `TA-P6-003`（store adapter + Postgres backend）。

@@ -1,0 +1,37 @@
+{
+  "phase": "Phase 6",
+  "taskId": "TA-P6-002",
+  "generatedAt": "2026-03-03T11:40:00+08:00",
+  "adr": {
+    "id": "ADR-P6-002",
+    "title": "Mailbox multi-instance shared state",
+    "decision": "postgres_primary_sqlite_fallback",
+    "status": "accepted"
+  },
+  "options": [
+    {
+      "name": "sqlite_shared_fs",
+      "selected": false,
+      "reason": "file lock semantics on network storage are fragile"
+    },
+    {
+      "name": "redis_only",
+      "selected": false,
+      "reason": "durability and audit semantics are insufficient for canonical mailbox state"
+    },
+    {
+      "name": "postgres",
+      "selected": true,
+      "reason": "transaction + row lock + upsert semantics satisfy seq/idempotency/retraction consistency"
+    }
+  ],
+  "followUp": {
+    "nextTaskId": "TA-P6-003",
+    "deliverables": [
+      "mailbox store adapter interface",
+      "postgres repository implementation",
+      "dual-write verification plan",
+      "rollback switch with sqlite fallback"
+    ]
+  }
+}
