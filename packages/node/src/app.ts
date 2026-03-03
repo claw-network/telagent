@@ -77,7 +77,7 @@ export class TelagentNode {
       ? Math.max(5, Math.floor(this.config.mailboxCleanupIntervalSec))
       : 60;
     this.mailboxCleanupTimer = setInterval(() => {
-      this.messageService.cleanupExpired();
+      this.messageService.runMaintenance();
     }, intervalSec * 1000);
     this.mailboxCleanupTimer.unref();
   }

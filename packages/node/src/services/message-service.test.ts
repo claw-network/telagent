@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { ErrorCodes, TelagentError } from '@telagent/protocol';
+import { ErrorCodes, TelagentError, hashDid, type GroupState } from '@telagent/protocol';
 
 import { MessageService } from './message-service.js';
 
@@ -27,6 +27,64 @@ function createMessageService(startMs?: number) {
   const groups = {} as ConstructorParameters<typeof MessageService>[0];
   const service = new MessageService(groups, { clock });
   return { service, clock };
+}
+
+function createGroupHarness() {
+  const stateByGroup = new Map<string, GroupState>();
+  const membersByGroup = new Map<string, Array<{ didHash: string; state: 'PENDING' | 'FINALIZED' | 'REMOVED' }>>();
+
+  const groups = {
+    getChainState(groupId: string) {
+      const state = stateByGroup.get(groupId);
+      if (!state) {
+        throw new Error(`group(${groupId}) not found`);
+      }
+      return {
+        groupId,
+        state,
+        updatedAtMs: Date.now(),
+      };
+    },
+    listMembers(groupId: string) {
+      return (membersByGroup.get(groupId) ?? []).map((member) => ({
+        groupId,
+        did: `did:claw:${member.didHash.slice(2, 10)}`,
+        didHash: member.didHash,
+        state: member.state,
+        joinedAtMs: Date.now(),
+      }));
+    },
+  } as unknown as ConstructorParameters<typeof MessageService>[0];
+
+  return {
+    groups,
+    setGroupState(groupId: string, state: GroupState) {
+      stateByGroup.set(groupId, state);
+    },
+    setMemberState(groupId: string, did: string, state: 'PENDING' | 'FINALIZED' | 'REMOVED') {
+      const members = membersByGroup.get(groupId) ?? [];
+      const didHash = hashDid(did);
+      const nextMembers = members.filter((member) => member.didHash !== didHash);
+      nextMembers.push({ didHash, state });
+      membersByGroup.set(groupId, nextMembers);
+    },
+  };
+}
+
+function createGroupMessageService(groupId: string, state: GroupState, startMs?: number) {
+  const clock = createClock(startMs);
+  const harness = createGroupHarness();
+  harness.setGroupState(groupId, state);
+  harness.setMemberState(groupId, 'did:claw:zAlice', 'FINALIZED');
+
+  const service = new MessageService(harness.groups, { clock });
+  return {
+    service,
+    clock,
+    setGroupState(nextState: GroupState) {
+      harness.setGroupState(groupId, nextState);
+    },
+  };
 }
 
 function createDirectInput(overrides: Partial<Parameters<MessageService['send']>[0]> = {}) {
@@ -126,4 +184,61 @@ test('TA-P4-004 cleanupExpired removes expired envelopes and releases dedupe key
   });
   assert.equal(resent.envelopeId, 'env-expired');
   assert.equal(resent.seq, 3n);
+});
+
+test('TA-P4-005 provisional envelopes are retracted when group is reorged back', () => {
+  const groupId = `0x${'a'.repeat(64)}`;
+  const { service, setGroupState } = createGroupMessageService(groupId, 'PENDING_ONCHAIN', 5_000);
+
+  const envelope = service.send({
+    envelopeId: 'env-provisional-1',
+    senderDid: 'did:claw:zAlice',
+    conversationId: `group:${groupId}`,
+    conversationType: 'group',
+    targetDomain: 'alpha.tel',
+    mailboxKeyId: 'mailbox-1',
+    sealedHeader: '0x11',
+    ciphertext: '0x22',
+    contentType: 'text',
+    ttlSec: 3600,
+  });
+
+  assert.equal(envelope.provisional, true);
+  assert.equal(service.pull({ conversationId: `group:${groupId}` }).items.length, 1);
+
+  setGroupState('REORGED_BACK');
+  const afterReorg = service.pull({ conversationId: `group:${groupId}` });
+  assert.equal(afterReorg.items.length, 0);
+
+  const retracted = service.listRetracted();
+  assert.equal(retracted.length, 1);
+  assert.equal(retracted[0].envelopeId, 'env-provisional-1');
+  assert.equal(retracted[0].reason, 'REORGED_BACK');
+});
+
+test('TA-P4-005 send is rejected when group chain state is REORGED_BACK', () => {
+  const groupId = `0x${'b'.repeat(64)}`;
+  const { service } = createGroupMessageService(groupId, 'REORGED_BACK', 9_000);
+
+  assert.throws(
+    () =>
+      service.send({
+        envelopeId: 'env-provisional-2',
+        senderDid: 'did:claw:zAlice',
+        conversationId: `group:${groupId}`,
+        conversationType: 'group',
+        targetDomain: 'alpha.tel',
+        mailboxKeyId: 'mailbox-1',
+        sealedHeader: '0x11',
+        ciphertext: '0x22',
+        contentType: 'text',
+        ttlSec: 3600,
+      }),
+    (error) => {
+      assert.ok(error instanceof TelagentError);
+      assert.equal(error.code, ErrorCodes.CONFLICT);
+      assert.match(error.message, /REORGED_BACK/);
+      return true;
+    },
+  );
 });

@@ -40,10 +40,28 @@ export interface CleanupReport {
   sweptAtMs: number;
 }
 
+export interface ProvisionalRetractionRecord {
+  envelopeId: string;
+  conversationId: string;
+  reason: 'REORGED_BACK';
+  retractedAtMs: number;
+}
+
+export interface ProvisionalRetractionReport {
+  retracted: number;
+  checkedAtMs: number;
+}
+
+export interface MessageMaintenanceReport {
+  cleanup: CleanupReport;
+  retraction: ProvisionalRetractionReport;
+}
+
 export class MessageService {
   private envelopes: Envelope[] = [];
   private readonly envelopeById = new Map<string, Envelope>();
   private readonly idempotencySignatureByEnvelopeId = new Map<string, string>();
+  private readonly retractedByEnvelopeId = new Map<string, ProvisionalRetractionRecord>();
   private readonly sequenceAllocator: SequenceAllocator;
   private readonly clock: MessageServiceClock;
 
@@ -56,7 +74,8 @@ export class MessageService {
   }
 
   send(input: SendMessageInput): Envelope {
-    this.cleanupExpired();
+    const nowMs = this.clock.now();
+    this.runMaintenance(nowMs);
 
     const envelopeId = input.envelopeId ?? randomUUID();
     const signature = this.buildIdempotencySignature(input);
@@ -72,6 +91,23 @@ export class MessageService {
       }
       return existing;
     }
+    const existingSignature = this.idempotencySignatureByEnvelopeId.get(envelopeId);
+    if (existingSignature) {
+      if (existingSignature !== signature) {
+        throw new TelagentError(
+          ErrorCodes.CONFLICT,
+          `envelopeId(${envelopeId}) already exists with a different payload`,
+        );
+      }
+      const retracted = this.retractedByEnvelopeId.get(envelopeId);
+      if (retracted) {
+        throw new TelagentError(
+          ErrorCodes.CONFLICT,
+          `envelopeId(${envelopeId}) was retracted due to ${retracted.reason}`,
+        );
+      }
+      throw new TelagentError(ErrorCodes.CONFLICT, `envelopeId(${envelopeId}) already exists`);
+    }
 
     if (!isDidClaw(input.senderDid)) {
       throw new TelagentError(ErrorCodes.VALIDATION, 'senderDid must use did:claw format');
@@ -81,6 +117,9 @@ export class MessageService {
     if (input.conversationType === 'group') {
       const groupId = this.resolveGroupId(input.conversationId);
       const chainState = this.groups.getChainState(groupId);
+      if (chainState.state === 'REORGED_BACK') {
+        throw new TelagentError(ErrorCodes.CONFLICT, 'Group chain state is REORGED_BACK');
+      }
       provisional = chainState.state !== 'ACTIVE';
 
       const members = this.groups.listMembers(groupId);
@@ -131,7 +170,7 @@ export class MessageService {
     items: Envelope[];
     nextCursor: string | null;
   } {
-    this.cleanupExpired();
+    this.runMaintenance();
 
     const limit = Math.min(100, Math.max(1, params.limit ?? 20));
     const offset = params.cursor ? Number.parseInt(params.cursor, 10) : 0;
@@ -160,6 +199,19 @@ export class MessageService {
     };
   }
 
+  runMaintenance(nowMs = this.clock.now()): MessageMaintenanceReport {
+    return {
+      cleanup: this.cleanupExpired(nowMs),
+      retraction: this.retractProvisionalOnReorg(nowMs),
+    };
+  }
+
+  listRetracted(limit = 50): ProvisionalRetractionRecord[] {
+    return Array.from(this.retractedByEnvelopeId.values())
+      .sort((a, b) => b.retractedAtMs - a.retractedAtMs)
+      .slice(0, Math.max(1, limit));
+  }
+
   cleanupExpired(nowMs = this.clock.now()): CleanupReport {
     let removed = 0;
     const retained: Envelope[] = [];
@@ -179,6 +231,40 @@ export class MessageService {
       removed,
       remaining: retained.length,
       sweptAtMs: nowMs,
+    };
+  }
+
+  retractProvisionalOnReorg(nowMs = this.clock.now()): ProvisionalRetractionReport {
+    let retracted = 0;
+    const retained: Envelope[] = [];
+
+    for (const envelope of this.envelopes) {
+      if (envelope.conversationType !== 'group' || !envelope.provisional) {
+        retained.push(envelope);
+        continue;
+      }
+
+      const groupId = this.resolveGroupId(envelope.conversationId);
+      const chainState = this.groups.getChainState(groupId);
+      if (chainState.state !== 'REORGED_BACK') {
+        retained.push(envelope);
+        continue;
+      }
+
+      retracted++;
+      this.envelopeById.delete(envelope.envelopeId);
+      this.retractedByEnvelopeId.set(envelope.envelopeId, {
+        envelopeId: envelope.envelopeId,
+        conversationId: envelope.conversationId,
+        reason: 'REORGED_BACK',
+        retractedAtMs: nowMs,
+      });
+    }
+
+    this.envelopes = retained;
+    return {
+      retracted,
+      checkedAtMs: nowMs,
     };
   }
 

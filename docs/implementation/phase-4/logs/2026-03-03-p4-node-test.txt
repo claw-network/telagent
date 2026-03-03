@@ -10,26 +10,28 @@
 > @telagent/node@0.1.0 test /Users/xiasenhai/workspace/private-repo/Bots/telagent/packages/node
 > node --test dist/*.test.js dist/**/*.test.js
 
-✔ created response returns data envelope and Location header (31.65575ms)
-✔ list response returns paginated envelope shape (5.761083ms)
-✔ validation errors use RFC7807 shape and problem+json content type (3.404833ms)
-✔ not found uses RFC7807 shape (2.471458ms)
-✔ identities and groups endpoints are accessible with expected status codes (7.715209ms)
-✔ messages, attachments and federation endpoints are accessible (5.087917ms)
-✔ routes only serve /api/v1/* prefix (27.857417ms)
-✔ identity endpoint responds with data envelope (5.6755ms)
-✔ finalityDepth only materializes finalized blocks (35.22525ms)
-✔ reorg rollback replays canonical events and restores deterministic view (8.043792ms)
-✔ assertSufficient throws INSUFFICIENT_GAS_TOKEN_BALANCE when native balance is not enough (0.865167ms)
-✔ TA-P4-002 sequence allocator keeps per-conversation monotonic order (0.742166ms)
-✔ TA-P4-003 dedupe keeps idempotent writes for same envelopeId (0.150709ms)
-✔ TA-P4-003 duplicate envelopeId with different payload is rejected (0.288125ms)
-✔ TA-P4-004 cleanupExpired removes expired envelopes and releases dedupe key (0.125125ms)
-ℹ tests 15
+✔ created response returns data envelope and Location header (47.174458ms)
+✔ list response returns paginated envelope shape (10.239416ms)
+✔ validation errors use RFC7807 shape and problem+json content type (10.458667ms)
+✔ not found uses RFC7807 shape (4.185375ms)
+✔ identities and groups endpoints are accessible with expected status codes (19.179333ms)
+✔ messages, attachments and federation endpoints are accessible (14.837917ms)
+✔ routes only serve /api/v1/* prefix (35.787083ms)
+✔ identity endpoint responds with data envelope (11.98575ms)
+✔ finalityDepth only materializes finalized blocks (36.422291ms)
+✔ reorg rollback replays canonical events and restores deterministic view (13.828333ms)
+✔ assertSufficient throws INSUFFICIENT_GAS_TOKEN_BALANCE when native balance is not enough (1.148083ms)
+✔ TA-P4-002 sequence allocator keeps per-conversation monotonic order (4.014708ms)
+✔ TA-P4-003 dedupe keeps idempotent writes for same envelopeId (0.181583ms)
+✔ TA-P4-003 duplicate envelopeId with different payload is rejected (0.312166ms)
+✔ TA-P4-004 cleanupExpired removes expired envelopes and releases dedupe key (0.150125ms)
+✔ TA-P4-005 provisional envelopes are retracted when group is reorged back (3.798625ms)
+✔ TA-P4-005 send is rejected when group chain state is REORGED_BACK (1.425791ms)
+ℹ tests 17
 ℹ suites 0
-ℹ pass 15
+ℹ pass 17
 ℹ fail 0
 ℹ cancelled 0
 ℹ skipped 0
 ℹ todo 0
-ℹ duration_ms 221.612375
+ℹ duration_ms 347.181
