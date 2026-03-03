@@ -1,7 +1,29 @@
 const DID_CLAW_PATTERN = /^did:claw:[A-Za-z0-9._:-]+$/;
 
+export interface ProblemDetail {
+  type?: string;
+  title?: string;
+  status?: number;
+  detail?: string;
+  code?: string;
+  instance?: string;
+  [key: string]: unknown;
+}
+
+export interface ApiResponse<T = unknown> {
+  status: number;
+  payload: T;
+  location: string | null;
+  contentType: string;
+}
+
 export class ApiProblemError extends Error {
-  constructor(problem) {
+  problem: ProblemDetail;
+  status?: number;
+  code?: string;
+  instance?: string;
+
+  constructor(problem: ProblemDetail) {
     const title = typeof problem?.title === 'string' ? problem.title : 'Request failed';
     const detail = typeof problem?.detail === 'string' ? problem.detail : '';
     super(detail ? `${title}: ${detail}` : title);
@@ -13,18 +35,18 @@ export class ApiProblemError extends Error {
   }
 }
 
-export function assertApiV1Path(path) {
+export function assertApiV1Path(path: string): string {
   if (typeof path !== 'string' || !path.startsWith('/api/v1/')) {
     throw new Error(`api path must start with /api/v1/, got: ${String(path)}`);
   }
   return path;
 }
 
-export function isDidClaw(value) {
+export function isDidClaw(value: unknown): value is string {
   return typeof value === 'string' && DID_CLAW_PATTERN.test(value.trim());
 }
 
-export function toCiphertextHex(text) {
+export function toCiphertextHex(text: string): string {
   const raw = typeof text === 'string' ? text : '';
   const bytes = new TextEncoder().encode(raw);
   if (bytes.length === 0) {
@@ -33,19 +55,19 @@ export function toCiphertextHex(text) {
   return `0x${Array.from(bytes, (entry) => entry.toString(16).padStart(2, '0')).join('')}`;
 }
 
-export function createEnvelopeId(nowMs = Date.now()) {
+export function createEnvelopeId(nowMs = Date.now()): string {
   const random = Math.random().toString(16).slice(2, 10);
   return `env-${nowMs}-${random}`;
 }
 
-function normalizeBaseUrl(baseUrl) {
+function normalizeBaseUrl(baseUrl: string): string {
   if (typeof baseUrl !== 'string' || !baseUrl.trim()) {
     throw new Error('baseUrl is required');
   }
   return baseUrl.trim().replace(/\/$/, '');
 }
 
-function safeJsonParse(text) {
+function safeJsonParse(text: string): unknown {
   if (!text) {
     return null;
   }
@@ -56,15 +78,18 @@ function safeJsonParse(text) {
   }
 }
 
-function extractEnvelopeData(payload) {
+function extractEnvelopeData(payload: unknown): unknown {
   if (payload && typeof payload === 'object' && Object.hasOwn(payload, 'data')) {
-    return payload.data;
+    return (payload as { data: unknown }).data;
   }
   return payload;
 }
 
 export class TelagentApiClient {
-  constructor({ baseUrl, fetchImpl } = {}) {
+  private fetchImpl: typeof fetch;
+  private baseUrl: string;
+
+  constructor({ baseUrl, fetchImpl }: { baseUrl?: string; fetchImpl?: typeof fetch } = {}) {
     this.fetchImpl = fetchImpl ?? globalThis.fetch;
     if (typeof this.fetchImpl !== 'function') {
       throw new Error('fetch implementation is required');
@@ -72,17 +97,16 @@ export class TelagentApiClient {
     this.baseUrl = normalizeBaseUrl(baseUrl ?? 'http://127.0.0.1:9528');
   }
 
-  setBaseUrl(baseUrl) {
+  setBaseUrl(baseUrl: string): void {
     this.baseUrl = normalizeBaseUrl(baseUrl);
   }
 
-  async request(method, path, options = {}) {
+  async request(method: 'GET' | 'POST', path: string, options: { body?: unknown; signal?: AbortSignal } = {}): Promise<ApiResponse> {
     const safePath = assertApiV1Path(path);
     const response = await this.fetchImpl(`${this.baseUrl}${safePath}`, {
       method,
       headers: {
         'Content-Type': 'application/json',
-        ...(options.headers ?? {}),
       },
       body: options.body ? JSON.stringify(options.body) : undefined,
       signal: options.signal,
@@ -94,9 +118,8 @@ export class TelagentApiClient {
 
     if (!response.ok) {
       if (contentType.includes('application/problem+json') && payload && typeof payload === 'object') {
-        throw new ApiProblemError(payload);
+        throw new ApiProblemError(payload as ProblemDetail);
       }
-
       throw new Error(`HTTP ${response.status}: ${text || response.statusText}`);
     }
 
@@ -108,40 +131,44 @@ export class TelagentApiClient {
     };
   }
 
-  async get(path, options = {}) {
+  async get(path: string, options: { signal?: AbortSignal } = {}): Promise<ApiResponse> {
     return this.request('GET', path, options);
   }
 
-  async post(path, body, options = {}) {
+  async post(path: string, body: unknown, options: { signal?: AbortSignal } = {}): Promise<ApiResponse> {
     return this.request('POST', path, { ...options, body });
   }
 
-  async getData(path, options = {}) {
+  async getData<T = unknown>(path: string, options: { signal?: AbortSignal } = {}): Promise<T> {
     const result = await this.get(path, options);
-    return extractEnvelopeData(result.payload);
+    return extractEnvelopeData(result.payload) as T;
   }
 
-  async postData(path, body, options = {}) {
+  async postData<T = unknown>(path: string, body: unknown, options: { signal?: AbortSignal } = {}): Promise<T> {
     const result = await this.post(path, body, options);
-    return extractEnvelopeData(result.payload);
+    return extractEnvelopeData(result.payload) as T;
   }
 
-  async getSelfIdentity() {
-    return this.getData('/api/v1/identities/self');
+  async getSelfIdentity<T = unknown>(): Promise<T> {
+    return this.getData<T>('/api/v1/identities/self');
   }
 
-  async resolveIdentity(did) {
+  async resolveIdentity<T = unknown>(did: string): Promise<T> {
     if (!isDidClaw(did)) {
       throw new Error('did must use did:claw:* format');
     }
-    return this.getData(`/api/v1/identities/${encodeURIComponent(did.trim())}`);
+    return this.getData<T>(`/api/v1/identities/${encodeURIComponent(did.trim())}`);
   }
 
-  async getNodeInfo() {
-    return this.getData('/api/v1/node');
+  async getNodeInfo<T = unknown>(): Promise<T> {
+    return this.getData<T>('/api/v1/node');
   }
 
-  async pullMessages({ conversationId, limit = 30, cursor } = {}) {
+  async pullMessages<T = unknown>({
+    conversationId,
+    limit = 30,
+    cursor,
+  }: { conversationId?: string; limit?: number; cursor?: string } = {}): Promise<T> {
     const params = new URLSearchParams();
     if (typeof conversationId === 'string' && conversationId.trim()) {
       params.set('conversation_id', conversationId.trim());
@@ -150,30 +177,30 @@ export class TelagentApiClient {
     if (typeof cursor === 'string' && cursor.trim()) {
       params.set('cursor', cursor.trim());
     }
-    return this.getData(`/api/v1/messages/pull?${params.toString()}`);
+    return this.getData<T>(`/api/v1/messages/pull?${params.toString()}`);
   }
 
-  async sendMessage(payload) {
+  async sendMessage<T = unknown>(payload: Record<string, unknown>): Promise<T> {
     if (!payload || typeof payload !== 'object') {
       throw new Error('send payload must be an object');
     }
     if (!isDidClaw(payload.senderDid)) {
       throw new Error('senderDid must use did:claw:* format');
     }
-    return this.postData('/api/v1/messages', payload);
+    return this.postData<T>('/api/v1/messages', payload);
   }
 
-  async createGroup(payload) {
+  async createGroup<T = unknown>(payload: Record<string, unknown>): Promise<T> {
     if (!payload || typeof payload !== 'object') {
       throw new Error('create group payload must be an object');
     }
     if (!isDidClaw(payload.creatorDid)) {
       throw new Error('creatorDid must use did:claw:* format');
     }
-    return this.postData('/api/v1/groups', payload);
+    return this.postData<T>('/api/v1/groups', payload);
   }
 
-  async inviteMember(groupId, payload) {
+  async inviteMember<T = unknown>(groupId: string, payload: Record<string, unknown>): Promise<T> {
     if (!groupId || typeof groupId !== 'string') {
       throw new Error('groupId is required');
     }
@@ -183,10 +210,10 @@ export class TelagentApiClient {
     if (!isDidClaw(payload.inviterDid) || !isDidClaw(payload.inviteeDid)) {
       throw new Error('inviterDid/inviteeDid must use did:claw:* format');
     }
-    return this.postData(`/api/v1/groups/${encodeURIComponent(groupId.trim())}/invites`, payload);
+    return this.postData<T>(`/api/v1/groups/${encodeURIComponent(groupId.trim())}/invites`, payload);
   }
 
-  async acceptInvite(groupId, inviteId, payload) {
+  async acceptInvite<T = unknown>(groupId: string, inviteId: string, payload: Record<string, unknown>): Promise<T> {
     if (!groupId || !inviteId) {
       throw new Error('groupId and inviteId are required');
     }
@@ -196,42 +223,50 @@ export class TelagentApiClient {
     if (!isDidClaw(payload.inviteeDid)) {
       throw new Error('inviteeDid must use did:claw:* format');
     }
-    return this.postData(
+    return this.postData<T>(
       `/api/v1/groups/${encodeURIComponent(groupId.trim())}/invites/${encodeURIComponent(inviteId.trim())}/accept`,
       payload,
     );
   }
 
-  async listGroupMembers(groupId, view = 'all') {
-    const payload = await this.listGroupMembersEnvelope(groupId, {
-      view,
-      page: 1,
-      perPage: 200,
-    });
-    if (payload && typeof payload === 'object' && Array.isArray(payload.data)) {
-      return payload.data;
-    }
-    return [];
-  }
-
-  async listGroupMembersEnvelope(groupId, options = {}) {
+  async listGroupMembersEnvelope(groupId: string, options: { view?: string; page?: number; perPage?: number } = {}): Promise<{
+    data: unknown[];
+    meta: { pagination: { page: number; perPage: number; total: number; totalPages: number } };
+    links: Record<string, string | null>;
+  }> {
     if (!groupId || typeof groupId !== 'string') {
       throw new Error('groupId is required');
     }
-    const view = typeof options.view === 'string' && options.view.trim()
-      ? options.view.trim()
-      : 'all';
-    const page = Number.isInteger(options.page) ? Math.max(1, options.page) : 1;
-    const perPage = Number.isInteger(options.perPage) ? Math.max(1, Math.min(200, options.perPage)) : 200;
 
-    const result = await this.get(
-      `/api/v1/groups/${encodeURIComponent(groupId.trim())}/members`
-      + `?view=${encodeURIComponent(view)}&page=${page}&per_page=${perPage}`,
-    );
+    const view = typeof options.view === 'string' && options.view.trim() ? options.view.trim() : 'all';
+    const pageInput = typeof options.page === 'number' ? options.page : 1;
+    const perPageInput = typeof options.perPage === 'number' ? options.perPage : 200;
+    const page = Number.isInteger(pageInput) ? Math.max(1, pageInput) : 1;
+    const perPage = Number.isInteger(perPageInput) ? Math.max(1, Math.min(200, perPageInput)) : 200;
 
-    if (result.payload && typeof result.payload === 'object') {
-      return result.payload;
+    const response = await this.get(`/api/v1/groups/${encodeURIComponent(groupId.trim())}/members?view=${encodeURIComponent(view)}&page=${page}&per_page=${perPage}`);
+    const payload = response.payload;
+
+    if (payload && typeof payload === 'object' && Object.hasOwn(payload, 'data')) {
+      const entity = payload as {
+        data?: unknown[];
+        meta?: { pagination?: { page?: number; perPage?: number; total?: number; totalPages?: number } };
+        links?: Record<string, string | null>;
+      };
+      return {
+        data: Array.isArray(entity.data) ? entity.data : [],
+        meta: {
+          pagination: {
+            page: entity.meta?.pagination?.page ?? page,
+            perPage: entity.meta?.pagination?.perPage ?? perPage,
+            total: entity.meta?.pagination?.total ?? 0,
+            totalPages: entity.meta?.pagination?.totalPages ?? 1,
+          },
+        },
+        links: entity.links ?? {},
+      };
     }
+
     return {
       data: [],
       meta: {
@@ -242,20 +277,19 @@ export class TelagentApiClient {
           totalPages: 1,
         },
       },
-      links: {
-        self: null,
-        next: null,
-        prev: null,
-        first: null,
-        last: null,
-      },
+      links: {},
     };
   }
 
-  async getGroupChainState(groupId) {
+  async listGroupMembers<T = unknown[]>(groupId: string, view = 'all'): Promise<T> {
+    const payload = await this.listGroupMembersEnvelope(groupId, { view, page: 1, perPage: 200 });
+    return payload.data as T;
+  }
+
+  async getGroupChainState<T = unknown>(groupId: string): Promise<T> {
     if (!groupId || typeof groupId !== 'string') {
       throw new Error('groupId is required');
     }
-    return this.getData(`/api/v1/groups/${encodeURIComponent(groupId.trim())}/chain-state`);
+    return this.getData<T>(`/api/v1/groups/${encodeURIComponent(groupId.trim())}/chain-state`);
   }
 }

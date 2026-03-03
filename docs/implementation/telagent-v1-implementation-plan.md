@@ -281,17 +281,17 @@
 
 ### 关键工作
 
-1. 落地路由化 Web 壳层（会话/群组/身份/设置）与运行态面板（`TA-P16-001`）；
-2. 落地统一 API Client，强制 `/api/v1/*` 前缀并内建 RFC7807 解析；
-3. 在前端输入与 API 层统一 DID 约束（仅 `did:claw:*`）；
-4. 建立 Web 包可执行单测与专项检查脚本；
-5. 分批补齐会话、群组、身份、设置等功能域交互细节与质量门禁；
+1. 完成技术栈纠偏：由 JS 原型切换到 `TypeScript + React + Vite`（`TA-P16-004`）；
+2. 落地路由化 Web 壳层（会话/群组/身份/设置）与运行态面板；
+3. 落地统一 API Client，强制 `/api/v1/*` 前缀并内建 RFC7807 解析；
+4. 在前端输入与 API 层统一 DID 约束（仅 `did:claw:*`）；
+5. 在 TS 基线上分批补齐身份、节点诊断、契约回归与质量门禁；
 6. 完成 Phase 16 Gate 收口（`TA-P16-007`）。
 
 ### 交付物
 
 - Phase 16 任务与证据文档（`docs/implementation/phase-16/`）；
-- Web 端代码基线（`packages/web/src/*` + `packages/web/test/*`）；
+- Web 端 TS 代码基线（`packages/web/src/*` + `packages/web/test/*`）；
 - Web 构建/测试日志与专项检查 manifest；
 - Phase 16 WBS 与迭代看板同步条目。
 

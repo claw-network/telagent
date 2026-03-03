@@ -234,10 +234,11 @@
 - 已完成：`TA-P15-005`（WebApp 离线同步与冲突策略冻结）
 - 已完成：`TA-P15-006`（WebApp 客户端质量体系与发布门禁冻结）
 - 已完成：`TA-P15-007`（Phase 15 Gate 收口，阶段关闭）
-- 已完成：`TA-P16-001`（Web App 路由化壳层 + 统一 API Client + RFC7807 + Web 单测基线）
-- 已完成：`TA-P16-002`（会话域增强：游标可视化、刷新重置、失败重试与状态提示）
-- 已完成：`TA-P16-003`（群组域增强：建群/邀请/接受链路校验与链状态联动视图）
-- 下一批 Ready：`TA-P16-004`（身份与节点诊断页增强：DID 解析、节点健康与版本信息可观测）。
+- 已完成：`TA-P16-001`（Web JS 原型壳层，后续由 TA-P16-004 替代）
+- 已完成：`TA-P16-002`（Web JS 原型会话增强，后续由 TA-P16-004 替代）
+- 已完成：`TA-P16-003`（Web JS 原型群组增强，后续由 TA-P16-004 替代）
+- 已完成：`TA-P16-004`（Web App 技术栈重规划：TypeScript + React + Vite）
+- 下一批 Ready：`TA-P16-005`（TS 基线下身份与节点诊断页增强）。
 
 ## 4.2 Blockers（2026-03-03 更新）
 
@@ -444,25 +445,17 @@
 
 ## 4.21 Phase 16 Web App 实装冲刺快照（2026-03-03）
 
-- `TA-P16-001`：DONE（Web App 路由化壳层、统一 API 客户端、RFC7807 错误链路与 Web 单测基线已落地，见 `docs/implementation/phase-16/ta-p16-001-web-app-runtime-shell-and-api-client-2026-03-03.md`）。
-- `TA-P16-001` 机读清单：`docs/implementation/phase-16/manifests/2026-03-03-p16-web-runtime-shell-check.json`。
-- `TA-P16-001` 验证日志：
-  - `docs/implementation/phase-16/logs/2026-03-03-p16-web-build.txt`
-  - `docs/implementation/phase-16/logs/2026-03-03-p16-web-test.txt`
-  - `docs/implementation/phase-16/logs/2026-03-03-p16-web-runtime-shell-check-run.txt`
-- `TA-P16-002`：DONE（会话域增强已完成，见 `docs/implementation/phase-16/ta-p16-002-sessions-domain-stability-retry-2026-03-03.md`）。
-- `TA-P16-002` 机读清单：`docs/implementation/phase-16/manifests/2026-03-03-p16-sessions-domain-check.json`。
-- `TA-P16-002` 验证日志：
-  - `docs/implementation/phase-16/logs/2026-03-03-p16-web-build-ta-p16-002.txt`
-  - `docs/implementation/phase-16/logs/2026-03-03-p16-web-test-ta-p16-002.txt`
-  - `docs/implementation/phase-16/logs/2026-03-03-p16-sessions-domain-check-run.txt`
-- `TA-P16-003`：DONE（群组域链路校验与链状态联动视图已完成，见 `docs/implementation/phase-16/ta-p16-003-groups-domain-validation-chain-state-linkage-2026-03-03.md`）。
-- `TA-P16-003` 机读清单：`docs/implementation/phase-16/manifests/2026-03-03-p16-groups-domain-check.json`。
-- `TA-P16-003` 验证日志：
-  - `docs/implementation/phase-16/logs/2026-03-03-p16-web-build-ta-p16-003.txt`
-  - `docs/implementation/phase-16/logs/2026-03-03-p16-web-test-ta-p16-003.txt`
-  - `docs/implementation/phase-16/logs/2026-03-03-p16-groups-domain-check-run.txt`
-- 阶段状态：Phase 16 执行中，下一步进入 `TA-P16-004`。
+- `TA-P16-001`：DONE（历史 JS 原型，已 superseded）。
+- `TA-P16-002`：DONE（历史 JS 原型增强，已 superseded）。
+- `TA-P16-003`：DONE（历史 JS 原型增强，已 superseded）。
+- `TA-P16-004`：DONE（技术栈重规划完成，见 `docs/implementation/phase-16/ta-p16-004-webapp-ts-react-vite-rebaseline-2026-03-03.md`）。
+- `TA-P16-004` 机读清单：`docs/implementation/phase-16/manifests/2026-03-03-p16-ts-framework-check.json`。
+- `TA-P16-004` 验证日志：
+  - `docs/implementation/phase-16/logs/2026-03-03-p16-web-typecheck-ta-p16-004.txt`
+  - `docs/implementation/phase-16/logs/2026-03-03-p16-web-build-ta-p16-004.txt`
+  - `docs/implementation/phase-16/logs/2026-03-03-p16-web-test-ta-p16-004.txt`
+  - `docs/implementation/phase-16/logs/2026-03-03-p16-ts-framework-check-run.txt`
+- 阶段状态：Phase 16 执行中，下一步进入 `TA-P16-005`。
 
 ## 5. 周会与 Gate 节奏建议
 
