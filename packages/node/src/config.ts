@@ -21,11 +21,25 @@ export interface MonitoringConfig {
   maintenanceStaleCriticalSec: number;
 }
 
+export type MailboxStoreBackend = 'sqlite' | 'postgres';
+
+export interface MailboxStoreConfig {
+  backend: MailboxStoreBackend;
+  sqlitePath: string;
+  postgres?: {
+    connectionString: string;
+    schema: string;
+    ssl: boolean;
+    maxConnections: number;
+  };
+}
+
 export interface AppConfig {
   host: string;
   port: number;
   dataDir: string;
   mailboxCleanupIntervalSec: number;
+  mailboxStore: MailboxStoreConfig;
   chain: ChainConfig;
   federation: FederationConfig;
   monitoring: MonitoringConfig;
@@ -61,11 +75,38 @@ export function loadConfigFromEnv(): AppConfig {
     .map((item) => item.trim())
     .filter(Boolean);
 
+  const mailboxStoreBackend = (
+    process.env.TELAGENT_MAILBOX_STORE_BACKEND?.trim().toLowerCase() || 'sqlite'
+  ) as MailboxStoreBackend;
+  if (mailboxStoreBackend !== 'sqlite' && mailboxStoreBackend !== 'postgres') {
+    throw new Error('TELAGENT_MAILBOX_STORE_BACKEND must be sqlite or postgres');
+  }
+
+  const mailboxStore: MailboxStoreConfig = {
+    backend: mailboxStoreBackend,
+    sqlitePath: process.env.TELAGENT_MAILBOX_SQLITE_PATH || resolveDataPath(dataDir, 'mailbox.sqlite'),
+  };
+
+  if (mailboxStoreBackend === 'postgres') {
+    const connectionString = process.env.TELAGENT_MAILBOX_PG_URL;
+    if (!connectionString || !connectionString.trim()) {
+      throw new Error('TELAGENT_MAILBOX_PG_URL is required when TELAGENT_MAILBOX_STORE_BACKEND=postgres');
+    }
+
+    mailboxStore.postgres = {
+      connectionString: connectionString.trim(),
+      schema: process.env.TELAGENT_MAILBOX_PG_SCHEMA || 'public',
+      ssl: parseBoolean(process.env.TELAGENT_MAILBOX_PG_SSL, false),
+      maxConnections: Number(process.env.TELAGENT_MAILBOX_PG_MAX_CONN || 10),
+    };
+  }
+
   return {
     host,
     port,
     dataDir,
     mailboxCleanupIntervalSec: Number(process.env.TELAGENT_MAILBOX_CLEANUP_INTERVAL_SEC || 60),
+    mailboxStore,
     chain,
     federation: {
       selfDomain: process.env.TELAGENT_FEDERATION_SELF_DOMAIN || host,
@@ -88,4 +129,18 @@ export function loadConfigFromEnv(): AppConfig {
 
 export function resolveDataPath(dataDir: string, filename: string): string {
   return join(dataDir, filename);
+}
+
+function parseBoolean(raw: string | undefined, fallback: boolean): boolean {
+  if (!raw) {
+    return fallback;
+  }
+  const normalized = raw.trim().toLowerCase();
+  if (normalized === '1' || normalized === 'true' || normalized === 'yes' || normalized === 'on') {
+    return true;
+  }
+  if (normalized === '0' || normalized === 'false' || normalized === 'no' || normalized === 'off') {
+    return false;
+  }
+  throw new Error(`invalid boolean value: ${raw}`);
 }

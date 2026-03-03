@@ -17,7 +17,7 @@ export function messageRoutes(ctx: RuntimeContext): Router {
     }
 
     try {
-      const envelope = ctx.messageService.send(parsed.data);
+      const envelope = await ctx.messageService.send(parsed.data);
       created(
         res,
         {
@@ -30,9 +30,9 @@ export function messageRoutes(ctx: RuntimeContext): Router {
     }
   });
 
-  router.get('/pull', ({ res, query, url }) => {
+  router.get('/pull', async ({ res, query, url }) => {
     try {
-      const result = ctx.messageService.pull({
+      const result = await ctx.messageService.pull({
         cursor: query.get('cursor') ?? undefined,
         limit: query.get('limit') ? Number.parseInt(query.get('limit') ?? '', 10) : undefined,
         conversationId: query.get('conversation_id') ?? undefined,

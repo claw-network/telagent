@@ -10,7 +10,11 @@ import {
 
 import type { GroupService } from './group-service.js';
 import { SequenceAllocator } from './sequence-allocator.js';
-import type { MessageRepository, StoredEnvelopeRecord } from '../storage/message-repository.js';
+import type {
+  MailboxStore,
+  ProvisionalRetractionRecord,
+  StoredEnvelopeRecord,
+} from '../storage/mailbox-store.js';
 
 export interface SendMessageInput {
   envelopeId?: string;
@@ -41,13 +45,6 @@ export interface CleanupReport {
   sweptAtMs: number;
 }
 
-export interface ProvisionalRetractionRecord {
-  envelopeId: string;
-  conversationId: string;
-  reason: 'REORGED_BACK';
-  retractedAtMs: number;
-}
-
 export interface ProvisionalRetractionReport {
   retracted: number;
   checkedAtMs: number;
@@ -65,27 +62,27 @@ export class MessageService {
   private readonly retractedByEnvelopeId = new Map<string, ProvisionalRetractionRecord>();
   private readonly sequenceAllocator: SequenceAllocator;
   private readonly clock: MessageServiceClock;
-  private readonly repository?: MessageRepository;
+  private readonly repository?: MailboxStore;
 
   constructor(
     private readonly groups: GroupService,
-    options?: { sequenceAllocator?: SequenceAllocator; clock?: MessageServiceClock; repository?: MessageRepository },
+    options?: { sequenceAllocator?: SequenceAllocator; clock?: MessageServiceClock; repository?: MailboxStore },
   ) {
     this.sequenceAllocator = options?.sequenceAllocator ?? new SequenceAllocator();
     this.clock = options?.clock ?? SystemClock;
     this.repository = options?.repository;
   }
 
-  send(input: SendMessageInput): Envelope {
+  async send(input: SendMessageInput): Promise<Envelope> {
     const nowMs = this.clock.now();
-    this.runMaintenance(nowMs);
+    await this.runMaintenance(nowMs);
 
     const envelopeId = input.envelopeId ?? randomUUID();
     const signature = this.buildIdempotencySignature(input);
 
-    const existing = this.getEnvelopeById(envelopeId);
+    const existing = await this.getEnvelopeById(envelopeId);
     if (existing) {
-      const existingSignature = this.getIdempotencySignature(envelopeId);
+      const existingSignature = await this.getIdempotencySignature(envelopeId);
       if (existingSignature !== signature) {
         throw new TelagentError(
           ErrorCodes.CONFLICT,
@@ -94,7 +91,7 @@ export class MessageService {
       }
       return existing;
     }
-    const existingSignature = this.getIdempotencySignature(envelopeId);
+    const existingSignature = await this.getIdempotencySignature(envelopeId);
     if (existingSignature) {
       if (existingSignature !== signature) {
         throw new TelagentError(
@@ -102,7 +99,7 @@ export class MessageService {
           `envelopeId(${envelopeId}) already exists with a different payload`,
         );
       }
-      const retracted = this.getRetraction(envelopeId);
+      const retracted = await this.getRetraction(envelopeId);
       if (retracted) {
         throw new TelagentError(
           ErrorCodes.CONFLICT,
@@ -141,7 +138,7 @@ export class MessageService {
       }
     }
 
-    const seq = this.nextSequence(input.conversationId);
+    const seq = await this.nextSequence(input.conversationId);
 
     const envelope: Envelope = {
       envelopeId,
@@ -157,12 +154,12 @@ export class MessageService {
       ciphertext: input.ciphertext,
       contentType: input.contentType,
       attachmentManifestHash: input.attachmentManifestHash,
-      sentAtMs: this.clock.now(),
+      sentAtMs: nowMs,
       ttlSec: input.ttlSec,
       provisional,
     };
 
-    this.persistEnvelope({
+    await this.persistEnvelope({
       envelope,
       idempotencySignature: signature,
     });
@@ -170,18 +167,18 @@ export class MessageService {
     return envelope;
   }
 
-  pull(params: { cursor?: string; limit?: number; conversationId?: string }): {
+  async pull(params: { cursor?: string; limit?: number; conversationId?: string }): Promise<{
     items: Envelope[];
     nextCursor: string | null;
-  } {
-    this.runMaintenance();
+  }> {
+    await this.runMaintenance();
 
     const limit = Math.min(100, Math.max(1, params.limit ?? 20));
     const offset = params.cursor ? Number.parseInt(params.cursor, 10) : 0;
     const safeOffset = Number.isFinite(offset) && offset >= 0 ? offset : 0;
 
-    const total = this.countEnvelopes(params.conversationId);
-    const items = this.listEnvelopes({
+    const total = await this.countEnvelopes(params.conversationId);
+    const items = await this.listEnvelopes({
       conversationId: params.conversationId,
       offset: safeOffset,
       limit,
@@ -194,14 +191,14 @@ export class MessageService {
     };
   }
 
-  runMaintenance(nowMs = this.clock.now()): MessageMaintenanceReport {
+  async runMaintenance(nowMs = this.clock.now()): Promise<MessageMaintenanceReport> {
     return {
-      cleanup: this.cleanupExpired(nowMs),
-      retraction: this.retractProvisionalOnReorg(nowMs),
+      cleanup: await this.cleanupExpired(nowMs),
+      retraction: await this.retractProvisionalOnReorg(nowMs),
     };
   }
 
-  listRetracted(limit = 50): ProvisionalRetractionRecord[] {
+  async listRetracted(limit = 50): Promise<ProvisionalRetractionRecord[]> {
     if (this.repository) {
       return this.repository.listRetractions(limit);
     }
@@ -211,9 +208,9 @@ export class MessageService {
       .slice(0, Math.max(1, limit));
   }
 
-  cleanupExpired(nowMs = this.clock.now()): CleanupReport {
+  async cleanupExpired(nowMs = this.clock.now()): Promise<CleanupReport> {
     if (this.repository) {
-      const result = this.repository.deleteExpired(nowMs);
+      const result = await this.repository.deleteExpired(nowMs);
       return {
         removed: result.removed,
         remaining: result.remaining,
@@ -242,10 +239,10 @@ export class MessageService {
     };
   }
 
-  retractProvisionalOnReorg(nowMs = this.clock.now()): ProvisionalRetractionReport {
+  async retractProvisionalOnReorg(nowMs = this.clock.now()): Promise<ProvisionalRetractionReport> {
     if (this.repository) {
       let retracted = 0;
-      const provisionalRecords = this.repository.listProvisionalGroupRecords();
+      const provisionalRecords = await this.repository.listProvisionalGroupRecords();
 
       for (const record of provisionalRecords) {
         const groupId = this.resolveGroupId(record.envelope.conversationId);
@@ -255,7 +252,7 @@ export class MessageService {
         }
 
         retracted++;
-        this.repository.retractEnvelope({
+        await this.repository.retractEnvelope({
           envelope: record.envelope,
           idempotencySignature: record.idempotencySignature,
           retractedAtMs: nowMs,
@@ -330,9 +327,9 @@ export class MessageService {
     return conversationId;
   }
 
-  private persistEnvelope(record: StoredEnvelopeRecord): void {
+  private async persistEnvelope(record: StoredEnvelopeRecord): Promise<void> {
     if (this.repository) {
-      this.repository.saveEnvelope(record);
+      await this.repository.saveEnvelope(record);
       return;
     }
 
@@ -341,28 +338,28 @@ export class MessageService {
     this.envelopes.push(record.envelope);
   }
 
-  private getEnvelopeById(envelopeId: string): Envelope | null {
+  private async getEnvelopeById(envelopeId: string): Promise<Envelope | null> {
     if (this.repository) {
-      return this.repository.getEnvelopeRecord(envelopeId)?.envelope ?? null;
+      return (await this.repository.getEnvelopeRecord(envelopeId))?.envelope ?? null;
     }
     return this.envelopeById.get(envelopeId) ?? null;
   }
 
-  private getIdempotencySignature(envelopeId: string): string | null {
+  private async getIdempotencySignature(envelopeId: string): Promise<string | null> {
     if (this.repository) {
       return this.repository.getIdempotencySignature(envelopeId);
     }
     return this.idempotencySignatureByEnvelopeId.get(envelopeId) ?? null;
   }
 
-  private getRetraction(envelopeId: string): ProvisionalRetractionRecord | null {
+  private async getRetraction(envelopeId: string): Promise<ProvisionalRetractionRecord | null> {
     if (this.repository) {
       return this.repository.getRetraction(envelopeId);
     }
     return this.retractedByEnvelopeId.get(envelopeId) ?? null;
   }
 
-  private countEnvelopes(conversationId?: string): number {
+  private async countEnvelopes(conversationId?: string): Promise<number> {
     if (this.repository) {
       return this.repository.countEnvelopes(conversationId);
     }
@@ -373,7 +370,7 @@ export class MessageService {
     return this.envelopes.filter((item) => item.conversationId === conversationId).length;
   }
 
-  private listEnvelopes(params: { conversationId?: string; offset: number; limit: number }): Envelope[] {
+  private async listEnvelopes(params: { conversationId?: string; offset: number; limit: number }): Promise<Envelope[]> {
     if (this.repository) {
       return this.repository.listEnvelopes(params);
     }
@@ -395,7 +392,7 @@ export class MessageService {
     return sorted.slice(params.offset, params.offset + params.limit);
   }
 
-  private nextSequence(conversationId: string): bigint {
+  private async nextSequence(conversationId: string): Promise<bigint> {
     if (this.repository) {
       return this.repository.nextSequence(conversationId);
     }

@@ -240,7 +240,7 @@ async function main() {
 
     const t0 = performance.now();
     try {
-      const envelope = service.send(payload);
+      const envelope = await service.send(payload);
       payloadByEnvelopeId.set(envelope.envelopeId, payload);
       seqByEnvelopeId.set(envelope.envelopeId, envelope.seq);
     } catch {
@@ -261,7 +261,7 @@ async function main() {
     const expectedSeq = seqByEnvelopeId.get(envelopeId);
     const t0 = performance.now();
     try {
-      const replayed = service.send(payload);
+      const replayed = await service.send(payload);
       if (expectedSeq != null && replayed.seq === expectedSeq) {
         dedupeHits++;
       }
@@ -275,7 +275,7 @@ async function main() {
   const pullStart = performance.now();
   do {
     const t0 = performance.now();
-    const result = service.pull({
+    const result = await service.pull({
       conversationId,
       limit: config.pullPageSize,
       cursor,

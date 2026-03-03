@@ -12,12 +12,14 @@ import { MessageService } from './services/message-service.js';
 import { NodeMonitoringService } from './services/node-monitoring-service.js';
 import { GroupRepository } from './storage/group-repository.js';
 import { MessageRepository } from './storage/message-repository.js';
+import type { MailboxStore } from './storage/mailbox-store.js';
+import { PostgresMessageRepository } from './storage/postgres-message-repository.js';
 
 export class TelagentNode {
   private mailboxCleanupTimer: NodeJS.Timeout | null = null;
   private readonly contracts: ContractProvider;
   private readonly repo: GroupRepository;
-  private readonly messageRepo: MessageRepository;
+  private readonly mailboxStore: MailboxStore;
   private readonly identityService: IdentityAdapterService;
   private readonly gasService: GasService;
   private readonly groupService: GroupService;
@@ -31,13 +33,13 @@ export class TelagentNode {
   constructor(private readonly config: AppConfig) {
     this.contracts = new ContractProvider(config.chain);
     this.repo = new GroupRepository(resolveDataPath(config.dataDir, 'group-indexer.sqlite'));
-    this.messageRepo = new MessageRepository(resolveDataPath(config.dataDir, 'mailbox.sqlite'));
+    this.mailboxStore = this.createMailboxStore(config);
 
     this.identityService = new IdentityAdapterService(this.contracts);
     this.gasService = new GasService(this.contracts);
     this.groupService = new GroupService(this.contracts, this.identityService, this.gasService, this.repo);
     this.messageService = new MessageService(this.groupService, {
-      repository: this.messageRepo,
+      repository: this.mailboxStore,
     });
     this.attachmentService = new AttachmentService();
     this.federationService = new FederationService(config.federation);
@@ -74,9 +76,12 @@ export class TelagentNode {
   }
 
   async start(): Promise<void> {
+    if (this.mailboxStore.init) {
+      await this.mailboxStore.init();
+    }
     await this.indexer.start();
     await this.apiServer.start();
-    this.monitoringService.recordMailboxMaintenance(this.messageService.runMaintenance());
+    this.monitoringService.recordMailboxMaintenance(await this.messageService.runMaintenance());
     this.startMailboxCleaner();
   }
 
@@ -84,6 +89,9 @@ export class TelagentNode {
     this.stopMailboxCleaner();
     await this.apiServer.stop();
     await this.indexer.stop();
+    if (this.mailboxStore.close) {
+      await this.mailboxStore.close();
+    }
     await this.contracts.destroy();
   }
 
@@ -96,8 +104,14 @@ export class TelagentNode {
       ? Math.max(5, Math.floor(this.config.mailboxCleanupIntervalSec))
       : 60;
     this.mailboxCleanupTimer = setInterval(() => {
-      const report = this.messageService.runMaintenance();
-      this.monitoringService.recordMailboxMaintenance(report);
+      void this.messageService
+        .runMaintenance()
+        .then((report) => {
+          this.monitoringService.recordMailboxMaintenance(report);
+        })
+        .catch(() => {
+          // keep cleaner loop alive even when one maintenance tick fails
+        });
     }, intervalSec * 1000);
     this.mailboxCleanupTimer.unref();
   }
@@ -108,5 +122,21 @@ export class TelagentNode {
     }
     clearInterval(this.mailboxCleanupTimer);
     this.mailboxCleanupTimer = null;
+  }
+
+  private createMailboxStore(config: AppConfig): MailboxStore {
+    if (config.mailboxStore.backend === 'postgres') {
+      if (!config.mailboxStore.postgres) {
+        throw new Error('mailbox postgres config is required when backend=postgres');
+      }
+      return new PostgresMessageRepository({
+        connectionString: config.mailboxStore.postgres.connectionString,
+        schema: config.mailboxStore.postgres.schema,
+        ssl: config.mailboxStore.postgres.ssl,
+        maxConnections: config.mailboxStore.postgres.maxConnections,
+      });
+    }
+
+    return new MessageRepository(config.mailboxStore.sqlitePath);
   }
 }

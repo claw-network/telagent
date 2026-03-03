@@ -2,7 +2,11 @@ import Database from 'better-sqlite3';
 
 import type { Envelope } from '@telagent/protocol';
 
-import type { ProvisionalRetractionRecord } from '../services/message-service.js';
+import type {
+  MailboxStore,
+  ProvisionalRetractionRecord,
+  StoredEnvelopeRecord,
+} from './mailbox-store.js';
 
 const SCHEMA = `
 CREATE TABLE IF NOT EXISTS mailbox_envelopes (
@@ -69,12 +73,7 @@ interface RetractionRow {
   retractedAtMs: number;
 }
 
-export interface StoredEnvelopeRecord {
-  envelope: Envelope;
-  idempotencySignature: string;
-}
-
-export class MessageRepository {
+export class MessageRepository implements MailboxStore {
   private readonly db: Database.Database;
   private readonly nextSequenceTransaction: (conversationId: string) => string;
 
@@ -102,11 +101,11 @@ export class MessageRepository {
     });
   }
 
-  nextSequence(conversationId: string): bigint {
+  async nextSequence(conversationId: string): Promise<bigint> {
     return BigInt(this.nextSequenceTransaction(conversationId));
   }
 
-  saveEnvelope(record: StoredEnvelopeRecord): void {
+  async saveEnvelope(record: StoredEnvelopeRecord): Promise<void> {
     const envelope = record.envelope;
     const expiresAtMs = envelope.sentAtMs + envelope.ttlSec * 1000;
 
@@ -138,7 +137,7 @@ export class MessageRepository {
       );
   }
 
-  getEnvelopeRecord(envelopeId: string): StoredEnvelopeRecord | null {
+  async getEnvelopeRecord(envelopeId: string): Promise<StoredEnvelopeRecord | null> {
     const row = this.db
       .prepare(
         `SELECT
@@ -172,7 +171,7 @@ export class MessageRepository {
     };
   }
 
-  getIdempotencySignature(envelopeId: string): string | null {
+  async getIdempotencySignature(envelopeId: string): Promise<string | null> {
     const active = this.db
       .prepare(
         `SELECT idempotency_signature AS idempotencySignature
@@ -195,7 +194,7 @@ export class MessageRepository {
     return retracted?.idempotencySignature ?? null;
   }
 
-  getRetraction(envelopeId: string): ProvisionalRetractionRecord | null {
+  async getRetraction(envelopeId: string): Promise<ProvisionalRetractionRecord | null> {
     const row = this.db
       .prepare(
         `SELECT
@@ -220,7 +219,7 @@ export class MessageRepository {
     };
   }
 
-  countEnvelopes(conversationId?: string): number {
+  async countEnvelopes(conversationId?: string): Promise<number> {
     const row = conversationId
       ? (this.db
         .prepare(
@@ -239,7 +238,7 @@ export class MessageRepository {
     return row.count;
   }
 
-  listEnvelopes(params: { conversationId?: string; offset: number; limit: number }): Envelope[] {
+  async listEnvelopes(params: { conversationId?: string; offset: number; limit: number }): Promise<Envelope[]> {
     const rows = params.conversationId
       ? (this.db
         .prepare(
@@ -292,7 +291,7 @@ export class MessageRepository {
     return rows.map((row) => this.toEnvelope(row));
   }
 
-  listProvisionalGroupRecords(): StoredEnvelopeRecord[] {
+  async listProvisionalGroupRecords(): Promise<StoredEnvelopeRecord[]> {
     const rows = this.db
       .prepare(
         `SELECT
@@ -323,12 +322,12 @@ export class MessageRepository {
     }));
   }
 
-  retractEnvelope(params: {
+  async retractEnvelope(params: {
     envelope: Envelope;
     idempotencySignature: string;
     retractedAtMs: number;
     reason: 'REORGED_BACK';
-  }): void {
+  }): Promise<void> {
     this.db.transaction(() => {
       this.db
         .prepare('DELETE FROM mailbox_envelopes WHERE envelope_id = ?')
@@ -355,7 +354,7 @@ export class MessageRepository {
     })();
   }
 
-  listRetractions(limit: number): ProvisionalRetractionRecord[] {
+  async listRetractions(limit: number): Promise<ProvisionalRetractionRecord[]> {
     const rows = this.db
       .prepare(
         `SELECT
@@ -377,7 +376,7 @@ export class MessageRepository {
     }));
   }
 
-  deleteExpired(nowMs: number): { removed: number; remaining: number } {
+  async deleteExpired(nowMs: number): Promise<{ removed: number; remaining: number }> {
     const removed = this.db
       .prepare('DELETE FROM mailbox_envelopes WHERE expires_at_ms <= ?')
       .run(nowMs).changes;
@@ -389,6 +388,10 @@ export class MessageRepository {
       removed,
       remaining,
     };
+  }
+
+  async close(): Promise<void> {
+    this.db.close();
   }
 
   private toEnvelope(row: MailboxEnvelopeRow): Envelope {

@@ -107,40 +107,40 @@ function createDirectInput(overrides: Partial<Parameters<MessageService['send']>
   };
 }
 
-test('TA-P4-002 sequence allocator keeps per-conversation monotonic order', () => {
+test('TA-P4-002 sequence allocator keeps per-conversation monotonic order', async () => {
   const { service } = createMessageService();
 
-  const first = service.send(createDirectInput({ envelopeId: 'env-a1', conversationId: 'direct:a' }));
-  const second = service.send(createDirectInput({ envelopeId: 'env-a2', conversationId: 'direct:a' }));
-  const third = service.send(createDirectInput({ envelopeId: 'env-b1', conversationId: 'direct:b' }));
+  const first = await service.send(createDirectInput({ envelopeId: 'env-a1', conversationId: 'direct:a' }));
+  const second = await service.send(createDirectInput({ envelopeId: 'env-a2', conversationId: 'direct:a' }));
+  const third = await service.send(createDirectInput({ envelopeId: 'env-b1', conversationId: 'direct:b' }));
 
   assert.equal(first.seq, 1n);
   assert.equal(second.seq, 2n);
   assert.equal(third.seq, 1n);
 });
 
-test('TA-P4-003 dedupe keeps idempotent writes for same envelopeId', () => {
+test('TA-P4-003 dedupe keeps idempotent writes for same envelopeId', async () => {
   const { service } = createMessageService();
   const input = createDirectInput({ envelopeId: 'env-dedupe-1', conversationId: 'direct:a' });
 
-  const first = service.send(input);
-  const second = service.send({ ...input });
+  const first = await service.send(input);
+  const second = await service.send({ ...input });
 
   assert.equal(first.envelopeId, 'env-dedupe-1');
   assert.equal(second.envelopeId, first.envelopeId);
   assert.equal(second.seq, first.seq);
 
-  const pulled = service.pull({ conversationId: 'direct:a', limit: 20 });
+  const pulled = await service.pull({ conversationId: 'direct:a', limit: 20 });
   assert.equal(pulled.items.length, 1);
 });
 
-test('TA-P4-003 duplicate envelopeId with different payload is rejected', () => {
+test('TA-P4-003 duplicate envelopeId with different payload is rejected', async () => {
   const { service } = createMessageService();
   const input = createDirectInput({ envelopeId: 'env-dedupe-2', conversationId: 'direct:a' });
-  service.send(input);
+  await service.send(input);
 
-  assert.throws(
-    () =>
+  await assert.rejects(
+    async () =>
       service.send({
         ...input,
         ciphertext: '0x33',
@@ -153,7 +153,7 @@ test('TA-P4-003 duplicate envelopeId with different payload is rejected', () => 
   );
 });
 
-test('TA-P4-004 cleanupExpired removes expired envelopes and releases dedupe key', () => {
+test('TA-P4-004 cleanupExpired removes expired envelopes and releases dedupe key', async () => {
   const { service, clock } = createMessageService(1_000);
 
   const expiredInput = createDirectInput({
@@ -167,21 +167,21 @@ test('TA-P4-004 cleanupExpired removes expired envelopes and releases dedupe key
     ttlSec: 100,
   });
 
-  const first = service.send(expiredInput);
+  const first = await service.send(expiredInput);
   assert.equal(first.seq, 1n);
   clock.tick(400);
-  service.send(longLivedInput);
+  await service.send(longLivedInput);
 
   clock.tick(1_100);
-  const report = service.cleanupExpired();
+  const report = await service.cleanupExpired();
   assert.equal(report.removed, 1);
   assert.equal(report.remaining, 1);
 
-  const pulled = service.pull({ conversationId: 'direct:ttl', limit: 20 });
+  const pulled = await service.pull({ conversationId: 'direct:ttl', limit: 20 });
   assert.equal(pulled.items.length, 1);
   assert.equal(pulled.items[0].envelopeId, 'env-active');
 
-  const resent = service.send({
+  const resent = await service.send({
     ...expiredInput,
     ttlSec: 20,
     ciphertext: '0x44',
@@ -190,11 +190,11 @@ test('TA-P4-004 cleanupExpired removes expired envelopes and releases dedupe key
   assert.equal(resent.seq, 3n);
 });
 
-test('TA-P4-005 provisional envelopes are retracted when group is reorged back', () => {
+test('TA-P4-005 provisional envelopes are retracted when group is reorged back', async () => {
   const groupId = `0x${'a'.repeat(64)}`;
   const { service, setGroupState } = createGroupMessageService(groupId, 'PENDING_ONCHAIN', 5_000);
 
-  const envelope = service.send({
+  const envelope = await service.send({
     envelopeId: 'env-provisional-1',
     senderDid: 'did:claw:zAlice',
     conversationId: `group:${groupId}`,
@@ -208,24 +208,24 @@ test('TA-P4-005 provisional envelopes are retracted when group is reorged back',
   });
 
   assert.equal(envelope.provisional, true);
-  assert.equal(service.pull({ conversationId: `group:${groupId}` }).items.length, 1);
+  assert.equal((await service.pull({ conversationId: `group:${groupId}` })).items.length, 1);
 
   setGroupState('REORGED_BACK');
-  const afterReorg = service.pull({ conversationId: `group:${groupId}` });
+  const afterReorg = await service.pull({ conversationId: `group:${groupId}` });
   assert.equal(afterReorg.items.length, 0);
 
-  const retracted = service.listRetracted();
+  const retracted = await service.listRetracted();
   assert.equal(retracted.length, 1);
   assert.equal(retracted[0].envelopeId, 'env-provisional-1');
   assert.equal(retracted[0].reason, 'REORGED_BACK');
 });
 
-test('TA-P4-005 send is rejected when group chain state is REORGED_BACK', () => {
+test('TA-P4-005 send is rejected when group chain state is REORGED_BACK', async () => {
   const groupId = `0x${'b'.repeat(64)}`;
   const { service } = createGroupMessageService(groupId, 'REORGED_BACK', 9_000);
 
-  assert.throws(
-    () =>
+  await assert.rejects(
+    async () =>
       service.send({
         envelopeId: 'env-provisional-2',
         senderDid: 'did:claw:zAlice',
@@ -259,7 +259,7 @@ test('TA-P6-001 mailbox persists messages and seq after service restart', async 
 
   const repoA = new MessageRepository(dbPath);
   const firstService = new MessageService(groups, { clock, repository: repoA });
-  const first = firstService.send(createDirectInput({
+  const first = await firstService.send(createDirectInput({
     envelopeId: 'env-persist-1',
     conversationId: 'direct:persist',
   }));
@@ -267,7 +267,7 @@ test('TA-P6-001 mailbox persists messages and seq after service restart', async 
 
   const repoB = new MessageRepository(dbPath);
   const secondService = new MessageService(groups, { clock, repository: repoB });
-  const pulled = secondService.pull({
+  const pulled = await secondService.pull({
     conversationId: 'direct:persist',
     limit: 10,
   });
@@ -276,7 +276,7 @@ test('TA-P6-001 mailbox persists messages and seq after service restart', async 
   assert.equal(pulled.items[0].envelopeId, 'env-persist-1');
   assert.equal(pulled.items[0].seq, 1n);
 
-  const second = secondService.send(createDirectInput({
+  const second = await secondService.send(createDirectInput({
     envelopeId: 'env-persist-2',
     conversationId: 'direct:persist',
   }));

@@ -105,7 +105,7 @@ async function main() {
     repository: firstRepo,
   });
 
-  const firstDirect = firstService.send({
+  const firstDirect = await firstService.send({
     envelopeId: 'env-p6-direct-1',
     senderDid: 'did:claw:zAlice',
     conversationId: 'direct:alice-bob',
@@ -118,7 +118,7 @@ async function main() {
     ttlSec: 5,
   });
 
-  const firstGroup = firstService.send({
+  const firstGroup = await firstService.send({
     envelopeId: 'env-p6-group-1',
     senderDid: 'did:claw:zAlice',
     conversationId: `group:${groupId}`,
@@ -137,16 +137,16 @@ async function main() {
     repository: secondRepo,
   });
 
-  const directAfterRestart = secondService.pull({
+  const directAfterRestart = await secondService.pull({
     conversationId: 'direct:alice-bob',
     limit: 10,
   });
-  const groupAfterRestart = secondService.pull({
+  const groupAfterRestart = await secondService.pull({
     conversationId: `group:${groupId}`,
     limit: 10,
   });
 
-  const secondDirect = secondService.send({
+  const secondDirect = await secondService.send({
     envelopeId: 'env-p6-direct-2',
     senderDid: 'did:claw:zAlice',
     conversationId: 'direct:alice-bob',
@@ -160,16 +160,16 @@ async function main() {
   });
 
   harness.setGroupState(groupId, 'REORGED_BACK');
-  const maintenance = secondService.runMaintenance(clock.now());
-  const retractions = secondService.listRetracted(10);
-  const groupAfterReorg = secondService.pull({
+  const maintenance = await secondService.runMaintenance(clock.now());
+  const retractions = await secondService.listRetracted(10);
+  const groupAfterReorg = await secondService.pull({
     conversationId: `group:${groupId}`,
     limit: 10,
   });
 
   clock.tick(6_000);
-  const cleanup = secondService.cleanupExpired(clock.now());
-  const directAfterCleanup = secondService.pull({
+  const cleanup = await secondService.cleanupExpired(clock.now());
+  const directAfterCleanup = await secondService.pull({
     conversationId: 'direct:alice-bob',
     limit: 10,
   });
