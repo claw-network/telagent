@@ -1,0 +1,6 @@
+[TA-P12-007] stagedRolloutPass=true
+[TA-P12-007] failureRollbackPass=true
+[TA-P12-007] oldKeysRetiredPass=true
+[TA-P12-007] fleetHealthyPass=true
+[TA-P12-007] decision=PASS
+[TA-P12-007] output=/Users/xiasenhai/Workspace/OpenClaw/telagent/docs/implementation/phase-12/manifests/2026-03-03-p12-key-rotation-orchestrator-check.json

@@ -1,0 +1,581 @@
+{
+  "phase": "Phase 12",
+  "taskId": "TA-P12-007",
+  "generatedAt": "2026-03-03T12:08:03.838Z",
+  "summary": {
+    "stagedRolloutPass": true,
+    "failureRollbackPass": true,
+    "oldKeysRetiredPass": true,
+    "fleetHealthyPass": true,
+    "batchesExecuted": 3
+  },
+  "decision": "PASS",
+  "details": {
+    "batches": [
+      {
+        "batchId": "canary",
+        "nodeIds": [
+          "node-a"
+        ]
+      },
+      {
+        "batchId": "wave-1",
+        "nodeIds": [
+          "node-b",
+          "node-c"
+        ]
+      },
+      {
+        "batchId": "wave-2",
+        "nodeIds": [
+          "node-d",
+          "node-e",
+          "node-f"
+        ]
+      }
+    ],
+    "executedBatches": [
+      "canary",
+      "wave-1",
+      "wave-2"
+    ],
+    "finalFleetStatus": [
+      {
+        "nodeId": "node-a",
+        "did": "did:claw:zNODEA",
+        "currentKeys": {
+          "signal": "signal-node-a-v2",
+          "mls": "mls-node-a-v2"
+        },
+        "signalActive": true,
+        "mlsActive": true,
+        "lifecycle": {
+          "signal": [
+            {
+              "did": "did:claw:zNODEA",
+              "suite": "signal",
+              "keyId": "signal-node-a-v1",
+              "publicKey": "0x9dc4933440de2539f9df72eded5e22b75164ff480583618850a05509b8f7a9c4",
+              "state": "ROTATING",
+              "createdAtMs": 1772582700000,
+              "activatedAtMs": 1772582700000,
+              "rotationGraceUntilMs": 1772582790000,
+              "rotatedToKeyId": "signal-node-a-v2"
+            },
+            {
+              "did": "did:claw:zNODEA",
+              "suite": "signal",
+              "keyId": "signal-node-a-v2",
+              "publicKey": "0x7b081b51ae32286801960a0e7751cf5a9f2d8d81771cd415b5fe8809fbf46b61",
+              "state": "ACTIVE",
+              "createdAtMs": 1772582700000,
+              "activatedAtMs": 1772582700000,
+              "rotatedFromKeyId": "signal-node-a-v1"
+            }
+          ],
+          "mls": [
+            {
+              "did": "did:claw:zNODEA",
+              "suite": "mls",
+              "keyId": "mls-node-a-v1",
+              "publicKey": "0xc0dcbf341248f2cc9c76f93e6d9b84827616179340e57fb36b2e12c2d0e6b518",
+              "state": "ROTATING",
+              "createdAtMs": 1772582700000,
+              "activatedAtMs": 1772582700000,
+              "rotationGraceUntilMs": 1772582790000,
+              "rotatedToKeyId": "mls-node-a-v2"
+            },
+            {
+              "did": "did:claw:zNODEA",
+              "suite": "mls",
+              "keyId": "mls-node-a-v2",
+              "publicKey": "0x2e4663b0a17caf62405f930adf168b13c5409180269c4b13f4e762e1d5b01f1d",
+              "state": "ACTIVE",
+              "createdAtMs": 1772582700000,
+              "activatedAtMs": 1772582700000,
+              "rotatedFromKeyId": "mls-node-a-v1"
+            }
+          ]
+        }
+      },
+      {
+        "nodeId": "node-b",
+        "did": "did:claw:zNODEB",
+        "currentKeys": {
+          "signal": "signal-node-b-v2",
+          "mls": "mls-node-b-v2"
+        },
+        "signalActive": true,
+        "mlsActive": true,
+        "lifecycle": {
+          "signal": [
+            {
+              "did": "did:claw:zNODEB",
+              "suite": "signal",
+              "keyId": "signal-node-b-v1",
+              "publicKey": "0x9df9eab8940d8e9145e33c662ad75dd65aa3e36b49a244ee5df45a294cc1e48f",
+              "state": "ROTATING",
+              "createdAtMs": 1772582700000,
+              "activatedAtMs": 1772582700000,
+              "rotationGraceUntilMs": 1772582795000,
+              "rotatedToKeyId": "signal-node-b-v2"
+            },
+            {
+              "did": "did:claw:zNODEB",
+              "suite": "signal",
+              "keyId": "signal-node-b-v2",
+              "publicKey": "0xc928364886e37df1d2e1ade870cbc0048be11a616e9653394350eea954e5451c",
+              "state": "ACTIVE",
+              "createdAtMs": 1772582705000,
+              "activatedAtMs": 1772582705000,
+              "rotatedFromKeyId": "signal-node-b-v1"
+            }
+          ],
+          "mls": [
+            {
+              "did": "did:claw:zNODEB",
+              "suite": "mls",
+              "keyId": "mls-node-b-v1",
+              "publicKey": "0xbffc7f6cd26c7ff29662978243d06568878b7730c5039986a66f9295c2ebc4b0",
+              "state": "ROTATING",
+              "createdAtMs": 1772582700000,
+              "activatedAtMs": 1772582700000,
+              "rotationGraceUntilMs": 1772582795000,
+              "rotatedToKeyId": "mls-node-b-v2"
+            },
+            {
+              "did": "did:claw:zNODEB",
+              "suite": "mls",
+              "keyId": "mls-node-b-v2",
+              "publicKey": "0x771a82abb9c742f5c1c46ddb1815e1c01512f280fd2a30b23a9d022203fcfdef",
+              "state": "ACTIVE",
+              "createdAtMs": 1772582705000,
+              "activatedAtMs": 1772582705000,
+              "rotatedFromKeyId": "mls-node-b-v1"
+            }
+          ]
+        }
+      },
+      {
+        "nodeId": "node-c",
+        "did": "did:claw:zNODEC",
+        "currentKeys": {
+          "signal": "signal-node-c-v2",
+          "mls": "mls-node-c-v2"
+        },
+        "signalActive": true,
+        "mlsActive": true,
+        "lifecycle": {
+          "signal": [
+            {
+              "did": "did:claw:zNODEC",
+              "suite": "signal",
+              "keyId": "signal-node-c-v1",
+              "publicKey": "0xbaa3b6c9f6ea9aa1e34247569871e14fc831b459a9f30bb46c098e49b4b063f3",
+              "state": "ROTATING",
+              "createdAtMs": 1772582700000,
+              "activatedAtMs": 1772582700000,
+              "rotationGraceUntilMs": 1772582795000,
+              "rotatedToKeyId": "signal-node-c-v2"
+            },
+            {
+              "did": "did:claw:zNODEC",
+              "suite": "signal",
+              "keyId": "signal-node-c-v2",
+              "publicKey": "0xa7145fe65ba844ec0ec094c17d56912aee654ea6be7a344b14b54f6c8dce6929",
+              "state": "ACTIVE",
+              "createdAtMs": 1772582705000,
+              "activatedAtMs": 1772582705000,
+              "rotatedFromKeyId": "signal-node-c-v1"
+            }
+          ],
+          "mls": [
+            {
+              "did": "did:claw:zNODEC",
+              "suite": "mls",
+              "keyId": "mls-node-c-v1",
+              "publicKey": "0x57d72c492f47fdfb093a6e1f31a729cd44eb5c1359bce79729653d8881066e38",
+              "state": "ROTATING",
+              "createdAtMs": 1772582700000,
+              "activatedAtMs": 1772582700000,
+              "rotationGraceUntilMs": 1772582795000,
+              "rotatedToKeyId": "mls-node-c-v2"
+            },
+            {
+              "did": "did:claw:zNODEC",
+              "suite": "mls",
+              "keyId": "mls-node-c-v2",
+              "publicKey": "0x0b4271925de3c4cac0f8d9c64b17a92deb99f7537f1807a59089edc843bb3db0",
+              "state": "ACTIVE",
+              "createdAtMs": 1772582705000,
+              "activatedAtMs": 1772582705000,
+              "rotatedFromKeyId": "mls-node-c-v1"
+            }
+          ]
+        }
+      },
+      {
+        "nodeId": "node-d",
+        "did": "did:claw:zNODED",
+        "currentKeys": {
+          "signal": "signal-node-d-v2",
+          "mls": "mls-node-d-v2"
+        },
+        "signalActive": true,
+        "mlsActive": true,
+        "lifecycle": {
+          "signal": [
+            {
+              "did": "did:claw:zNODED",
+              "suite": "signal",
+              "keyId": "signal-node-d-v1",
+              "publicKey": "0xc4edd0b4e1983968f5cfdc17255a3b85fb8db43574b558f89888ba8146ce3628",
+              "state": "ROTATING",
+              "createdAtMs": 1772582700000,
+              "activatedAtMs": 1772582700000,
+              "rotationGraceUntilMs": 1772582800000,
+              "rotatedToKeyId": "signal-node-d-v2"
+            },
+            {
+              "did": "did:claw:zNODED",
+              "suite": "signal",
+              "keyId": "signal-node-d-v2",
+              "publicKey": "0x71684a19894f32a528b71fec012b395c8da91891de82ef1764e7cca825d7402f",
+              "state": "ACTIVE",
+              "createdAtMs": 1772582710000,
+              "activatedAtMs": 1772582710000,
+              "rotatedFromKeyId": "signal-node-d-v1"
+            }
+          ],
+          "mls": [
+            {
+              "did": "did:claw:zNODED",
+              "suite": "mls",
+              "keyId": "mls-node-d-v1",
+              "publicKey": "0x8753055c36ca3fab08e4b9f3ebf80d546e561def81d1b9657e55e7ebce0a51f7",
+              "state": "ROTATING",
+              "createdAtMs": 1772582700000,
+              "activatedAtMs": 1772582700000,
+              "rotationGraceUntilMs": 1772582800000,
+              "rotatedToKeyId": "mls-node-d-v2"
+            },
+            {
+              "did": "did:claw:zNODED",
+              "suite": "mls",
+              "keyId": "mls-node-d-v2",
+              "publicKey": "0x193408b5d483e9d5dffc6d54f68f4ad3be1b822b72d94bbc8842508fd0ee3022",
+              "state": "ACTIVE",
+              "createdAtMs": 1772582710000,
+              "activatedAtMs": 1772582710000,
+              "rotatedFromKeyId": "mls-node-d-v1"
+            }
+          ]
+        }
+      },
+      {
+        "nodeId": "node-e",
+        "did": "did:claw:zNODEE",
+        "currentKeys": {
+          "signal": "signal-node-e-v2-rollback",
+          "mls": "mls-node-e-v2-rollback"
+        },
+        "signalActive": true,
+        "mlsActive": true,
+        "lifecycle": {
+          "signal": [
+            {
+              "did": "did:claw:zNODEE",
+              "suite": "signal",
+              "keyId": "signal-node-e-v1",
+              "publicKey": "0x79d1de3bd029fff52d948cd0e44ab73b7032ef89143d9fc2d6e5443bc565d9ca",
+              "state": "ROTATING",
+              "createdAtMs": 1772582700000,
+              "activatedAtMs": 1772582700000,
+              "rotationGraceUntilMs": 1772582800000,
+              "rotatedToKeyId": "signal-node-e-v2"
+            },
+            {
+              "did": "did:claw:zNODEE",
+              "suite": "signal",
+              "keyId": "signal-node-e-v2",
+              "publicKey": "0x4e6ddff9509931b46df61a134d0966177a5f9a74532f70bea7ffa7c2e36dc847",
+              "state": "RECOVERED",
+              "createdAtMs": 1772582710000,
+              "activatedAtMs": 1772582710000,
+              "rotatedFromKeyId": "signal-node-e-v1",
+              "revokedAtMs": 1772582715000,
+              "revokeReason": "post-rotation-smoke-check-failed",
+              "recoveredAtMs": 1772582715000,
+              "recoveredToKeyId": "signal-node-e-v2-rollback"
+            },
+            {
+              "did": "did:claw:zNODEE",
+              "suite": "signal",
+              "keyId": "signal-node-e-v2-rollback",
+              "publicKey": "0x04aa235de3b9a5e129611d18a2d07af83ab6df1757b74029249e4d38079dff5d",
+              "state": "ACTIVE",
+              "createdAtMs": 1772582715000,
+              "activatedAtMs": 1772582715000,
+              "recoveredFromKeyId": "signal-node-e-v2"
+            }
+          ],
+          "mls": [
+            {
+              "did": "did:claw:zNODEE",
+              "suite": "mls",
+              "keyId": "mls-node-e-v1",
+              "publicKey": "0xd228dd2973ba043aad8261e93123b9cf1a58c12177e6d5988f6630a9eb734a50",
+              "state": "ROTATING",
+              "createdAtMs": 1772582700000,
+              "activatedAtMs": 1772582700000,
+              "rotationGraceUntilMs": 1772582800000,
+              "rotatedToKeyId": "mls-node-e-v2"
+            },
+            {
+              "did": "did:claw:zNODEE",
+              "suite": "mls",
+              "keyId": "mls-node-e-v2",
+              "publicKey": "0x19a02f489009b387158986dcb6d46dd9468ba9cf058905a209d54a130078b8e0",
+              "state": "RECOVERED",
+              "createdAtMs": 1772582710000,
+              "activatedAtMs": 1772582710000,
+              "rotatedFromKeyId": "mls-node-e-v1",
+              "revokedAtMs": 1772582715000,
+              "revokeReason": "post-rotation-smoke-check-failed",
+              "recoveredAtMs": 1772582715000,
+              "recoveredToKeyId": "mls-node-e-v2-rollback"
+            },
+            {
+              "did": "did:claw:zNODEE",
+              "suite": "mls",
+              "keyId": "mls-node-e-v2-rollback",
+              "publicKey": "0x57b28f807db47f78e777cedac4b48923fb37f5b39258c44bbea72de0da6a5f93",
+              "state": "ACTIVE",
+              "createdAtMs": 1772582715000,
+              "activatedAtMs": 1772582715000,
+              "recoveredFromKeyId": "mls-node-e-v2"
+            }
+          ]
+        }
+      },
+      {
+        "nodeId": "node-f",
+        "did": "did:claw:zNODEF",
+        "currentKeys": {
+          "signal": "signal-node-f-v2",
+          "mls": "mls-node-f-v2"
+        },
+        "signalActive": true,
+        "mlsActive": true,
+        "lifecycle": {
+          "signal": [
+            {
+              "did": "did:claw:zNODEF",
+              "suite": "signal",
+              "keyId": "signal-node-f-v1",
+              "publicKey": "0xf03c2dcf9888a4110260b0d61d7bef1f60b49ce7f532c7282637742f02cf725a",
+              "state": "ROTATING",
+              "createdAtMs": 1772582700000,
+              "activatedAtMs": 1772582700000,
+              "rotationGraceUntilMs": 1772582800000,
+              "rotatedToKeyId": "signal-node-f-v2"
+            },
+            {
+              "did": "did:claw:zNODEF",
+              "suite": "signal",
+              "keyId": "signal-node-f-v2",
+              "publicKey": "0xb8bbc744e75967a7ef1cbe096ecb6facdd42816df114b7f58a0606977d6f7d3b",
+              "state": "ACTIVE",
+              "createdAtMs": 1772582710000,
+              "activatedAtMs": 1772582710000,
+              "rotatedFromKeyId": "signal-node-f-v1"
+            }
+          ],
+          "mls": [
+            {
+              "did": "did:claw:zNODEF",
+              "suite": "mls",
+              "keyId": "mls-node-f-v1",
+              "publicKey": "0x6cc4f38bd0e3f7150ee796d8e85be18288d4a8fc5ae45e1c469bfb3a9f5d85ab",
+              "state": "ROTATING",
+              "createdAtMs": 1772582700000,
+              "activatedAtMs": 1772582700000,
+              "rotationGraceUntilMs": 1772582800000,
+              "rotatedToKeyId": "mls-node-f-v2"
+            },
+            {
+              "did": "did:claw:zNODEF",
+              "suite": "mls",
+              "keyId": "mls-node-f-v2",
+              "publicKey": "0x0e7803828d00f70197e6c7184f34cd09f4682b99471cb7d785be6307ff60a79a",
+              "state": "ACTIVE",
+              "createdAtMs": 1772582710000,
+              "activatedAtMs": 1772582710000,
+              "rotatedFromKeyId": "mls-node-f-v1"
+            }
+          ]
+        }
+      }
+    ],
+    "events": [
+      {
+        "atMs": 1772582700000,
+        "action": "register-initial",
+        "nodeId": "node-a",
+        "note": "signal=signal-node-a-v1 mls=mls-node-a-v1"
+      },
+      {
+        "atMs": 1772582700000,
+        "action": "register-initial",
+        "nodeId": "node-b",
+        "note": "signal=signal-node-b-v1 mls=mls-node-b-v1"
+      },
+      {
+        "atMs": 1772582700000,
+        "action": "register-initial",
+        "nodeId": "node-c",
+        "note": "signal=signal-node-c-v1 mls=mls-node-c-v1"
+      },
+      {
+        "atMs": 1772582700000,
+        "action": "register-initial",
+        "nodeId": "node-d",
+        "note": "signal=signal-node-d-v1 mls=mls-node-d-v1"
+      },
+      {
+        "atMs": 1772582700000,
+        "action": "register-initial",
+        "nodeId": "node-e",
+        "note": "signal=signal-node-e-v1 mls=mls-node-e-v1"
+      },
+      {
+        "atMs": 1772582700000,
+        "action": "register-initial",
+        "nodeId": "node-f",
+        "note": "signal=signal-node-f-v1 mls=mls-node-f-v1"
+      },
+      {
+        "atMs": 1772582700000,
+        "action": "rotate",
+        "batchId": "canary",
+        "nodeId": "node-a",
+        "suite": "signal",
+        "fromKeyId": "signal-node-a-v1",
+        "toKeyId": "signal-node-a-v2"
+      },
+      {
+        "atMs": 1772582700000,
+        "action": "rotate",
+        "batchId": "canary",
+        "nodeId": "node-a",
+        "suite": "mls",
+        "fromKeyId": "mls-node-a-v1",
+        "toKeyId": "mls-node-a-v2"
+      },
+      {
+        "atMs": 1772582705000,
+        "action": "rotate",
+        "batchId": "wave-1",
+        "nodeId": "node-b",
+        "suite": "signal",
+        "fromKeyId": "signal-node-b-v1",
+        "toKeyId": "signal-node-b-v2"
+      },
+      {
+        "atMs": 1772582705000,
+        "action": "rotate",
+        "batchId": "wave-1",
+        "nodeId": "node-b",
+        "suite": "mls",
+        "fromKeyId": "mls-node-b-v1",
+        "toKeyId": "mls-node-b-v2"
+      },
+      {
+        "atMs": 1772582705000,
+        "action": "rotate",
+        "batchId": "wave-1",
+        "nodeId": "node-c",
+        "suite": "signal",
+        "fromKeyId": "signal-node-c-v1",
+        "toKeyId": "signal-node-c-v2"
+      },
+      {
+        "atMs": 1772582705000,
+        "action": "rotate",
+        "batchId": "wave-1",
+        "nodeId": "node-c",
+        "suite": "mls",
+        "fromKeyId": "mls-node-c-v1",
+        "toKeyId": "mls-node-c-v2"
+      },
+      {
+        "atMs": 1772582710000,
+        "action": "rotate",
+        "batchId": "wave-2",
+        "nodeId": "node-d",
+        "suite": "signal",
+        "fromKeyId": "signal-node-d-v1",
+        "toKeyId": "signal-node-d-v2"
+      },
+      {
+        "atMs": 1772582710000,
+        "action": "rotate",
+        "batchId": "wave-2",
+        "nodeId": "node-d",
+        "suite": "mls",
+        "fromKeyId": "mls-node-d-v1",
+        "toKeyId": "mls-node-d-v2"
+      },
+      {
+        "atMs": 1772582710000,
+        "action": "rotate",
+        "batchId": "wave-2",
+        "nodeId": "node-e",
+        "suite": "signal",
+        "fromKeyId": "signal-node-e-v1",
+        "toKeyId": "signal-node-e-v2"
+      },
+      {
+        "atMs": 1772582710000,
+        "action": "rotate",
+        "batchId": "wave-2",
+        "nodeId": "node-e",
+        "suite": "mls",
+        "fromKeyId": "mls-node-e-v1",
+        "toKeyId": "mls-node-e-v2"
+      },
+      {
+        "atMs": 1772582710000,
+        "action": "rotate",
+        "batchId": "wave-2",
+        "nodeId": "node-f",
+        "suite": "signal",
+        "fromKeyId": "signal-node-f-v1",
+        "toKeyId": "signal-node-f-v2"
+      },
+      {
+        "atMs": 1772582710000,
+        "action": "rotate",
+        "batchId": "wave-2",
+        "nodeId": "node-f",
+        "suite": "mls",
+        "fromKeyId": "mls-node-f-v1",
+        "toKeyId": "mls-node-f-v2"
+      },
+      {
+        "atMs": 1772582715000,
+        "action": "revoke-failed-node",
+        "batchId": "wave-2",
+        "nodeId": "node-e",
+        "note": "signal=signal-node-e-v2 mls=mls-node-e-v2"
+      },
+      {
+        "atMs": 1772582715000,
+        "action": "rollback-recover",
+        "nodeId": "node-e",
+        "note": "signal=signal-node-e-v2-rollback mls=mls-node-e-v2-rollback"
+      }
+    ],
+    "clockNow": 1772582806000
+  }
+}

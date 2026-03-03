@@ -1,7 +1,7 @@
 # TelAgent v1 Phase 12 执行产出（v1.2 候选能力冻结）
 
 - 文档版本：v1.0
-- 状态：Phase 12 执行中（`TA-P12-001` ~ `TA-P12-006` 已完成，`TA-P12-007` ~ `TA-P12-008` 待执行）
+- 状态：Phase 12 执行中（`TA-P12-001` ~ `TA-P12-007` 已完成，`TA-P12-008` 待执行）
 - 最后更新：2026-03-03
 
 ## 1. 产出目录
@@ -14,6 +14,7 @@
 | TA-P12-004 | `ta-p12-004-federation-slo-automation-2026-03-03.md` | 联邦 SLO 自动化（DLQ 自动重放 + burn-rate 告警） |
 | TA-P12-005 | `ta-p12-005-agent-sdk-python-beta-2026-03-03.md` | Agent SDK Python Beta |
 | TA-P12-006 | `ta-p12-006-web-console-v21-ops-emergency-panel-2026-03-03.md` | Web Console v2.1 运营与应急面板 |
+| TA-P12-007 | `ta-p12-007-multi-node-key-rotation-orchestrator-2026-03-03.md` | 多节点密钥轮换编排脚本 |
 
 ## 2. 当前证据目录
 
@@ -24,6 +25,7 @@
   - `ta-p12-004-federation-slo-automation-2026-03-03.md`
   - `ta-p12-005-agent-sdk-python-beta-2026-03-03.md`
   - `ta-p12-006-web-console-v21-ops-emergency-panel-2026-03-03.md`
+  - `ta-p12-007-multi-node-key-rotation-orchestrator-2026-03-03.md`
 - 机读清单：
   - `manifests/2026-03-03-p12-candidate-pool-freeze.json`
   - `manifests/2026-03-03-p12-audit-snapshot-check.json`
@@ -31,6 +33,7 @@
   - `manifests/2026-03-03-p12-federation-slo-automation-check.json`
   - `manifests/2026-03-03-p12-python-sdk-quickstart-check.json`
   - `manifests/2026-03-03-p12-web-console-v21-check.json`
+  - `manifests/2026-03-03-p12-key-rotation-orchestrator-check.json`
 - 日志：
   - `logs/2026-03-03-p12-node-build.txt`
   - `logs/2026-03-03-p12-node-test.txt`
@@ -43,6 +46,7 @@
   - `logs/2026-03-03-p12-web-build.txt`
   - `logs/2026-03-03-p12-web-test.txt`
   - `logs/2026-03-03-p12-web-console-v21-check-run.txt`
+  - `logs/2026-03-03-p12-key-rotation-orchestrator-check-run.txt`
 
 ## 3. 当前进展
 
@@ -52,6 +56,6 @@
 - `TA-P12-004`：DONE
 - `TA-P12-005`：DONE
 - `TA-P12-006`：DONE
-- `TA-P12-007`：TODO
+- `TA-P12-007`：DONE
 - `TA-P12-008`：TODO
-- 下一步：进入 `TA-P12-007`（多节点密钥轮换编排脚本）。
+- 下一步：进入 `TA-P12-008`（Phase 12 Gate 收口）。

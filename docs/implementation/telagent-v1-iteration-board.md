@@ -370,9 +370,10 @@
 - `TA-P12-005` 机读清单：`docs/implementation/phase-12/manifests/2026-03-03-p12-python-sdk-quickstart-check.json`。
 - `TA-P12-006`：DONE（Web Console v2.1 运营与应急面板，见 `docs/implementation/phase-12/ta-p12-006-web-console-v21-ops-emergency-panel-2026-03-03.md`）。
 - `TA-P12-006` 机读清单：`docs/implementation/phase-12/manifests/2026-03-03-p12-web-console-v21-check.json`。
-- `TA-P12-007`：TODO（多节点密钥轮换编排脚本）。
+- `TA-P12-007`：DONE（多节点密钥轮换编排脚本，见 `docs/implementation/phase-12/ta-p12-007-multi-node-key-rotation-orchestrator-2026-03-03.md`）。
+- `TA-P12-007` 机读清单：`docs/implementation/phase-12/manifests/2026-03-03-p12-key-rotation-orchestrator-check.json`。
 - `TA-P12-008`：TODO（Phase 12 Gate 收口）。
-- 阶段状态：Phase 12 执行中，进入 `TA-P12-007`。
+- 阶段状态：Phase 12 执行中，进入 `TA-P12-008`。
 
 ## 5. 周会与 Gate 节奏建议
 
