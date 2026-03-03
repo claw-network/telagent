@@ -1,0 +1,9 @@
+ WARN  Unsupported engine: wanted: {"node":">=22 <25"} (current: {"node":"v25.6.1","pnpm":"10.18.1"})
+
+> telagent@0.1.0 check:runtime /Users/xiasenhai/workspace/private-repo/Bots/telagent
+> node scripts/check-runtime.mjs
+
+[runtime] node=25.6.1 expected=>=22 <25 recommended=22.19.0
+[runtime] pnpm=10.18.1 expected=>=10.18.1 <11
+[runtime] node major 25 is outside validated baseline (22.x); continuing in non-strict mode
+[runtime] baseline check PASS

@@ -6,7 +6,7 @@
 
 ## 1. 使用说明
 
-- **执行顺序**：按 `Phase 0 -> Phase 10` 串行推进，禁止跨 Gate 跳阶段。
+- **执行顺序**：按 `Phase 0 -> Phase 11` 串行推进，禁止跨 Gate 跳阶段。
 - **状态字段**：`TODO | IN_PROGRESS | BLOCKED | DONE`。
 - **估算单位**：人日（PD）。
 - **依赖格式**：`-` 表示无依赖；多个依赖用逗号分隔任务 ID。
@@ -26,6 +26,7 @@ flowchart LR
   P7 --> P8["Phase 8\n联邦韧性与可观测增强"]
   P8 --> P9["Phase 9\n联邦灰度兼容矩阵"]
   P9 --> P10["Phase 10\n联邦灰度发布自动化与回滚编排"]
+  P10 --> P11["Phase 11\nv1.1 安全与运营能力增强"]
 ```
 
 ## 3. 分阶段任务清单
@@ -115,6 +116,16 @@ flowchart LR
 | TA-P10-002 | Phase 10 | 联邦灰度发布自动化编排脚本与机读清单 | Backend Engineer + SRE | 1 | TA-P10-001 | rollout automation script + manifest | 节点覆盖完整且 `decision=PASS` | DONE |
 | TA-P10-003 | Phase 10 | 联邦应急回滚演练脚本与机读清单 | Backend Engineer + QA | 1 | TA-P10-002 | rollback drill script + manifest | 演练结果 `decision=PASS` 且回滚步骤可复用 | DONE |
 | TA-P10-004 | Phase 10 | Phase 10 Gate 评审与收口 | TL + QA | 0.5 | TA-P10-003 | gate 结论文档 | Phase 10 正式关闭 | DONE |
+| TA-P11-001 | Phase 11 | 冻结 v1.1 安全与运营能力增强边界/验收标准 | TL + BE + SRE + QA + Security | 0.5 | TA-P10-004 | Phase 11 boundary doc | 范围、验收、证据模板冻结 | DONE |
+| TA-P11-002 | Phase 11 | Node Runtime/CI 基线固化 | TL + DevEx | 1 | TA-P11-001 | runtime baseline + CI workflow | 基线版本锁定且 CI 稳定通过 | DONE |
+| TA-P11-003 | Phase 11 | DomainProof 自动挑战与过期轮转 | Security + Backend | 2 | TA-P11-001 | domain challenge service + tests | 非法域名挑战失败，合法域名可续期 | TODO |
+| TA-P11-004 | Phase 11 | 联邦互信 pinning 与轮换策略 | Security + Backend | 1.5 | TA-P11-001 | pinning policy + rotation runbook | 非法证书请求被拒绝且有审计证据 | TODO |
+| TA-P11-005 | Phase 11 | 联邦 DLQ 与重放工具链 | Backend + SRE | 1.5 | TA-P11-001 | DLQ store + replay script | 失败消息可重放且顺序一致 | TODO |
+| TA-P11-006 | Phase 11 | Signal/MLS 密钥生命周期管理 | Protocol + Backend | 2 | TA-P11-001 | key lifecycle manager + tests | 轮换/撤销/恢复流程可验证 | TODO |
+| TA-P11-007 | Phase 11 | revoked DID 会话失效链路 | Security + Backend | 1.5 | TA-P11-001 | revocation invalidation flow | revoked DID 无法继续发送新消息 | TODO |
+| TA-P11-008 | Phase 11 | Agent SDK（TypeScript）v0 | Backend + DX | 2 | TA-P11-001 | SDK package + examples | 30 分钟内可完成建群与发消息集成 | TODO |
+| TA-P11-009 | Phase 11 | Web Console v2 运营能力增强 | Frontend + SRE | 2 | TA-P11-001 | web v2 console + e2e | 支持群状态/回滚入口/联邦视图 | TODO |
+| TA-P11-010 | Phase 11 | Phase 11 Gate 评审与收口 | TL + QA | 0.5 | TA-P11-002, TA-P11-003, TA-P11-004, TA-P11-005, TA-P11-006, TA-P11-007, TA-P11-008, TA-P11-009 | gate 结论文档 | Phase 11 正式关闭 | TODO |
 
 ## 4. 执行节奏建议（按部就班）
 
@@ -266,3 +277,18 @@ flowchart LR
 | TA-P10-002 | DONE | `docs/implementation/phase-10/ta-p10-002-federation-rollout-automation-2026-03-03.md`, `packages/node/scripts/run-phase10-federation-rollout-automation.ts`, `docs/implementation/phase-10/manifests/2026-03-03-p10-federation-rollout-automation.json`, `docs/implementation/phase-10/logs/2026-03-03-p10-federation-rollout-automation-run.txt` | 无 | 进入 `TA-P10-003` 应急回滚演练 |
 | TA-P10-003 | DONE | `docs/implementation/phase-10/ta-p10-003-federation-rollback-drill-2026-03-03.md`, `packages/node/scripts/run-phase10-federation-rollback-drill.ts`, `docs/implementation/phase-10/manifests/2026-03-03-p10-federation-rollback-drill.json`, `docs/implementation/phase-10/logs/2026-03-03-p10-federation-rollback-drill-run.txt` | 无 | 进入 `TA-P10-004` Gate 收口 |
 | TA-P10-004 | DONE | `docs/implementation/phase-10/ta-p10-004-phase10-gate-review-2026-03-03.md`, `docs/implementation/gates/phase-10-gate.md`, `docs/implementation/phase-10/logs/2026-03-03-p10-node-build.txt`, `docs/implementation/phase-10/logs/2026-03-03-p10-node-test.txt`, `docs/implementation/phase-10/logs/2026-03-03-p10-workspace-test.txt` | 无 | Phase 10 已关闭，进入联邦跨域常态运维 |
+
+## 17. Phase 11 v1.1 安全与运营能力增强（2026-03-03）
+
+| Task ID | 状态 | 证据链接 | 阻塞项 | 下一步动作 |
+| --- | --- | --- | --- | --- |
+| TA-P11-001 | DONE | `docs/implementation/phase-11/ta-p11-001-phase11-boundary-acceptance-2026-03-03.md`, `docs/implementation/phase-11/README.md` | 无 | 进入 `TA-P11-002` Node Runtime/CI 基线固化 |
+| TA-P11-002 | DONE | `docs/implementation/phase-11/ta-p11-002-runtime-ci-baseline-2026-03-03.md`, `.nvmrc`, `.node-version`, `scripts/check-runtime.mjs`, `.github/workflows/ci.yml`, `docs/implementation/phase-11/logs/2026-03-03-p11-runtime-check.txt`, `docs/implementation/phase-11/logs/2026-03-03-p11-workspace-build.txt`, `docs/implementation/phase-11/logs/2026-03-03-p11-workspace-test.txt` | 无 | 进入 `TA-P11-003` DomainProof 自动挑战设计与实现 |
+| TA-P11-003 | TODO | `docs/implementation/phase-11/README.md` | 无 | 设计并实现 DomainProof 自动挑战 |
+| TA-P11-004 | TODO | `docs/implementation/phase-11/README.md` | 无 | 落地联邦 pinning 与轮换策略 |
+| TA-P11-005 | TODO | `docs/implementation/phase-11/README.md` | 无 | 落地 DLQ 与重放工具链 |
+| TA-P11-006 | TODO | `docs/implementation/phase-11/README.md` | 无 | 落地 Signal/MLS 密钥生命周期 |
+| TA-P11-007 | TODO | `docs/implementation/phase-11/README.md` | 无 | 落地 revoked DID 会话失效 |
+| TA-P11-008 | TODO | `docs/implementation/phase-11/README.md` | 无 | 实现 Agent SDK v0 |
+| TA-P11-009 | TODO | `docs/implementation/phase-11/README.md` | 无 | 实现 Web Console v2 运营能力 |
+| TA-P11-010 | TODO | `docs/implementation/phase-11/README.md` | 无 | 汇总证据并执行 Phase 11 Gate |

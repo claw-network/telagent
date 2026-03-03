@@ -3,7 +3,7 @@
 - 文档版本：v1.0
 - 基线计划起始日：2026-03-02（周一）
 - 基线计划结束日：2026-05-17（周日）
-- 适用范围：Phase 0 -> Phase 10（发布后改进 + 联邦灰度兼容 + 自动化回滚）
+- 适用范围：Phase 0 -> Phase 11（发布后改进 + 联邦灰度兼容 + 自动化回滚 + v1.1 增强）
 
 ## 1. 看板目的
 
@@ -196,7 +196,9 @@
 - 已完成：`TA-P10-002`（联邦灰度发布自动化编排脚本与机读清单）
 - 已完成：`TA-P10-003`（联邦应急回滚演练脚本与机读清单）
 - 已完成：`TA-P10-004`（Phase 10 Gate 评审与阶段关闭）
-- 下一批 Ready：进入联邦跨域常态运维与下一阶段需求池评审
+- 已完成：`TA-P11-001`（Phase 11 边界与验收标准冻结）
+- 已完成：`TA-P11-002`（Node Runtime/CI 基线固化）
+- 下一批 Ready：继续 Phase 11 执行（优先 `TA-P11-003` ~ `TA-P11-005`）
 
 ## 4.2 Blockers（2026-03-03 更新）
 
@@ -291,7 +293,7 @@
 - `TA-P6-004`：DONE（发布后回归与 Gate 收口通过，见 `docs/implementation/phase-6/ta-p6-004-phase6-gate-review-2026-03-03.md`）。
 - 验证脚本：`packages/node/scripts/run-phase6-mailbox-persistence-check.ts`（清单：`docs/implementation/phase-6/manifests/2026-03-03-p6-mailbox-persistence-check.json`）。
 - 回归结果：`@telagent/node` `35/35` 通过（日志：`docs/implementation/phase-6/logs/2026-03-03-p6-node-test.txt`）。
-- 下一批任务：Phase 7 / Phase 8 / Phase 9 / Phase 10 已关闭（见 `docs/implementation/phase-7/README.md`、`docs/implementation/phase-8/README.md`、`docs/implementation/phase-9/README.md`、`docs/implementation/phase-10/README.md`），进入联邦跨域常态运维。
+- 下一批任务：Phase 7 / Phase 8 / Phase 9 / Phase 10 已关闭（见 `docs/implementation/phase-7/README.md`、`docs/implementation/phase-8/README.md`、`docs/implementation/phase-9/README.md`、`docs/implementation/phase-10/README.md`），进入 Phase 11 执行。
 
 ## 4.12 Phase 7 Postgres 集群压测与故障演练快照（2026-03-03）
 
@@ -328,6 +330,20 @@
 - `TA-P10-004`：DONE（Gate=PASS，见 `docs/implementation/phase-10/ta-p10-004-phase10-gate-review-2026-03-03.md`）。
 - 验证结果：灰度脚本 `stages=3, nodes=8/8, decision=PASS`；回滚演练 `decision=PASS`（见 `docs/implementation/phase-10/manifests/`）。
 - 阶段状态：Phase 10 已关闭（Gate=PASS），Phase 9 遗留风险已完成收口。
+
+## 4.16 Phase 11 v1.1 安全与运营能力增强启动快照（2026-03-03）
+
+- `TA-P11-001`：DONE（边界与验收冻结，见 `docs/implementation/phase-11/ta-p11-001-phase11-boundary-acceptance-2026-03-03.md`）。
+- `TA-P11-002`：DONE（Node Runtime/CI 基线固化，见 `docs/implementation/phase-11/ta-p11-002-runtime-ci-baseline-2026-03-03.md`）。
+- `TA-P11-003`：TODO（DomainProof 自动挑战与过期轮转）。
+- `TA-P11-004`：TODO（联邦互信 pinning 与轮换）。
+- `TA-P11-005`：TODO（联邦 DLQ 与重放工具链）。
+- `TA-P11-006`：TODO（Signal/MLS 密钥生命周期管理）。
+- `TA-P11-007`：TODO（revoked DID 会话失效链路）。
+- `TA-P11-008`：TODO（Agent SDK TypeScript v0）。
+- `TA-P11-009`：TODO（Web Console v2 运营能力增强）。
+- `TA-P11-010`：TODO（Phase 11 Gate 收口）。
+- 阶段状态：Phase 11 已启动，进入执行阶段。
 
 ## 5. 周会与 Gate 节奏建议
 

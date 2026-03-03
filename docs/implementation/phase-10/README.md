@@ -33,4 +33,4 @@
 - `TA-P10-002`：DONE
 - `TA-P10-003`：DONE
 - `TA-P10-004`：DONE（Phase 10 Gate=PASS）
-- 下一步：进入联邦跨域常态运维与下一阶段需求池评审。
+- 下一步：进入 Phase 11 执行（见 `docs/implementation/phase-11/README.md`）。

@@ -1,0 +1,14 @@
+.                                        |  WARN  Unsupported engine: wanted: {"node":">=22 <25"} (current: {"node":"v25.6.1","pnpm":"10.18.1"})
+Scope: 4 of 5 workspace projects
+packages/contracts build$ hardhat compile
+packages/protocol build$ tsc -p tsconfig.json
+packages/web build$ node scripts/build.mjs
+packages/web build: web assets copied to dist
+packages/web build: Done
+packages/contracts build: WARNING: You are currently using Node.js v25.6.1, which is not supported by Hardhat. This can lead to unexpected behavior. See https://v2.hardhat.org/nodejs-versions
+packages/protocol build: Done
+packages/contracts build: Nothing to compile
+packages/contracts build: No need to generate any newer typings.
+packages/contracts build: Done
+packages/node build$ tsc -p tsconfig.json
+packages/node build: Done
