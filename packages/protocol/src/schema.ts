@@ -75,5 +75,5 @@ export const InitAttachmentSchema = z.object({
 export const CompleteAttachmentSchema = z.object({
   objectKey: z.string().min(1),
   manifestHash: Bytes32,
-  checksum: HexString,
+  checksum: Bytes32,
 });

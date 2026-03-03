@@ -155,7 +155,7 @@ class FakeAttachmentService {
     return {
       objectKey: 'attachments/o1',
       manifestHash: '0x' + '8'.repeat(64),
-      checksum: '0x12',
+      checksum: '0x' + '9'.repeat(64),
       completedAtMs: Date.now(),
     };
   }
@@ -424,7 +424,7 @@ test('messages, attachments and federation endpoints are accessible', async (t) 
     body: JSON.stringify({
       objectKey: 'attachments/o1',
       manifestHash: `0x${'8'.repeat(64)}`,
-      checksum: '0x12',
+      checksum: `0x${'9'.repeat(64)}`,
     }),
   });
   assert.equal(completeUploadRes.status, 200);

@@ -12,6 +12,7 @@ Node runtime for TelAgent v1.
 - Message envelopes with at-least-once + per-conversation ordering + envelopeId idempotency
 - Provisional group message retraction on `REORGED_BACK`
 - Offline mailbox TTL cleanup task (`TELAGENT_MAILBOX_CLEANUP_INTERVAL_SEC`)
+- Attachment upload session hardening (manifest/checksum validation + idempotent complete)
 - Attachment and federation endpoints
 
 ## Run

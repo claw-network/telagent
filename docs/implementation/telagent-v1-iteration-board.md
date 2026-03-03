@@ -161,7 +161,8 @@
 - 已完成：`TA-P4-003`（Envelope 去重与幂等写入）
 - 已完成：`TA-P4-004`（离线邮箱 TTL 清理任务）
 - 已完成：`TA-P4-005`（provisional 消息标记/剔除逻辑）
-- 下一批 Ready：`TA-P4-006`、`TA-P4-007`、`TA-P4-008`
+- 已完成：`TA-P4-006`（附件清单校验与会话幂等）
+- 下一批 Ready：`TA-P4-007`、`TA-P4-008`
 
 ## 4.2 Blockers（2026-03-03 更新）
 
@@ -219,8 +220,9 @@
 - `TA-P4-003`：DONE（`envelopeId` 幂等去重，见 `docs/implementation/phase-4/ta-p4-003-envelope-dedupe-idempotent-write-2026-03-03.md`）。
 - `TA-P4-004`：DONE（TTL 清理任务与定时清理，见 `docs/implementation/phase-4/ta-p4-004-mailbox-ttl-cleanup-task-2026-03-03.md`）。
 - `TA-P4-005`：DONE（reorg 后 provisional 剔除，见 `docs/implementation/phase-4/ta-p4-005-provisional-mark-retract-2026-03-03.md`）。
-- 测试结果：`@telagent/node` `17/17` 通过（日志：`docs/implementation/phase-4/logs/2026-03-03-p4-node-test.txt`）。
-- 阶段状态：Phase 4 进行中，允许继续推进 `TA-P4-006` ~ `TA-P4-008`。
+- `TA-P4-006`：DONE（附件校验收口，见 `docs/implementation/phase-4/ta-p4-006-attachment-manifest-validation-2026-03-03.md`）。
+- 测试结果：`@telagent/node` `21/21` 通过（日志：`docs/implementation/phase-4/logs/2026-03-03-p4-node-test.txt`）。
+- 阶段状态：Phase 4 进行中，允许继续推进 `TA-P4-007` ~ `TA-P4-008`。
 
 ## 5. 周会与 Gate 节奏建议
 
