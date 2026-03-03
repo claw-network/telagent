@@ -1,4 +1,4 @@
-import { randomUUID } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 
 import {
   ErrorCodes,
@@ -58,6 +58,22 @@ export interface ProvisionalRetractionReport {
 export interface MessageMaintenanceReport {
   cleanup: CleanupReport;
   retraction: ProvisionalRetractionReport;
+}
+
+export interface MessageAuditRetractionSample {
+  envelopeIdHash: string;
+  conversationIdHash: string;
+  reason: 'REORGED_BACK';
+  retractedAtMs: number;
+}
+
+export interface MessageAuditSnapshot {
+  activeEnvelopeCount: number;
+  retractedCount: number;
+  retractedByReason: Record<'REORGED_BACK', number>;
+  sampledRetractions: MessageAuditRetractionSample[];
+  sampleSize: number;
+  retractionScanLimit: number;
 }
 
 export class MessageService {
@@ -235,6 +251,40 @@ export class MessageService {
     return Array.from(this.retractedByEnvelopeId.values())
       .sort((a, b) => b.retractedAtMs - a.retractedAtMs)
       .slice(0, Math.max(1, limit));
+  }
+
+  async buildAuditSnapshot(options?: {
+    sampleSize?: number;
+    retractionScanLimit?: number;
+  }): Promise<MessageAuditSnapshot> {
+    const sampleSize = this.normalizePositiveInt(options?.sampleSize, 20, 100);
+    const retractionScanLimit = this.normalizePositiveInt(options?.retractionScanLimit, 2000, 100_000);
+
+    const [activeEnvelopeCount, retractions] = await Promise.all([
+      this.countEnvelopes(),
+      this.listRetracted(retractionScanLimit),
+    ]);
+
+    const retractedByReason: Record<'REORGED_BACK', number> = {
+      REORGED_BACK: 0,
+    };
+    for (const entry of retractions) {
+      retractedByReason[entry.reason] += 1;
+    }
+
+    return {
+      activeEnvelopeCount,
+      retractedCount: retractions.length,
+      retractedByReason,
+      sampledRetractions: retractions.slice(0, sampleSize).map((entry) => ({
+        envelopeIdHash: this.digestForAudit(entry.envelopeId),
+        conversationIdHash: this.digestForAudit(entry.conversationId),
+        reason: entry.reason,
+        retractedAtMs: entry.retractedAtMs,
+      })),
+      sampleSize,
+      retractionScanLimit,
+    };
   }
 
   async cleanupExpired(nowMs = this.clock.now()): Promise<CleanupReport> {
@@ -426,5 +476,16 @@ export class MessageService {
       return this.repository.nextSequence(conversationId);
     }
     return this.sequenceAllocator.next(conversationId);
+  }
+
+  private normalizePositiveInt(value: number | undefined, fallback: number, max: number): number {
+    if (typeof value === 'undefined' || !Number.isFinite(value)) {
+      return fallback;
+    }
+    return Math.min(max, Math.max(1, Math.floor(value)));
+  }
+
+  private digestForAudit(input: string): string {
+    return createHash('sha256').update(input).digest('hex');
   }
 }

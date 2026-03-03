@@ -76,7 +76,29 @@ class FakeGroupService {
     };
   }
 
-  listMembers() {
+  listGroups() {
+    return [
+      this.getGroup('0x' + 'b'.repeat(64)),
+      {
+        ...this.getGroup('0x' + 'c'.repeat(64)),
+        groupDomain: 'beta.tel',
+        state: 'PENDING_ONCHAIN' as const,
+      },
+    ];
+  }
+
+  listMembers(groupId?: string) {
+    if (groupId === '0x' + 'c'.repeat(64)) {
+      return [
+        {
+          groupId: '0x' + 'c'.repeat(64),
+          did: 'did:claw:zM3',
+          didHash: '0x' + '9'.repeat(64),
+          state: 'PENDING',
+          joinedAtMs: Date.now(),
+        },
+      ];
+    }
     return [
       {
         groupId: '0x' + 'b'.repeat(64),
@@ -152,6 +174,26 @@ class FakeMessageService {
         retractedAtMs: Date.now(),
       },
     ];
+  }
+
+  async buildAuditSnapshot(options?: { sampleSize?: number; retractionScanLimit?: number }) {
+    return {
+      activeEnvelopeCount: 1,
+      retractedCount: 1,
+      retractedByReason: {
+        REORGED_BACK: 1,
+      },
+      sampledRetractions: [
+        {
+          envelopeIdHash: 'a'.repeat(64),
+          conversationIdHash: 'b'.repeat(64),
+          reason: 'REORGED_BACK',
+          retractedAtMs: Date.now(),
+        },
+      ].slice(0, Math.max(1, Math.min(100, options?.sampleSize ?? 20))),
+      sampleSize: Math.max(1, Math.min(100, options?.sampleSize ?? 20)),
+      retractionScanLimit: Math.max(1, Math.min(100_000, options?.retractionScanLimit ?? 2_000)),
+    };
   }
 }
 
@@ -273,6 +315,18 @@ class FakeFederationService {
       envelopeCount: 0,
       receiptCount: 0,
       groupStateSyncCount: 0,
+      compatibility: {
+        protocolVersion: 'v1',
+        supportedProtocolVersions: ['v1'],
+        stats: {
+          acceptedWithoutProtocolHint: 0,
+          acceptedWithProtocolHint: 0,
+          unsupportedProtocolRejected: 0,
+          usageByVersion: {
+            v1: 0,
+          },
+        },
+      },
       security: {
         authMode: 'none',
         allowedSourceDomains: [],
@@ -281,11 +335,29 @@ class FakeFederationService {
           'group-state-sync': 300,
           receipts: 600,
         },
+        pinning: {
+          mode: 'disabled',
+          cutoverAt: null,
+          cutoverReached: false,
+          configuredDomains: ['node-a.tel'],
+          stats: {
+            acceptedWithCurrent: 0,
+            acceptedWithNext: 0,
+            rejected: 0,
+            reportOnlyWarnings: 0,
+          },
+        },
       },
       resilience: {
         staleGroupStateSyncRejected: 0,
         splitBrainGroupStateSyncDetected: 0,
         totalGroupStateSyncConflicts: 0,
+      },
+      dlq: {
+        pendingCount: 0,
+        replayedCount: 0,
+        replaySuccessCount: 0,
+        replayFailedCount: 0,
       },
     };
   }
@@ -588,6 +660,88 @@ test('validation errors use RFC7807 shape and problem+json content type', async 
   assert.equal(body.code, 'VALIDATION_ERROR');
   assert.match(body.type, /^https:\/\/telagent\.dev\/errors\/validation-error$/);
   assert.ok(body.detail.length > 0);
+});
+
+test('node audit snapshot exports de-sensitized envelope and links.self', async (t) => {
+  const { server, baseUrl } = await startTestServer();
+  t.after(async () => {
+    await server.stop();
+  });
+
+  const response = await fetch(`${baseUrl}/api/v1/node/audit-snapshot?sample_size=5&retraction_scan_limit=100`);
+  assert.equal(response.status, 200);
+
+  const body = (await response.json()) as {
+    data: {
+      actor: { didHash: string; controllerHash: string; isActive: boolean };
+      groups: {
+        total: number;
+        domainCount: number;
+        domainSamples: Array<{ domainHash: string; groupCount: number }>;
+        memberStateCounts: { PENDING: number; FINALIZED: number; REMOVED: number };
+      };
+      messages: {
+        activeEnvelopeCount: number;
+        retractedCount: number;
+        sampledRetractions: Array<{ envelopeIdHash: string; conversationIdHash: string }>;
+      };
+      federation: {
+        domainHash: string;
+        security: {
+          allowedSourceDomainHashes: string[];
+          pinning: {
+            configuredDomainCount: number;
+            configuredDomainHashes: string[];
+          };
+        };
+      };
+    };
+    links: { self: string };
+  };
+
+  assert.equal(body.data.groups.total, 2);
+  assert.equal(body.data.groups.domainCount, 2);
+  assert.equal(body.data.groups.memberStateCounts.PENDING, 2);
+  assert.equal(body.data.groups.memberStateCounts.FINALIZED, 1);
+  assert.equal(body.data.messages.retractedCount, 1);
+  assert.equal(body.data.messages.sampledRetractions.length, 1);
+  assert.equal(body.data.messages.sampledRetractions[0].envelopeIdHash.length, 64);
+  assert.equal(body.data.federation.domainHash.length, 64);
+  assert.equal(body.data.federation.security.pinning.configuredDomainCount, 1);
+  assert.equal(body.data.federation.security.pinning.configuredDomainHashes[0].length, 64);
+  assert.match(body.links.self, /^\/api\/v1\/node\/audit-snapshot\?/);
+
+  const serialized = JSON.stringify(body.data);
+  assert.equal(serialized.includes('alpha.tel'), false);
+  assert.equal(serialized.includes('beta.tel'), false);
+  assert.equal(serialized.includes('node-a.tel'), false);
+  assert.equal(serialized.includes('env-retracted-1'), false);
+  assert.equal(serialized.includes('group:0x' + 'b'.repeat(64)), false);
+});
+
+test('node audit snapshot rejects invalid query with RFC7807 response', async (t) => {
+  const { server, baseUrl } = await startTestServer();
+  t.after(async () => {
+    await server.stop();
+  });
+
+  const response = await fetch(`${baseUrl}/api/v1/node/audit-snapshot?sample_size=0`);
+  assert.equal(response.status, 400);
+  assert.match(response.headers.get('content-type') ?? '', /^application\/problem\+json/);
+
+  const body = (await response.json()) as {
+    title: string;
+    status: number;
+    instance: string;
+    code: string;
+    type: string;
+  };
+
+  assert.equal(body.title, 'Bad Request');
+  assert.equal(body.status, 400);
+  assert.equal(body.instance, '/api/v1/node/audit-snapshot');
+  assert.equal(body.code, 'VALIDATION_ERROR');
+  assert.match(body.type, /^https:\/\/telagent\.dev\/errors\/validation-error$/);
 });
 
 test('not found uses RFC7807 shape', async (t) => {

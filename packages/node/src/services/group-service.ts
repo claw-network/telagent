@@ -7,6 +7,7 @@ import {
   type GroupChainState,
   type GroupMemberRecord,
   type GroupRecord,
+  type GroupState,
   type MembershipState,
 } from '@telagent/protocol';
 
@@ -359,6 +360,14 @@ export class GroupService {
 
   getGroup(groupId: string): GroupRecord {
     return this.requireGroup(groupId);
+  }
+
+  listGroups(state?: GroupState): GroupRecord[] {
+    const groups = this.repo.listGroups();
+    if (!state) {
+      return groups;
+    }
+    return groups.filter((group) => group.state === state);
   }
 
   listMembers(groupId: string, state?: MembershipState): GroupMemberRecord[] {

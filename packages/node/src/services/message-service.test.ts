@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
 import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
@@ -106,6 +107,10 @@ function createDirectInput(overrides: Partial<Parameters<MessageService['send']>
     ttlSec: 60,
     ...overrides,
   };
+}
+
+function digest(input: string): string {
+  return createHash('sha256').update(input).digest('hex');
 }
 
 class MutableIdentityService implements MessageIdentityService {
@@ -260,6 +265,54 @@ test('TA-P4-005 send is rejected when group chain state is REORGED_BACK', async 
       return true;
     },
   );
+});
+
+test('TA-P12-002 buildAuditSnapshot exports hashed retraction samples', async () => {
+  const groupId = `0x${'d'.repeat(64)}`;
+  const { service, setGroupState } = createGroupMessageService(groupId, 'PENDING_ONCHAIN', 15_000);
+
+  await service.send({
+    envelopeId: 'env-audit-1',
+    senderDid: 'did:claw:zAlice',
+    conversationId: `group:${groupId}`,
+    conversationType: 'group',
+    targetDomain: 'alpha.tel',
+    mailboxKeyId: 'mailbox-1',
+    sealedHeader: '0x11',
+    ciphertext: '0x22',
+    contentType: 'text',
+    ttlSec: 3600,
+  });
+
+  setGroupState('REORGED_BACK');
+  await service.pull({ conversationId: `group:${groupId}`, limit: 20 });
+
+  const snapshot = await service.buildAuditSnapshot({
+    sampleSize: 1,
+    retractionScanLimit: 10,
+  });
+
+  assert.equal(snapshot.activeEnvelopeCount, 0);
+  assert.equal(snapshot.retractedCount, 1);
+  assert.equal(snapshot.retractedByReason.REORGED_BACK, 1);
+  assert.equal(snapshot.sampledRetractions.length, 1);
+  assert.equal(snapshot.sampledRetractions[0].envelopeIdHash, digest('env-audit-1'));
+  assert.equal(snapshot.sampledRetractions[0].conversationIdHash, digest(`group:${groupId}`));
+  assert.equal(snapshot.sampledRetractions[0].reason, 'REORGED_BACK');
+  assert.equal(snapshot.sampleSize, 1);
+  assert.equal(snapshot.retractionScanLimit, 10);
+});
+
+test('TA-P12-002 buildAuditSnapshot normalizes sample and scan bounds', async () => {
+  const { service } = createMessageService(20_000);
+
+  const snapshot = await service.buildAuditSnapshot({
+    sampleSize: 0,
+    retractionScanLimit: 999_999,
+  });
+
+  assert.equal(snapshot.sampleSize, 1);
+  assert.equal(snapshot.retractionScanLimit, 100_000);
 });
 
 test('TA-P6-001 mailbox persists messages and seq after service restart', async (t) => {

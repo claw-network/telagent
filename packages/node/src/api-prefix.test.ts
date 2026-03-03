@@ -59,6 +59,9 @@ class FakeGroupService {
       blockNumber: 100,
     };
   }
+  listGroups() {
+    return [this.getGroup('0x' + 'b'.repeat(64))];
+  }
   listMembers() {
     return [];
   }
@@ -91,6 +94,18 @@ class FakeMessageService {
   }
   listRetracted() {
     return [];
+  }
+  async buildAuditSnapshot(options?: { sampleSize?: number; retractionScanLimit?: number }) {
+    return {
+      activeEnvelopeCount: 0,
+      retractedCount: 0,
+      retractedByReason: {
+        REORGED_BACK: 0,
+      },
+      sampledRetractions: [],
+      sampleSize: Math.max(1, Math.min(100, options?.sampleSize ?? 20)),
+      retractionScanLimit: Math.max(1, Math.min(100_000, options?.retractionScanLimit ?? 2_000)),
+    };
   }
 }
 
@@ -125,9 +140,53 @@ class FakeFederationService {
   nodeInfo() {
     return {
       protocolVersion: 'v1',
+      domain: 'node-a.tel',
       capabilities: ['identity'],
       envelopeCount: 0,
       receiptCount: 0,
+      groupStateSyncCount: 0,
+      compatibility: {
+        protocolVersion: 'v1',
+        supportedProtocolVersions: ['v1'],
+        stats: {
+          acceptedWithoutProtocolHint: 0,
+          acceptedWithProtocolHint: 0,
+          unsupportedProtocolRejected: 0,
+          usageByVersion: { v1: 0 },
+        },
+      },
+      security: {
+        authMode: 'none',
+        allowedSourceDomains: [],
+        rateLimitPerMinute: {
+          envelopes: 600,
+          'group-state-sync': 300,
+          receipts: 600,
+        },
+        pinning: {
+          mode: 'disabled',
+          cutoverAt: null,
+          cutoverReached: false,
+          configuredDomains: [],
+          stats: {
+            acceptedWithCurrent: 0,
+            acceptedWithNext: 0,
+            rejected: 0,
+            reportOnlyWarnings: 0,
+          },
+        },
+      },
+      resilience: {
+        staleGroupStateSyncRejected: 0,
+        splitBrainGroupStateSyncDetected: 0,
+        totalGroupStateSyncConflicts: 0,
+      },
+      dlq: {
+        pendingCount: 0,
+        replayedCount: 0,
+        replaySuccessCount: 0,
+        replayFailedCount: 0,
+      },
     };
   }
 }
@@ -226,6 +285,12 @@ test('routes only serve /api/v1/* prefix', async (t) => {
 
   const noPrefixRes = await fetch(`${baseUrl}/v1/node`);
   assert.equal(noPrefixRes.status, 404);
+
+  const auditRes = await fetch(`${baseUrl}/api/v1/node/audit-snapshot`);
+  assert.equal(auditRes.status, 200);
+
+  const noPrefixAuditRes = await fetch(`${baseUrl}/v1/node/audit-snapshot`);
+  assert.equal(noPrefixAuditRes.status, 404);
 });
 
 test('identity endpoint responds with data envelope', async (t) => {

@@ -1,5 +1,10 @@
+import { createHash } from 'node:crypto';
+
+import { ErrorCodes, TelagentError } from '@telagent/protocol';
+
 import { Router } from '../router.js';
 import { ok } from '../response.js';
+import { handleError } from '../route-utils.js';
 import type { RuntimeContext } from '../types.js';
 
 export function nodeRoutes(ctx: RuntimeContext): Router {
@@ -21,5 +26,126 @@ export function nodeRoutes(ctx: RuntimeContext): Router {
     ok(res, snapshot, { self: '/api/v1/node/metrics' });
   });
 
+  router.get('/audit-snapshot', async ({ res, query, url }) => {
+    try {
+      const sampleSize = parsePositiveInt(query.get('sample_size'), 'sample_size', 20, 100);
+      const retractionScanLimit = parsePositiveInt(query.get('retraction_scan_limit'), 'retraction_scan_limit', 2000, 100_000);
+
+      const [selfIdentity, messageAudit] = await Promise.all([
+        ctx.identityService.getSelf(),
+        ctx.messageService.buildAuditSnapshot({
+          sampleSize,
+          retractionScanLimit,
+        }),
+      ]);
+
+      const groups = ctx.groupService.listGroups();
+      const groupStateCounts = {
+        PENDING_ONCHAIN: 0,
+        ACTIVE: 0,
+        REORGED_BACK: 0,
+      };
+      const memberStateCounts = {
+        PENDING: 0,
+        FINALIZED: 0,
+        REMOVED: 0,
+      };
+      const domainCounts = new Map<string, number>();
+
+      for (const group of groups) {
+        groupStateCounts[group.state] += 1;
+        const domainHash = digestForAudit(group.groupDomain);
+        domainCounts.set(domainHash, (domainCounts.get(domainHash) ?? 0) + 1);
+
+        const members = ctx.groupService.listMembers(group.groupId);
+        for (const member of members) {
+          memberStateCounts[member.state] += 1;
+        }
+      }
+
+      const federationInfo = ctx.federationService.nodeInfo();
+      const monitoring = ctx.monitoringService.snapshot();
+      const pinning = federationInfo.security.pinning;
+      const selfLink = `/api/v1/node/audit-snapshot?sample_size=${sampleSize}&retraction_scan_limit=${retractionScanLimit}`;
+
+      ok(
+        res,
+        {
+          generatedAt: new Date().toISOString(),
+          actor: {
+            didHash: selfIdentity.didHash,
+            controllerHash: digestForAudit(selfIdentity.controller.toLowerCase()),
+            isActive: selfIdentity.isActive,
+          },
+          groups: {
+            total: groups.length,
+            stateCounts: groupStateCounts,
+            domainCount: domainCounts.size,
+            domainSamples: [...domainCounts.entries()]
+              .sort((left, right) => right[1] - left[1] || left[0].localeCompare(right[0]))
+              .slice(0, sampleSize)
+              .map(([domainHash, count]) => ({
+                domainHash,
+                groupCount: count,
+              })),
+            memberStateCounts,
+          },
+          messages: messageAudit,
+          federation: {
+            protocolVersion: federationInfo.protocolVersion,
+            domainHash: digestForAudit(federationInfo.domain),
+            capabilities: federationInfo.capabilities,
+            compatibility: federationInfo.compatibility,
+            security: {
+              authMode: federationInfo.security.authMode,
+              allowedSourceDomainCount: federationInfo.security.allowedSourceDomains.length,
+              allowedSourceDomainHashes: federationInfo.security.allowedSourceDomains
+                .slice(0, sampleSize)
+                .map((domain) => digestForAudit(domain)),
+              rateLimitPerMinute: federationInfo.security.rateLimitPerMinute,
+              pinning: {
+                mode: pinning.mode,
+                cutoverAt: pinning.cutoverAt,
+                cutoverReached: pinning.cutoverReached,
+                configuredDomainCount: pinning.configuredDomains.length,
+                configuredDomainHashes: pinning.configuredDomains
+                  .slice(0, sampleSize)
+                  .map((domain) => digestForAudit(domain)),
+                stats: pinning.stats,
+              },
+            },
+            resilience: federationInfo.resilience,
+            dlq: federationInfo.dlq,
+          },
+          monitoring: {
+            generatedAt: monitoring.generatedAt,
+            uptimeSec: monitoring.uptimeSec,
+            totals: monitoring.totals,
+            alerts: monitoring.alerts,
+            mailboxMaintenance: monitoring.mailboxMaintenance,
+          },
+        },
+        { self: selfLink },
+      );
+    } catch (error) {
+      handleError(res, error, url.pathname);
+    }
+  });
+
   return router;
+}
+
+function parsePositiveInt(raw: string | null, field: string, fallback: number, max: number): number {
+  if (!raw || !raw.trim()) {
+    return fallback;
+  }
+  const value = Number.parseInt(raw, 10);
+  if (!Number.isInteger(value) || value <= 0) {
+    throw new TelagentError(ErrorCodes.VALIDATION, `${field} must be a positive integer`);
+  }
+  return Math.min(value, max);
+}
+
+function digestForAudit(value: string): string {
+  return createHash('sha256').update(value).digest('hex');
 }
