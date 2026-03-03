@@ -167,10 +167,10 @@ class FakeFederationService {
   }
 
   syncGroupState(
-    _payload: { groupId: string; state: string; groupDomain?: string },
+    _payload: { groupId: string; state: string; groupDomain?: string; stateVersion?: number },
     _meta: { sourceDomain: string; authToken?: string },
   ) {
-    return { synced: true, updatedAtMs: Date.now(), deduplicated: false };
+    return { synced: true, updatedAtMs: Date.now(), deduplicated: false, stateVersion: 1 };
   }
 
   recordReceipt(
@@ -196,6 +196,11 @@ class FakeFederationService {
           'group-state-sync': 300,
           receipts: 600,
         },
+      },
+      resilience: {
+        staleGroupStateSyncRejected: 0,
+        splitBrainGroupStateSyncDetected: 0,
+        totalGroupStateSyncConflicts: 0,
       },
     };
   }
@@ -520,6 +525,18 @@ test('messages, attachments and federation endpoints are accessible', async (t) 
     body: JSON.stringify({ groupId: `0x${'b'.repeat(64)}`, state: 'ACTIVE', sourceDomain: 'node-b.tel' }),
   });
   assert.equal(fedSyncRes.status, 201);
+
+  const fedSyncInvalidVersionRes = await fetch(`${baseUrl}/api/v1/federation/group-state/sync`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({
+      groupId: `0x${'b'.repeat(64)}`,
+      state: 'ACTIVE',
+      sourceDomain: 'node-b.tel',
+      stateVersion: '11',
+    }),
+  });
+  assert.equal(fedSyncInvalidVersionRes.status, 400);
 
   const fedReceiptRes = await fetch(`${baseUrl}/api/v1/federation/receipts`, {
     method: 'POST',

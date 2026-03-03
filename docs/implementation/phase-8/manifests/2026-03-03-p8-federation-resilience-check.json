@@ -1,0 +1,74 @@
+{
+  "phase": "Phase 8",
+  "taskId": "TA-P8-003",
+  "generatedAt": "2026-03-03T06:00:59.857Z",
+  "summary": {
+    "total": 4,
+    "passed": 4,
+    "failed": 0
+  },
+  "decision": "PASS",
+  "scenarios": [
+    {
+      "id": "P8-FED-001",
+      "passed": true,
+      "details": {
+        "first": {
+          "synced": true,
+          "updatedAtMs": 1772517659857,
+          "deduplicated": false,
+          "stateVersion": 1
+        },
+        "second": {
+          "synced": true,
+          "updatedAtMs": 1772517659857,
+          "deduplicated": true,
+          "stateVersion": 1
+        }
+      }
+    },
+    {
+      "id": "P8-FED-002",
+      "passed": true,
+      "details": {
+        "upgraded": {
+          "synced": true,
+          "updatedAtMs": 1772517659857,
+          "deduplicated": false,
+          "stateVersion": 2
+        },
+        "explicitNew": {
+          "synced": true,
+          "updatedAtMs": 1772517659857,
+          "deduplicated": false,
+          "stateVersion": 10
+        }
+      }
+    },
+    {
+      "id": "P8-FED-003",
+      "passed": true,
+      "details": {
+        "staleError": "group-state sync is stale for current stateVersion"
+      }
+    },
+    {
+      "id": "P8-FED-004",
+      "passed": true,
+      "details": {
+        "splitBrainError": "group-state sync conflict detected (split-brain)",
+        "recovery": {
+          "synced": true,
+          "updatedAtMs": 1772517659857,
+          "deduplicated": false,
+          "stateVersion": 11
+        },
+        "resilience": {
+          "staleGroupStateSyncRejected": 1,
+          "splitBrainGroupStateSyncDetected": 1,
+          "totalGroupStateSyncConflicts": 2
+        }
+      }
+    }
+  ]
+}

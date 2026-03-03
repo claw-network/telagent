@@ -39,8 +39,17 @@ export function federationRoutes(ctx: RuntimeContext): Router {
       if (typeof groupDomain !== 'undefined' && typeof groupDomain !== 'string') {
         throw new TelagentError(ErrorCodes.VALIDATION, 'groupDomain must be a string when provided');
       }
+      const stateVersion = payload.stateVersion;
+      if (typeof stateVersion !== 'undefined' && typeof stateVersion !== 'number') {
+        throw new TelagentError(ErrorCodes.VALIDATION, 'stateVersion must be a number when provided');
+      }
       const result = ctx.federationService.syncGroupState(
-        { groupId, state, groupDomain: typeof groupDomain === 'string' ? groupDomain : undefined },
+        {
+          groupId,
+          state,
+          groupDomain: typeof groupDomain === 'string' ? groupDomain : undefined,
+          stateVersion: typeof stateVersion === 'number' ? stateVersion : undefined,
+        },
         {
           sourceDomain: resolveSourceDomain(req, payload),
           authToken: resolveFederationToken(req),

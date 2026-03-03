@@ -20,6 +20,7 @@ interface FederationReceipt {
 interface GroupStateSyncRecord {
   groupId: string;
   state: 'PENDING_ONCHAIN' | 'ACTIVE' | 'REORGED_BACK';
+  stateVersion: number;
   sourceDomain: string;
   groupDomain: string;
   updatedAtMs: number;
@@ -60,6 +61,8 @@ export class FederationService {
   private readonly receiptByKey = new Map<string, FederationReceipt>();
   private readonly groupStateSyncByKey = new Map<string, GroupStateSyncRecord>();
   private readonly rateLimitByKey = new Map<string, RateLimitBucket>();
+  private staleGroupStateSyncRejected = 0;
+  private splitBrainGroupStateSyncDetected = 0;
 
   private readonly selfDomain: string;
   private readonly authToken?: string;
@@ -119,9 +122,9 @@ export class FederationService {
   }
 
   syncGroupState(
-    payload: { groupId: string; state: string; groupDomain?: string },
+    payload: { groupId: string; state: string; groupDomain?: string; stateVersion?: number },
     meta: FederationRequestMeta,
-  ): { synced: boolean; updatedAtMs: number; deduplicated: boolean } {
+  ): { synced: boolean; updatedAtMs: number; deduplicated: boolean; stateVersion: number } {
     const sourceDomain = this.assertAndNormalizeSourceDomain(meta.sourceDomain);
     this.assertAuthorized(meta.authToken);
     this.assertRateLimit('group-state-sync', sourceDomain);
@@ -145,12 +148,32 @@ export class FederationService {
 
     const key = `${sourceDomain}:${groupId}`;
     const existing = this.groupStateSyncByKey.get(key);
-    const deduplicated = !!existing && existing.state === state && existing.groupDomain === groupDomain;
+    const requestedStateVersion = this.parseStateVersion(payload.stateVersion);
+    const conflictReason = this.detectStateSyncConflict(existing, {
+      state: state as GroupStateSyncRecord['state'],
+      groupDomain,
+      stateVersion: requestedStateVersion,
+    });
+    if (conflictReason) {
+      this.recordStateSyncConflict(conflictReason);
+      if (conflictReason === 'stale') {
+        throw new TelagentError(ErrorCodes.CONFLICT, 'group-state sync is stale for current stateVersion');
+      }
+      throw new TelagentError(ErrorCodes.CONFLICT, 'group-state sync conflict detected (split-brain)');
+    }
+
+    const deduplicated = this.isStateSyncDeduplicated(existing, {
+      state: state as GroupStateSyncRecord['state'],
+      groupDomain,
+      stateVersion: requestedStateVersion,
+    });
+    const resolvedStateVersion = this.resolveStateVersion(existing, requestedStateVersion, deduplicated);
     const updatedAtMs = this.clock.now();
 
     this.groupStateSyncByKey.set(key, {
       groupId,
       state: state as GroupStateSyncRecord['state'],
+      stateVersion: resolvedStateVersion,
       sourceDomain,
       groupDomain,
       updatedAtMs,
@@ -160,6 +183,7 @@ export class FederationService {
       synced: true,
       updatedAtMs,
       deduplicated,
+      stateVersion: resolvedStateVersion,
     };
   }
 
@@ -211,6 +235,11 @@ export class FederationService {
       allowedSourceDomains: string[];
       rateLimitPerMinute: Record<FederationScope, number>;
     };
+    resilience: {
+      staleGroupStateSyncRejected: number;
+      splitBrainGroupStateSyncDetected: number;
+      totalGroupStateSyncConflicts: number;
+    };
   } {
     return {
       protocolVersion: 'v1',
@@ -223,6 +252,11 @@ export class FederationService {
         authMode: this.authToken ? 'required' : 'none',
         allowedSourceDomains: [...this.allowedSourceDomains.values()],
         rateLimitPerMinute: { ...this.rateLimitConfig },
+      },
+      resilience: {
+        staleGroupStateSyncRejected: this.staleGroupStateSyncRejected,
+        splitBrainGroupStateSyncDetected: this.splitBrainGroupStateSyncDetected,
+        totalGroupStateSyncConflicts: this.staleGroupStateSyncRejected + this.splitBrainGroupStateSyncDetected,
       },
     };
   }
@@ -283,5 +317,83 @@ export class FederationService {
 
   private signatureOfPayload(payload: Record<string, unknown>): string {
     return JSON.stringify(payload);
+  }
+
+  private parseStateVersion(value: unknown): number | undefined {
+    if (typeof value === 'undefined') {
+      return undefined;
+    }
+    if (typeof value !== 'number' || !Number.isInteger(value) || value <= 0) {
+      throw new TelagentError(ErrorCodes.VALIDATION, 'stateVersion must be a positive integer');
+    }
+    return value;
+  }
+
+  private detectStateSyncConflict(
+    existing: GroupStateSyncRecord | undefined,
+    incoming: {
+      state: GroupStateSyncRecord['state'];
+      groupDomain: string;
+      stateVersion?: number;
+    },
+  ): 'stale' | 'split-brain' | null {
+    if (!existing || typeof incoming.stateVersion === 'undefined') {
+      return null;
+    }
+    if (incoming.stateVersion < existing.stateVersion) {
+      return 'stale';
+    }
+    if (incoming.stateVersion > existing.stateVersion) {
+      return null;
+    }
+    if (incoming.state === existing.state && incoming.groupDomain === existing.groupDomain) {
+      return null;
+    }
+    return 'split-brain';
+  }
+
+  private isStateSyncDeduplicated(
+    existing: GroupStateSyncRecord | undefined,
+    incoming: {
+      state: GroupStateSyncRecord['state'];
+      groupDomain: string;
+      stateVersion?: number;
+    },
+  ): boolean {
+    if (!existing) {
+      return false;
+    }
+    if (incoming.state !== existing.state || incoming.groupDomain !== existing.groupDomain) {
+      return false;
+    }
+    if (typeof incoming.stateVersion === 'undefined') {
+      return true;
+    }
+    return incoming.stateVersion === existing.stateVersion;
+  }
+
+  private resolveStateVersion(
+    existing: GroupStateSyncRecord | undefined,
+    requestedStateVersion: number | undefined,
+    deduplicated: boolean,
+  ): number {
+    if (!existing) {
+      return requestedStateVersion ?? 1;
+    }
+    if (deduplicated) {
+      return existing.stateVersion;
+    }
+    if (typeof requestedStateVersion === 'undefined') {
+      return existing.stateVersion + 1;
+    }
+    return requestedStateVersion;
+  }
+
+  private recordStateSyncConflict(type: 'stale' | 'split-brain'): void {
+    if (type === 'stale') {
+      this.staleGroupStateSyncRejected++;
+      return;
+    }
+    this.splitBrainGroupStateSyncDetected++;
   }
 }

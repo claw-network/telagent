@@ -153,6 +153,89 @@ test('TA-P4-008 group-state sync enforces domain consistency', () => {
   );
 });
 
+test('TA-P8-002 group-state sync rejects stale stateVersion and records resilience counters', () => {
+  const service = new FederationService({
+    selfDomain: 'node-a.tel',
+  });
+
+  const first = service.syncGroupState(
+    {
+      groupId: `0x${'b'.repeat(64)}`,
+      state: 'ACTIVE',
+      stateVersion: 5,
+    },
+    {
+      sourceDomain: 'node-b.tel',
+    },
+  );
+  assert.equal(first.stateVersion, 5);
+
+  assert.throws(
+    () =>
+      service.syncGroupState(
+        {
+          groupId: `0x${'b'.repeat(64)}`,
+          state: 'REORGED_BACK',
+          stateVersion: 4,
+        },
+        {
+          sourceDomain: 'node-b.tel',
+        },
+      ),
+    (error) => {
+      assert.ok(error instanceof TelagentError);
+      assert.equal(error.code, ErrorCodes.CONFLICT);
+      assert.match(error.message, /stale/i);
+      return true;
+    },
+  );
+
+  const info = service.nodeInfo();
+  assert.equal(info.resilience.staleGroupStateSyncRejected, 1);
+  assert.equal(info.resilience.splitBrainGroupStateSyncDetected, 0);
+});
+
+test('TA-P8-002 group-state sync detects split-brain on same stateVersion with different state', () => {
+  const service = new FederationService({
+    selfDomain: 'node-a.tel',
+  });
+
+  service.syncGroupState(
+    {
+      groupId: `0x${'c'.repeat(64)}`,
+      state: 'ACTIVE',
+      stateVersion: 8,
+    },
+    {
+      sourceDomain: 'node-b.tel',
+    },
+  );
+
+  assert.throws(
+    () =>
+      service.syncGroupState(
+        {
+          groupId: `0x${'c'.repeat(64)}`,
+          state: 'REORGED_BACK',
+          stateVersion: 8,
+        },
+        {
+          sourceDomain: 'node-b.tel',
+        },
+      ),
+    (error) => {
+      assert.ok(error instanceof TelagentError);
+      assert.equal(error.code, ErrorCodes.CONFLICT);
+      assert.match(error.message, /split-brain/i);
+      return true;
+    },
+  );
+
+  const info = service.nodeInfo();
+  assert.equal(info.resilience.staleGroupStateSyncRejected, 0);
+  assert.equal(info.resilience.splitBrainGroupStateSyncDetected, 1);
+});
+
 test('TA-P4-008 node-info publishes domain and federation security policy', () => {
   const service = new FederationService({
     selfDomain: 'node-a.tel',
@@ -170,4 +253,5 @@ test('TA-P4-008 node-info publishes domain and federation security policy', () =
   assert.equal(info.security.rateLimitPerMinute.envelopes, 500);
   assert.equal(info.security.rateLimitPerMinute['group-state-sync'], 250);
   assert.equal(info.security.rateLimitPerMinute.receipts, 400);
+  assert.equal(info.resilience.totalGroupStateSyncConflicts, 0);
 });
