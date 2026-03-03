@@ -1,0 +1,12 @@
+# v0.1.0 tag push log
+generated_at=2026-03-03T11:04:36+0800
+
+$ git show -s --format='%H %ci %s' v0.1.0
+tag v0.1.0
+Tagger: weibo <benjamin-linus@outlook.com>
+
+TelAgent v1 MVP
+199d46f1fc93b1005768fd65c012bf77a6397df0 2026-03-03 11:03:22 +0800 docs(release): add TA-RLS-001 preflight package
+
+$ git ls-remote --tags origin refs/tags/v0.1.0
+dc572d0021e4985197a68a8915a913f367fb60ed	refs/tags/v0.1.0
