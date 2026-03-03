@@ -1,0 +1,27 @@
+{
+  "phase": "Phase 11",
+  "taskId": "TA-P11-004",
+  "generatedAt": "2026-03-03T07:59:53.594Z",
+  "summary": {
+    "missingKeyRejected": true,
+    "unknownKeyRejected": true,
+    "currentKeyAcceptedPreCutover": true,
+    "nextKeyAcceptedPreCutover": true,
+    "currentKeyRejectedPostCutover": true,
+    "nextKeyAcceptedPostCutover": true,
+    "nodeInfoPinningPublished": true
+  },
+  "decision": "PASS",
+  "details": {
+    "cutoverAt": "2026-03-04T00:02:00.000Z",
+    "pinningStats": {
+      "acceptedWithCurrent": 1,
+      "acceptedWithNext": 2,
+      "rejected": 3,
+      "reportOnlyWarnings": 0
+    },
+    "missingKeyErrorCode": "UNAUTHORIZED",
+    "unknownKeyErrorCode": "FORBIDDEN",
+    "postCutoverErrorCode": "FORBIDDEN"
+  }
+}
