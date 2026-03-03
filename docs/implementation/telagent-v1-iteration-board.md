@@ -238,7 +238,10 @@
 - 已完成：`TA-P16-002`（Web JS 原型会话增强，后续由 TA-P16-004 替代）
 - 已完成：`TA-P16-003`（Web JS 原型群组增强，后续由 TA-P16-004 替代）
 - 已完成：`TA-P16-004`（Web App 技术栈重规划：TypeScript + React + Vite）
-- 下一批 Ready：`TA-P16-005`（TS 基线下身份与节点诊断页增强）。
+- 已完成：`TA-P16-005`（TS 基线身份与节点诊断增强，含 DID hash 与节点运行态）
+- 已完成：`TA-P16-006`（Web 契约回归与异常语义测试增强）
+- 已完成：`TA-P16-007`（质量收口与 Phase 16 Gate 评审）
+- 当前结论：Phase 16 已关闭（PASS）。
 
 ## 4.2 Blockers（2026-03-03 更新）
 
@@ -449,13 +452,11 @@
 - `TA-P16-002`：DONE（历史 JS 原型增强，已 superseded）。
 - `TA-P16-003`：DONE（历史 JS 原型增强，已 superseded）。
 - `TA-P16-004`：DONE（技术栈重规划完成，见 `docs/implementation/phase-16/ta-p16-004-webapp-ts-react-vite-rebaseline-2026-03-03.md`）。
-- `TA-P16-004` 机读清单：`docs/implementation/phase-16/manifests/2026-03-03-p16-ts-framework-check.json`。
-- `TA-P16-004` 验证日志：
-  - `docs/implementation/phase-16/logs/2026-03-03-p16-web-typecheck-ta-p16-004.txt`
-  - `docs/implementation/phase-16/logs/2026-03-03-p16-web-build-ta-p16-004.txt`
-  - `docs/implementation/phase-16/logs/2026-03-03-p16-web-test-ta-p16-004.txt`
-  - `docs/implementation/phase-16/logs/2026-03-03-p16-ts-framework-check-run.txt`
-- 阶段状态：Phase 16 执行中，下一步进入 `TA-P16-005`。
+- `TA-P16-005`：DONE（身份与节点诊断增强，见 `docs/implementation/phase-16/ta-p16-005-identity-node-diagnostics-ts-baseline-2026-03-03.md` 与 `docs/implementation/phase-16/manifests/2026-03-03-p16-identity-node-diagnostics-check.json`）。
+- `TA-P16-006`：DONE（Web 契约回归与异常语义增强，见 `docs/implementation/phase-16/ta-p16-006-web-contract-regression-and-error-semantics-2026-03-03.md` 与 `docs/implementation/phase-16/manifests/2026-03-03-p16-web-contract-regression-check.json`）。
+- `TA-P16-007`：DONE（质量收口与 Gate，见 `docs/implementation/phase-16/ta-p16-007-phase16-quality-closure-and-gate-2026-03-03.md`、`docs/implementation/phase-16/manifests/2026-03-03-p16-quality-gate-check.json`、`docs/implementation/gates/phase-16-gate.md`）。
+- Phase 16 manifests 汇总：`docs/implementation/phase-16/logs/2026-03-03-p16-gate-manifest-summary.txt`（`failed=0`）。
+- 阶段状态：Phase 16 已关闭（PASS）。
 
 ## 5. 周会与 Gate 节奏建议
 

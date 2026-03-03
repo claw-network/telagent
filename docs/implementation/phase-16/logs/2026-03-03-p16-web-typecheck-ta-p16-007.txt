@@ -1,0 +1,4 @@
+
+> @telagent/web@0.1.0 typecheck /Users/xiasenhai/Workspace/OpenClaw/telagent/packages/web
+> tsc --noEmit
+

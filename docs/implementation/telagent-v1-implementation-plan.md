@@ -291,7 +291,7 @@
 ### 交付物
 
 - Phase 16 任务与证据文档（`docs/implementation/phase-16/`）；
-- Web 端 TS 代码基线（`packages/web/src/*` + `packages/web/test/*`）；
+- Web 端 TS 代码基线（`packages/web/src/*` + `packages/web/scripts/*`）；
 - Web 构建/测试日志与专项检查 manifest；
 - Phase 16 WBS 与迭代看板同步条目。
 
@@ -302,6 +302,15 @@
 - DID 输入校验仅接受 `did:claw:*`；
 - RFC7807 错误链路可在 Web 侧稳定识别并展示；
 - Phase 16 Gate 结论为 `PASS`。
+
+### 阶段进展（2026-03-03）
+
+- `TA-P16-001` ~ `TA-P16-003`：DONE（历史 JS 原型归档，已 superseded）；
+- `TA-P16-004`：DONE（TS/React/Vite 技术栈重规划）；
+- `TA-P16-005`：DONE（身份与节点诊断增强，含 `keccak256(utf8(did))` 诊断）；
+- `TA-P16-006`：DONE（Web 契约回归与异常语义增强）；
+- `TA-P16-007`：DONE（质量门禁 + Gate 收口）；
+- Gate 结论：`docs/implementation/gates/phase-16-gate.md` = `PASS`。
 
 ## 6. 质量保障策略
 

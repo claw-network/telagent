@@ -1,0 +1,40 @@
+{
+  "phase": "Phase 16",
+  "taskId": "TA-P16-005",
+  "generatedAt": "2026-03-03T16:57:45.458Z",
+  "summary": {
+    "didParserReady": true,
+    "didHashKeccakReady": true,
+    "nodeHealthDiagnosticsReady": true,
+    "identityDiagnosticsUiReady": true,
+    "requiredTokensChecked": 15
+  },
+  "decision": "PASS",
+  "details": {
+    "packageChecks": [
+      "\"ethers\"",
+      "\"check:phase16:005\""
+    ],
+    "appChecks": [
+      "DID Diagnostics (Sender)",
+      "DID Diagnostics (Lookup)",
+      "DID Hash (keccak256 utf8)",
+      "Node Runtime Diagnostics",
+      "Refresh Node Diagnostics"
+    ],
+    "apiClientChecks": [
+      "async getNodeMetrics<T = unknown>()",
+      "return this.getData<T>('/api/v1/node/metrics')"
+    ],
+    "diagnosticsChecks": [
+      "hashDidKeccakUtf8(did: string)",
+      "keccak256(toUtf8Bytes(did))",
+      "buildDidDiagnostics(inputDid: string",
+      "buildNodeRuntimeDiagnostics(nodeInfoPayload: unknown, nodeMetricsPayload: unknown)"
+    ],
+    "diagnosticsTestChecks": [
+      "hashDidKeccakUtf8 follows keccak256(utf8(did))",
+      "buildNodeRuntimeDiagnostics computes level from alerts"
+    ]
+  }
+}

@@ -1,0 +1,13 @@
+# Phase 16 manifest summary
+generatedAt=2026-03-03T16:58:46.906Z
+total=7
+passed=7
+failed=0
+
+2026-03-03-p16-groups-domain-check.json	TA-P16-003	PASS
+2026-03-03-p16-identity-node-diagnostics-check.json	TA-P16-005	PASS
+2026-03-03-p16-quality-gate-check.json	TA-P16-007	PASS
+2026-03-03-p16-sessions-domain-check.json	TA-P16-002	PASS
+2026-03-03-p16-ts-framework-check.json	TA-P16-004	PASS
+2026-03-03-p16-web-contract-regression-check.json	TA-P16-006	PASS
+2026-03-03-p16-web-runtime-shell-check.json	TA-P16-001	PASS

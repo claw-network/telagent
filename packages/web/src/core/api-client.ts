@@ -164,6 +164,10 @@ export class TelagentApiClient {
     return this.getData<T>('/api/v1/node');
   }
 
+  async getNodeMetrics<T = unknown>(): Promise<T> {
+    return this.getData<T>('/api/v1/node/metrics');
+  }
+
   async pullMessages<T = unknown>({
     conversationId,
     limit = 30,

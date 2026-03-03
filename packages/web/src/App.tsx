@@ -28,6 +28,10 @@ import {
   recordSendSuccess,
   resetPullCursor,
 } from './core/session-domain';
+import {
+  buildDidDiagnostics,
+  buildNodeRuntimeDiagnostics,
+} from './core/identity-node-diagnostics';
 
 const STORAGE_API_BASE_KEY = 'telagent.web.apiBase.v2';
 const DEFAULT_API_BASE = 'http://127.0.0.1:9528';
@@ -65,6 +69,17 @@ interface GroupFormState {
   inviteId: string;
   inviteMlsCommitHash: string;
   acceptMlsWelcomeHash: string;
+}
+
+function readDidHash(payload: unknown): string | undefined {
+  if (!payload || typeof payload !== 'object' || Array.isArray(payload)) {
+    return undefined;
+  }
+  const candidate = (payload as { didHash?: unknown }).didHash;
+  if (typeof candidate !== 'string' || !candidate.trim()) {
+    return undefined;
+  }
+  return candidate;
 }
 
 function randomHex(bytes: number): string {
@@ -105,6 +120,8 @@ export function App() {
   const [selfIdentity, setSelfIdentity] = useState<unknown>(null);
   const [resolvedIdentity, setResolvedIdentity] = useState<unknown>(null);
   const [identityLookupDid, setIdentityLookupDid] = useState<string>('did:claw:zBob');
+  const [nodeInfo, setNodeInfo] = useState<Record<string, unknown> | null>(null);
+  const [nodeMetrics, setNodeMetrics] = useState<Record<string, unknown> | null>(null);
   const [banner, setBanner] = useState<BannerState | null>(null);
   const [busyKeys, setBusyKeys] = useState<Record<string, boolean>>({});
   const [logs, setLogs] = useState<ActivityLog[]>([]);
@@ -114,6 +131,18 @@ export function App() {
 
   const currentMessages = messagesByConversation[activeConversationId] ?? [];
   const runtime = sessionRuntimeByConversation[activeConversationId] ?? createSessionRuntime();
+  const senderDidDiagnostics = useMemo(
+    () => buildDidDiagnostics(senderDid, readDidHash(selfIdentity)),
+    [senderDid, selfIdentity],
+  );
+  const lookupDidDiagnostics = useMemo(
+    () => buildDidDiagnostics(identityLookupDid, readDidHash(resolvedIdentity)),
+    [identityLookupDid, resolvedIdentity],
+  );
+  const nodeRuntimeDiagnostics = useMemo(
+    () => buildNodeRuntimeDiagnostics(nodeInfo, nodeMetrics),
+    [nodeInfo, nodeMetrics],
+  );
 
   function setBusy(key: string, enabled: boolean) {
     setBusyKeys((previous) => ({ ...previous, [key]: enabled }));
@@ -499,9 +528,28 @@ export function App() {
     setBusy('settings:health', true);
     setBanner(null);
     try {
-      const response = await apiClient.getNodeInfo();
-      addLog('ok', 'settings:health', 'node health checked');
-      setLastResponse({ label: 'settings:health', payload: response, at: new Date().toISOString() });
+      const [info, metrics] = await Promise.all([
+        apiClient.getNodeInfo<Record<string, unknown>>(),
+        apiClient.getNodeMetrics<Record<string, unknown>>(),
+      ]);
+      setNodeInfo(info);
+      setNodeMetrics(metrics);
+
+      const diagnostics = buildNodeRuntimeDiagnostics(info, metrics);
+      addLog(
+        'ok',
+        'settings:health',
+        `level=${diagnostics.level} alerts=${diagnostics.alertCounts.total} requests=${diagnostics.totalRequests ?? 0}`,
+      );
+      setLastResponse({
+        label: 'settings:health',
+        payload: {
+          info,
+          metrics,
+          diagnostics,
+        },
+        at: new Date().toISOString(),
+      });
     } catch (error) {
       handleError('settings:health', error);
     } finally {
@@ -761,7 +809,7 @@ export function App() {
               element={(
                 <section className="card">
                   <h2>Identity</h2>
-                  <p className="card-subtitle">Self identity and DID resolution panel.</p>
+                  <p className="card-subtitle">Self identity, DID resolution and keccak256(utf8(did)) diagnostics.</p>
 
                   <div className="toolbar-grid">
                     <label>
@@ -774,6 +822,34 @@ export function App() {
                     <button type="button" disabled={isBusy('identity:self')} onClick={() => void refreshSelfIdentity()}>Load Self Identity</button>
                     <button type="button" disabled={isBusy('identity:resolve')} onClick={() => void resolveIdentity()}>Resolve DID</button>
                   </div>
+
+                  <article className="session-status-card">
+                    <h3>DID Diagnostics (Sender)</h3>
+                    <div className="status-grid">
+                      <div className="status-row"><span>Raw DID</span><code>{senderDidDiagnostics.input || '-'}</code></div>
+                      <div className="status-row"><span>Normalized DID</span><code>{senderDidDiagnostics.normalizedDid || '-'}</code></div>
+                      <div className="status-row"><span>Method</span><code>{senderDidDiagnostics.method || '-'}</code></div>
+                      <div className="status-row"><span>Identifier</span><code>{senderDidDiagnostics.identifier || '-'}</code></div>
+                      <div className="status-row"><span>Valid did:claw:*</span><code>{senderDidDiagnostics.isValidDid ? 'true' : 'false'}</code></div>
+                      <div className="status-row"><span>DID Hash (keccak256 utf8)</span><code>{senderDidDiagnostics.didHash || '-'}</code></div>
+                      <div className="status-row"><span>Node DID Hash</span><code>{senderDidDiagnostics.remoteDidHash || '-'}</code></div>
+                      <div className="status-row"><span>Hash Match</span><code>{senderDidDiagnostics.hashMatchesRemote === null ? 'unknown' : String(senderDidDiagnostics.hashMatchesRemote)}</code></div>
+                    </div>
+                  </article>
+
+                  <article className="session-status-card">
+                    <h3>DID Diagnostics (Lookup)</h3>
+                    <div className="status-grid">
+                      <div className="status-row"><span>Raw DID</span><code>{lookupDidDiagnostics.input || '-'}</code></div>
+                      <div className="status-row"><span>Normalized DID</span><code>{lookupDidDiagnostics.normalizedDid || '-'}</code></div>
+                      <div className="status-row"><span>Method</span><code>{lookupDidDiagnostics.method || '-'}</code></div>
+                      <div className="status-row"><span>Identifier</span><code>{lookupDidDiagnostics.identifier || '-'}</code></div>
+                      <div className="status-row"><span>Valid did:claw:*</span><code>{lookupDidDiagnostics.isValidDid ? 'true' : 'false'}</code></div>
+                      <div className="status-row"><span>DID Hash (keccak256 utf8)</span><code>{lookupDidDiagnostics.didHash || '-'}</code></div>
+                      <div className="status-row"><span>Node DID Hash</span><code>{lookupDidDiagnostics.remoteDidHash || '-'}</code></div>
+                      <div className="status-row"><span>Hash Match</span><code>{lookupDidDiagnostics.hashMatchesRemote === null ? 'unknown' : String(lookupDidDiagnostics.hashMatchesRemote)}</code></div>
+                    </div>
+                  </article>
 
                   <div className="identity-grid">
                     <article className="mini-card">
@@ -794,7 +870,7 @@ export function App() {
               element={(
                 <section className="card">
                   <h2>Settings</h2>
-                  <p className="card-subtitle">Connection and diagnostics.</p>
+                  <p className="card-subtitle">Connection, node health and runtime diagnostics.</p>
 
                   <div className="toolbar-grid">
                     <label>
@@ -805,13 +881,42 @@ export function App() {
 
                   <div className="button-row">
                     <button type="button" onClick={() => saveApiBase()}>Save API Base</button>
-                    <button type="button" disabled={isBusy('settings:health')} onClick={() => void checkNodeHealth()}>Check Node Health</button>
+                    <button type="button" disabled={isBusy('settings:health')} onClick={() => void checkNodeHealth()}>Refresh Node Diagnostics</button>
                   </div>
+
+                  <article className="session-status-card">
+                    <h3>Node Runtime Diagnostics</h3>
+                    <div className="status-grid">
+                      <div className="status-row"><span>Level</span><code>{nodeRuntimeDiagnostics.level}</code></div>
+                      <div className="status-row"><span>Service</span><code>{nodeRuntimeDiagnostics.service || '-'}</code></div>
+                      <div className="status-row"><span>Version</span><code>{nodeRuntimeDiagnostics.version || '-'}</code></div>
+                      <div className="status-row"><span>Generated At</span><code>{nodeRuntimeDiagnostics.generatedAt || '-'}</code></div>
+                      <div className="status-row"><span>Uptime (sec)</span><code>{nodeRuntimeDiagnostics.uptimeSec ?? '-'}</code></div>
+                      <div className="status-row"><span>Total Requests</span><code>{nodeRuntimeDiagnostics.totalRequests ?? '-'}</code></div>
+                      <div className="status-row"><span>Error Rate Ratio</span><code>{nodeRuntimeDiagnostics.errorRateRatio ?? '-'}</code></div>
+                      <div className="status-row"><span>P95 Latency (ms)</span><code>{nodeRuntimeDiagnostics.p95LatencyMs ?? '-'}</code></div>
+                      <div className="status-row"><span>Mailbox Stale (sec)</span><code>{nodeRuntimeDiagnostics.mailboxStaleSec ?? '-'}</code></div>
+                      <div className="status-row"><span>DLQ Burn Rate</span><code>{nodeRuntimeDiagnostics.dlqBurnRate ?? '-'}</code></div>
+                      <div className="status-row"><span>WARN Alerts</span><code>{nodeRuntimeDiagnostics.alertCounts.warn}</code></div>
+                      <div className="status-row"><span>CRITICAL Alerts</span><code>{nodeRuntimeDiagnostics.alertCounts.critical}</code></div>
+                    </div>
+                  </article>
 
                   <article className="mini-card">
                     <h3>Current Runtime</h3>
                     <pre>{JSON.stringify({ apiBase, activeConversationId }, null, 2)}</pre>
                   </article>
+
+                  <div className="identity-grid">
+                    <article className="mini-card">
+                      <h3>Node Info</h3>
+                      <pre>{JSON.stringify(nodeInfo ?? { hint: 'Run node diagnostics to load /api/v1/node' }, null, 2)}</pre>
+                    </article>
+                    <article className="mini-card">
+                      <h3>Node Metrics</h3>
+                      <pre>{JSON.stringify(nodeMetrics ?? { hint: 'Run node diagnostics to load /api/v1/node/metrics' }, null, 2)}</pre>
+                    </article>
+                  </div>
                 </section>
               )}
             />
