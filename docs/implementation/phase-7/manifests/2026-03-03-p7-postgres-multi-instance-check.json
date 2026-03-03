@@ -1,0 +1,58 @@
+{
+  "phase": "Phase 7",
+  "taskId": "TA-P7-002",
+  "generatedAt": "2026-03-03T04:04:17.062Z",
+  "config": {
+    "pgUrl": "postgres://postgres:***@127.0.0.1:55432/telagent_p7?connect_timeout=3",
+    "schema": "phase7_multi_instance_20260303040416",
+    "serviceInstances": 3,
+    "totalMessages": 180,
+    "dedupeReplayCount": 30
+  },
+  "summary": {
+    "pulledCount": 180,
+    "uniqueSeqCount": 180,
+    "duplicateSeqCount": 0,
+    "missingSeqCount": 0,
+    "dedupeReplayHitCount": 30,
+    "dedupeReplayRate": 1
+  },
+  "decision": "PASS",
+  "details": {
+    "minSeq": 1,
+    "maxSeq": 180,
+    "replayEnvelopeIds": [
+      "p7-mi-env-00011",
+      "p7-mi-env-00002",
+      "p7-mi-env-00053",
+      "p7-mi-env-00023",
+      "p7-mi-env-00032",
+      "p7-mi-env-00029",
+      "p7-mi-env-00038",
+      "p7-mi-env-00026",
+      "p7-mi-env-00044",
+      "p7-mi-env-00047",
+      "p7-mi-env-00071",
+      "p7-mi-env-00041",
+      "p7-mi-env-00035",
+      "p7-mi-env-00056",
+      "p7-mi-env-00050",
+      "p7-mi-env-00062",
+      "p7-mi-env-00014",
+      "p7-mi-env-00059",
+      "p7-mi-env-00005",
+      "p7-mi-env-00020",
+      "p7-mi-env-00065",
+      "p7-mi-env-00077",
+      "p7-mi-env-00074",
+      "p7-mi-env-00098",
+      "p7-mi-env-00017",
+      "p7-mi-env-00068",
+      "p7-mi-env-00086",
+      "p7-mi-env-00101",
+      "p7-mi-env-00083",
+      "p7-mi-env-00104"
+    ],
+    "missingSeq": []
+  }
+}

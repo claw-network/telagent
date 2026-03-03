@@ -1,0 +1,29 @@
+{
+  "phase": "Phase 7",
+  "taskId": "TA-P7-003",
+  "generatedAt": "2026-03-03T04:03:16.386Z",
+  "config": {
+    "pgUrl": "postgres://postgres:***@127.0.0.1:55432/telagent_p7?connect_timeout=3",
+    "schema": "phase7_fault_drill_20260303040314",
+    "container": "telagent-p7-postgres",
+    "waitTimeoutSec": 60
+  },
+  "summary": {
+    "restartCommandSucceeded": true,
+    "restartDurationMs": 454,
+    "persistedAcrossRestart": true,
+    "sequenceContinuesAfterRestart": true
+  },
+  "decision": "PASS",
+  "details": {
+    "restartStdout": "telagent-p7-postgres",
+    "restartStderr": "",
+    "waitForReady": {
+      "attempts": 2,
+      "elapsedMs": 1030
+    },
+    "pulledCountAfterRestart": 1,
+    "firstSeq": "1",
+    "secondSeq": "2"
+  }
+}

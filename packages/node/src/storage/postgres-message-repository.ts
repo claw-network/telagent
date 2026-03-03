@@ -124,29 +124,19 @@ export class PostgresMessageRepository implements MailboxStore {
   }
 
   async nextSequence(conversationId: string): Promise<bigint> {
-    return this.withTransaction(async (client) => {
-      const selected = await client.query<{ last_seq: string }>(
-        `SELECT last_seq
-         FROM ${this.table('mailbox_sequences')}
-         WHERE conversation_id = $1
-         FOR UPDATE`,
-        [conversationId],
-      );
+    const result = await this.pool.query<{ last_seq: string }>(
+      `INSERT INTO ${this.table('mailbox_sequences')} (conversation_id, last_seq)
+       VALUES ($1, 1)
+       ON CONFLICT(conversation_id) DO UPDATE SET
+         last_seq = ${this.table('mailbox_sequences')}.last_seq + 1
+       RETURNING last_seq::text AS last_seq`,
+      [conversationId],
+    );
 
-      const next = selected.rowCount && selected.rows[0]
-        ? BigInt(selected.rows[0].last_seq) + 1n
-        : 1n;
-
-      await client.query(
-        `INSERT INTO ${this.table('mailbox_sequences')} (conversation_id, last_seq)
-         VALUES ($1, $2)
-         ON CONFLICT(conversation_id) DO UPDATE SET
-           last_seq = EXCLUDED.last_seq`,
-        [conversationId, next.toString()],
-      );
-
-      return next;
-    });
+    if (!result.rowCount || !result.rows[0]) {
+      throw new Error(`failed to allocate sequence for conversation(${conversationId})`);
+    }
+    return BigInt(result.rows[0].last_seq);
   }
 
   async saveEnvelope(record: StoredEnvelopeRecord): Promise<void> {

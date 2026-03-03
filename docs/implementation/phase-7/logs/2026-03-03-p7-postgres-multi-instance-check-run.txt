@@ -1,0 +1,4 @@
+[TA-P7-002] pulled=180 uniqueSeq=180 missingSeq=0
+[TA-P7-002] dedupeReplay=30/30
+[TA-P7-002] decision=PASS
+[TA-P7-002] output=/Users/xiasenhai/workspace/private-repo/Bots/telagent/docs/implementation/phase-7/manifests/2026-03-03-p7-postgres-multi-instance-check.json

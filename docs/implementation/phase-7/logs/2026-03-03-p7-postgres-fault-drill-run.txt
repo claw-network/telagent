@@ -1,0 +1,4 @@
+[TA-P7-003] restartCommandSucceeded=true restartDurationMs=454
+[TA-P7-003] persistedAcrossRestart=true sequenceContinuesAfterRestart=true
+[TA-P7-003] decision=PASS
+[TA-P7-003] output=/Users/xiasenhai/workspace/private-repo/Bots/telagent/docs/implementation/phase-7/manifests/2026-03-03-p7-postgres-fault-drill.json
