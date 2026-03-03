@@ -366,11 +366,12 @@
 - `TA-P12-003` 机读清单：`docs/implementation/phase-12/manifests/2026-03-03-p12-revoked-did-isolation-check.json`。
 - `TA-P12-004`：DONE（联邦 SLO 自动化：DLQ 自动重放 + burn-rate 告警，见 `docs/implementation/phase-12/ta-p12-004-federation-slo-automation-2026-03-03.md`）。
 - `TA-P12-004` 机读清单：`docs/implementation/phase-12/manifests/2026-03-03-p12-federation-slo-automation-check.json`。
-- `TA-P12-005`：TODO（Agent SDK Python Beta）。
+- `TA-P12-005`：DONE（Agent SDK Python Beta，见 `docs/implementation/phase-12/ta-p12-005-agent-sdk-python-beta-2026-03-03.md`）。
+- `TA-P12-005` 机读清单：`docs/implementation/phase-12/manifests/2026-03-03-p12-python-sdk-quickstart-check.json`。
 - `TA-P12-006`：TODO（Web Console v2.1 运营与应急面板）。
 - `TA-P12-007`：TODO（多节点密钥轮换编排脚本）。
 - `TA-P12-008`：TODO（Phase 12 Gate 收口）。
-- 阶段状态：Phase 12 执行中，进入 `TA-P12-005`。
+- 阶段状态：Phase 12 执行中，进入 `TA-P12-006`。
 
 ## 5. 周会与 Gate 节奏建议
 

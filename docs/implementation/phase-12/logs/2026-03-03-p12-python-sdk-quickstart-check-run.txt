@@ -1,0 +1,6 @@
+[TA-P12-005] createGroupOk=True
+[TA-P12-005] sendMessageOk=True
+[TA-P12-005] pullMessageOk=True
+[TA-P12-005] integratesWithin30Minutes=True elapsedMs=9
+[TA-P12-005] decision=PASS
+[TA-P12-005] output=/Users/xiasenhai/Workspace/OpenClaw/telagent/docs/implementation/phase-12/manifests/2026-03-03-p12-python-sdk-quickstart-check.json

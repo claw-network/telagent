@@ -3,6 +3,8 @@ node_modules
 .pnpm-store
 .env
 *.log
+__pycache__/
+*.py[cod]
 
 packages/*/dist
 packages/*/cache
