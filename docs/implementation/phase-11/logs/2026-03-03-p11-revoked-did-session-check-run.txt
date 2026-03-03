@@ -1,0 +1,6 @@
+.                                        |  WARN  Unsupported engine: wanted: {"node":">=22 <25"} (current: {"node":"v25.6.1","pnpm":"10.18.1"})
+[TA-P11-007] preRevokeSendSuccess=true
+[TA-P11-007] postRevokeSendBlocked=true blockedErrorCode=UNPROCESSABLE_ENTITY
+[TA-P11-007] mailboxIsolationAfterRevoke=true
+[TA-P11-007] decision=PASS
+[TA-P11-007] output=/Users/xiasenhai/workspace/private-repo/Bots/telagent/docs/implementation/phase-11/manifests/2026-03-03-p11-revoked-did-session-check.json

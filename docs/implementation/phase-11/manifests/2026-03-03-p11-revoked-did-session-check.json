@@ -1,0 +1,34 @@
+{
+  "phase": "Phase 11",
+  "taskId": "TA-P11-007",
+  "generatedAt": "2026-03-03T08:33:26.329Z",
+  "summary": {
+    "preRevokeSendSuccess": true,
+    "postRevokeSendBlocked": true,
+    "mailboxIsolationAfterRevoke": true,
+    "blockedErrorCode": "UNPROCESSABLE_ENTITY"
+  },
+  "decision": "PASS",
+  "details": {
+    "did": "did:claw:zRevokedCase",
+    "conversationId": "direct:revoked-case",
+    "mailboxItems": [
+      {
+        "envelopeId": "p11-revoked-did-send-1",
+        "conversationId": "direct:revoked-case",
+        "conversationType": "direct",
+        "routeHint": {
+          "targetDomain": "node-a.tel",
+          "mailboxKeyId": "signal-key-v1"
+        },
+        "sealedHeader": "0x11",
+        "seq": "1",
+        "ciphertext": "0x22",
+        "contentType": "text",
+        "sentAtMs": 1772582400000,
+        "ttlSec": 60,
+        "provisional": false
+      }
+    ]
+  }
+}
