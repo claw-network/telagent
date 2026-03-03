@@ -1,0 +1,5 @@
+
+> @telagent/web@0.1.0 test /Users/xiasenhai/Workspace/OpenClaw/telagent/packages/web
+> echo 'no tests for web package'
+
+no tests for web package
