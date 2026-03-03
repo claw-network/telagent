@@ -167,7 +167,8 @@
 - 已完成：`TA-P4-009`（E2E 主链路：建群->邀请->接受->文本/图片/文件）
 - 已完成：`TA-P4-010`（E2E 离线 24h 拉取 + 去重排序）
 - 已完成：`TA-P4-011`（<=500 成员群压测与 SLO 验证）
-- 下一批 Ready：`TA-P4-012`
+- 已完成：`TA-P4-012`（Phase 4 Gate 评审与阶段关闭）
+- 下一批 Ready：`TA-P5-001`、`TA-P5-002`、`TA-P5-003`、`TA-P5-004`、`TA-P5-005`、`TA-P5-006`
 
 ## 4.2 Blockers（2026-03-03 更新）
 
@@ -231,8 +232,9 @@
 - `TA-P4-009`：DONE（主链路 E2E，见 `docs/implementation/phase-4/ta-p4-009-e2e-main-path-2026-03-03.md`）。
 - `TA-P4-010`：DONE（离线 24h E2E，见 `docs/implementation/phase-4/ta-p4-010-e2e-offline-24h-dedupe-order-2026-03-03.md`）。
 - `TA-P4-011`：DONE（压测通过，见 `docs/implementation/phase-4/ta-p4-011-load-test-500-members-2026-03-03.md`）。
+- `TA-P4-012`：DONE（Gate 评审通过，见 `docs/implementation/phase-4/ta-p4-012-phase4-gate-review-2026-03-03.md`）。
 - 测试结果：`@telagent/node` `28/28` 通过（日志：`docs/implementation/phase-4/logs/2026-03-03-p4-node-test.txt`），压测 `evaluation.passed=true`。
-- 阶段状态：Phase 4 进行中，允许继续推进 `TA-P4-012`。
+- 阶段状态：Phase 4 已关闭（Gate=PASS），允许进入 Phase 5。
 
 ## 5. 周会与 Gate 节奏建议
 
