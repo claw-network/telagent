@@ -226,8 +226,9 @@
 - 已完成：`TA-P14-003`（消息拉取稳定游标改造，修复 cleanup/retraction 导致分页跳项风险）
 - 已完成：`TA-P14-004`（direct 会话参与方访问控制，非参与方写入返回 RFC7807）
 - 已完成：`TA-P14-005`（TS/Python SDK 行为与错误语义收敛，覆盖 FORBIDDEN direct ACL 场景）
+- 已完成：`TA-P14-006`（Phase 14 Gate 收口，阶段关闭）
 - 已规划：`TA-P15-001`（WebApp 工业级规划总纲冻结）
-- 下一批 Ready：执行 `TA-P14-006`（Phase 14 Gate 收口）。
+- 下一批 Ready：执行 `TA-P15-002`（功能域与 IA 设计）与 `TA-P15-003`（设计系统与组件规范）。
 
 ## 4.2 Blockers（2026-03-03 更新）
 
@@ -418,14 +419,14 @@
 - `TA-P14-003`：DONE（消息拉取稳定游标改造，见 `docs/implementation/phase-14/ta-p14-003-stable-pull-cursor-2026-03-03.md`）。
 - `TA-P14-004`：DONE（direct 会话参与方访问控制，见 `docs/implementation/phase-14/ta-p14-004-direct-session-acl-2026-03-03.md`）。
 - `TA-P14-005`：DONE（TS/Python SDK 行为收敛，见 `docs/implementation/phase-14/ta-p14-005-sdk-parity-and-error-semantics-2026-03-03.md`）。
-- `TA-P14-006`：TODO（Phase 14 Gate 收口）。
-- 阶段状态：Phase 14 执行中（产品核心能力与高优缺陷收敛）。
+- `TA-P14-006`：DONE（Phase 14 Gate 收口，见 `docs/implementation/phase-14/ta-p14-006-phase14-gate-review-2026-03-03.md` 与 `docs/implementation/gates/phase-14-gate.md`）。
+- 阶段状态：Phase 14 已关闭（Gate=PASS）。
 
 ## 4.20 Phase 15 Web App 工业级设计与多平台快照（2026-03-03）
 
 - `TA-P15-001`：DONE（Web App 工业级规划总纲冻结，见 `docs/implementation/phase-15/ta-p15-001-webapp-industrial-program-2026-03-03.md`）。
 - `TA-P15-002` ~ `TA-P15-007`：TODO（进入功能、设计系统、多平台、质量体系分解阶段）。
-- 阶段状态：Phase 15 已立项（PLANNED），等待 Phase 14 关键缺陷收敛后转入执行。
+- 阶段状态：Phase 15 已满足启动条件（READY），可进入执行。
 
 ## 5. 周会与 Gate 节奏建议
 

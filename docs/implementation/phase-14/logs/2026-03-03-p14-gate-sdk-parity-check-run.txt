@@ -1,0 +1,7 @@
+[TA-P14-005] coreMethodParityPass=true
+[TA-P14-005] apiPrefixParityPass=true
+[TA-P14-005] errorModelParityPass=true
+[TA-P14-005] identityEncodingParityPass=true
+[TA-P14-005] directAclErrorSemanticsParityPass=true
+[TA-P14-005] decision=PASS
+[TA-P14-005] output=/Users/xiasenhai/Workspace/OpenClaw/telagent/docs/implementation/phase-14/manifests/2026-03-03-p14-sdk-parity-check.json
