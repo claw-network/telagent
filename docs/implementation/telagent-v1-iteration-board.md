@@ -154,25 +154,18 @@
 
 ## 4. 当前可执行看板（即刻启动）
 
-## 4.1 Ready This Week
+## 4.1 Ready This Week（2026-03-03 更新）
 
-- `TA-P0-001` 冻结 API 路径规则（PO）
-- `TA-P0-002` 冻结 success/error envelope（PO）
-- `TA-P0-003` 冻结错误码映射（PO）
-- `TA-P0-004` 冻结 DID hash/controller（SE）
-- `TA-P0-005` 输出状态机 RFC（BE-1）
-- `TA-P0-006` 输出 DomainProofV1（SE）
-- `TA-P0-007` 冻结测试策略（QA）
-- `TA-P0-008` Gate 模板与评审机制（TL）
+- 已完成：`TA-P4-001`（Signal/MLS 适配层接口冻结）
+- 已完成：`TA-P4-002`（Envelope 序号生成与单调保障）
+- 已完成：`TA-P4-003`（Envelope 去重与幂等写入）
+- 已完成：`TA-P4-004`（离线邮箱 TTL 清理任务）
+- 下一批 Ready：`TA-P4-005`、`TA-P4-006`、`TA-P4-007`、`TA-P4-008`
 
-## 4.2 Blockers（2026-03-02 更新）
+## 4.2 Blockers（2026-03-03 更新）
 
-- 基线验证状态：提权复验后 `pnpm install && pnpm -r build && pnpm -r test` 已通过，`P0-PATCH-001` 已关闭。
-- 残余限制：受限沙箱环境仍可能出现 DNS/listen 限制，已作为执行环境说明归档，不再阻断 Phase 0 Gate。
-- 远端写入状态：已恢复，`git push` 成功（`2026-03-02`）。
-- 签字状态：`P0-PATCH-002` 已关闭（TL/PO/QA 实名签字已补齐）。
-- Phase 1 合约阻塞状态：`TA-P1-007/008/009` 已在 testnet 完成复验并关闭。
-- 跟踪方式：统一纳入 `docs/implementation/gates/phase-0-gate.md` 与 `docs/implementation/gates/phase-0-risk-register.md`。
+- 当前无硬阻塞项。
+- 已知环境注意：首次运行 Node 索引器测试前需确保 `better-sqlite3` 本地绑定可用（若缺失可执行 `pnpm run build-release` 于 `node_modules/.pnpm/better-sqlite3@12.6.2/node_modules/better-sqlite3`）。
 
 ## 4.3 Definition of Done（每个任务统一标准）
 
@@ -217,6 +210,15 @@
 - `TA-P3-007`：链上 vs 读模型巡检 `mismatchCount=0`（见 `docs/implementation/phase-3/manifests/2026-03-02-p3-consistency-check.json`）。
 - `TA-P3-008`：DONE（`docs/implementation/gates/phase-3-gate.md` 结论 `PASS`）。
 - 阶段结论：Phase 3 已正式关闭，允许进入 Phase 4。
+
+## 4.9 Phase 4A 进展快照（2026-03-03）
+
+- `TA-P4-001`：DONE（见 `docs/implementation/phase-4/ta-p4-001-signal-mls-adapter-interface-freeze-2026-03-03.md`）。
+- `TA-P4-002`：DONE（新增 `SequenceAllocator`，见 `docs/implementation/phase-4/ta-p4-002-seq-allocator-monotonic-2026-03-03.md`）。
+- `TA-P4-003`：DONE（`envelopeId` 幂等去重，见 `docs/implementation/phase-4/ta-p4-003-envelope-dedupe-idempotent-write-2026-03-03.md`）。
+- `TA-P4-004`：DONE（TTL 清理任务与定时清理，见 `docs/implementation/phase-4/ta-p4-004-mailbox-ttl-cleanup-task-2026-03-03.md`）。
+- 测试结果：`@telagent/node` `15/15` 通过（日志：`docs/implementation/phase-4/logs/2026-03-03-p4-node-test.txt`）。
+- 阶段状态：Phase 4 进行中，允许继续推进 `TA-P4-005` ~ `TA-P4-008`。
 
 ## 5. 周会与 Gate 节奏建议
 

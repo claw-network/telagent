@@ -7,6 +7,7 @@ export interface AppConfig {
   host: string;
   port: number;
   dataDir: string;
+  mailboxCleanupIntervalSec: number;
   chain: ChainConfig;
 }
 
@@ -37,6 +38,7 @@ export function loadConfigFromEnv(): AppConfig {
     host: process.env.TELAGENT_API_HOST || '127.0.0.1',
     port: Number(process.env.TELAGENT_API_PORT || 9528),
     dataDir,
+    mailboxCleanupIntervalSec: Number(process.env.TELAGENT_MAILBOX_CLEANUP_INTERVAL_SEC || 60),
     chain,
   };
 }

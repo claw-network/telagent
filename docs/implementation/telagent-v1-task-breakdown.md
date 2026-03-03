@@ -69,10 +69,10 @@ flowchart LR
 | TA-P3-007 | Phase 3 | 一致性巡检脚本（链上 vs 读模型） | Backend Engineer | 1 | TA-P3-003, TA-P3-005 | consistency checker | 巡检误差率为 0 | DONE |
 | TA-P3-008 | Phase 3 | Indexer 阶段 Gate 评审 | PM/Tech Lead | 0.5 | TA-P3-006, TA-P3-007 | Gate 结论 | Phase 3 正式关闭 | DONE |
 
-| TA-P4-001 | Phase 4 | Signal/MLS 适配层接口冻结 | Protocol Owner | 1 | TA-P0-005 | 协议接口文档 | 参数与状态机一致 | TODO |
-| TA-P4-002 | Phase 4 | 实现 Envelope 序号生成与单调保障 | Backend Engineer | 1 | TA-P4-001 | seq allocator | 会话内 seq 单调递增 | TODO |
-| TA-P4-003 | Phase 4 | 实现 Envelope 去重与幂等写入 | Backend Engineer | 1 | TA-P4-002 | dedupe store | 重复 envelope 不重复投递 | TODO |
-| TA-P4-004 | Phase 4 | 实现离线邮箱 TTL 清理任务 | Backend Engineer | 1 | TA-P4-003 | mailbox cleaner | 超时消息按策略清理 | TODO |
+| TA-P4-001 | Phase 4 | Signal/MLS 适配层接口冻结 | Protocol Owner | 1 | TA-P0-005 | 协议接口文档 | 参数与状态机一致 | DONE |
+| TA-P4-002 | Phase 4 | 实现 Envelope 序号生成与单调保障 | Backend Engineer | 1 | TA-P4-001 | seq allocator | 会话内 seq 单调递增 | DONE |
+| TA-P4-003 | Phase 4 | 实现 Envelope 去重与幂等写入 | Backend Engineer | 1 | TA-P4-002 | dedupe store | 重复 envelope 不重复投递 | DONE |
+| TA-P4-004 | Phase 4 | 实现离线邮箱 TTL 清理任务 | Backend Engineer | 1 | TA-P4-003 | mailbox cleaner | 超时消息按策略清理 | DONE |
 | TA-P4-005 | Phase 4 | 实现 provisional 消息标记/剔除逻辑 | Backend Engineer | 1.5 | TA-P3-005, TA-P4-003 | provisional handler | 失败/reorg 后可剔除 | TODO |
 | TA-P4-006 | Phase 4 | 实现附件 init/complete 与清单校验 | Backend Engineer | 1.5 | TA-P2-008 | attachment service | 50MB 限制与校验生效 | TODO |
 | TA-P4-007 | Phase 4 | 实现联邦接口鉴权/限流/重试 | Security + Backend | 2 | TA-P2-008 | federation hardening | 恶意重放与洪泛可控 | TODO |
@@ -163,3 +163,12 @@ flowchart LR
 | TA-P3-006 | DONE | `docs/implementation/phase-3/ta-p3-006-reorg-injection-test-2026-03-02.md`, `packages/node/src/indexer/group-indexer.test.ts`, `docs/implementation/phase-3/logs/2026-03-02-p3-node-test.txt` | 无 | 进入 `TA-P3-008` Gate 材料汇总 |
 | TA-P3-007 | DONE | `docs/implementation/phase-3/ta-p3-007-consistency-checker-2026-03-02.md`, `packages/node/scripts/run-phase3-consistency-check.ts`, `docs/implementation/phase-3/logs/2026-03-02-p3-consistency-check-run.txt`, `docs/implementation/phase-3/manifests/2026-03-02-p3-consistency-check.json` | 无 | 进入 `TA-P3-008` Gate 评审 |
 | TA-P3-008 | DONE | `docs/implementation/gates/phase-3-gate.md`, `docs/implementation/phase-3/README.md` | 无 | Phase 3 已正式关闭，按 Gate 结论进入 Phase 4 |
+
+## 10. Phase 4A 执行快照（2026-03-03）
+
+| Task ID | 状态 | 证据链接 | 阻塞项 | 下一步动作 |
+| --- | --- | --- | --- | --- |
+| TA-P4-001 | DONE | `docs/implementation/phase-4/phase-4-boundary-and-acceptance-2026-03-03.md`, `docs/implementation/phase-4/ta-p4-001-signal-mls-adapter-interface-freeze-2026-03-03.md`, `packages/protocol/src/crypto-adapters.ts`, `packages/protocol/src/index.ts`, `packages/protocol/README.md` | 无 | 继续推进 `TA-P4-002` 与 `TA-P4-003` |
+| TA-P4-002 | DONE | `docs/implementation/phase-4/ta-p4-002-seq-allocator-monotonic-2026-03-03.md`, `packages/node/src/services/sequence-allocator.ts`, `packages/node/src/services/message-service.ts`, `packages/node/src/services/message-service.test.ts`, `docs/implementation/phase-4/logs/2026-03-03-p4-node-test.txt` | 无 | 继续推进 `TA-P4-003` |
+| TA-P4-003 | DONE | `docs/implementation/phase-4/ta-p4-003-envelope-dedupe-idempotent-write-2026-03-03.md`, `packages/protocol/src/schema.ts`, `packages/node/src/services/message-service.ts`, `packages/node/src/services/message-service.test.ts`, `docs/implementation/phase-4/logs/2026-03-03-p4-node-test.txt` | 无 | 继续推进 `TA-P4-004` |
+| TA-P4-004 | DONE | `docs/implementation/phase-4/ta-p4-004-mailbox-ttl-cleanup-task-2026-03-03.md`, `packages/node/src/app.ts`, `packages/node/src/config.ts`, `.env.example`, `packages/node/src/services/message-service.ts`, `packages/node/src/services/message-service.test.ts`, `docs/implementation/phase-4/logs/2026-03-03-p4-node-build.txt`, `docs/implementation/phase-4/logs/2026-03-03-p4-node-test.txt` | 无 | 进入 `TA-P4-005` |

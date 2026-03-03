@@ -12,6 +12,7 @@ import { MessageService } from './services/message-service.js';
 import { GroupRepository } from './storage/group-repository.js';
 
 export class TelagentNode {
+  private mailboxCleanupTimer: NodeJS.Timeout | null = null;
   private readonly contracts: ContractProvider;
   private readonly repo: GroupRepository;
   private readonly identityService: IdentityAdapterService;
@@ -57,11 +58,35 @@ export class TelagentNode {
   async start(): Promise<void> {
     await this.indexer.start();
     await this.apiServer.start();
+    this.startMailboxCleaner();
   }
 
   async stop(): Promise<void> {
+    this.stopMailboxCleaner();
     await this.apiServer.stop();
     await this.indexer.stop();
     await this.contracts.destroy();
+  }
+
+  private startMailboxCleaner(): void {
+    if (this.mailboxCleanupTimer) {
+      return;
+    }
+
+    const intervalSec = Number.isFinite(this.config.mailboxCleanupIntervalSec)
+      ? Math.max(5, Math.floor(this.config.mailboxCleanupIntervalSec))
+      : 60;
+    this.mailboxCleanupTimer = setInterval(() => {
+      this.messageService.cleanupExpired();
+    }, intervalSec * 1000);
+    this.mailboxCleanupTimer.unref();
+  }
+
+  private stopMailboxCleaner(): void {
+    if (!this.mailboxCleanupTimer) {
+      return;
+    }
+    clearInterval(this.mailboxCleanupTimer);
+    this.mailboxCleanupTimer = null;
   }
 }

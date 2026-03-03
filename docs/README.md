@@ -11,8 +11,11 @@
 5. [TelAgent v1 Agent 接力启动清单（Day 1）](./implementation/telagent-v1-agent-handoff-day1.md)
 6. [Phase 0 规范冻结产出（TA-P0-001 ~ TA-P0-008）](./implementation/phase-0/README.md)
 7. [Phase 1 执行产出（TA-P1-*）](./implementation/phase-1/README.md)
-8. [Phase Gate 模板与记录](./implementation/gates/README.md)
-9. [TL 广播模板（给所有 agent）](./implementation/telagent-v1-tl-broadcast-template.md)
+8. [Phase 2 执行产出（TA-P2-*）](./implementation/phase-2/README.md)
+9. [Phase 3 执行产出（TA-P3-*）](./implementation/phase-3/README.md)
+10. [Phase 4 执行产出（TA-P4-*）](./implementation/phase-4/README.md)
+11. [Phase Gate 模板与记录](./implementation/gates/README.md)
+12. [TL 广播模板（给所有 agent）](./implementation/telagent-v1-tl-broadcast-template.md)
 
 ## 2) 文档用途
 

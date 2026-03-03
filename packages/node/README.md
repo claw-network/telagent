@@ -9,7 +9,8 @@ Node runtime for TelAgent v1.
 - Group lifecycle on chain (`create/invite/accept/remove`)
 - Gas preflight with `INSUFFICIENT_GAS_TOKEN_BALANCE`
 - Group state indexer with pending/finalized semantics
-- Message envelopes with at-least-once + per-conversation ordering
+- Message envelopes with at-least-once + per-conversation ordering + envelopeId idempotency
+- Offline mailbox TTL cleanup task (`TELAGENT_MAILBOX_CLEANUP_INTERVAL_SEC`)
 - Attachment and federation endpoints
 
 ## Run

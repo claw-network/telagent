@@ -51,6 +51,7 @@ export const RemoveMemberSchema = z.object({
 });
 
 export const SendMessageSchema = z.object({
+  envelopeId: z.string().min(1).max(128).optional(),
   senderDid: AgentDidSchema,
   conversationId: z.string().min(1),
   conversationType: z.enum(['direct', 'group']),
