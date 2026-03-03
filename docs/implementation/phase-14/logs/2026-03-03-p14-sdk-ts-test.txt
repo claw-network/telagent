@@ -1,0 +1,24 @@
+
+> @telagent/sdk@0.1.0 pretest /Users/xiasenhai/Workspace/OpenClaw/telagent/packages/sdk
+> pnpm build
+
+
+> @telagent/sdk@0.1.0 build /Users/xiasenhai/Workspace/OpenClaw/telagent/packages/sdk
+> tsc -p tsconfig.json
+
+
+> @telagent/sdk@0.1.0 test /Users/xiasenhai/Workspace/OpenClaw/telagent/packages/sdk
+> node --test dist/**/*.test.js
+
+✔ TA-P11-008 SDK quickstart covers create-group and send/pull message flow (44.873857ms)
+✔ TA-P11-008 SDK maps RFC7807 errors to TelagentSdkError (9.490601ms)
+✔ TA-P14-005 SDK getIdentity encodes DID path segment (4.819717ms)
+✔ TA-P14-005 SDK maps direct ACL FORBIDDEN RFC7807 to TelagentSdkError (5.411714ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 4
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 206.989866

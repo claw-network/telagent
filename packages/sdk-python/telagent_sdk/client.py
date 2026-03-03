@@ -4,7 +4,7 @@ import json
 from http import HTTPStatus
 from typing import Any, Mapping, MutableMapping
 from urllib.error import HTTPError, URLError
-from urllib.parse import urlencode, urljoin
+from urllib.parse import quote, urlencode, urljoin
 from urllib.request import Request, urlopen
 
 JsonObject = dict[str, Any]
@@ -51,7 +51,7 @@ class TelagentSdk:
         return self._request_data("GET", "/api/v1/identities/self")
 
     def get_identity(self, did: str) -> JsonObject:
-        return self._request_data("GET", f"/api/v1/identities/{did}")
+        return self._request_data("GET", f"/api/v1/identities/{quote(did, safe='')}")
 
     def create_group(self, payload: Mapping[str, Any]) -> JsonObject:
         return self._request_data("POST", "/api/v1/groups", payload=payload)

@@ -241,6 +241,71 @@ class TelagentSdkTests(unittest.TestCase):
         self.assertEqual(raised.exception.status, 422)
         self.assertEqual(raised.exception.problem.get("code"), "UNPROCESSABLE_ENTITY")
 
+    def test_get_identity_escapes_did_path_segment(self) -> None:
+        observed_path = {"value": ""}
+
+        def router(handler: BaseHTTPRequestHandler, path: str) -> None:
+            observed_path["value"] = path
+            write_json(
+                handler,
+                200,
+                {
+                    "data": {
+                        "did": "did:claw:zAlice",
+                        "didHash": f"0x{'1' * 64}",
+                        "controller": f"0x{'2' * 40}",
+                        "publicKey": "0x11",
+                        "isActive": True,
+                        "resolvedAtMs": 1000,
+                    }
+                },
+            )
+
+        harness = start_server(router)
+        self.addCleanup(harness.close)
+
+        sdk = TelagentSdk(base_url=harness.base_url)
+        sdk.get_identity("did:claw:zAlice/with-slash")
+        self.assertEqual(observed_path["value"], "/api/v1/identities/did%3Aclaw%3AzAlice%2Fwith-slash")
+
+    def test_maps_direct_acl_forbidden_problem_to_sdk_error(self) -> None:
+        def router(handler: BaseHTTPRequestHandler, _path: str) -> None:
+            write_json(
+                handler,
+                403,
+                {
+                    "type": "https://telagent.dev/errors/forbidden",
+                    "title": "Forbidden",
+                    "status": 403,
+                    "detail": "senderDid is not a direct conversation participant for conversation(direct:acl-case)",
+                    "code": "FORBIDDEN",
+                },
+                content_type="application/problem+json; charset=utf-8",
+            )
+
+        harness = start_server(router)
+        self.addCleanup(harness.close)
+
+        sdk = TelagentSdk(base_url=harness.base_url)
+        with self.assertRaises(TelagentSdkError) as raised:
+            sdk.send_message(
+                {
+                    "senderDid": "did:claw:zCarol",
+                    "conversationId": "direct:acl-case",
+                    "conversationType": "direct",
+                    "targetDomain": "alpha.tel",
+                    "mailboxKeyId": "mailbox-1",
+                    "sealedHeader": "0x11",
+                    "ciphertext": "0x22",
+                    "contentType": "text",
+                    "ttlSec": 60,
+                }
+            )
+
+        self.assertEqual(raised.exception.status, 403)
+        self.assertEqual(raised.exception.problem.get("code"), "FORBIDDEN")
+        self.assertIn("direct conversation participant", str(raised.exception.problem.get("detail", "")))
+
 
 if __name__ == "__main__":
     unittest.main()

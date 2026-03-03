@@ -149,7 +149,7 @@ flowchart LR
 | TA-P14-002 | Phase 14 | 删除默认 Web 运维面板，保留核心聊天流程 | Frontend | 1 | TA-P14-001 | web app cleanup + build log | 默认界面仅保留核心链路入口，构建通过 | DONE |
 | TA-P14-003 | Phase 14 | 消息拉取稳定游标改造（替代 offset 风险） | Backend + QA | 1.5 | TA-P14-001 | pull cursor upgrade + tests | 清理/撤回场景下分页稳定无重复/跳项 | DONE |
 | TA-P14-004 | Phase 14 | direct 会话访问控制强化（参与方约束） | Backend + Security | 1.5 | TA-P14-001 | direct ACL guard + tests | 非参与方消息写入被拒绝并返回 RFC7807 | DONE |
-| TA-P14-005 | Phase 14 | TS/Python SDK 核心行为收敛 | DX + Backend + QA | 1 | TA-P14-003, TA-P14-004 | sdk parity extension + checks | 参数、错误语义、返回结构一致 | TODO |
+| TA-P14-005 | Phase 14 | TS/Python SDK 核心行为收敛 | DX + Backend + QA | 1 | TA-P14-003, TA-P14-004 | sdk parity extension + checks | 参数、错误语义、返回结构一致 | DONE |
 | TA-P14-006 | Phase 14 | Phase 14 Gate 评审与收口 | TL + QA | 0.5 | TA-P14-002, TA-P14-003, TA-P14-004, TA-P14-005 | gate 结论文档 | Phase 14 正式关闭 | TODO |
 | TA-P15-001 | Phase 15 | Web App 工业级规划总纲冻结 | TL + FE + BE + QA + DX | 1 | TA-P14-001 | industrial planning doc | 功能/架构/平台/质量主线冻结 | DONE |
 | TA-P15-002 | Phase 15 | 功能域与 IA 设计（会话/消息/群组/身份） | FE + Product + BE | 2 | TA-P15-001 | IA + feature matrix | 关键用户旅程与页面结构冻结 | TODO |
@@ -358,8 +358,8 @@ flowchart LR
 | TA-P14-002 | DONE | `docs/implementation/phase-14/ta-p14-002-web-ops-panel-removal-2026-03-03.md`, `packages/web/src/index.html`, `packages/web/src/main.js` | 无 | 进入 `TA-P14-003`（消息拉取稳定游标改造） |
 | TA-P14-003 | DONE | `docs/implementation/phase-14/ta-p14-003-stable-pull-cursor-2026-03-03.md`, `packages/node/src/services/message-service.ts`, `packages/node/src/storage/message-repository.ts`, `packages/node/src/storage/postgres-message-repository.ts`, `packages/node/src/services/message-service.test.ts`, `packages/node/src/phase4-e2e.test.ts`, `packages/node/scripts/run-phase14-stable-pull-cursor-check.ts`, `docs/implementation/phase-14/logs/2026-03-03-p14-node-build.txt`, `docs/implementation/phase-14/logs/2026-03-03-p14-node-test.txt`, `docs/implementation/phase-14/logs/2026-03-03-p14-stable-pull-cursor-check-run.txt`, `docs/implementation/phase-14/manifests/2026-03-03-p14-stable-pull-cursor-check.json` | 无 | 进入 `TA-P14-004`（direct 会话参与方访问控制） |
 | TA-P14-004 | DONE | `docs/implementation/phase-14/ta-p14-004-direct-session-acl-2026-03-03.md`, `packages/node/src/services/message-service.ts`, `packages/node/src/storage/message-repository.ts`, `packages/node/src/storage/postgres-message-repository.ts`, `packages/node/src/services/message-service.test.ts`, `packages/node/src/phase4-e2e.test.ts`, `packages/node/scripts/run-phase14-direct-session-acl-check.ts`, `docs/implementation/phase-14/logs/2026-03-03-p14-node-build-ta-p14-004.txt`, `docs/implementation/phase-14/logs/2026-03-03-p14-node-test-ta-p14-004.txt`, `docs/implementation/phase-14/logs/2026-03-03-p14-direct-session-acl-check-run.txt`, `docs/implementation/phase-14/manifests/2026-03-03-p14-direct-session-acl-check.json` | 无 | 进入 `TA-P14-005`（TS/Python SDK 行为收敛） |
-| TA-P14-005 | TODO | `docs/implementation/phase-14/README.md` | 无 | TS/Python SDK 行为与错误语义收敛并补齐专项校验 |
-| TA-P14-006 | TODO | `docs/implementation/phase-14/README.md` | 无 | 阶段回归与 Gate 收口 |
+| TA-P14-005 | DONE | `docs/implementation/phase-14/ta-p14-005-sdk-parity-and-error-semantics-2026-03-03.md`, `packages/sdk/src/index.test.ts`, `packages/sdk-python/telagent_sdk/client.py`, `packages/sdk-python/tests/test_client.py`, `packages/node/scripts/run-phase14-sdk-parity-check.ts`, `docs/implementation/phase-14/logs/2026-03-03-p14-sdk-ts-test.txt`, `docs/implementation/phase-14/logs/2026-03-03-p14-sdk-python-test.txt`, `docs/implementation/phase-14/logs/2026-03-03-p14-sdk-parity-check-run.txt`, `docs/implementation/phase-14/manifests/2026-03-03-p14-sdk-parity-check.json` | 无 | 进入 `TA-P14-006`（Phase 14 Gate 收口） |
+| TA-P14-006 | TODO | `docs/implementation/phase-14/README.md` | 无 | 执行 Phase 14 汇总回归与 Gate 文档收口 |
 
 ## 21. Phase 15 Web App 工业级设计与多平台建设（2026-03-03）
 
