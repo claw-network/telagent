@@ -3,7 +3,7 @@
 - 文档版本：v1.0
 - 基线计划起始日：2026-03-02（周一）
 - 基线计划结束日：2026-05-17（周日）
-- 适用范围：Phase 0 -> Phase 13（发布后改进 + 联邦灰度兼容 + 自动化回滚 + v1.1/v1.2/v0.2.0 增强）
+- 适用范围：Phase 0 -> Phase 15（发布后改进 + 联邦灰度兼容 + 自动化回滚 + v1.1/v1.2/v0.2.0 + WebApp 工业化增强）
 
 ## 1. 看板目的
 
@@ -221,7 +221,10 @@
 - 已完成：`TA-P13-005`（联邦重放保护增强：熔断+退避）
 - 已完成：`TA-P13-006`（SDK TS/Python 一致性校验）
 - 已完成：`TA-P13-007`（Phase 13 Gate 评审与收口）
-- 下一批 Ready：等待 Phase 14 规划与边界冻结（`TA-P14-001`）。
+- 已完成：`TA-P14-001`（Phase 14 产品聚焦边界冻结）
+- 已完成：`TA-P14-002`（默认 Web 运维面板下线，回归核心聊天流程）
+- 已规划：`TA-P15-001`（WebApp 工业级规划总纲冻结）
+- 下一批 Ready：执行 `TA-P14-003`（消息拉取稳定游标）与 `TA-P14-004`（direct 会话访问控制）。
 
 ## 4.2 Blockers（2026-03-03 更新）
 
@@ -404,6 +407,22 @@
 - `TA-P13-007`：DONE（Gate=PASS，见 `docs/implementation/phase-13/ta-p13-007-phase13-gate-review-2026-03-03.md` 与 `docs/implementation/gates/phase-13-gate.md`）。
 - 汇总日志：`docs/implementation/phase-13/logs/2026-03-03-p13-gate-manifest-summary.txt`（`total=6`, `failed=0`）。
 - 阶段状态：Phase 13 已关闭（Gate=PASS）。
+
+## 4.19 Phase 14 产品聚焦与缺陷收敛快照（2026-03-03）
+
+- `TA-P14-001`：DONE（产品聚焦边界冻结，见 `docs/implementation/phase-14/ta-p14-001-phase14-product-focus-boundary-2026-03-03.md`）。
+- `TA-P14-002`：DONE（默认 Web 运维面板下线，见 `docs/implementation/phase-14/ta-p14-002-web-ops-panel-removal-2026-03-03.md`）。
+- `TA-P14-003`：TODO（消息拉取稳定游标改造）。
+- `TA-P14-004`：TODO（direct 会话参与方访问控制）。
+- `TA-P14-005`：TODO（TS/Python SDK 行为收敛）。
+- `TA-P14-006`：TODO（Phase 14 Gate 收口）。
+- 阶段状态：Phase 14 执行中（产品核心能力与高优缺陷收敛）。
+
+## 4.20 Phase 15 Web App 工业级设计与多平台快照（2026-03-03）
+
+- `TA-P15-001`：DONE（Web App 工业级规划总纲冻结，见 `docs/implementation/phase-15/ta-p15-001-webapp-industrial-program-2026-03-03.md`）。
+- `TA-P15-002` ~ `TA-P15-007`：TODO（进入功能、设计系统、多平台、质量体系分解阶段）。
+- 阶段状态：Phase 15 已立项（PLANNED），等待 Phase 14 关键缺陷收敛后转入执行。
 
 ## 5. 周会与 Gate 节奏建议
 

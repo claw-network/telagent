@@ -6,7 +6,7 @@
 
 ## 1. 使用说明
 
-- **执行顺序**：按 `Phase 0 -> Phase 13` 串行推进，禁止跨 Gate 跳阶段。
+- **执行顺序**：按 `Phase 0 -> Phase 15` 串行推进，禁止跨 Gate 跳阶段。
 - **状态字段**：`TODO | IN_PROGRESS | BLOCKED | DONE`。
 - **估算单位**：人日（PD）。
 - **依赖格式**：`-` 表示无依赖；多个依赖用逗号分隔任务 ID。
@@ -29,6 +29,8 @@ flowchart LR
   P10 --> P11["Phase 11\nv1.1 安全与运营能力增强"]
   P11 --> P12["Phase 12\nv1.2 候选池冻结与执行排程"]
   P12 --> P13["Phase 13\nv0.2.0 稳定化与可运营增强"]
+  P13 --> P14["Phase 14\n产品聚焦与缺陷收敛"]
+  P14 --> P15["Phase 15\nWeb App 工业级设计与多平台建设"]
 ```
 
 ## 3. 分阶段任务清单
@@ -143,6 +145,19 @@ flowchart LR
 | TA-P13-005 | Phase 13 | 联邦重放保护增强（熔断 + 退避） | Backend + Security | 2 | TA-P13-001 | federation replay protection + tests + manifest | 重放失败具备退避/熔断/恢复能力且可观测 | DONE |
 | TA-P13-006 | Phase 13 | SDK TS/Python 核心能力一致性校验 | DX + Backend + QA | 1 | TA-P13-001 | sdk parity check script + manifest | 核心方法、API 前缀、错误模型一致 | DONE |
 | TA-P13-007 | Phase 13 | Phase 13 Gate 评审与收口 | TL + QA | 0.5 | TA-P13-002, TA-P13-003, TA-P13-004, TA-P13-005, TA-P13-006 | gate 结论文档 | Phase 13 正式关闭 | DONE |
+| TA-P14-001 | Phase 14 | 冻结产品聚焦边界（回归核心 P2P 应用） | TL + BE + FE + QA | 0.5 | TA-P13-007 | boundary decision doc | Phase 14 范围与 Phase 15 分工冻结 | DONE |
+| TA-P14-002 | Phase 14 | 删除默认 Web 运维面板，保留核心聊天流程 | Frontend | 1 | TA-P14-001 | web app cleanup + build log | 默认界面仅保留核心链路入口，构建通过 | DONE |
+| TA-P14-003 | Phase 14 | 消息拉取稳定游标改造（替代 offset 风险） | Backend + QA | 1.5 | TA-P14-001 | pull cursor upgrade + tests | 清理/撤回场景下分页稳定无重复/跳项 | TODO |
+| TA-P14-004 | Phase 14 | direct 会话访问控制强化（参与方约束） | Backend + Security | 1.5 | TA-P14-001 | direct ACL guard + tests | 非参与方消息写入被拒绝并返回 RFC7807 | TODO |
+| TA-P14-005 | Phase 14 | TS/Python SDK 核心行为收敛 | DX + Backend + QA | 1 | TA-P14-003, TA-P14-004 | sdk parity extension + checks | 参数、错误语义、返回结构一致 | TODO |
+| TA-P14-006 | Phase 14 | Phase 14 Gate 评审与收口 | TL + QA | 0.5 | TA-P14-002, TA-P14-003, TA-P14-004, TA-P14-005 | gate 结论文档 | Phase 14 正式关闭 | TODO |
+| TA-P15-001 | Phase 15 | Web App 工业级规划总纲冻结 | TL + FE + BE + QA + DX | 1 | TA-P14-001 | industrial planning doc | 功能/架构/平台/质量主线冻结 | DONE |
+| TA-P15-002 | Phase 15 | 功能域与 IA 设计（会话/消息/群组/身份） | FE + Product + BE | 2 | TA-P15-001 | IA + feature matrix | 关键用户旅程与页面结构冻结 | TODO |
+| TA-P15-003 | Phase 15 | 设计系统与组件规范 | FE + Design | 2 | TA-P15-001 | design tokens + component spec | 主题、组件、可访问性基线可复用 | TODO |
+| TA-P15-004 | Phase 15 | 多平台架构（Web/PWA/Desktop/Mobile） | FE + DX + BE | 2 | TA-P15-001 | platform architecture doc | 共享核心层与平台适配边界冻结 | TODO |
+| TA-P15-005 | Phase 15 | 离线同步与冲突解决策略 | FE + BE + QA | 2 | TA-P15-004 | offline-sync strategy + test plan | 离线队列、重放、冲突策略可验证 | TODO |
+| TA-P15-006 | Phase 15 | 客户端质量体系与发布门禁 | QA + FE + SRE | 1.5 | TA-P15-002, TA-P15-003, TA-P15-004, TA-P15-005 | quality gates + release checklist | 单测/E2E/性能/崩溃门禁成体系 | TODO |
+| TA-P15-007 | Phase 15 | Phase 15 Gate 评审与收口 | TL + QA | 0.5 | TA-P15-006 | gate 结论文档 | Phase 15 正式关闭 | TODO |
 
 ## 4. 执行节奏建议（按部就班）
 
@@ -333,4 +348,27 @@ flowchart LR
 | TA-P13-004 | DONE | `docs/implementation/phase-13/ta-p13-004-audit-archive-signing-2026-03-03.md`, `packages/node/scripts/run-phase13-audit-archive-check.ts`, `docs/implementation/phase-13/archives/2026-03-03-p13-audit-snapshot-archive.json`, `docs/implementation/phase-13/logs/2026-03-03-p13-audit-archive-check-run.txt`, `docs/implementation/phase-13/manifests/2026-03-03-p13-audit-archive-check.json` | 无 | 进入 `TA-P13-005`（联邦重放保护增强） |
 | TA-P13-005 | DONE | `docs/implementation/phase-13/ta-p13-005-federation-circuit-breaker-backoff-2026-03-03.md`, `packages/node/src/services/federation-service.ts`, `packages/node/src/services/federation-service.test.ts`, `packages/node/src/config.ts`, `packages/node/src/config.test.ts`, `packages/node/src/app.ts`, `.env.example`, `packages/node/scripts/run-phase13-federation-protection-check.ts`, `docs/implementation/phase-13/logs/2026-03-03-p13-federation-protection-check-run.txt`, `docs/implementation/phase-13/manifests/2026-03-03-p13-federation-protection-check.json` | 无 | 进入 `TA-P13-006`（SDK 一致性校验） |
 | TA-P13-006 | DONE | `docs/implementation/phase-13/ta-p13-006-sdk-ts-python-parity-2026-03-03.md`, `packages/node/scripts/run-phase13-sdk-parity-check.ts`, `packages/sdk/src/index.ts`, `packages/sdk-python/telagent_sdk/client.py`, `docs/implementation/phase-13/logs/2026-03-03-p13-sdk-parity-check-run.txt`, `docs/implementation/phase-13/manifests/2026-03-03-p13-sdk-parity-check.json` | 无 | 进入 `TA-P13-007`（Gate 收口） |
-| TA-P13-007 | DONE | `docs/implementation/phase-13/ta-p13-007-phase13-gate-review-2026-03-03.md`, `docs/implementation/gates/phase-13-gate.md`, `docs/implementation/phase-13/logs/2026-03-03-p13-node-build.txt`, `docs/implementation/phase-13/logs/2026-03-03-p13-node-test.txt`, `docs/implementation/phase-13/logs/2026-03-03-p13-gate-manifest-summary.txt` | 无 | Phase 13 已关闭（Gate=PASS），等待 Phase 14 规划 |
+| TA-P13-007 | DONE | `docs/implementation/phase-13/ta-p13-007-phase13-gate-review-2026-03-03.md`, `docs/implementation/gates/phase-13-gate.md`, `docs/implementation/phase-13/logs/2026-03-03-p13-node-build.txt`, `docs/implementation/phase-13/logs/2026-03-03-p13-node-test.txt`, `docs/implementation/phase-13/logs/2026-03-03-p13-gate-manifest-summary.txt` | 无 | Phase 13 已关闭（Gate=PASS），进入 Phase 14 产品聚焦执行 |
+
+## 20. Phase 14 产品聚焦与缺陷收敛（2026-03-03）
+
+| Task ID | 状态 | 证据链接 | 阻塞项 | 下一步动作 |
+| --- | --- | --- | --- | --- |
+| TA-P14-001 | DONE | `docs/implementation/phase-14/ta-p14-001-phase14-product-focus-boundary-2026-03-03.md`, `docs/implementation/phase-14/README.md` | 无 | 进入 `TA-P14-002`（删除默认 Web 运维面板） |
+| TA-P14-002 | DONE | `docs/implementation/phase-14/ta-p14-002-web-ops-panel-removal-2026-03-03.md`, `packages/web/src/index.html`, `packages/web/src/main.js` | 无 | 进入 `TA-P14-003`（消息拉取稳定游标改造） |
+| TA-P14-003 | TODO | `docs/implementation/phase-14/README.md` | 无 | 实施 pull cursor 稳定化改造并补齐测试 |
+| TA-P14-004 | TODO | `docs/implementation/phase-14/README.md` | 无 | 实施 direct 会话参与方访问控制 |
+| TA-P14-005 | TODO | `docs/implementation/phase-14/README.md` | 无 | TS/Python SDK 行为与错误语义收敛 |
+| TA-P14-006 | TODO | `docs/implementation/phase-14/README.md` | 无 | 阶段回归与 Gate 收口 |
+
+## 21. Phase 15 Web App 工业级设计与多平台建设（2026-03-03）
+
+| Task ID | 状态 | 证据链接 | 阻塞项 | 下一步动作 |
+| --- | --- | --- | --- | --- |
+| TA-P15-001 | DONE | `docs/implementation/phase-15/ta-p15-001-webapp-industrial-program-2026-03-03.md`, `docs/implementation/phase-15/README.md` | 无 | 进入 `TA-P15-002`（功能域与 IA 设计） |
+| TA-P15-002 | TODO | `docs/implementation/phase-15/README.md` | 无 | 冻结会话/消息/群组/身份功能矩阵与信息架构 |
+| TA-P15-003 | TODO | `docs/implementation/phase-15/README.md` | 无 | 冻结设计系统、组件规范与可访问性基线 |
+| TA-P15-004 | TODO | `docs/implementation/phase-15/README.md` | 无 | 冻结多平台架构与共享核心层边界 |
+| TA-P15-005 | TODO | `docs/implementation/phase-15/README.md` | 无 | 冻结离线同步、冲突解决与性能预算 |
+| TA-P15-006 | TODO | `docs/implementation/phase-15/README.md` | 无 | 建立客户端质量门禁与发布体系 |
+| TA-P15-007 | TODO | `docs/implementation/phase-15/README.md` | 无 | Phase 15 Gate 收口 |

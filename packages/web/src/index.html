@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>TelAgent Mission Console</title>
+    <title>TelAgent Web App</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -16,11 +16,11 @@
     <div class="bg-grid"></div>
     <main class="layout">
       <header>
-        <p class="eyebrow">Phase 5 / TA-P5-001</p>
-        <h1>TelAgent Mission Console</h1>
+        <p class="eyebrow">Product-Focused Core Flow</p>
+        <h1>TelAgent Web App</h1>
         <p>
-          End-to-end console for <code>/api/v1/*</code> group flow:
-          <strong>create -> invite -> accept -> chat -> pull</strong>.
+          Core conversation flow for <code>/api/v1/*</code>:
+          <strong>create -> invite -> accept -> send -> pull</strong>.
         </p>
       </header>
 
@@ -37,18 +37,7 @@
         <div class="button-row">
           <button id="btn-self">GET /api/v1/identities/self</button>
           <button id="btn-randomize">Regenerate IDs/Hashes</button>
-          <button id="btn-node-metrics">GET /api/v1/node/metrics</button>
-          <button id="btn-toggle-metrics-poll">Start Metrics Auto Refresh</button>
         </div>
-      </section>
-
-      <section class="panel">
-        <h2>Monitoring Dashboard</h2>
-        <div id="metrics-summary" class="metric-grid"></div>
-        <h3>Alert Rules</h3>
-        <ul id="metric-alerts" class="alerts">
-          <li class="alert-empty">No metrics loaded yet.</li>
-        </ul>
       </section>
 
       <section class="panel">
@@ -89,7 +78,7 @@
               <option value="control">control</option>
             </select>
           </label>
-          <label>Message (plain text) <input id="message-plain" value="Hello from TelAgent v1" /></label>
+          <label>Message (plain text) <input id="message-plain" value="Hello from TelAgent" /></label>
           <label>Ciphertext (hex override) <input id="ciphertext-hex" placeholder="0x..." /></label>
           <label>Sealed Header (hex) <input id="sealed-header" value="0x11" /></label>
           <label>Attachment Manifest Hash (image/file) <input id="attachment-manifest-hash" placeholder="0x..." /></label>
@@ -102,61 +91,6 @@
           <button id="btn-pull">5) Pull Messages</button>
           <button id="btn-run-flow">Run Full Happy Path</button>
         </div>
-      </section>
-
-      <section class="panel">
-        <h2>Group State & Rollback Entry</h2>
-        <div class="button-row">
-          <button id="btn-group-snapshot">Refresh Group Snapshot</button>
-          <button id="btn-retracted">GET /api/v1/messages/retracted</button>
-        </div>
-        <div id="group-state-summary" class="state-grid"></div>
-        <h3>Retracted Envelopes (Rollback Audit)</h3>
-        <ul id="retracted-list" class="ops-list">
-          <li class="alert-empty">No rollback data loaded yet.</li>
-        </ul>
-      </section>
-
-      <section class="panel">
-        <h2>Federation Ops View</h2>
-        <div class="button-row">
-          <button id="btn-fed-node-info">GET /api/v1/federation/node-info</button>
-          <button id="btn-fed-dlq">GET /api/v1/federation/dlq?status=all</button>
-          <button id="btn-fed-replay">POST /api/v1/federation/dlq/replay</button>
-        </div>
-        <div id="federation-summary" class="state-grid"></div>
-        <h3>DLQ Entries</h3>
-        <ul id="federation-dlq-list" class="ops-list">
-          <li class="alert-empty">No federation data loaded yet.</li>
-        </ul>
-      </section>
-
-      <section class="panel">
-        <h2>Audit & Emergency Panel v2.1</h2>
-        <div class="grid">
-          <label>Audit Sample Size <input id="audit-sample-size" type="number" min="1" max="100" value="20" /></label>
-          <label>Retraction Scan Limit <input id="audit-retraction-limit" type="number" min="1" max="100000" value="2000" /></label>
-          <label>DLQ Replay Max Items <input id="fed-replay-max-items" type="number" min="1" max="200" value="20" /></label>
-          <label class="checkbox-label">
-            <span>Stop On Error</span>
-            <input id="fed-replay-stop-on-error" type="checkbox" />
-          </label>
-        </div>
-        <div class="button-row">
-          <button id="btn-audit-snapshot">GET /api/v1/node/audit-snapshot</button>
-          <button id="btn-risk-refresh">Refresh Risk Board</button>
-          <button id="btn-fed-replay-pending-fill">Fill Pending DLQ IDs</button>
-          <button id="btn-fed-replay-batch">POST /api/v1/federation/dlq/replay (batch ids)</button>
-        </div>
-        <label class="textarea-label">
-          DLQ IDs (one per line or comma separated)
-          <textarea id="fed-replay-ids" rows="4" placeholder="dlq-envelopes-..."></textarea>
-        </label>
-        <div id="audit-summary" class="state-grid"></div>
-        <h3>Risk Board</h3>
-        <ul id="risk-board-list" class="risk-list">
-          <li class="alert-empty">No risk signals loaded yet.</li>
-        </ul>
       </section>
 
       <div class="split">

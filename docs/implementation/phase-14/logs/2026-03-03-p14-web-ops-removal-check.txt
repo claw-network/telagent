@@ -1,0 +1,16 @@
+[CHECK] TA-P14-002 web ops panel removal
+[TIME] 2026-03-03T14:25:38Z
+[STEP] assert removed ops panel markers
+[PASS] legacy ops markers are absent
+[STEP] list explicit api paths
+188:  await callApi('create-group', 'POST', '/api/v1/groups', payload, 201);
+201:  await callApi('invite-member', 'POST', `/api/v1/groups/${encodeURIComponent(groupId)}/invites`, payload, 201);
+214:    `/api/v1/groups/${encodeURIComponent(groupId)}/invites/${encodeURIComponent(inviteId)}/accept`,
+225:    `/api/v1/groups/${encodeURIComponent(groupId)}/members?view=all&page=1&per_page=200`,
+233:  await callApi('group-chain-state', 'GET', `/api/v1/groups/${encodeURIComponent(groupId)}/chain-state`, undefined, 200);
+238:  await callApi('send-message', 'POST', '/api/v1/messages', payload, 201);
+252:  const result = await callApi('pull-messages', 'GET', `/api/v1/messages/pull?${query.toString()}`, undefined, 200);
+283:  void callApi('identity-self', 'GET', '/api/v1/identities/self', undefined, 200);
+[STEP] assert all explicit api paths are under /api/v1/*
+[PASS] all explicit api paths are under /api/v1/*
+[RESULT] PASS
