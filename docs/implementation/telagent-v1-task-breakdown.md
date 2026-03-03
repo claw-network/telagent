@@ -128,7 +128,7 @@ flowchart LR
 | TA-P11-009 | Phase 11 | Web Console v2 运营能力增强 | Frontend + SRE | 2 | TA-P11-001 | web v2 console + e2e | 支持群状态/回滚入口/联邦视图 | DONE |
 | TA-P11-010 | Phase 11 | Phase 11 Gate 评审与收口 | TL + QA | 0.5 | TA-P11-002, TA-P11-003, TA-P11-004, TA-P11-005, TA-P11-006, TA-P11-007, TA-P11-008, TA-P11-009 | gate 结论文档 | Phase 11 正式关闭 | DONE |
 | TA-P12-001 | Phase 12 | 冻结 v1.2 候选池与优先级 | TL + BE + Security + SRE + QA | 0.5 | TA-P11-010 | candidate pool freeze doc + manifest | 候选池冻结并明确首个 MUST 任务 | DONE |
-| TA-P12-002 | Phase 12 | 链上/链下审计快照导出（脱敏） | Backend + Security | 2 | TA-P12-001 | audit snapshot service + export api | 可导出审计摘要且不泄露明文 | TODO |
+| TA-P12-002 | Phase 12 | 链上/链下审计快照导出（脱敏） | Backend + Security | 2 | TA-P12-001 | audit snapshot service + export api | 可导出审计摘要且不泄露明文 | DONE |
 | TA-P12-003 | Phase 12 | revoked DID 实时会话隔离（订阅+驱逐） | Security + Backend | 1.5 | TA-P12-001 | revocation subscription + quarantine flow | 撤销事件后会话进入隔离且发送被拒绝 | TODO |
 | TA-P12-004 | Phase 12 | 联邦 SLO 自动化（DLQ 自动重放 + burn-rate 告警） | SRE + Backend | 1.5 | TA-P12-001 | replay scheduler + alert policy | 自动重放与多级告警可验证 | TODO |
 | TA-P12-005 | Phase 12 | Agent SDK Python Beta | DX + Backend | 2 | TA-P12-001 | python sdk + quickstart | 30 分钟内完成建群与发消息集成 | TODO |
@@ -307,7 +307,7 @@ flowchart LR
 | Task ID | 状态 | 证据链接 | 阻塞项 | 下一步动作 |
 | --- | --- | --- | --- | --- |
 | TA-P12-001 | DONE | `docs/implementation/phase-12/ta-p12-001-phase12-candidate-pool-freeze-2026-03-03.md`, `docs/implementation/phase-12/manifests/2026-03-03-p12-candidate-pool-freeze.json`, `docs/implementation/phase-12/README.md` | 无 | 进入 `TA-P12-002` 链上/链下审计快照导出 |
-| TA-P12-002 | TODO | `docs/implementation/phase-12/README.md` | 无 | 落地脱敏审计快照导出与 API |
+| TA-P12-002 | DONE | `docs/implementation/phase-12/ta-p12-002-audit-snapshot-export-2026-03-03.md`, `packages/node/src/api/routes/node.ts`, `packages/node/src/services/message-service.ts`, `packages/node/src/services/group-service.ts`, `packages/node/src/api-contract.test.ts`, `packages/node/src/services/message-service.test.ts`, `packages/node/scripts/run-phase12-audit-snapshot-check.ts`, `docs/implementation/phase-12/logs/2026-03-03-p12-node-build.txt`, `docs/implementation/phase-12/logs/2026-03-03-p12-node-test.txt`, `docs/implementation/phase-12/logs/2026-03-03-p12-audit-snapshot-check-run.txt`, `docs/implementation/phase-12/manifests/2026-03-03-p12-audit-snapshot-check.json` | 无 | 进入 `TA-P12-003`（revoked DID 实时会话隔离） |
 | TA-P12-003 | TODO | `docs/implementation/phase-12/README.md` | 无 | 落地 revoked DID 实时会话隔离 |
 | TA-P12-004 | TODO | `docs/implementation/phase-12/README.md` | 无 | 落地联邦 SLO 自动化 |
 | TA-P12-005 | TODO | `docs/implementation/phase-12/README.md` | 无 | 交付 Python SDK Beta |

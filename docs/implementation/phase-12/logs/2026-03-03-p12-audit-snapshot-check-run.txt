@@ -1,0 +1,7 @@
+.                                        |  WARN  Unsupported engine: wanted: {"node":">=22 <25"} (current: {"node":"v25.6.1","pnpm":"10.18.1"})
+[TA-P12-002] serviceHashingPass=true
+[TA-P12-002] apiEnvelopePass=true
+[TA-P12-002] apiDesensitizedPass=true
+[TA-P12-002] apiQueryValidationPass=true
+[TA-P12-002] decision=PASS
+[TA-P12-002] output=/Users/xiasenhai/workspace/private-repo/Bots/telagent/docs/implementation/phase-12/manifests/2026-03-03-p12-audit-snapshot-check.json

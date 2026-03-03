@@ -207,7 +207,8 @@
 - 已完成：`TA-P11-009`（Web Console v2 运营能力增强）
 - 已完成：`TA-P11-010`（Phase 11 Gate 评审与收口）
 - 已完成：`TA-P12-001`（Phase 12 候选池冻结）
-- 下一批 Ready：继续 Phase 12 执行（优先 `TA-P12-002` ~ `TA-P12-004`）
+- 已完成：`TA-P12-002`（链上/链下审计快照导出（脱敏））
+- 下一批 Ready：继续 Phase 12 执行（优先 `TA-P12-003` ~ `TA-P12-004`）
 
 ## 4.2 Blockers（2026-03-03 更新）
 
@@ -358,14 +359,15 @@
 
 - `TA-P12-001`：DONE（候选池与优先级冻结，见 `docs/implementation/phase-12/ta-p12-001-phase12-candidate-pool-freeze-2026-03-03.md`）。
 - 候选池机读清单：`docs/implementation/phase-12/manifests/2026-03-03-p12-candidate-pool-freeze.json`。
-- `TA-P12-002`：TODO（链上/链下审计快照导出（脱敏））。
+- `TA-P12-002`：DONE（审计快照导出 API + 脱敏校验 + 检查脚本，见 `docs/implementation/phase-12/ta-p12-002-audit-snapshot-export-2026-03-03.md`）。
+- `TA-P12-002` 机读清单：`docs/implementation/phase-12/manifests/2026-03-03-p12-audit-snapshot-check.json`。
 - `TA-P12-003`：TODO（revoked DID 实时会话隔离（订阅+驱逐））。
 - `TA-P12-004`：TODO（联邦 SLO 自动化）。
 - `TA-P12-005`：TODO（Agent SDK Python Beta）。
 - `TA-P12-006`：TODO（Web Console v2.1 运营与应急面板）。
 - `TA-P12-007`：TODO（多节点密钥轮换编排脚本）。
 - `TA-P12-008`：TODO（Phase 12 Gate 收口）。
-- 阶段状态：Phase 12 已启动，进入 `TA-P12-002`。
+- 阶段状态：Phase 12 执行中，进入 `TA-P12-003`。
 
 ## 5. 周会与 Gate 节奏建议
 

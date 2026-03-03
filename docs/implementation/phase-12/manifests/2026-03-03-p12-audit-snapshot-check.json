@@ -1,0 +1,43 @@
+{
+  "phase": "Phase 12",
+  "taskId": "TA-P12-002",
+  "generatedAt": "2026-03-03T09:43:07.300Z",
+  "summary": {
+    "serviceHashingPass": true,
+    "apiEnvelopePass": true,
+    "apiDesensitizedPass": true,
+    "apiQueryValidationPass": true
+  },
+  "decision": "PASS",
+  "details": {
+    "service": {
+      "groupId": "0xdddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+      "snapshot": {
+        "activeEnvelopeCount": 0,
+        "retractedCount": 1,
+        "retractedByReason": {
+          "REORGED_BACK": 1
+        },
+        "sampledRetractions": [
+          {
+            "envelopeIdHash": "2c2aaea44e41ad2ba007a376b407349d6866c6c9d91b72959b5d1cd7d6cc8d55",
+            "conversationIdHash": "c1573db4e636ce719c1f04f4d2a7c0f1a860e843e23f79126a3e21cb1ca96f3b",
+            "reason": "REORGED_BACK",
+            "retractedAtMs": 1772582400000
+          }
+        ],
+        "sampleSize": 1,
+        "retractionScanLimit": 20
+      },
+      "expectedEnvelopeHash": "2c2aaea44e41ad2ba007a376b407349d6866c6c9d91b72959b5d1cd7d6cc8d55",
+      "expectedConversationHash": "c1573db4e636ce719c1f04f4d2a7c0f1a860e843e23f79126a3e21cb1ca96f3b"
+    },
+    "api": {
+      "selfLink": "/api/v1/node/audit-snapshot?sample_size=3&retraction_scan_limit=100",
+      "leakedTokens": [],
+      "invalidStatus": 400,
+      "invalidCode": "VALIDATION_ERROR",
+      "invalidDetail": "sample_size must be a positive integer"
+    }
+  }
+}
