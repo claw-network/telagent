@@ -108,3 +108,35 @@ test('sendMessage enforces did:claw sender', async () => {
     /did:claw/,
   );
 });
+
+test('listGroupMembersEnvelope returns data/meta links payload', async () => {
+  const client = new TelagentApiClient({
+    baseUrl: 'http://localhost:9528',
+    fetchImpl: async () => new Response(JSON.stringify({
+      data: [{ did: 'did:claw:zBob', state: 'PENDING' }],
+      meta: {
+        pagination: {
+          page: 1,
+          perPage: 20,
+          total: 1,
+          totalPages: 1,
+        },
+      },
+      links: {
+        self: '/api/v1/groups/0x1/members?page=1&per_page=20',
+      },
+    }), {
+      status: 200,
+      headers: {
+        'content-type': 'application/json; charset=utf-8',
+      },
+    }),
+  });
+
+  const envelope = await client.listGroupMembersEnvelope('0x1', { view: 'all', page: 1, perPage: 20 });
+  assert.equal(Array.isArray(envelope.data), true);
+  assert.equal(envelope.meta.pagination.total, 1);
+
+  const members = await client.listGroupMembers('0x1', 'all');
+  assert.deepEqual(members, [{ did: 'did:claw:zBob', state: 'PENDING' }]);
+});

@@ -1,0 +1,8 @@
+[TA-P16-003] groupInputValidationReady=true
+[TA-P16-003] groupDiagnosticsViewReady=true
+[TA-P16-003] groupChainStateSyncReady=true
+[TA-P16-003] groupMembersEnvelopeReady=true
+[TA-P16-003] testsReady=true
+[TA-P16-003] requiredTokensChecked=21
+[TA-P16-003] decision=PASS
+[TA-P16-003] output=/Users/xiasenhai/Workspace/OpenClaw/telagent/docs/implementation/phase-16/manifests/2026-03-03-p16-groups-domain-check.json

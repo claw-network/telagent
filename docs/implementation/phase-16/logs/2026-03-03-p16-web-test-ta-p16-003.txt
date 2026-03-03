@@ -1,0 +1,31 @@
+
+> @telagent/web@0.1.0 test /Users/xiasenhai/Workspace/OpenClaw/telagent/packages/web
+> node --test test/**/*.test.js
+
+✔ assertApiV1Path only accepts /api/v1/* (1.382255ms)
+✔ isDidClaw validates did:claw format (0.253295ms)
+✔ toCiphertextHex encodes utf8 text (0.220721ms)
+✔ createEnvelopeId builds deterministic prefix (1.019842ms)
+✔ request parses RFC7807 errors to ApiProblemError (25.784798ms)
+✔ getData/postData extract envelope data (1.513677ms)
+✔ sendMessage enforces did:claw sender (0.246424ms)
+✔ listGroupMembersEnvelope returns data/meta links payload (0.804277ms)
+✔ isBytes32Hex validates bytes32 hex (1.012116ms)
+✔ normalizeMembersView accepts all/pending/finalized (0.1927ms)
+✔ validateCreateGroupInput returns empty errors for valid payload (0.743097ms)
+✔ validateInviteInput and validateAcceptInviteInput catch invalid fields (1.492256ms)
+✔ summarizeMembersByState counts state buckets (0.294739ms)
+✔ createGroupDiagnosticsState and formatValidationErrors defaults (0.187139ms)
+✔ ensureSessionRuntime creates and reuses runtime by conversation (1.095157ms)
+✔ mergeMessagesByEnvelope dedupes by envelope and sorts by seq (0.830213ms)
+✔ recordPullSuccess and recordPullFailure update runtime state (1.324025ms)
+✔ recordSendFailure and recordSendSuccess update retry payload (0.260505ms)
+✔ formatIsoOrDash returns dash for invalid text (2.100946ms)
+ℹ tests 19
+ℹ suites 0
+ℹ pass 19
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 116.720353

@@ -1,0 +1,47 @@
+{
+  "phase": "Phase 16",
+  "taskId": "TA-P16-003",
+  "generatedAt": "2026-03-03T16:28:15.525Z",
+  "summary": {
+    "groupInputValidationReady": true,
+    "groupDiagnosticsViewReady": true,
+    "groupChainStateSyncReady": true,
+    "groupMembersEnvelopeReady": true,
+    "testsReady": true,
+    "requiredTokensChecked": 21
+  },
+  "decision": "PASS",
+  "details": {
+    "mainChecks": [
+      "refreshGroupDiagnostics",
+      "validateCreateGroupInput",
+      "validateInviteInput",
+      "validateAcceptInviteInput",
+      "Group Diagnostics Status",
+      "Refresh Chain State + Members",
+      "group-members-view"
+    ],
+    "groupDomainChecks": [
+      "export function validateCreateGroupInput(input)",
+      "export function validateInviteInput(input)",
+      "export function validateAcceptInviteInput(input)",
+      "export function summarizeMembersByState(members)",
+      "const BYTES32_PATTERN = /^0x[0-9a-fA-F]{64}$/"
+    ],
+    "apiClientChecks": [
+      "async listGroupMembersEnvelope(groupId, options = {})",
+      "/api/v1/groups/",
+      "/members"
+    ],
+    "cssChecks": [
+      ".group-member-list",
+      ".group-member-row",
+      ".group-member-meta"
+    ],
+    "testChecks": [
+      "validateCreateGroupInput returns empty errors for valid payload",
+      "validateInviteInput and validateAcceptInviteInput catch invalid fields",
+      "summarizeMembersByState counts state buckets"
+    ]
+  }
+}

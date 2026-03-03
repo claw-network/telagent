@@ -15,6 +15,15 @@ import {
   recordSendSuccess,
   resetPullCursor,
 } from './core/session-domain.js';
+import {
+  createGroupDiagnosticsState,
+  formatValidationErrors,
+  normalizeMembersView,
+  summarizeMembersByState,
+  validateAcceptInviteInput,
+  validateCreateGroupInput,
+  validateInviteInput,
+} from './core/group-domain.js';
 
 const STORAGE_API_BASE_KEY = 'telagent.web.apiBase.v1';
 const DEFAULT_API_BASE = 'http://127.0.0.1:9528';
@@ -41,6 +50,7 @@ const state = {
   messagesByConversation: new Map(),
   sessionRuntimeByConversation: new Map(),
   groupForm: createInitialGroupForm(),
+  groupDiagnostics: createGroupDiagnosticsState(),
   selfIdentity: null,
   resolvedIdentity: null,
   identityLookupDid: 'did:claw:zBob',
@@ -66,6 +76,7 @@ async function bootstrap() {
   if (state.route.name === 'sessions' && state.route.conversationId) {
     setActiveConversation(state.route.conversationId);
   }
+  state.groupDiagnostics.groupId = getCurrentGroupId();
   render();
   await refreshSelfIdentity();
 }
@@ -138,6 +149,10 @@ function createInitialGroupForm() {
     inviteMlsCommitHash: randomHex(32),
     acceptMlsWelcomeHash: randomHex(32),
   };
+}
+
+function getCurrentGroupId() {
+  return state.groupForm.groupId.trim();
 }
 
 function addLog(level, action, detail) {
@@ -217,6 +232,67 @@ function handleError(action, error) {
   setBanner('error', message);
   addLog('error', action, message);
   setLastResponse(`${action}:error`, { message });
+}
+
+function failValidation(action, errors) {
+  const message = formatValidationErrors(errors);
+  if (!message) {
+    return false;
+  }
+  setBanner('error', message);
+  addLog('error', action, message);
+  setLastResponse(`${action}:validation`, { errors });
+  render();
+  return true;
+}
+
+async function refreshGroupDiagnostics({ reason = 'manual', viewOverride } = {}) {
+  const groupId = getCurrentGroupId();
+  if (!groupId) {
+    setBanner('warn', 'group id is required for diagnostics');
+    render();
+    return;
+  }
+  const membersView = normalizeMembersView(viewOverride ?? state.groupDiagnostics.membersView);
+  state.groupDiagnostics.groupId = groupId;
+  state.groupDiagnostics.membersView = membersView;
+
+  setBusy('groups:sync', true);
+  clearBanner();
+  try {
+    const [chainState, membersPayload] = await Promise.all([
+      apiClient.getGroupChainState(groupId),
+      apiClient.listGroupMembersEnvelope(groupId, { view: membersView, page: 1, perPage: 200 }),
+    ]);
+
+    const members = Array.isArray(membersPayload?.data) ? membersPayload.data : [];
+    state.groupDiagnostics.chainState = chainState && typeof chainState === 'object' ? chainState : null;
+    state.groupDiagnostics.members = members;
+    state.groupDiagnostics.pagination = membersPayload?.meta?.pagination ?? null;
+    state.groupDiagnostics.lastSyncedAt = new Date().toISOString();
+    state.groupDiagnostics.lastError = null;
+    state.groupDiagnostics.lastAction = reason;
+
+    const summary = summarizeMembersByState(members);
+    addLog(
+      'ok',
+      'groups:sync',
+      `group=${groupId} view=${membersView} total=${summary.total} finalized=${summary.finalized} pending=${summary.pending}`,
+    );
+    setLastResponse('groups:sync', {
+      groupId,
+      membersView,
+      chainState,
+      membersPayload,
+    });
+  } catch (error) {
+    state.groupDiagnostics.lastError = error instanceof Error ? error.message : String(error);
+    state.groupDiagnostics.lastAction = 'sync:failed';
+    handleError('groups:sync', error);
+  } finally {
+    setBusy('groups:sync', false);
+    render();
+  }
 }
 
 async function refreshSelfIdentity() {
@@ -378,9 +454,8 @@ async function retryLastPull() {
 
 async function createGroup() {
   const data = state.groupForm;
-  if (!isDidClaw(data.creatorDid)) {
-    setBanner('error', 'creator did must match did:claw:*');
-    render();
+  const errors = validateCreateGroupInput(data);
+  if (failValidation('groups:create', errors)) {
     return;
   }
 
@@ -403,7 +478,7 @@ async function createGroup() {
     addLog('ok', 'groups:create', `group created ${created?.group?.groupId || data.groupId}`);
     setLastResponse('groups:create', created);
     state.groupForm.inviteId = randomHex(32);
-    render();
+    await refreshGroupDiagnostics({ reason: 'after-create' });
   } catch (error) {
     handleError('groups:create', error);
     render();
@@ -414,9 +489,14 @@ async function createGroup() {
 
 async function inviteMember() {
   const data = state.groupForm;
-  if (!isDidClaw(data.creatorDid) || !isDidClaw(data.inviteeDid)) {
-    setBanner('error', 'inviter/invitee did must match did:claw:*');
-    render();
+  const errors = validateInviteInput({
+    groupId: data.groupId,
+    inviteId: data.inviteId,
+    inviterDid: data.creatorDid,
+    inviteeDid: data.inviteeDid,
+    mlsCommitHash: data.inviteMlsCommitHash,
+  });
+  if (failValidation('groups:invite', errors)) {
     return;
   }
 
@@ -433,6 +513,7 @@ async function inviteMember() {
 
     addLog('ok', 'groups:invite', `invite created ${invited?.inviteId || data.inviteId}`);
     setLastResponse('groups:invite', invited);
+    await refreshGroupDiagnostics({ reason: 'after-invite' });
   } catch (error) {
     handleError('groups:invite', error);
   } finally {
@@ -443,9 +524,13 @@ async function inviteMember() {
 
 async function acceptInvite() {
   const data = state.groupForm;
-  if (!isDidClaw(data.inviteeDid)) {
-    setBanner('error', 'invitee did must match did:claw:*');
-    render();
+  const errors = validateAcceptInviteInput({
+    groupId: data.groupId,
+    inviteId: data.inviteId,
+    inviteeDid: data.inviteeDid,
+    mlsWelcomeHash: data.acceptMlsWelcomeHash,
+  });
+  if (failValidation('groups:accept', errors)) {
     return;
   }
 
@@ -461,6 +546,7 @@ async function acceptInvite() {
     addLog('ok', 'groups:accept', `invite accepted ${accepted?.inviteId || data.inviteId}`);
     setLastResponse('groups:accept', accepted);
     setActiveConversation(`group:${data.groupId}`);
+    await refreshGroupDiagnostics({ reason: 'after-accept' });
   } catch (error) {
     handleError('groups:accept', error);
   } finally {
@@ -648,10 +734,51 @@ function renderSessions() {
 
 function renderGroups() {
   const form = state.groupForm;
+  const diagnostics = state.groupDiagnostics;
+  const memberSummary = summarizeMembersByState(diagnostics.members);
+  const membersList = diagnostics.members
+    .slice(0, 120)
+    .map(
+      (member) => `
+        <li class="group-member-row">
+          <div class="group-member-did">${escapeHtml(member?.did || '-')}</div>
+          <div class="group-member-meta">
+            state=${escapeHtml(member?.state || '-')}
+            · invite=${escapeHtml(member?.inviteId || '-')}
+          </div>
+        </li>
+      `,
+    )
+    .join('');
+
+  const diagnosticsRows = [
+    { label: 'Group ID', value: diagnostics.groupId || '-' },
+    { label: 'Members View', value: diagnostics.membersView || 'all' },
+    { label: 'Last Synced', value: formatIsoOrDash(diagnostics.lastSyncedAt) },
+    { label: 'Last Action', value: diagnostics.lastAction || '-' },
+    { label: 'Last Error', value: diagnostics.lastError || '-' },
+    { label: 'Members Total', value: String(memberSummary.total) },
+    { label: 'Pending', value: String(memberSummary.pending) },
+    { label: 'Finalized', value: String(memberSummary.finalized) },
+    { label: 'Removed', value: String(memberSummary.removed) },
+    { label: 'Page', value: String(diagnostics.pagination?.page ?? '-') },
+    { label: 'Per Page', value: String(diagnostics.pagination?.perPage ?? '-') },
+    { label: 'Total Pages', value: String(diagnostics.pagination?.totalPages ?? '-') },
+  ]
+    .map(
+      (entry) => `
+        <div class="status-row">
+          <span>${escapeHtml(entry.label)}</span>
+          <code>${escapeHtml(entry.value)}</code>
+        </div>
+      `,
+    )
+    .join('');
+
   return `
     <section class="card">
       <h2>Groups</h2>
-      <p class="card-subtitle">Create, invite and accept in the same page.</p>
+      <p class="card-subtitle">Create/invite/accept with strict validation and chain-state linked diagnostics.</p>
 
       <div class="toolbar-grid">
         <label>Creator DID <input id="group-creator-did" value="${escapeHtml(form.creatorDid)}" /></label>
@@ -670,6 +797,41 @@ function renderGroups() {
         <button id="btn-invite-member" ${isBusy('groups:invite') ? 'disabled' : ''}>Invite Member</button>
         <button id="btn-accept-invite" ${isBusy('groups:accept') ? 'disabled' : ''}>Accept Invite</button>
         <button id="btn-refresh-random" ${isBusy('groups:create') ? 'disabled' : ''}>Regenerate IDs/Hashes</button>
+      </div>
+
+      <article class="session-status-card">
+        <h3>Group Diagnostics Controls</h3>
+        <div class="toolbar-grid">
+          <label>
+            Members View
+            <select id="group-members-view">
+              <option value="all" ${diagnostics.membersView === 'all' ? 'selected' : ''}>all</option>
+              <option value="pending" ${diagnostics.membersView === 'pending' ? 'selected' : ''}>pending</option>
+              <option value="finalized" ${diagnostics.membersView === 'finalized' ? 'selected' : ''}>finalized</option>
+            </select>
+          </label>
+        </div>
+        <div class="button-row">
+          <button id="btn-refresh-group-diagnostics" ${isBusy('groups:sync') ? 'disabled' : ''}>Refresh Chain State + Members</button>
+        </div>
+      </article>
+
+      <article class="session-status-card">
+        <h3>Group Diagnostics Status</h3>
+        <div class="status-grid">${diagnosticsRows}</div>
+      </article>
+
+      <div class="session-layout">
+        <article class="session-list-wrap">
+          <h3>Chain State</h3>
+          <pre>${escapeHtml(formatJson(diagnostics.chainState))}</pre>
+        </article>
+        <article class="chat-wrap">
+          <h3>Members</h3>
+          <ul class="group-member-list">
+            ${membersList || '<li class="message-empty">No members loaded yet.</li>'}
+          </ul>
+        </article>
       </div>
     </section>
   `;
@@ -896,8 +1058,25 @@ function bindEvents() {
 
   appRoot.querySelector('#btn-refresh-random')?.addEventListener('click', () => {
     state.groupForm = createInitialGroupForm();
+    state.groupDiagnostics = createGroupDiagnosticsState();
+    state.groupDiagnostics.groupId = getCurrentGroupId();
     render();
   });
+
+  appRoot.querySelector('#btn-refresh-group-diagnostics')?.addEventListener('click', () => {
+    void refreshGroupDiagnostics({ reason: 'manual-refresh' });
+  });
+
+  const groupMembersViewSelect = appRoot.querySelector('#group-members-view');
+  if (groupMembersViewSelect instanceof HTMLSelectElement) {
+    groupMembersViewSelect.addEventListener('change', () => {
+      state.groupDiagnostics.membersView = normalizeMembersView(groupMembersViewSelect.value);
+      void refreshGroupDiagnostics({
+        reason: 'view-change',
+        viewOverride: state.groupDiagnostics.membersView,
+      });
+    });
+  }
 
   appRoot.querySelector('#btn-resolve-identity')?.addEventListener('click', () => {
     void resolveIdentity();
@@ -970,5 +1149,13 @@ function bindGroupInput(id, field) {
   }
   input.addEventListener('input', () => {
     state.groupForm[field] = input.value;
+    if (field === 'groupId') {
+      state.groupDiagnostics.groupId = input.value.trim();
+      state.groupDiagnostics.members = [];
+      state.groupDiagnostics.pagination = null;
+      state.groupDiagnostics.chainState = null;
+      state.groupDiagnostics.lastError = null;
+      state.groupDiagnostics.lastAction = 'group-id-input';
+    }
   });
 }

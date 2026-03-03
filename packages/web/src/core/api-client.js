@@ -203,12 +203,53 @@ export class TelagentApiClient {
   }
 
   async listGroupMembers(groupId, view = 'all') {
+    const payload = await this.listGroupMembersEnvelope(groupId, {
+      view,
+      page: 1,
+      perPage: 200,
+    });
+    if (payload && typeof payload === 'object' && Array.isArray(payload.data)) {
+      return payload.data;
+    }
+    return [];
+  }
+
+  async listGroupMembersEnvelope(groupId, options = {}) {
     if (!groupId || typeof groupId !== 'string') {
       throw new Error('groupId is required');
     }
-    return this.getData(
-      `/api/v1/groups/${encodeURIComponent(groupId.trim())}/members?view=${encodeURIComponent(view)}&page=1&per_page=200`,
+    const view = typeof options.view === 'string' && options.view.trim()
+      ? options.view.trim()
+      : 'all';
+    const page = Number.isInteger(options.page) ? Math.max(1, options.page) : 1;
+    const perPage = Number.isInteger(options.perPage) ? Math.max(1, Math.min(200, options.perPage)) : 200;
+
+    const result = await this.get(
+      `/api/v1/groups/${encodeURIComponent(groupId.trim())}/members`
+      + `?view=${encodeURIComponent(view)}&page=${page}&per_page=${perPage}`,
     );
+
+    if (result.payload && typeof result.payload === 'object') {
+      return result.payload;
+    }
+    return {
+      data: [],
+      meta: {
+        pagination: {
+          page,
+          perPage,
+          total: 0,
+          totalPages: 1,
+        },
+      },
+      links: {
+        self: null,
+        next: null,
+        prev: null,
+        first: null,
+        last: null,
+      },
+    };
   }
 
   async getGroupChainState(groupId) {
