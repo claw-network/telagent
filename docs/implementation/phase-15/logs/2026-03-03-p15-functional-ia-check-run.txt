@@ -1,0 +1,56 @@
+[TA-P15-002] functional IA check run
+generated_at=2026-03-03T15:22:32Z
+doc=docs/implementation/phase-15/ta-p15-002-webapp-functional-ia-freeze-2026-03-03.md
+
+[check] section headers
+8:## 1. 目标
+12:## 2. 边界与约束
+20:## 3. 功能域矩阵（冻结版）
+30:## 4. IA（信息架构）冻结
+56:## 5. 关键用户旅程（含失败/恢复）
+58:## 5.1 群聊主路径（Happy Path）
+68:## 5.2 revoked DID 隔离路径（Failure + Recovery）
+77:## 5.3 输入错误路径（Validation）
+85:## 6. API 映射与错误语义
+97:## 7. TA-P15-002 验收清单
+106:## 8. 证据
+114:## 9. 结论
+
+[check] api prefix only
+15:2. API 约束：仅允许映射 `/api/v1/*` 路径。
+22:| 功能域 | P0 能力（本期必须） | P1 能力（后续增强） | 核心 API（均为 `/api/v1/*`） | 验收口径 |
+51:1. `Bootstrapping` -> `Ready`：节点可连通且 `GET /api/v1/identities/self` 成功。
+60:1. 在 `Groups` 创建群：`POST /api/v1/groups`。
+61:2. 发起邀请：`POST /api/v1/groups/:groupId/invites`。
+62:3. 被邀请方接受：`POST /api/v1/groups/:groupId/invites/:inviteId/accept`。
+63:4. 进入会话页发送消息：`POST /api/v1/messages`。
+64:5. 拉取消息流：`GET /api/v1/messages/pull`。
+70:1. 已建立会话后触发撤销事件（灰度/测试）：`POST /api/v1/node/revocations`。
+89:| 启动加载身份 | `GET /api/v1/identities/self` | 返回 DID、didHash、controller | `5xx` 时进入 `Degraded` 并允许重试 |
+90:| 创建群组 | `POST /api/v1/groups` | `201 + group/txHash` | `400 VALIDATION` 显示输入修复建议 |
+91:| 邀请/接受 | `POST /api/v1/groups/:groupId/invites`, `POST /api/v1/groups/:groupId/invites/:inviteId/accept` | `201` 返回链上事务信息 | `403 FORBIDDEN` 或 `422 UNPROCESSABLE` 提示权限/状态冲突 |
+92:| 发送消息 | `POST /api/v1/messages` | `201 + envelope` | `422 UNPROCESSABLE`（revoked DID/隔离）禁用发送并提示 |
+93:| 拉取消息 | `GET /api/v1/messages/pull` | `200 + items + cursor` | `400 VALIDATION`（非法游标）回退到首屏重拉 |
+94:| 上传附件 | `POST /api/v1/attachments/init-upload`, `POST /api/v1/attachments/complete-upload` | 初始化与完成闭环 | `400 VALIDATION`（checksum/manifest）提示重传 |
+95:| 只读诊断 | `GET /api/v1/node/metrics`, `GET /api/v1/node/audit-snapshot` | 输出系统快照用于支持分析 | `5xx` 时仅标记“诊断不可用”，不影响聊天主流程 |
+102:- [x] API 映射仅使用 `/api/v1/*`。
+
+[check] did and error constraints
+16:3. DID 约束：客户端输入和展示仅接受 `did:claw:*`。
+17:4. 错误约束：失败响应统一按 RFC7807（`application/problem+json`）处理并落 UI 语义。
+71:2. 会话进入隔离态，消息发送返回 RFC7807 错误（`application/problem+json`）。
+79:1. 用户输入非法 DID（非 `did:claw:*`）或格式错误 payload。
+80:2. 服务返回 RFC7807 `400 VALIDATION`。
+87:| 页面/动作 | API | 成功语义 | 失败语义（RFC7807） |
+103:- [x] DID 与错误语义约束显式写入（`did:claw:*` + RFC7807）。
+
+[check] tracker rows
+docs/implementation/telagent-v1-iteration-board.md:428:- `TA-P15-002`：DONE（功能域与 IA 冻结，见 `docs/implementation/phase-15/ta-p15-002-webapp-functional-ia-freeze-2026-03-03.md` 与 `docs/implementation/phase-15/manifests/2026-03-03-p15-functional-ia-check.json`）。
+docs/implementation/telagent-v1-task-breakdown.md:155:| TA-P15-002 | Phase 15 | 功能域与 IA 设计（会话/消息/群组/身份） | FE + Product + BE | 2 | TA-P15-001 | IA + feature matrix | 关键用户旅程与页面结构冻结 | DONE |
+docs/implementation/telagent-v1-task-breakdown.md:159:| TA-P15-006 | Phase 15 | 客户端质量体系与发布门禁 | QA + FE + SRE | 1.5 | TA-P15-002, TA-P15-003, TA-P15-004, TA-P15-005 | quality gates + release checklist | 单测/E2E/性能/崩溃门禁成体系 | TODO |
+docs/implementation/telagent-v1-task-breakdown.md:368:| TA-P15-001 | DONE | `docs/implementation/phase-15/ta-p15-001-webapp-industrial-program-2026-03-03.md`, `docs/implementation/phase-15/README.md` | 无 | 进入 `TA-P15-002`（功能域与 IA 设计） |
+docs/implementation/telagent-v1-task-breakdown.md:369:| TA-P15-002 | DONE | `docs/implementation/phase-15/ta-p15-002-webapp-functional-ia-freeze-2026-03-03.md`, `docs/implementation/phase-15/README.md`, `docs/implementation/phase-15/logs/2026-03-03-p15-node-build.txt`, `docs/implementation/phase-15/logs/2026-03-03-p15-node-test.txt`, `docs/implementation/phase-15/logs/2026-03-03-p15-functional-ia-check-run.txt`, `docs/implementation/phase-15/manifests/2026-03-03-p15-functional-ia-check.json` | 无 | 进入 `TA-P15-003`（设计系统与组件规范） |
+docs/implementation/phase-15/README.md:4:- 状态：IN_PROGRESS（`TA-P15-002` 已完成，推进 `TA-P15-003`）
+docs/implementation/phase-15/README.md:20:| TA-P15-002 | DONE | 功能域与信息架构（IA）冻结 |
+
+[result] PASS
