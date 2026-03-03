@@ -1,0 +1,50 @@
+
+> @telagent/node@0.1.0 pretest /Users/xiasenhai/workspace/private-repo/Bots/telagent/packages/node
+> pnpm build
+
+
+> @telagent/node@0.1.0 build /Users/xiasenhai/workspace/private-repo/Bots/telagent/packages/node
+> tsc -p tsconfig.json
+
+
+> @telagent/node@0.1.0 test /Users/xiasenhai/workspace/private-repo/Bots/telagent/packages/node
+> node --test dist/*.test.js dist/**/*.test.js
+
+✔ created response returns data envelope and Location header (125.911083ms)
+✔ list response returns paginated envelope shape (14.926709ms)
+✔ validation errors use RFC7807 shape and problem+json content type (11.603333ms)
+✔ not found uses RFC7807 shape (6.42725ms)
+✔ identities and groups endpoints are accessible with expected status codes (28.237125ms)
+✔ messages, attachments and federation endpoints are accessible (16.583541ms)
+✔ routes only serve /api/v1/* prefix (133.6665ms)
+✔ identity endpoint responds with data envelope (24.343083ms)
+✔ finalityDepth only materializes finalized blocks (125.636416ms)
+✔ reorg rollback replays canonical events and restores deterministic view (38.842333ms)
+✔ TA-P4-009 E2E main path: create -> invite -> accept -> group chat (text/image/file) (169.796291ms)
+✔ TA-P4-010 E2E offline 24h pull keeps dedupe and per-conversation order (32.558666ms)
+✔ TA-P4-006 init-upload sanitizes filename and emits attachment objectKey (6.628292ms)
+✔ TA-P4-006 complete-upload enforces manifest and checksum integrity (0.552875ms)
+✔ TA-P4-006 complete-upload is idempotent and rejects checksum divergence (0.161334ms)
+✔ TA-P4-006 expired upload sessions are cleaned and cannot be completed (0.144208ms)
+✔ TA-P4-007 federation envelopes support idempotent retries (1.195667ms)
+✔ TA-P4-007 federation auth token is enforced when configured (0.338041ms)
+✔ TA-P4-007 federation rate limit rejects burst traffic (0.176875ms)
+✔ TA-P4-008 group-state sync enforces domain consistency (0.181167ms)
+✔ TA-P4-008 node-info publishes domain and federation security policy (0.776375ms)
+✔ assertSufficient throws INSUFFICIENT_GAS_TOKEN_BALANCE when native balance is not enough (2.229416ms)
+✔ TA-P4-002 sequence allocator keeps per-conversation monotonic order (0.802584ms)
+✔ TA-P4-003 dedupe keeps idempotent writes for same envelopeId (0.159375ms)
+✔ TA-P4-003 duplicate envelopeId with different payload is rejected (0.289916ms)
+✔ TA-P4-004 cleanupExpired removes expired envelopes and releases dedupe key (0.157042ms)
+✔ TA-P4-005 provisional envelopes are retracted when group is reorged back (1.34975ms)
+✔ TA-P4-005 send is rejected when group chain state is REORGED_BACK (0.46775ms)
+✔ TA-P5-002 monitoring snapshot normalizes dynamic route segments and records counters (2.7585ms)
+✔ TA-P5-002 monitoring emits warning/critical alerts when thresholds are exceeded (0.817541ms)
+ℹ tests 30
+ℹ suites 0
+ℹ pass 30
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1073.529833

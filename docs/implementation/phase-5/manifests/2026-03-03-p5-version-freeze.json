@@ -1,0 +1,30 @@
+{
+  "phase": "Phase 5",
+  "taskId": "TA-P5-006",
+  "generatedAt": "2026-03-03T11:30:00+08:00",
+  "release": {
+    "name": "TelAgent v1 MVP",
+    "version": "0.1.0",
+    "sourceBranch": "main",
+    "freezeMode": "DOC_AND_GATE_LOCKED",
+    "frozenCommit": "SET_BY_RELEASE_TAG",
+    "requiredApiPrefix": "/api/v1/*",
+    "requiredDidNamespace": "did:claw:*",
+    "requiredErrorModel": "RFC7807"
+  },
+  "artifacts": {
+    "gate": "docs/implementation/gates/phase-5-gate.md",
+    "readiness": "docs/implementation/phase-5/ta-p5-005-readiness-report-2026-03-03.md",
+    "readinessManifest": "docs/implementation/phase-5/manifests/2026-03-03-p5-readiness-report.json",
+    "securityManifest": "docs/implementation/phase-5/manifests/2026-03-03-p5-security-review.json",
+    "faultInjectionManifest": "docs/implementation/phase-5/manifests/2026-03-03-p5-fault-injection-drill.json"
+  },
+  "signOff": {
+    "tl": "Agent-TL",
+    "phaseOwner": "Agent-Release",
+    "qa": "Agent-QA",
+    "sre": "Agent-SRE",
+    "security": "Agent-SE"
+  },
+  "decision": "APPROVED_AND_FROZEN"
+}

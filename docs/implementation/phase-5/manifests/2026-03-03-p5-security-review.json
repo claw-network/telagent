@@ -1,0 +1,161 @@
+{
+  "phase": "Phase 5",
+  "taskId": "TA-P5-004",
+  "generatedAt": "2026-03-03T02:51:13.181Z",
+  "summary": {
+    "totalChecks": 10,
+    "passedChecks": 10,
+    "failedChecks": 0,
+    "criticalOpenCount": 0,
+    "highRiskOpenCount": 0
+  },
+  "decision": "PASS",
+  "checks": [
+    {
+      "id": "SEC-P5-001",
+      "title": "API 前缀仅开放 /api/v1/*",
+      "severity": "critical",
+      "status": "PASS",
+      "evidence": [
+        "packages/node/src/api/server.ts",
+        "packages/node/src/api-prefix.test.ts"
+      ],
+      "details": {
+        "apiStatus": 200,
+        "legacyStatus": 404,
+        "legacyProblemCode": "NOT_FOUND"
+      }
+    },
+    {
+      "id": "SEC-P5-002",
+      "title": "错误响应符合 RFC7807 + telagent.dev/errors 命名空间",
+      "severity": "critical",
+      "status": "PASS",
+      "evidence": [
+        "packages/node/src/api/response.ts",
+        "packages/protocol/src/errors.ts",
+        "packages/node/src/api-contract.test.ts"
+      ],
+      "details": {
+        "status": 400,
+        "code": "VALIDATION_ERROR",
+        "type": "https://telagent.dev/errors/validation-error"
+      }
+    },
+    {
+      "id": "SEC-P5-003",
+      "title": "DID 命名空间仅接受 did:claw:*",
+      "severity": "critical",
+      "status": "PASS",
+      "evidence": [
+        "packages/protocol/src/schema.ts",
+        "packages/protocol/src/hash.ts"
+      ],
+      "details": {
+        "validAccepted": true,
+        "invalidAccepted": false
+      }
+    },
+    {
+      "id": "SEC-P5-004",
+      "title": "DID hash 固定为 keccak256(utf8(did))",
+      "severity": "critical",
+      "status": "PASS",
+      "evidence": [
+        "packages/protocol/src/hash.ts"
+      ],
+      "details": {
+        "sampleDid": "did:claw:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK",
+        "didHash": "0x0da4c0771cb08ebf5576a598d16d7b1a84065bba02de475e6ea53b6539556d35"
+      }
+    },
+    {
+      "id": "SEC-P5-005",
+      "title": "附件大小上限 50MB 生效",
+      "severity": "high",
+      "status": "PASS",
+      "evidence": [
+        "packages/protocol/src/schema.ts",
+        "packages/node/src/services/attachment-service.ts"
+      ],
+      "details": {
+        "acceptedAtBoundary": true,
+        "rejectedAboveBoundary": true
+      }
+    },
+    {
+      "id": "SEC-P5-006",
+      "title": "联邦鉴权与来源域名白名单强制执行",
+      "severity": "critical",
+      "status": "PASS",
+      "evidence": [
+        "packages/node/src/services/federation-service.ts",
+        "packages/node/src/api/routes/federation.ts"
+      ],
+      "details": {
+        "unauthorizedCode": "UNAUTHORIZED",
+        "forbiddenCode": "FORBIDDEN",
+        "accepted": true
+      }
+    },
+    {
+      "id": "SEC-P5-007",
+      "title": "联邦接口限流策略生效",
+      "severity": "high",
+      "status": "PASS",
+      "evidence": [
+        "packages/node/src/services/federation-service.ts"
+      ],
+      "details": {
+        "rateLimitCode": "TOO_MANY_REQUESTS",
+        "allowedPerMinute": 2
+      }
+    },
+    {
+      "id": "SEC-P5-008",
+      "title": "groupDomain 与 sourceDomain 一致性校验生效",
+      "severity": "high",
+      "status": "PASS",
+      "evidence": [
+        "packages/node/src/services/federation-service.ts",
+        "packages/node/src/api/routes/federation.ts"
+      ],
+      "details": {
+        "mismatchCode": "FORBIDDEN",
+        "accepted": true
+      }
+    },
+    {
+      "id": "SEC-P5-009",
+      "title": "链上写操作执行前必须完成 gas 预检与余额断言",
+      "severity": "high",
+      "status": "PASS",
+      "evidence": [
+        "packages/node/src/services/group-service.ts",
+        "packages/node/src/services/gas-service.ts"
+      ],
+      "details": {
+        "preflightCalls": 4,
+        "assertCalls": 4,
+        "sourcePath": "/Users/xiasenhai/workspace/private-repo/Bots/telagent/packages/node/src/services/group-service.ts"
+      }
+    },
+    {
+      "id": "SEC-P5-010",
+      "title": "监控告警基线覆盖关键安全运营指标",
+      "severity": "medium",
+      "status": "PASS",
+      "evidence": [
+        "docs/implementation/phase-5/manifests/2026-03-03-p5-alert-rules.yaml"
+      ],
+      "details": {
+        "alertRulesPath": "/Users/xiasenhai/workspace/private-repo/Bots/telagent/docs/implementation/phase-5/manifests/2026-03-03-p5-alert-rules.yaml",
+        "requiredCodes": [
+          "HTTP_5XX_RATE",
+          "HTTP_P95_LATENCY",
+          "MAILBOX_MAINTENANCE_STALE"
+        ]
+      }
+    }
+  ]
+}
