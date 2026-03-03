@@ -7,7 +7,7 @@ import test from 'node:test';
 import { ErrorCodes, TelagentError, hashDid, type GroupState } from '@telagent/protocol';
 
 import { KeyLifecycleService } from './key-lifecycle-service.js';
-import { MessageService } from './message-service.js';
+import { MessageService, type MessageIdentityService } from './message-service.js';
 import { MessageRepository } from '../storage/message-repository.js';
 
 interface MutableClock {
@@ -106,6 +106,20 @@ function createDirectInput(overrides: Partial<Parameters<MessageService['send']>
     ttlSec: 60,
     ...overrides,
   };
+}
+
+class MutableIdentityService implements MessageIdentityService {
+  private readonly revokedDids = new Set<string>();
+
+  revoke(did: string) {
+    this.revokedDids.add(did);
+  }
+
+  async assertActiveDid(rawDid: string): Promise<void> {
+    if (this.revokedDids.has(rawDid)) {
+      throw new TelagentError(ErrorCodes.UNPROCESSABLE, 'DID is revoked or inactive');
+    }
+  }
 }
 
 test('TA-P4-002 sequence allocator keeps per-conversation monotonic order', async () => {
@@ -363,4 +377,42 @@ test('TA-P11-006 message send validates signal/mls key lifecycle status', async 
       return true;
     },
   );
+});
+
+test('TA-P11-007 revoked DID cannot continue sending new messages', async () => {
+  const clock = createClock(60_000);
+  const identityService = new MutableIdentityService();
+  const groups = {} as ConstructorParameters<typeof MessageService>[0];
+  const service = new MessageService(groups, {
+    clock,
+    identityService,
+  });
+
+  const first = await service.send(createDirectInput({
+    envelopeId: 'env-revoked-did-1',
+    conversationId: 'direct:revoked-did',
+  }));
+  assert.equal(first.envelopeId, 'env-revoked-did-1');
+
+  identityService.revoke('did:claw:zAlice');
+
+  await assert.rejects(
+    async () =>
+      service.send(createDirectInput({
+        envelopeId: 'env-revoked-did-2',
+        conversationId: 'direct:revoked-did',
+      })),
+    (error) => {
+      assert.ok(error instanceof TelagentError);
+      assert.equal(error.code, ErrorCodes.UNPROCESSABLE);
+      return true;
+    },
+  );
+
+  const pulled = await service.pull({
+    conversationId: 'direct:revoked-did',
+    limit: 10,
+  });
+  assert.equal(pulled.items.length, 1);
+  assert.equal(pulled.items[0].envelopeId, 'env-revoked-did-1');
 });

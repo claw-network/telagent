@@ -36,6 +36,10 @@ export interface MessageServiceClock {
   now(): number;
 }
 
+export interface MessageIdentityService {
+  assertActiveDid(rawDid: string): Promise<unknown>;
+}
+
 const SystemClock: MessageServiceClock = {
   now: () => Date.now(),
 };
@@ -65,6 +69,7 @@ export class MessageService {
   private readonly clock: MessageServiceClock;
   private readonly repository?: MailboxStore;
   private readonly keyLifecycleService?: KeyLifecycleService;
+  private readonly identityService?: MessageIdentityService;
 
   constructor(
     private readonly groups: GroupService,
@@ -73,12 +78,14 @@ export class MessageService {
       clock?: MessageServiceClock;
       repository?: MailboxStore;
       keyLifecycleService?: KeyLifecycleService;
+      identityService?: MessageIdentityService;
     },
   ) {
     this.sequenceAllocator = options?.sequenceAllocator ?? new SequenceAllocator();
     this.clock = options?.clock ?? SystemClock;
     this.repository = options?.repository;
     this.keyLifecycleService = options?.keyLifecycleService;
+    this.identityService = options?.identityService;
   }
 
   async send(input: SendMessageInput): Promise<Envelope> {
@@ -119,6 +126,10 @@ export class MessageService {
 
     if (!isDidClaw(input.senderDid)) {
       throw new TelagentError(ErrorCodes.VALIDATION, 'senderDid must use did:claw format');
+    }
+
+    if (this.identityService) {
+      await this.identityService.assertActiveDid(input.senderDid);
     }
 
     if (this.keyLifecycleService) {

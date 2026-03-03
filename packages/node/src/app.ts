@@ -58,6 +58,7 @@ export class TelagentNode {
     this.messageService = new MessageService(this.groupService, {
       repository: this.mailboxStore,
       keyLifecycleService: this.keyLifecycleService,
+      identityService: this.identityService,
     });
     this.attachmentService = new AttachmentService();
     this.federationService = new FederationService(config.federation);
