@@ -1,0 +1,8 @@
+[TA-P16-001] routeShellReady=true
+[TA-P16-001] apiPrefixGuardReady=true
+[TA-P16-001] didValidationReady=true
+[TA-P16-001] rfc7807HandlingReady=true
+[TA-P16-001] webTestsReady=true
+[TA-P16-001] requiredTokensChecked=22
+[TA-P16-001] decision=PASS
+[TA-P16-001] output=/Users/xiasenhai/Workspace/OpenClaw/telagent/docs/implementation/phase-16/manifests/2026-03-03-p16-web-runtime-shell-check.json

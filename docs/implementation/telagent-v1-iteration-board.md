@@ -3,7 +3,7 @@
 - 文档版本：v1.0
 - 基线计划起始日：2026-03-02（周一）
 - 基线计划结束日：2026-05-17（周日）
-- 适用范围：Phase 0 -> Phase 15（发布后改进 + 联邦灰度兼容 + 自动化回滚 + v1.1/v1.2/v0.2.0 + WebApp 工业化增强）
+- 适用范围：Phase 0 -> Phase 16（发布后改进 + 联邦灰度兼容 + 自动化回滚 + v1.1/v1.2/v0.2.0 + WebApp 工业化增强 + WebApp 实装冲刺）
 
 ## 1. 看板目的
 
@@ -227,8 +227,15 @@
 - 已完成：`TA-P14-004`（direct 会话参与方访问控制，非参与方写入返回 RFC7807）
 - 已完成：`TA-P14-005`（TS/Python SDK 行为与错误语义收敛，覆盖 FORBIDDEN direct ACL 场景）
 - 已完成：`TA-P14-006`（Phase 14 Gate 收口，阶段关闭）
-- 已规划：`TA-P15-001`（WebApp 工业级规划总纲冻结）
-- 下一批 Ready：等待下一阶段立项（建议先冻结 Phase 16 目标与验收口径）。
+- 已完成：`TA-P15-001`（WebApp 工业级规划总纲冻结）
+- 已完成：`TA-P15-002`（WebApp 功能域与 IA 冻结）
+- 已完成：`TA-P15-003`（WebApp 设计系统与组件规范冻结）
+- 已完成：`TA-P15-004`（WebApp 多平台架构冻结）
+- 已完成：`TA-P15-005`（WebApp 离线同步与冲突策略冻结）
+- 已完成：`TA-P15-006`（WebApp 客户端质量体系与发布门禁冻结）
+- 已完成：`TA-P15-007`（Phase 15 Gate 收口，阶段关闭）
+- 已完成：`TA-P16-001`（Web App 路由化壳层 + 统一 API Client + RFC7807 + Web 单测基线）
+- 下一批 Ready：`TA-P16-002`（会话域增强：稳定刷新、游标体验、失败重试状态）。
 
 ## 4.2 Blockers（2026-03-03 更新）
 
@@ -432,6 +439,16 @@
 - `TA-P15-006`：DONE（客户端质量体系与发布门禁冻结，见 `docs/implementation/phase-15/ta-p15-006-webapp-quality-gates-and-release-readiness-2026-03-03.md` 与 `docs/implementation/phase-15/manifests/2026-03-03-p15-quality-gates-check.json`）。
 - `TA-P15-007`：DONE（Phase 15 Gate 收口，见 `docs/implementation/phase-15/ta-p15-007-phase15-gate-review-2026-03-03.md` 与 `docs/implementation/gates/phase-15-gate.md`）。
 - 阶段状态：Phase 15 已关闭（PASS）。
+
+## 4.21 Phase 16 Web App 实装冲刺快照（2026-03-03）
+
+- `TA-P16-001`：DONE（Web App 路由化壳层、统一 API 客户端、RFC7807 错误链路与 Web 单测基线已落地，见 `docs/implementation/phase-16/ta-p16-001-web-app-runtime-shell-and-api-client-2026-03-03.md`）。
+- `TA-P16-001` 机读清单：`docs/implementation/phase-16/manifests/2026-03-03-p16-web-runtime-shell-check.json`。
+- `TA-P16-001` 验证日志：
+  - `docs/implementation/phase-16/logs/2026-03-03-p16-web-build.txt`
+  - `docs/implementation/phase-16/logs/2026-03-03-p16-web-test.txt`
+  - `docs/implementation/phase-16/logs/2026-03-03-p16-web-runtime-shell-check-run.txt`
+- 阶段状态：Phase 16 执行中，下一步进入 `TA-P16-002`。
 
 ## 5. 周会与 Gate 节奏建议
 

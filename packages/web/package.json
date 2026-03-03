@@ -6,6 +6,6 @@
   "scripts": {
     "build": "node scripts/build.mjs",
     "typecheck": "echo 'no typecheck for web package'",
-    "test": "echo 'no tests for web package'"
+    "test": "node --test test/**/*.test.js"
   }
 }

@@ -1,0 +1,5 @@
+
+> @telagent/web@0.1.0 build /Users/xiasenhai/Workspace/OpenClaw/telagent/packages/web
+> node scripts/build.mjs
+
+web assets copied to dist

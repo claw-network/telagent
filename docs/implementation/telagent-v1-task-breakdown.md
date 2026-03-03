@@ -6,7 +6,7 @@
 
 ## 1. 使用说明
 
-- **执行顺序**：按 `Phase 0 -> Phase 15` 串行推进，禁止跨 Gate 跳阶段。
+- **执行顺序**：按 `Phase 0 -> Phase 16` 串行推进，禁止跨 Gate 跳阶段。
 - **状态字段**：`TODO | IN_PROGRESS | BLOCKED | DONE`。
 - **估算单位**：人日（PD）。
 - **依赖格式**：`-` 表示无依赖；多个依赖用逗号分隔任务 ID。
@@ -31,6 +31,7 @@ flowchart LR
   P12 --> P13["Phase 13\nv0.2.0 稳定化与可运营增强"]
   P13 --> P14["Phase 14\n产品聚焦与缺陷收敛"]
   P14 --> P15["Phase 15\nWeb App 工业级设计与多平台建设"]
+  P15 --> P16["Phase 16\nWeb App 实装冲刺"]
 ```
 
 ## 3. 分阶段任务清单
@@ -158,6 +159,13 @@ flowchart LR
 | TA-P15-005 | Phase 15 | 离线同步与冲突解决策略 | FE + BE + QA | 2 | TA-P15-004 | offline-sync strategy + test plan | 离线队列、重放、冲突策略可验证 | DONE |
 | TA-P15-006 | Phase 15 | 客户端质量体系与发布门禁 | QA + FE + SRE | 1.5 | TA-P15-002, TA-P15-003, TA-P15-004, TA-P15-005 | quality gates + release checklist | 单测/E2E/性能/崩溃门禁成体系 | DONE |
 | TA-P15-007 | Phase 15 | Phase 15 Gate 评审与收口 | TL + QA | 0.5 | TA-P15-006 | gate 结论文档 | Phase 15 正式关闭 | DONE |
+| TA-P16-001 | Phase 16 | Web App 路由化壳层 + 统一 API Client + RFC7807 错误处理 + Web 单测基线 | Frontend + QA | 2 | TA-P15-007 | web runtime shell + api client + tests | 构建/测试/专项脚本均通过，证据可追踪 | DONE |
+| TA-P16-002 | Phase 16 | 会话域增强（稳定刷新、游标体验、失败重试状态） | Frontend + QA | 1.5 | TA-P16-001 | sessions domain improvements + tests | 会话拉取/发送交互稳定且错误提示可追踪 | TODO |
+| TA-P16-003 | Phase 16 | 群组域增强（建群/邀请/接受链路校验与链状态联动） | Frontend + Backend + QA | 1.5 | TA-P16-001 | groups domain improvements + tests | 群组主链路校验完整，失败分支具备 RFC7807 反馈 | TODO |
+| TA-P16-004 | Phase 16 | 身份与节点诊断增强（DID 解析、节点健康、版本信息） | Frontend + Backend | 1 | TA-P16-001 | identity/settings enhancements | 自身份、DID 解析与节点状态展示可验证 | TODO |
+| TA-P16-005 | Phase 16 | Web 契约回归与异常语义测试增强 | QA + Frontend | 1 | TA-P16-002, TA-P16-003, TA-P16-004 | web contract/e2e checks + manifest | `/api/v1/*`、RFC7807、DID 约束均回归通过 | TODO |
+| TA-P16-006 | Phase 16 | Web 质量收口（构建产物校验、专项脚本、发布前检查） | Frontend + QA + DX | 1 | TA-P16-005 | quality checklist + logs + manifest | Web 交付门禁可重复执行且结论 PASS | TODO |
+| TA-P16-007 | Phase 16 | Phase 16 Gate 评审与收口 | TL + QA | 0.5 | TA-P16-006 | gate 结论文档 | Phase 16 正式关闭 | TODO |
 
 ## 4. 执行节奏建议（按部就班）
 
@@ -371,4 +379,16 @@ flowchart LR
 | TA-P15-004 | DONE | `docs/implementation/phase-15/ta-p15-004-webapp-multi-platform-architecture-2026-03-03.md`, `docs/implementation/phase-15/README.md`, `docs/implementation/phase-15/logs/2026-03-03-p15-web-build-ta-p15-004.txt`, `docs/implementation/phase-15/logs/2026-03-03-p15-web-test-ta-p15-004.txt`, `docs/implementation/phase-15/logs/2026-03-03-p15-platform-architecture-check-run.txt`, `docs/implementation/phase-15/manifests/2026-03-03-p15-platform-architecture-check.json` | 无 | 进入 `TA-P15-005`（离线同步、冲突策略与性能预算） |
 | TA-P15-005 | DONE | `docs/implementation/phase-15/ta-p15-005-webapp-offline-sync-conflict-performance-2026-03-03.md`, `docs/implementation/phase-15/README.md`, `docs/implementation/phase-15/logs/2026-03-03-p15-web-build-ta-p15-005.txt`, `docs/implementation/phase-15/logs/2026-03-03-p15-web-test-ta-p15-005.txt`, `docs/implementation/phase-15/logs/2026-03-03-p15-offline-sync-check-run.txt`, `docs/implementation/phase-15/manifests/2026-03-03-p15-offline-sync-check.json` | 无 | 进入 `TA-P15-006`（客户端质量体系与发布门禁） |
 | TA-P15-006 | DONE | `docs/implementation/phase-15/ta-p15-006-webapp-quality-gates-and-release-readiness-2026-03-03.md`, `docs/implementation/phase-15/README.md`, `docs/implementation/phase-15/logs/2026-03-03-p15-web-build-ta-p15-006.txt`, `docs/implementation/phase-15/logs/2026-03-03-p15-web-test-ta-p15-006.txt`, `docs/implementation/phase-15/logs/2026-03-03-p15-node-build-ta-p15-006.txt`, `docs/implementation/phase-15/logs/2026-03-03-p15-node-test-ta-p15-006.txt`, `docs/implementation/phase-15/logs/2026-03-03-p15-sdk-ts-test-ta-p15-006.txt`, `docs/implementation/phase-15/logs/2026-03-03-p15-sdk-python-test-ta-p15-006.txt`, `docs/implementation/phase-15/logs/2026-03-03-p15-quality-gates-check-run.txt`, `docs/implementation/phase-15/manifests/2026-03-03-p15-quality-gates-check.json` | 无 | 进入 `TA-P15-007`（Phase 15 Gate 评审与收口） |
-| TA-P15-007 | DONE | `docs/implementation/phase-15/ta-p15-007-phase15-gate-review-2026-03-03.md`, `docs/implementation/gates/phase-15-gate.md`, `docs/implementation/phase-15/logs/2026-03-03-p15-gate-web-build.txt`, `docs/implementation/phase-15/logs/2026-03-03-p15-gate-web-test.txt`, `docs/implementation/phase-15/logs/2026-03-03-p15-gate-node-build.txt`, `docs/implementation/phase-15/logs/2026-03-03-p15-gate-node-test.txt`, `docs/implementation/phase-15/logs/2026-03-03-p15-gate-sdk-ts-test.txt`, `docs/implementation/phase-15/logs/2026-03-03-p15-gate-sdk-python-test.txt`, `docs/implementation/phase-15/logs/2026-03-03-p15-gate-manifest-summary.txt` | 无 | Phase 15 已关闭（PASS），等待下一阶段立项 |
+| TA-P15-007 | DONE | `docs/implementation/phase-15/ta-p15-007-phase15-gate-review-2026-03-03.md`, `docs/implementation/gates/phase-15-gate.md`, `docs/implementation/phase-15/logs/2026-03-03-p15-gate-web-build.txt`, `docs/implementation/phase-15/logs/2026-03-03-p15-gate-web-test.txt`, `docs/implementation/phase-15/logs/2026-03-03-p15-gate-node-build.txt`, `docs/implementation/phase-15/logs/2026-03-03-p15-gate-node-test.txt`, `docs/implementation/phase-15/logs/2026-03-03-p15-gate-sdk-ts-test.txt`, `docs/implementation/phase-15/logs/2026-03-03-p15-gate-sdk-python-test.txt`, `docs/implementation/phase-15/logs/2026-03-03-p15-gate-manifest-summary.txt` | 无 | Phase 15 已关闭（PASS），进入 Phase 16 实装冲刺 |
+
+## 22. Phase 16 Web App 实装冲刺（2026-03-03）
+
+| Task ID | 状态 | 证据链接 | 阻塞项 | 下一步动作 |
+| --- | --- | --- | --- | --- |
+| TA-P16-001 | DONE | `docs/implementation/phase-16/ta-p16-001-web-app-runtime-shell-and-api-client-2026-03-03.md`, `docs/implementation/phase-16/README.md`, `packages/web/src/core/api-client.js`, `packages/web/src/main.js`, `packages/web/src/index.html`, `packages/web/src/styles.css`, `packages/web/test/api-client.test.js`, `packages/web/scripts/run-phase16-web-runtime-shell-check.mjs`, `docs/implementation/phase-16/logs/2026-03-03-p16-web-build.txt`, `docs/implementation/phase-16/logs/2026-03-03-p16-web-test.txt`, `docs/implementation/phase-16/logs/2026-03-03-p16-web-runtime-shell-check-run.txt`, `docs/implementation/phase-16/manifests/2026-03-03-p16-web-runtime-shell-check.json` | 无 | 进入 `TA-P16-002`（会话域增强与交互稳定性补齐） |
+| TA-P16-002 | TODO | `docs/implementation/phase-16/README.md` | 无 | 实施会话域增强并补齐测试/证据 |
+| TA-P16-003 | TODO | `docs/implementation/phase-16/README.md` | 无 | 实施群组域增强并补齐测试/证据 |
+| TA-P16-004 | TODO | `docs/implementation/phase-16/README.md` | 无 | 实施身份/节点诊断增强并补齐测试/证据 |
+| TA-P16-005 | TODO | `docs/implementation/phase-16/README.md` | 无 | 补齐 Web 契约与异常语义回归 |
+| TA-P16-006 | TODO | `docs/implementation/phase-16/README.md` | 无 | 进行质量收口与发布前检查 |
+| TA-P16-007 | TODO | `docs/implementation/phase-16/README.md` | 无 | Gate 评审与阶段收口 |

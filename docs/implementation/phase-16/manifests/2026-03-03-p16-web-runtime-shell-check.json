@@ -1,0 +1,48 @@
+{
+  "phase": "Phase 16",
+  "taskId": "TA-P16-001",
+  "generatedAt": "2026-03-03T16:10:35.894Z",
+  "summary": {
+    "routeShellReady": true,
+    "apiPrefixGuardReady": true,
+    "didValidationReady": true,
+    "rfc7807HandlingReady": true,
+    "webTestsReady": true,
+    "requiredTokensChecked": 22
+  },
+  "decision": "PASS",
+  "details": {
+    "htmlChecks": [
+      "<div id=\"app\"></div>",
+      "<script type=\"module\" src=\"./main.js\"></script>"
+    ],
+    "apiClientChecks": [
+      "assertApiV1Path(path)",
+      "path.startsWith('/api/v1/')",
+      "application/problem+json",
+      "did:claw:*",
+      "class ApiProblemError extends Error"
+    ],
+    "jsChecks": [
+      "function parseRoute(hashValue)",
+      "return { name: 'sessions' }",
+      "async function pullMessages()",
+      "async function sendMessage()",
+      "async function createGroup()",
+      "async function inviteMember()",
+      "async function acceptInvite()",
+      "async function resolveIdentity()"
+    ],
+    "cssChecks": [
+      ".shell",
+      ".session-layout",
+      ".inspect-panel",
+      "@media (max-width: 1180px)"
+    ],
+    "testChecks": [
+      "assertApiV1Path only accepts /api/v1/*",
+      "request parses RFC7807 errors to ApiProblemError",
+      "sendMessage enforces did:claw sender"
+    ]
+  }
+}
