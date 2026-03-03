@@ -129,6 +129,60 @@ class FakeFederationService {
   }
 }
 
+class FakeKeyLifecycleService {
+  registerKey() {
+    return {
+      did: 'did:claw:zSelf',
+      suite: 'signal',
+      keyId: 'signal-key-v1',
+      publicKey: '0x11',
+      state: 'ACTIVE',
+      createdAtMs: Date.now(),
+      activatedAtMs: Date.now(),
+    };
+  }
+
+  rotateKey() {
+    return {
+      previous: this.registerKey(),
+      current: {
+        ...this.registerKey(),
+        keyId: 'signal-key-v2',
+      },
+    };
+  }
+
+  revokeKey() {
+    return {
+      ...this.registerKey(),
+      state: 'REVOKED',
+      revokedAtMs: Date.now(),
+      revokeReason: 'test',
+    };
+  }
+
+  recoverKey() {
+    return {
+      revoked: {
+        ...this.registerKey(),
+        state: 'RECOVERED',
+      },
+      recovered: {
+        ...this.registerKey(),
+        keyId: 'signal-key-v3',
+      },
+    };
+  }
+
+  listKeys() {
+    return [this.registerKey()];
+  }
+
+  assertCanUseKey() {
+    return this.registerKey();
+  }
+}
+
 async function startTestServer() {
   const context: RuntimeContext = {
     config: { host: '127.0.0.1', port: 0 },
@@ -139,6 +193,7 @@ async function startTestServer() {
     attachmentService: new FakeAttachmentService() as unknown as RuntimeContext['attachmentService'],
     federationService: new FakeFederationService() as unknown as RuntimeContext['federationService'],
     monitoringService: new NodeMonitoringService(),
+    keyLifecycleService: new FakeKeyLifecycleService() as unknown as RuntimeContext['keyLifecycleService'],
   };
 
   const server = new ApiServer(context);

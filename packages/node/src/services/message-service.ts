@@ -9,6 +9,7 @@ import {
 } from '@telagent/protocol';
 
 import type { GroupService } from './group-service.js';
+import type { KeyLifecycleService, KeySuite } from './key-lifecycle-service.js';
 import { SequenceAllocator } from './sequence-allocator.js';
 import type {
   MailboxStore,
@@ -63,14 +64,21 @@ export class MessageService {
   private readonly sequenceAllocator: SequenceAllocator;
   private readonly clock: MessageServiceClock;
   private readonly repository?: MailboxStore;
+  private readonly keyLifecycleService?: KeyLifecycleService;
 
   constructor(
     private readonly groups: GroupService,
-    options?: { sequenceAllocator?: SequenceAllocator; clock?: MessageServiceClock; repository?: MailboxStore },
+    options?: {
+      sequenceAllocator?: SequenceAllocator;
+      clock?: MessageServiceClock;
+      repository?: MailboxStore;
+      keyLifecycleService?: KeyLifecycleService;
+    },
   ) {
     this.sequenceAllocator = options?.sequenceAllocator ?? new SequenceAllocator();
     this.clock = options?.clock ?? SystemClock;
     this.repository = options?.repository;
+    this.keyLifecycleService = options?.keyLifecycleService;
   }
 
   async send(input: SendMessageInput): Promise<Envelope> {
@@ -111,6 +119,16 @@ export class MessageService {
 
     if (!isDidClaw(input.senderDid)) {
       throw new TelagentError(ErrorCodes.VALIDATION, 'senderDid must use did:claw format');
+    }
+
+    if (this.keyLifecycleService) {
+      const suite: KeySuite = input.conversationType === 'direct' ? 'signal' : 'mls';
+      this.keyLifecycleService.assertCanUseKey({
+        did: input.senderDid,
+        suite,
+        keyId: input.mailboxKeyId,
+        atMs: nowMs,
+      });
     }
 
     let provisional = false;

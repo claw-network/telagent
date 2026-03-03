@@ -9,6 +9,7 @@ import { attachmentRoutes } from './routes/attachments.js';
 import { federationRoutes } from './routes/federation.js';
 import { groupRoutes } from './routes/groups.js';
 import { identityRoutes } from './routes/identities.js';
+import { keyRoutes } from './routes/keys.js';
 import { messageRoutes } from './routes/messages.js';
 import { nodeRoutes } from './routes/node.js';
 import { walletRoutes } from './routes/wallets.js';
@@ -20,6 +21,7 @@ function buildRouter(ctx: RuntimeContext): Router {
   router.mount('/api/v1/node', nodeRoutes(ctx));
   router.mount('/api/v1/identities', identityRoutes(ctx));
   router.mount('/api/v1/groups', groupRoutes(ctx));
+  router.mount('/api/v1/keys', keyRoutes(ctx));
   router.mount('/api/v1/wallets', walletRoutes(ctx));
   router.mount('/api/v1/messages', messageRoutes(ctx));
   router.mount('/api/v1/attachments', attachmentRoutes(ctx));

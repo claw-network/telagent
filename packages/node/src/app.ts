@@ -8,6 +8,7 @@ import { FederationService } from './services/federation-service.js';
 import { GasService } from './services/gas-service.js';
 import { GroupService } from './services/group-service.js';
 import { IdentityAdapterService } from './services/identity-adapter-service.js';
+import { KeyLifecycleService } from './services/key-lifecycle-service.js';
 import { MessageService } from './services/message-service.js';
 import { NodeMonitoringService } from './services/node-monitoring-service.js';
 import { DomainProofChallengeService } from './services/domain-proof-challenge-service.js';
@@ -24,6 +25,7 @@ export class TelagentNode {
   private readonly identityService: IdentityAdapterService;
   private readonly gasService: GasService;
   private readonly domainProofChallengeService: DomainProofChallengeService;
+  private readonly keyLifecycleService: KeyLifecycleService;
   private readonly groupService: GroupService;
   private readonly messageService: MessageService;
   private readonly attachmentService: AttachmentService;
@@ -52,8 +54,10 @@ export class TelagentNode {
       this.repo,
       this.domainProofChallengeService,
     );
+    this.keyLifecycleService = new KeyLifecycleService();
     this.messageService = new MessageService(this.groupService, {
       repository: this.mailboxStore,
+      keyLifecycleService: this.keyLifecycleService,
     });
     this.attachmentService = new AttachmentService();
     this.federationService = new FederationService(config.federation);
@@ -84,6 +88,7 @@ export class TelagentNode {
       attachmentService: this.attachmentService,
       federationService: this.federationService,
       monitoringService: this.monitoringService,
+      keyLifecycleService: this.keyLifecycleService,
     };
 
     this.apiServer = new ApiServer(runtime);

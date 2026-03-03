@@ -340,6 +340,127 @@ class FakeMonitoringService {
   }
 }
 
+class FakeKeyLifecycleService {
+  private readonly keys = new Map<string, Array<{
+    did: string;
+    suite: 'signal' | 'mls';
+    keyId: string;
+    publicKey: string;
+    state: 'ACTIVE' | 'ROTATING' | 'REVOKED' | 'RECOVERED';
+    createdAtMs: number;
+    activatedAtMs: number;
+    revokeReason?: string;
+  }>>();
+
+  registerKey(input: {
+    did: string;
+    suite: 'signal' | 'mls';
+    keyId: string;
+    publicKey: string;
+    expiresAtMs?: number;
+  }) {
+    const record = {
+      did: input.did,
+      suite: input.suite,
+      keyId: input.keyId,
+      publicKey: input.publicKey,
+      state: 'ACTIVE' as const,
+      createdAtMs: Date.now(),
+      activatedAtMs: Date.now(),
+      expiresAtMs: input.expiresAtMs,
+    };
+    const bucket = this.keys.get(input.did) ?? [];
+    bucket.push(record);
+    this.keys.set(input.did, bucket);
+    return record;
+  }
+
+  rotateKey(input: {
+    did: string;
+    suite: 'signal' | 'mls';
+    fromKeyId: string;
+    toKeyId: string;
+    publicKey: string;
+  }) {
+    const previous = this.registerKey({
+      did: input.did,
+      suite: input.suite,
+      keyId: input.fromKeyId,
+      publicKey: '0x' + '1'.repeat(64),
+    });
+    const current = this.registerKey({
+      did: input.did,
+      suite: input.suite,
+      keyId: input.toKeyId,
+      publicKey: input.publicKey,
+    });
+    return {
+      previous: {
+        ...previous,
+        state: 'ROTATING' as const,
+      },
+      current,
+    };
+  }
+
+  revokeKey(input: {
+    did: string;
+    suite: 'signal' | 'mls';
+    keyId: string;
+    reason: string;
+  }) {
+    return {
+      did: input.did,
+      suite: input.suite,
+      keyId: input.keyId,
+      publicKey: '0x' + '1'.repeat(64),
+      state: 'REVOKED' as const,
+      createdAtMs: Date.now(),
+      activatedAtMs: Date.now(),
+      revokedAtMs: Date.now(),
+      revokeReason: input.reason,
+    };
+  }
+
+  recoverKey(input: {
+    did: string;
+    suite: 'signal' | 'mls';
+    revokedKeyId: string;
+    recoveredKeyId: string;
+    publicKey: string;
+  }) {
+    return {
+      revoked: {
+        did: input.did,
+        suite: input.suite,
+        keyId: input.revokedKeyId,
+        publicKey: '0x' + '1'.repeat(64),
+        state: 'RECOVERED' as const,
+        createdAtMs: Date.now(),
+        activatedAtMs: Date.now(),
+      },
+      recovered: {
+        did: input.did,
+        suite: input.suite,
+        keyId: input.recoveredKeyId,
+        publicKey: input.publicKey,
+        state: 'ACTIVE' as const,
+        createdAtMs: Date.now(),
+        activatedAtMs: Date.now(),
+      },
+    };
+  }
+
+  listKeys(did: string, suite?: 'signal' | 'mls') {
+    const bucket = this.keys.get(did) ?? [];
+    return suite ? bucket.filter((entry) => entry.suite === suite) : bucket;
+  }
+
+  assertCanUseKey() {
+    return true;
+  }
+}
+
 async function startTestServer() {
   const context: RuntimeContext = {
     config: { host: '127.0.0.1', port: 0 },
@@ -350,6 +471,7 @@ async function startTestServer() {
     attachmentService: new FakeAttachmentService() as unknown as RuntimeContext['attachmentService'],
     federationService: new FakeFederationService() as unknown as RuntimeContext['federationService'],
     monitoringService: new FakeMonitoringService() as unknown as RuntimeContext['monitoringService'],
+    keyLifecycleService: new FakeKeyLifecycleService() as unknown as RuntimeContext['keyLifecycleService'],
   };
 
   const server = new ApiServer(context);
@@ -591,6 +713,35 @@ test('messages, attachments and federation endpoints are accessible', async (t) 
     }),
   });
   assert.equal(completeUploadRes.status, 200);
+
+  const keyRegisterRes = await fetch(`${baseUrl}/api/v1/keys/register`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({
+      did: 'did:claw:zSelf',
+      suite: 'signal',
+      keyId: 'signal-key-v1',
+      publicKey: `0x${'9'.repeat(64)}`,
+    }),
+  });
+  assert.equal(keyRegisterRes.status, 201);
+
+  const keyRotateRes = await fetch(`${baseUrl}/api/v1/keys/rotate`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({
+      did: 'did:claw:zSelf',
+      suite: 'signal',
+      fromKeyId: 'signal-key-v1',
+      toKeyId: 'signal-key-v2',
+      publicKey: `0x${'8'.repeat(64)}`,
+      gracePeriodSec: 60,
+    }),
+  });
+  assert.equal(keyRotateRes.status, 200);
+
+  const keyListRes = await fetch(`${baseUrl}/api/v1/keys/${encodeURIComponent('did:claw:zSelf')}?suite=signal`);
+  assert.equal(keyListRes.status, 200);
 
   const fedEnvelopeRes = await fetch(`${baseUrl}/api/v1/federation/envelopes`, {
     method: 'POST',

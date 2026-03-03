@@ -3,6 +3,7 @@ import type { FederationService } from '../services/federation-service.js';
 import type { GasService } from '../services/gas-service.js';
 import type { GroupService } from '../services/group-service.js';
 import type { IdentityAdapterService } from '../services/identity-adapter-service.js';
+import type { KeyLifecycleService } from '../services/key-lifecycle-service.js';
 import type { MessageService } from '../services/message-service.js';
 import type { NodeMonitoringService } from '../services/node-monitoring-service.js';
 
@@ -20,4 +21,5 @@ export interface RuntimeContext {
   attachmentService: AttachmentService;
   federationService: FederationService;
   monitoringService: NodeMonitoringService;
+  keyLifecycleService: KeyLifecycleService;
 }

@@ -6,6 +6,7 @@ import test from 'node:test';
 
 import { ErrorCodes, TelagentError, hashDid, type GroupState } from '@telagent/protocol';
 
+import { KeyLifecycleService } from './key-lifecycle-service.js';
 import { MessageService } from './message-service.js';
 import { MessageRepository } from '../storage/message-repository.js';
 
@@ -281,4 +282,85 @@ test('TA-P6-001 mailbox persists messages and seq after service restart', async 
     conversationId: 'direct:persist',
   }));
   assert.equal(second.seq, 2n);
+});
+
+test('TA-P11-006 message send validates signal/mls key lifecycle status', async () => {
+  const clock = createClock(50_000);
+  const keyLifecycle = new KeyLifecycleService({
+    clock,
+    defaultSignalGraceSec: 1,
+    defaultMlsGraceSec: 1,
+  });
+  const groups = {} as ConstructorParameters<typeof MessageService>[0];
+  const service = new MessageService(groups, {
+    clock,
+    keyLifecycleService: keyLifecycle,
+  });
+
+  keyLifecycle.registerKey({
+    did: 'did:claw:zAlice',
+    suite: 'signal',
+    keyId: 'signal-key-v1',
+    publicKey: `0x${'1'.repeat(64)}`,
+  });
+
+  const first = await service.send(createDirectInput({
+    envelopeId: 'env-key-life-1',
+    mailboxKeyId: 'signal-key-v1',
+  }));
+  assert.equal(first.envelopeId, 'env-key-life-1');
+
+  keyLifecycle.rotateKey({
+    did: 'did:claw:zAlice',
+    suite: 'signal',
+    fromKeyId: 'signal-key-v1',
+    toKeyId: 'signal-key-v2',
+    publicKey: `0x${'2'.repeat(64)}`,
+    gracePeriodSec: 1,
+  });
+
+  const inGrace = await service.send(createDirectInput({
+    envelopeId: 'env-key-life-2',
+    mailboxKeyId: 'signal-key-v1',
+  }));
+  assert.equal(inGrace.envelopeId, 'env-key-life-2');
+
+  clock.tick(1_500);
+  await assert.rejects(
+    async () =>
+      service.send(createDirectInput({
+        envelopeId: 'env-key-life-3',
+        mailboxKeyId: 'signal-key-v1',
+      })),
+    (error) => {
+      assert.ok(error instanceof TelagentError);
+      assert.equal(error.code, ErrorCodes.FORBIDDEN);
+      return true;
+    },
+  );
+
+  await service.send(createDirectInput({
+    envelopeId: 'env-key-life-4',
+    mailboxKeyId: 'signal-key-v2',
+  }));
+
+  keyLifecycle.revokeKey({
+    did: 'did:claw:zAlice',
+    suite: 'signal',
+    keyId: 'signal-key-v2',
+    reason: 'device lost',
+  });
+
+  await assert.rejects(
+    async () =>
+      service.send(createDirectInput({
+        envelopeId: 'env-key-life-5',
+        mailboxKeyId: 'signal-key-v2',
+      })),
+    (error) => {
+      assert.ok(error instanceof TelagentError);
+      assert.equal(error.code, ErrorCodes.FORBIDDEN);
+      return true;
+    },
+  );
 });

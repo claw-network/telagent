@@ -132,6 +132,52 @@ class FakeFederationService {
   }
 }
 
+class FakeKeyLifecycleService {
+  assertCanUseKey() {
+    return {
+      did: 'did:claw:zAlice',
+      suite: 'signal',
+      keyId: 'mailbox-1',
+      publicKey: '0x11',
+      state: 'ACTIVE',
+      createdAtMs: Date.now(),
+      activatedAtMs: Date.now(),
+    };
+  }
+
+  registerKey() {
+    return this.assertCanUseKey();
+  }
+
+  rotateKey() {
+    return {
+      previous: this.assertCanUseKey(),
+      current: this.assertCanUseKey(),
+    };
+  }
+
+  revokeKey() {
+    return {
+      ...this.assertCanUseKey(),
+      state: 'REVOKED',
+    };
+  }
+
+  recoverKey() {
+    return {
+      revoked: {
+        ...this.assertCanUseKey(),
+        state: 'RECOVERED',
+      },
+      recovered: this.assertCanUseKey(),
+    };
+  }
+
+  listKeys() {
+    return [this.assertCanUseKey()];
+  }
+}
+
 class FakeGroupService {
   private readonly groups = new Map<string, GroupRecord>();
   private readonly members = new Map<string, GroupMemberRecord[]>();
@@ -322,6 +368,7 @@ async function startE2EServer(startMs?: number): Promise<{
     attachmentService,
     federationService: new FakeFederationService() as unknown as RuntimeContext['federationService'],
     monitoringService,
+    keyLifecycleService: new FakeKeyLifecycleService() as unknown as RuntimeContext['keyLifecycleService'],
   };
 
   const server = new ApiServer(context);
