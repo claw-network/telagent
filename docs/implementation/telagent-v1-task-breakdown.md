@@ -79,7 +79,7 @@ flowchart LR
 | TA-P4-008 | Phase 4 | 实现 node-info 域名一致性校验 | Security Engineer | 1 | TA-P0-006, TA-P4-007 | domain verify logic | 域名与节点声明一致 | DONE |
 | TA-P4-009 | Phase 4 | E2E：A 建群 -> 邀请 B -> B 接受 -> 群聊 | QA Engineer | 2 | TA-P4-005, TA-P4-006 | E2E suite | 主链路全绿 | DONE |
 | TA-P4-010 | Phase 4 | E2E：离线 24h 拉取 + 去重排序 | QA Engineer | 1.5 | TA-P4-004, TA-P4-009 | E2E suite | 离线场景稳定通过 | DONE |
-| TA-P4-011 | Phase 4 | 压测（<=500 成员群） | SRE + QA | 2 | TA-P4-009 | 压测报告 | 核心 SLO 达到目标 | TODO |
+| TA-P4-011 | Phase 4 | 压测（<=500 成员群） | SRE + QA | 2 | TA-P4-009 | 压测报告 | 核心 SLO 达到目标 | DONE |
 | TA-P4-012 | Phase 4 | 消息通道阶段 Gate 评审 | PM/Tech Lead | 0.5 | TA-P4-010, TA-P4-011 | Gate 结论 | Phase 4 正式关闭 | TODO |
 
 | TA-P5-001 | Phase 5 | Web 管理台打通建群/邀请/接受/聊天 | Frontend Engineer | 2 | TA-P4-009 | Web 功能闭环 | 全流程可操作可演示 | TODO |
@@ -178,3 +178,4 @@ flowchart LR
 | TA-P4-008 | DONE | `docs/implementation/phase-4/ta-p4-008-node-info-domain-consistency-2026-03-03.md`, `packages/node/src/services/federation-service.ts`, `packages/node/src/services/federation-service.test.ts`, `packages/node/src/api/routes/federation.ts`, `packages/node/src/api-contract.test.ts`, `docs/implementation/phase-4/logs/2026-03-03-p4-node-test.txt`, `docs/implementation/phase-4/logs/2026-03-03-p4-workspace-test.txt` | 无 | 进入 `TA-P4-009` |
 | TA-P4-009 | DONE | `docs/implementation/phase-4/ta-p4-009-e2e-main-path-2026-03-03.md`, `packages/node/src/phase4-e2e.test.ts`, `docs/implementation/phase-4/logs/2026-03-03-p4-node-test.txt`, `docs/implementation/phase-4/logs/2026-03-03-p4-workspace-test.txt` | 无 | 进入 `TA-P4-010` |
 | TA-P4-010 | DONE | `docs/implementation/phase-4/ta-p4-010-e2e-offline-24h-dedupe-order-2026-03-03.md`, `packages/node/src/phase4-e2e.test.ts`, `docs/implementation/phase-4/logs/2026-03-03-p4-node-test.txt`, `docs/implementation/phase-4/logs/2026-03-03-p4-workspace-test.txt` | 无 | 进入 `TA-P4-011` |
+| TA-P4-011 | DONE | `docs/implementation/phase-4/ta-p4-011-load-test-500-members-2026-03-03.md`, `packages/node/scripts/run-phase4-load-test.ts`, `docs/implementation/phase-4/logs/2026-03-03-p4-load-test-run.txt`, `docs/implementation/phase-4/manifests/2026-03-03-p4-load-test.json`, `docs/implementation/phase-4/logs/2026-03-03-p4-node-test.txt`, `docs/implementation/phase-4/logs/2026-03-03-p4-workspace-test.txt` | 无 | 进入 `TA-P4-012` |

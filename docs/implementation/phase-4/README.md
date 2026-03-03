@@ -1,7 +1,7 @@
 # TelAgent v1 Phase 4 执行产出
 
 - 文档版本：v1.0
-- 状态：Phase 4 进行中（已完成 `TA-P4-001` ~ `TA-P4-010`）
+- 状态：Phase 4 进行中（已完成 `TA-P4-001` ~ `TA-P4-011`）
 - 最后更新：2026-03-03
 
 ## 1. 产出目录
@@ -19,6 +19,7 @@
 | TA-P4-008 | `ta-p4-008-node-info-domain-consistency-2026-03-03.md` | node-info 域名一致性校验 |
 | TA-P4-009 | `ta-p4-009-e2e-main-path-2026-03-03.md` | E2E 主链路（建群->邀请->接受->文本/图片/文件） |
 | TA-P4-010 | `ta-p4-010-e2e-offline-24h-dedupe-order-2026-03-03.md` | E2E 离线 24h 拉取 + 去重排序 |
+| TA-P4-011 | `ta-p4-011-load-test-500-members-2026-03-03.md` | <=500 成员群压测与 SLO 验证 |
 
 ## 2. 证据目录
 
@@ -26,10 +27,13 @@
   - `logs/2026-03-03-p4-node-build.txt`
   - `logs/2026-03-03-p4-node-test.txt`
   - `logs/2026-03-03-p4-workspace-test.txt`
+  - `logs/2026-03-03-p4-load-test-run.txt`
+- 压测清单：
+  - `manifests/2026-03-03-p4-load-test.json`
 - Gate：
   - `docs/implementation/gates/phase-4-gate.md`
 
 ## 3. 阶段进展
 
-- `TA-P4-001` ~ `TA-P4-010`：DONE
-- 下一个执行任务：`TA-P4-011`、`TA-P4-012`
+- `TA-P4-001` ~ `TA-P4-011`：DONE
+- 下一个执行任务：`TA-P4-012`

@@ -1,0 +1,77 @@
+{
+  "phase": "Phase 4",
+  "taskId": "TA-P4-011",
+  "generatedAt": "2026-03-03T02:09:44.099Z",
+  "config": {
+    "groupId": "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+    "groupDomain": "load.tel",
+    "memberCount": 500,
+    "messagesPerMember": 4,
+    "dedupeReplayCount": 200,
+    "pullPageSize": 200
+  },
+  "metrics": {
+    "send": {
+      "totalMessages": 2000,
+      "durationMs": 141.58962499999996,
+      "throughputPerSec": 14125.328744955716,
+      "latencyMs": {
+        "p50": 0.05991699999992761,
+        "p95": 0.09629100000006474,
+        "p99": 0.3982500000000755,
+        "max": 1.0950000000000273
+      },
+      "errors": 0
+    },
+    "dedupe": {
+      "replayCount": 200,
+      "hitCount": 200,
+      "hitRate": 1,
+      "latencyMs": {
+        "p50": 0.025875000000041837,
+        "p95": 0.04275000000006912,
+        "p99": 0.05220899999994799,
+        "max": 0.46845799999982773
+      }
+    },
+    "pull": {
+      "pages": 20,
+      "totalItems": 2000,
+      "durationMs": 2.8241659999998774,
+      "latencyMs": {
+        "p50": 0.10491699999988668,
+        "p95": 0.29741599999988466,
+        "p99": 0.5355830000000878,
+        "max": 0.5355830000000878
+      }
+    },
+    "checks": {
+      "expectedMembers": 500,
+      "orderingViolationCount": 0,
+      "duplicateEnvelopeCount": 0,
+      "provisionalCount": 0
+    }
+  },
+  "thresholds": {
+    "maxMembers": 500,
+    "minThroughputPerSec": 200,
+    "maxSendP95Ms": 20,
+    "maxPullP95Ms": 100,
+    "minDedupeHitRate": 1,
+    "maxOrderingViolationCount": 0,
+    "maxDuplicateEnvelopeCount": 0
+  },
+  "evaluation": {
+    "passed": true,
+    "checks": {
+      "memberCountWithinTarget": true,
+      "sendErrorFree": true,
+      "throughputSufficient": true,
+      "sendP95WithinSlo": true,
+      "pullP95WithinSlo": true,
+      "dedupeHitRateSufficient": true,
+      "orderingStable": true,
+      "duplicateFree": true
+    }
+  }
+}

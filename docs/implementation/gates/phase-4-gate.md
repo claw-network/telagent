@@ -13,21 +13,21 @@
 - [ ] WBS 中 `TA-P4-001` ~ `TA-P4-012` 已更新状态
 - [x] E2E 报告（文本/图片/文件）已归档
 - [x] 离线场景验证报告（>=24h）已归档
-- [ ] 压测报告与问题清单已归档
+- [x] 压测报告与问题清单已归档
 
 ## 2) Exit Criteria 核对
 
 | 条目 | 结果 | 证据路径 | 备注 |
 | --- | --- | --- | --- |
-| 至少一次投递 + 会话内有序成立 | 待评审 | `<pending>` |  |
-| 未确权消息可正确标记与剔除 | 待评审 | `<pending>` |  |
-| 联邦对端不可伪造成员状态 | 待评审 | `<pending>` |  |
+| 至少一次投递 + 会话内有序成立 | PASS | `docs/implementation/phase-4/ta-p4-009-e2e-main-path-2026-03-03.md`, `docs/implementation/phase-4/ta-p4-010-e2e-offline-24h-dedupe-order-2026-03-03.md`, `docs/implementation/phase-4/ta-p4-011-load-test-500-members-2026-03-03.md` | 500 成员压测下顺序违规=0，重复 envelope=0 |
+| 未确权消息可正确标记与剔除 | PASS | `docs/implementation/phase-4/ta-p4-005-provisional-mark-retract-2026-03-03.md`, `docs/implementation/phase-4/logs/2026-03-03-p4-node-test.txt` | reorg 回滚后 provisional 已剔除 |
+| 联邦对端不可伪造成员状态 | PASS | `docs/implementation/phase-4/ta-p4-007-federation-auth-rate-limit-retry-2026-03-03.md`, `docs/implementation/phase-4/ta-p4-008-node-info-domain-consistency-2026-03-03.md` | 鉴权 + 限流 + 域名一致性已生效 |
 
 ## 3) 风险与阻塞
 
 | 风险/阻塞 | 影响 | Owner | 截止日期 | 状态 |
 | --- | --- | --- | --- | --- |
-| Phase 4C 尚未收口（`TA-P4-011` ~ `TA-P4-012`） | 暂不可进入 Phase 5 Gate | BE/QA/SRE | 2026-05-10 | Open |
+| Gate 收口待执行（`TA-P4-012`） | 未完成签字与阶段放行结论 | TL/BE/QA | 2026-05-10 | Open |
 
 ## 4) 条件放行补丁项（仅 CONDITIONAL PASS 填写）
 
@@ -43,9 +43,9 @@
 
 ## 7) 阶段进展快照（2026-03-03）
 
-- 已完成任务：`TA-P4-001`、`TA-P4-002`、`TA-P4-003`、`TA-P4-004`、`TA-P4-005`、`TA-P4-006`、`TA-P4-007`、`TA-P4-008`、`TA-P4-009`、`TA-P4-010`。
+- 已完成任务：`TA-P4-001`、`TA-P4-002`、`TA-P4-003`、`TA-P4-004`、`TA-P4-005`、`TA-P4-006`、`TA-P4-007`、`TA-P4-008`、`TA-P4-009`、`TA-P4-010`、`TA-P4-011`。
 - 证据目录：`docs/implementation/phase-4/README.md`。
-- 当前结论：保持 `PENDING`，等待 `TA-P4-011` ~ `TA-P4-012` 完成后再执行正式 Gate 评审。
+- 当前结论：保持 `PENDING`，等待 `TA-P4-012` 完成 Gate 签字与阶段放行。
 
 ## 6) 签字
 
