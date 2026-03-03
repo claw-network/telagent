@@ -236,6 +236,83 @@ test('TA-P8-002 group-state sync detects split-brain on same stateVersion with d
   assert.equal(info.resilience.splitBrainGroupStateSyncDetected, 1);
 });
 
+test('TA-P9-002 federation accepts compatible protocol versions and tracks usage stats', () => {
+  const service = new FederationService({
+    selfDomain: 'node-a.tel',
+    protocolVersion: 'v2',
+    supportedProtocolVersions: ['v1', 'v2'],
+  });
+
+  service.receiveEnvelope(
+    {
+      envelopeId: 'fed-p9-v1',
+      sourceDomain: 'node-b.tel',
+    },
+    {
+      sourceDomain: 'node-b.tel',
+      protocolVersion: 'v1',
+    },
+  );
+  service.receiveEnvelope(
+    {
+      envelopeId: 'fed-p9-v2',
+      sourceDomain: 'node-b.tel',
+    },
+    {
+      sourceDomain: 'node-b.tel',
+      protocolVersion: 'v2',
+    },
+  );
+  service.recordReceipt(
+    {
+      envelopeId: 'fed-p9-v2',
+      status: 'delivered',
+    },
+    {
+      sourceDomain: 'node-b.tel',
+    },
+  );
+
+  const info = service.nodeInfo();
+  assert.equal(info.protocolVersion, 'v2');
+  assert.deepEqual(info.compatibility.supportedProtocolVersions, ['v1', 'v2']);
+  assert.equal(info.compatibility.stats.acceptedWithProtocolHint, 2);
+  assert.equal(info.compatibility.stats.acceptedWithoutProtocolHint, 1);
+  assert.equal(info.compatibility.stats.unsupportedProtocolRejected, 0);
+  assert.equal(info.compatibility.stats.usageByVersion.v1, 1);
+  assert.equal(info.compatibility.stats.usageByVersion.v2, 2);
+});
+
+test('TA-P9-002 federation rejects unsupported protocol versions', () => {
+  const service = new FederationService({
+    selfDomain: 'node-a.tel',
+    protocolVersion: 'v2',
+    supportedProtocolVersions: ['v1', 'v2'],
+  });
+
+  assert.throws(
+    () =>
+      service.receiveEnvelope(
+        {
+          envelopeId: 'fed-p9-v3',
+          sourceDomain: 'node-b.tel',
+        },
+        {
+          sourceDomain: 'node-b.tel',
+          protocolVersion: 'v3',
+        },
+      ),
+    (error) => {
+      assert.ok(error instanceof TelagentError);
+      assert.equal(error.code, ErrorCodes.UNPROCESSABLE);
+      return true;
+    },
+  );
+
+  const info = service.nodeInfo();
+  assert.equal(info.compatibility.stats.unsupportedProtocolRejected, 1);
+});
+
 test('TA-P4-008 node-info publishes domain and federation security policy', () => {
   const service = new FederationService({
     selfDomain: 'node-a.tel',
@@ -253,5 +330,7 @@ test('TA-P4-008 node-info publishes domain and federation security policy', () =
   assert.equal(info.security.rateLimitPerMinute.envelopes, 500);
   assert.equal(info.security.rateLimitPerMinute['group-state-sync'], 250);
   assert.equal(info.security.rateLimitPerMinute.receipts, 400);
+  assert.equal(info.compatibility.protocolVersion, 'v1');
+  assert.deepEqual(info.compatibility.supportedProtocolVersions, ['v1']);
   assert.equal(info.resilience.totalGroupStateSyncConflicts, 0);
 });

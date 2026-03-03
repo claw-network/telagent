@@ -17,6 +17,7 @@ export function federationRoutes(ctx: RuntimeContext): Router {
       const result = ctx.federationService.receiveEnvelope(payload, {
         sourceDomain: resolveSourceDomain(req, payload),
         authToken: resolveFederationToken(req),
+        protocolVersion: resolveProtocolVersion(req, payload),
       });
       created(res, result, { self: '/api/v1/federation/envelopes' });
     } catch (error) {
@@ -53,6 +54,7 @@ export function federationRoutes(ctx: RuntimeContext): Router {
         {
           sourceDomain: resolveSourceDomain(req, payload),
           authToken: resolveFederationToken(req),
+          protocolVersion: resolveProtocolVersion(req, payload),
         },
       );
       created(res, result, { self: '/api/v1/federation/group-state/sync' });
@@ -77,6 +79,7 @@ export function federationRoutes(ctx: RuntimeContext): Router {
         {
           sourceDomain: resolveSourceDomain(req, payload),
           authToken: resolveFederationToken(req),
+          protocolVersion: resolveProtocolVersion(req, payload),
         },
       );
       created(res, result, { self: '/api/v1/federation/receipts' });
@@ -127,6 +130,22 @@ function resolveSourceDomain(
     return bodyDomain;
   }
   throw new TelagentError(ErrorCodes.VALIDATION, 'sourceDomain is required');
+}
+
+function resolveProtocolVersion(
+  req: { headers: Record<string, string | string[] | undefined> },
+  payload: Record<string, unknown>,
+): string | undefined {
+  const headerVersion = headerString(req.headers['x-telagent-protocol-version']);
+  if (headerVersion) {
+    return headerVersion;
+  }
+
+  const bodyVersion = payload.protocolVersion;
+  if (typeof bodyVersion === 'string' && bodyVersion.trim()) {
+    return bodyVersion;
+  }
+  return undefined;
 }
 
 function headerString(value: string | string[] | undefined): string | undefined {

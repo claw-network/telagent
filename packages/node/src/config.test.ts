@@ -113,3 +113,31 @@ test('mailbox backend rejects unsupported value', async () => {
     },
   );
 });
+
+test('federation protocol defaults to v1 and supports self version', async () => {
+  await withEnv(
+    {
+      TELAGENT_FEDERATION_PROTOCOL_VERSION: undefined,
+      TELAGENT_FEDERATION_SUPPORTED_PROTOCOLS: undefined,
+    },
+    async () => {
+      const config = loadConfigFromEnv();
+      assert.equal(config.federation.protocolVersion, 'v1');
+      assert.deepEqual(config.federation.supportedProtocolVersions, ['v1']);
+    },
+  );
+});
+
+test('federation supported protocols auto-include self version', async () => {
+  await withEnv(
+    {
+      TELAGENT_FEDERATION_PROTOCOL_VERSION: 'v2',
+      TELAGENT_FEDERATION_SUPPORTED_PROTOCOLS: 'v1',
+    },
+    async () => {
+      const config = loadConfigFromEnv();
+      assert.equal(config.federation.protocolVersion, 'v2');
+      assert.deepEqual(config.federation.supportedProtocolVersions, ['v2', 'v1']);
+    },
+  );
+});

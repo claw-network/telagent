@@ -1,0 +1,4 @@
+
+> @telagent/node@0.1.0 build /Users/xiasenhai/workspace/private-repo/Bots/telagent/packages/node
+> tsc -p tsconfig.json
+

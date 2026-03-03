@@ -38,12 +38,15 @@ export interface FederationServiceClock {
 export interface FederationRequestMeta {
   sourceDomain: string;
   authToken?: string;
+  protocolVersion?: string;
 }
 
 export interface FederationServiceOptions {
   selfDomain: string;
   authToken?: string;
   allowedSourceDomains?: string[];
+  protocolVersion?: string;
+  supportedProtocolVersions?: string[];
   envelopeRateLimitPerMinute?: number;
   groupStateSyncRateLimitPerMinute?: number;
   receiptRateLimitPerMinute?: number;
@@ -67,13 +70,26 @@ export class FederationService {
   private readonly selfDomain: string;
   private readonly authToken?: string;
   private readonly allowedSourceDomains: Set<string>;
+  private readonly protocolVersion: string;
+  private readonly supportedProtocolVersions: Set<string>;
   private readonly clock: FederationServiceClock;
   private readonly rateLimitConfig: Record<FederationScope, number>;
+  private readonly protocolUsageCounts = new Map<string, number>();
+  private acceptedWithoutProtocolHint = 0;
+  private acceptedWithProtocolHint = 0;
+  private unsupportedProtocolRejected = 0;
 
   constructor(options: FederationServiceOptions) {
     this.selfDomain = this.normalizeDomain(options.selfDomain, 'selfDomain');
     this.authToken = options.authToken;
     this.allowedSourceDomains = new Set((options.allowedSourceDomains ?? []).map((item) => this.normalizeDomain(item, 'allowedSourceDomains')));
+    this.protocolVersion = this.normalizeProtocolVersion(options.protocolVersion ?? 'v1', 'protocolVersion');
+    this.supportedProtocolVersions = new Set(
+      (options.supportedProtocolVersions ?? [this.protocolVersion]).map((item) =>
+        this.normalizeProtocolVersion(item, 'supportedProtocolVersions'),
+      ),
+    );
+    this.supportedProtocolVersions.add(this.protocolVersion);
     this.clock = options.clock ?? SYSTEM_CLOCK;
     this.rateLimitConfig = {
       envelopes: options.envelopeRateLimitPerMinute ?? 600,
@@ -88,6 +104,7 @@ export class FederationService {
   ): { accepted: boolean; id: string; deduplicated: boolean; retryable: boolean } {
     const sourceDomain = this.assertAndNormalizeSourceDomain(meta.sourceDomain);
     this.assertAuthorized(meta.authToken);
+    const protocolVersion = this.assertAndResolveProtocolVersion(meta.protocolVersion);
     this.assertRateLimit('envelopes', sourceDomain);
 
     const envelopeId = this.assertRequiredString(payload.envelopeId, 'envelopeId');
@@ -97,6 +114,7 @@ export class FederationService {
       if (existing.payloadSignature !== signature || existing.sourceDomain !== sourceDomain) {
         throw new TelagentError(ErrorCodes.CONFLICT, `envelopeId(${envelopeId}) conflicts with existing payload`);
       }
+      this.recordProtocolAcceptance(protocolVersion, typeof meta.protocolVersion === 'string' && meta.protocolVersion.trim().length > 0);
       return {
         accepted: true,
         id: envelopeId,
@@ -112,6 +130,7 @@ export class FederationService {
       payloadSignature: signature,
       receivedAtMs: this.clock.now(),
     });
+    this.recordProtocolAcceptance(protocolVersion, typeof meta.protocolVersion === 'string' && meta.protocolVersion.trim().length > 0);
 
     return {
       accepted: true,
@@ -127,6 +146,7 @@ export class FederationService {
   ): { synced: boolean; updatedAtMs: number; deduplicated: boolean; stateVersion: number } {
     const sourceDomain = this.assertAndNormalizeSourceDomain(meta.sourceDomain);
     this.assertAuthorized(meta.authToken);
+    const protocolVersion = this.assertAndResolveProtocolVersion(meta.protocolVersion);
     this.assertRateLimit('group-state-sync', sourceDomain);
 
     const groupId = this.assertRequiredString(payload.groupId, 'groupId');
@@ -178,6 +198,7 @@ export class FederationService {
       groupDomain,
       updatedAtMs,
     });
+    this.recordProtocolAcceptance(protocolVersion, typeof meta.protocolVersion === 'string' && meta.protocolVersion.trim().length > 0);
 
     return {
       synced: true,
@@ -193,6 +214,7 @@ export class FederationService {
   ): { accepted: boolean; deduplicated: boolean; retryable: boolean } {
     const sourceDomain = this.assertAndNormalizeSourceDomain(meta.sourceDomain);
     this.assertAuthorized(meta.authToken);
+    const protocolVersion = this.assertAndResolveProtocolVersion(meta.protocolVersion);
     this.assertRateLimit('receipts', sourceDomain);
 
     const envelopeId = this.assertRequiredString(payload.envelopeId, 'envelopeId');
@@ -202,6 +224,7 @@ export class FederationService {
 
     const key = `${sourceDomain}:${envelopeId}:${payload.status}`;
     if (this.receiptByKey.has(key)) {
+      this.recordProtocolAcceptance(protocolVersion, typeof meta.protocolVersion === 'string' && meta.protocolVersion.trim().length > 0);
       return {
         accepted: true,
         deduplicated: true,
@@ -215,6 +238,7 @@ export class FederationService {
       status: payload.status,
       receivedAtMs: this.clock.now(),
     });
+    this.recordProtocolAcceptance(protocolVersion, typeof meta.protocolVersion === 'string' && meta.protocolVersion.trim().length > 0);
 
     return {
       accepted: true,
@@ -230,6 +254,16 @@ export class FederationService {
     envelopeCount: number;
     receiptCount: number;
     groupStateSyncCount: number;
+    compatibility: {
+      protocolVersion: string;
+      supportedProtocolVersions: string[];
+      stats: {
+        acceptedWithoutProtocolHint: number;
+        acceptedWithProtocolHint: number;
+        unsupportedProtocolRejected: number;
+        usageByVersion: Record<string, number>;
+      };
+    };
     security: {
       authMode: 'required' | 'none';
       allowedSourceDomains: string[];
@@ -242,12 +276,22 @@ export class FederationService {
     };
   } {
     return {
-      protocolVersion: 'v1',
+      protocolVersion: this.protocolVersion,
       domain: this.selfDomain,
       capabilities: ['identity', 'groups', 'messages', 'attachments', 'federation'],
       envelopeCount: this.envelopeById.size,
       receiptCount: this.receiptByKey.size,
       groupStateSyncCount: this.groupStateSyncByKey.size,
+      compatibility: {
+        protocolVersion: this.protocolVersion,
+        supportedProtocolVersions: [...this.supportedProtocolVersions.values()].sort(),
+        stats: {
+          acceptedWithoutProtocolHint: this.acceptedWithoutProtocolHint,
+          acceptedWithProtocolHint: this.acceptedWithProtocolHint,
+          unsupportedProtocolRejected: this.unsupportedProtocolRejected,
+          usageByVersion: Object.fromEntries([...this.protocolUsageCounts.entries()].sort((a, b) => a[0].localeCompare(b[0]))),
+        },
+      },
       security: {
         authMode: this.authToken ? 'required' : 'none',
         allowedSourceDomains: [...this.allowedSourceDomains.values()],
@@ -317,6 +361,39 @@ export class FederationService {
 
   private signatureOfPayload(payload: Record<string, unknown>): string {
     return JSON.stringify(payload);
+  }
+
+  private normalizeProtocolVersion(input: string, fieldName: string): string {
+    const normalized = this.assertRequiredString(input, fieldName).trim().toLowerCase();
+    if (!/^v[0-9]+(?:\.[0-9]+)?$/.test(normalized)) {
+      throw new TelagentError(ErrorCodes.VALIDATION, `${fieldName} must match pattern vN or vN.M`);
+    }
+    return normalized;
+  }
+
+  private assertAndResolveProtocolVersion(protocolVersion: string | undefined): string {
+    if (!protocolVersion || !protocolVersion.trim()) {
+      return this.protocolVersion;
+    }
+
+    const normalized = this.normalizeProtocolVersion(protocolVersion, 'protocolVersion');
+    if (!this.supportedProtocolVersions.has(normalized)) {
+      this.unsupportedProtocolRejected++;
+      throw new TelagentError(
+        ErrorCodes.UNPROCESSABLE,
+        `protocolVersion(${normalized}) is not compatible with supported set ${[...this.supportedProtocolVersions.values()].join(',')}`,
+      );
+    }
+    return normalized;
+  }
+
+  private recordProtocolAcceptance(protocolVersion: string, hinted: boolean): void {
+    if (hinted) {
+      this.acceptedWithProtocolHint++;
+    } else {
+      this.acceptedWithoutProtocolHint++;
+    }
+    this.protocolUsageCounts.set(protocolVersion, (this.protocolUsageCounts.get(protocolVersion) ?? 0) + 1);
   }
 
   private parseStateVersion(value: unknown): number | undefined {

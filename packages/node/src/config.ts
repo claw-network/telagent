@@ -7,6 +7,8 @@ export interface FederationConfig {
   selfDomain: string;
   authToken?: string;
   allowedSourceDomains: string[];
+  protocolVersion: string;
+  supportedProtocolVersions: string[];
   envelopeRateLimitPerMinute: number;
   groupStateSyncRateLimitPerMinute: number;
   receiptRateLimitPerMinute: number;
@@ -74,6 +76,14 @@ export function loadConfigFromEnv(): AppConfig {
     .split(',')
     .map((item) => item.trim())
     .filter(Boolean);
+  const federationProtocolVersion = (process.env.TELAGENT_FEDERATION_PROTOCOL_VERSION || 'v1').trim().toLowerCase();
+  const supportedProtocolVersions = (process.env.TELAGENT_FEDERATION_SUPPORTED_PROTOCOLS || federationProtocolVersion)
+    .split(',')
+    .map((item) => item.trim().toLowerCase())
+    .filter(Boolean);
+  if (!supportedProtocolVersions.includes(federationProtocolVersion)) {
+    supportedProtocolVersions.unshift(federationProtocolVersion);
+  }
 
   const mailboxStoreBackend = (
     process.env.TELAGENT_MAILBOX_STORE_BACKEND?.trim().toLowerCase() || 'sqlite'
@@ -112,6 +122,8 @@ export function loadConfigFromEnv(): AppConfig {
       selfDomain: process.env.TELAGENT_FEDERATION_SELF_DOMAIN || host,
       authToken: process.env.TELAGENT_FEDERATION_AUTH_TOKEN || undefined,
       allowedSourceDomains,
+      protocolVersion: federationProtocolVersion,
+      supportedProtocolVersions,
       envelopeRateLimitPerMinute: Number(process.env.TELAGENT_FEDERATION_ENVELOPE_RATE_LIMIT_PER_MIN || 600),
       groupStateSyncRateLimitPerMinute: Number(process.env.TELAGENT_FEDERATION_SYNC_RATE_LIMIT_PER_MIN || 300),
       receiptRateLimitPerMinute: Number(process.env.TELAGENT_FEDERATION_RECEIPT_RATE_LIMIT_PER_MIN || 600),

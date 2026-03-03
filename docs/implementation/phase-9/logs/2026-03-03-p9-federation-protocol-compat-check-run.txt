@@ -1,0 +1,3 @@
+[TA-P9-003] scenarios=4/4
+[TA-P9-003] decision=PASS
+[TA-P9-003] output=/Users/xiasenhai/workspace/private-repo/Bots/telagent/docs/implementation/phase-9/manifests/2026-03-03-p9-federation-protocol-compat-check.json

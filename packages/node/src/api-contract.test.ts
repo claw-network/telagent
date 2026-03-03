@@ -1,6 +1,8 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
+import { ErrorCodes, TelagentError } from '@telagent/protocol';
+
 import { ApiServer } from './api/server.js';
 import type { RuntimeContext } from './api/types.js';
 
@@ -162,21 +164,27 @@ class FakeAttachmentService {
 }
 
 class FakeFederationService {
-  receiveEnvelope(_payload: Record<string, unknown>, _meta: { sourceDomain: string; authToken?: string }) {
+  receiveEnvelope(
+    _payload: Record<string, unknown>,
+    meta: { sourceDomain: string; authToken?: string; protocolVersion?: string },
+  ) {
+    this.assertProtocol(meta.protocolVersion);
     return { accepted: true, id: 'fed-1', deduplicated: false, retryable: true };
   }
 
   syncGroupState(
     _payload: { groupId: string; state: string; groupDomain?: string; stateVersion?: number },
-    _meta: { sourceDomain: string; authToken?: string },
+    meta: { sourceDomain: string; authToken?: string; protocolVersion?: string },
   ) {
+    this.assertProtocol(meta.protocolVersion);
     return { synced: true, updatedAtMs: Date.now(), deduplicated: false, stateVersion: 1 };
   }
 
   recordReceipt(
     _payload: { envelopeId: string; status: 'delivered' | 'read' },
-    _meta: { sourceDomain: string; authToken?: string },
+    meta: { sourceDomain: string; authToken?: string; protocolVersion?: string },
   ) {
+    this.assertProtocol(meta.protocolVersion);
     return { accepted: true, deduplicated: false, retryable: true };
   }
 
@@ -203,6 +211,12 @@ class FakeFederationService {
         totalGroupStateSyncConflicts: 0,
       },
     };
+  }
+
+  private assertProtocol(protocolVersion?: string): void {
+    if (protocolVersion === 'v99') {
+      throw new TelagentError(ErrorCodes.UNPROCESSABLE, 'protocolVersion(v99) is not compatible');
+    }
   }
 }
 
@@ -544,6 +558,17 @@ test('messages, attachments and federation endpoints are accessible', async (t) 
     body: JSON.stringify({ envelopeId: 'fed-1', status: 'delivered', sourceDomain: 'node-b.tel' }),
   });
   assert.equal(fedReceiptRes.status, 201);
+
+  const incompatibleProtocolRes = await fetch(`${baseUrl}/api/v1/federation/envelopes`, {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/json',
+      'x-telagent-protocol-version': 'v99',
+    },
+    body: JSON.stringify({ envelopeId: 'fed-2', sourceDomain: 'node-b.tel' }),
+  });
+  assert.equal(incompatibleProtocolRes.status, 422);
+  assert.match(incompatibleProtocolRes.headers.get('content-type') ?? '', /^application\/problem\+json/);
 
   const nodeInfoRes = await fetch(`${baseUrl}/api/v1/federation/node-info`);
   assert.equal(nodeInfoRes.status, 200);
