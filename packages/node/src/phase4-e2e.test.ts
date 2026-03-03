@@ -7,6 +7,7 @@ import { ApiServer } from './api/server.js';
 import type { RuntimeContext } from './api/types.js';
 import { AttachmentService } from './services/attachment-service.js';
 import { MessageService } from './services/message-service.js';
+import { NodeMonitoringService } from './services/node-monitoring-service.js';
 
 interface MutableClock {
   now(): number;
@@ -303,6 +304,11 @@ async function startE2EServer(startMs?: number): Promise<{
   const groupService = new FakeGroupService(clock);
   const messageService = new MessageService(groupService as unknown as RuntimeContext['groupService'], { clock });
   const attachmentService = new AttachmentService({ clock });
+  const monitoringService = new NodeMonitoringService({
+    clock: {
+      nowMs: () => clock.now(),
+    },
+  });
 
   const context: RuntimeContext = {
     config: {
@@ -315,6 +321,7 @@ async function startE2EServer(startMs?: number): Promise<{
     messageService,
     attachmentService,
     federationService: new FakeFederationService() as unknown as RuntimeContext['federationService'],
+    monitoringService,
   };
 
   const server = new ApiServer(context);

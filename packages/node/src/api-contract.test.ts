@@ -201,6 +201,60 @@ class FakeFederationService {
   }
 }
 
+class FakeMonitoringService {
+  recordHttpRequest() {}
+
+  recordMailboxMaintenance() {}
+
+  snapshot() {
+    return {
+      generatedAt: new Date().toISOString(),
+      uptimeSec: 120,
+      totals: {
+        requests: 12,
+        status2xx: 11,
+        status4xx: 1,
+        status5xx: 0,
+        statusOther: 0,
+        errorRateRatio: 0,
+        avgLatencyMs: 4.2,
+        p95LatencyMs: 7.3,
+      },
+      routes: [
+        {
+          path: '/api/v1/messages',
+          count: 3,
+          errorRateRatio: 0,
+          avgLatencyMs: 3.5,
+          p95LatencyMs: 5.8,
+          lastStatus: 201,
+          lastSeenAt: new Date().toISOString(),
+        },
+      ],
+      mailboxMaintenance: {
+        runs: 2,
+        totalCleanupRemoved: 0,
+        totalRetracted: 0,
+        lastRunAt: new Date().toISOString(),
+        lastCleanupRemoved: 0,
+        lastRemaining: 0,
+        lastRetracted: 0,
+        staleSec: 2,
+      },
+      alerts: [
+        {
+          code: 'HTTP_5XX_RATE',
+          level: 'OK',
+          title: 'HTTP 5xx rate',
+          value: 0,
+          threshold: 0.02,
+          message: 'ok',
+        },
+      ],
+    };
+  }
+}
+
 async function startTestServer() {
   const context: RuntimeContext = {
     config: { host: '127.0.0.1', port: 0 },
@@ -210,6 +264,7 @@ async function startTestServer() {
     messageService: new FakeMessageService() as unknown as RuntimeContext['messageService'],
     attachmentService: new FakeAttachmentService() as unknown as RuntimeContext['attachmentService'],
     federationService: new FakeFederationService() as unknown as RuntimeContext['federationService'],
+    monitoringService: new FakeMonitoringService() as unknown as RuntimeContext['monitoringService'],
   };
 
   const server = new ApiServer(context);
@@ -355,6 +410,12 @@ test('identities and groups endpoints are accessible with expected status codes'
 
   const selfRes = await fetch(`${baseUrl}/api/v1/identities/self`);
   assert.equal(selfRes.status, 200);
+
+  const nodeRes = await fetch(`${baseUrl}/api/v1/node`);
+  assert.equal(nodeRes.status, 200);
+
+  const metricsRes = await fetch(`${baseUrl}/api/v1/node/metrics`);
+  assert.equal(metricsRes.status, 200);
 
   const resolveRes = await fetch(`${baseUrl}/api/v1/identities/${encodeURIComponent(did)}`);
   assert.equal(resolveRes.status, 200);

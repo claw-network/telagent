@@ -1,4 +1,5 @@
 import { createServer, type Server } from 'node:http';
+import { performance } from 'node:perf_hooks';
 
 import { ErrorCodes, TelagentError } from '@telagent/protocol';
 
@@ -16,7 +17,7 @@ import type { RuntimeContext } from './types.js';
 function buildRouter(ctx: RuntimeContext): Router {
   const router = new Router();
 
-  router.mount('/api/v1/node', nodeRoutes());
+  router.mount('/api/v1/node', nodeRoutes(ctx));
   router.mount('/api/v1/identities', identityRoutes(ctx));
   router.mount('/api/v1/groups', groupRoutes(ctx));
   router.mount('/api/v1/wallets', walletRoutes(ctx));
@@ -41,6 +42,17 @@ export class ApiServer {
     }
 
     this.server = createServer(async (req, res) => {
+      const parsedUrl = new URL(req.url || '/', 'http://127.0.0.1');
+      const startedAt = performance.now();
+      res.once('finish', () => {
+        this.ctx.monitoringService.recordHttpRequest({
+          method: req.method || 'UNKNOWN',
+          path: parsedUrl.pathname,
+          status: res.statusCode,
+          durationMs: performance.now() - startedAt,
+        });
+      });
+
       res.setHeader('Access-Control-Allow-Origin', '*');
       res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
       res.setHeader('Access-Control-Allow-Methods', 'GET,POST,DELETE,OPTIONS');

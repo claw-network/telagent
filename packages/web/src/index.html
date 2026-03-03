@@ -37,7 +37,18 @@
         <div class="button-row">
           <button id="btn-self">GET /api/v1/identities/self</button>
           <button id="btn-randomize">Regenerate IDs/Hashes</button>
+          <button id="btn-node-metrics">GET /api/v1/node/metrics</button>
+          <button id="btn-toggle-metrics-poll">Start Metrics Auto Refresh</button>
         </div>
+      </section>
+
+      <section class="panel">
+        <h2>Monitoring Dashboard</h2>
+        <div id="metrics-summary" class="metric-grid"></div>
+        <h3>Alert Rules</h3>
+        <ul id="metric-alerts" class="alerts">
+          <li class="alert-empty">No metrics loaded yet.</li>
+        </ul>
       </section>
 
       <section class="panel">

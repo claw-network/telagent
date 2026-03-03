@@ -1,0 +1,60 @@
+{
+  "phase": "Phase 5",
+  "taskId": "TA-P5-002",
+  "dashboard": {
+    "id": "telagent-node-ops-v1",
+    "title": "TelAgent Node Operations",
+    "version": "2026-03-03",
+    "dataSource": "GET /api/v1/node/metrics",
+    "panels": [
+      {
+        "id": "requests-overview",
+        "title": "Requests Overview",
+        "fields": [
+          "totals.requests",
+          "totals.status2xx",
+          "totals.status4xx",
+          "totals.status5xx"
+        ]
+      },
+      {
+        "id": "latency",
+        "title": "Latency",
+        "fields": [
+          "totals.avgLatencyMs",
+          "totals.p95LatencyMs"
+        ]
+      },
+      {
+        "id": "mailbox-maintenance",
+        "title": "Mailbox Maintenance",
+        "fields": [
+          "mailboxMaintenance.runs",
+          "mailboxMaintenance.lastRunAt",
+          "mailboxMaintenance.staleSec",
+          "mailboxMaintenance.totalCleanupRemoved",
+          "mailboxMaintenance.totalRetracted"
+        ]
+      },
+      {
+        "id": "alerts",
+        "title": "Alert Status",
+        "fields": [
+          "alerts[].code",
+          "alerts[].level",
+          "alerts[].message"
+        ]
+      },
+      {
+        "id": "top-routes",
+        "title": "Top Routes",
+        "fields": [
+          "routes[].path",
+          "routes[].count",
+          "routes[].errorRateRatio",
+          "routes[].p95LatencyMs"
+        ]
+      }
+    ]
+  }
+}

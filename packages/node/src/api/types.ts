@@ -4,6 +4,7 @@ import type { GasService } from '../services/gas-service.js';
 import type { GroupService } from '../services/group-service.js';
 import type { IdentityAdapterService } from '../services/identity-adapter-service.js';
 import type { MessageService } from '../services/message-service.js';
+import type { NodeMonitoringService } from '../services/node-monitoring-service.js';
 
 export interface ApiServerConfig {
   host: string;
@@ -18,4 +19,5 @@ export interface RuntimeContext {
   messageService: MessageService;
   attachmentService: AttachmentService;
   federationService: FederationService;
+  monitoringService: NodeMonitoringService;
 }

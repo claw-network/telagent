@@ -1,0 +1,29 @@
+version: 1
+phase: Phase 5
+taskId: TA-P5-002
+source: /api/v1/node/metrics
+rules:
+  - code: HTTP_5XX_RATE
+    title: HTTP 5xx rate
+    expression: totals.errorRateRatio
+    warn: ">= 0.02"
+    critical: ">= 0.05"
+    action:
+      - notify_oncall_sre
+      - create_incident_ticket
+  - code: HTTP_P95_LATENCY
+    title: HTTP p95 latency (ms)
+    expression: totals.p95LatencyMs
+    warn: ">= 250"
+    critical: ">= 500"
+    action:
+      - notify_backend_owner
+      - throttle_noncritical_jobs
+  - code: MAILBOX_MAINTENANCE_STALE
+    title: Mailbox maintenance staleness (sec)
+    expression: mailboxMaintenance.staleSec
+    warn: ">= 180"
+    critical: ">= 300"
+    action:
+      - notify_sre
+      - restart_mailbox_cleaner

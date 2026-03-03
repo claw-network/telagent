@@ -12,6 +12,15 @@ export interface FederationConfig {
   receiptRateLimitPerMinute: number;
 }
 
+export interface MonitoringConfig {
+  errorRateWarnRatio: number;
+  errorRateCriticalRatio: number;
+  requestP95WarnMs: number;
+  requestP95CriticalMs: number;
+  maintenanceStaleWarnSec: number;
+  maintenanceStaleCriticalSec: number;
+}
+
 export interface AppConfig {
   host: string;
   port: number;
@@ -19,6 +28,7 @@ export interface AppConfig {
   mailboxCleanupIntervalSec: number;
   chain: ChainConfig;
   federation: FederationConfig;
+  monitoring: MonitoringConfig;
 }
 
 export function loadConfigFromEnv(): AppConfig {
@@ -64,6 +74,14 @@ export function loadConfigFromEnv(): AppConfig {
       envelopeRateLimitPerMinute: Number(process.env.TELAGENT_FEDERATION_ENVELOPE_RATE_LIMIT_PER_MIN || 600),
       groupStateSyncRateLimitPerMinute: Number(process.env.TELAGENT_FEDERATION_SYNC_RATE_LIMIT_PER_MIN || 300),
       receiptRateLimitPerMinute: Number(process.env.TELAGENT_FEDERATION_RECEIPT_RATE_LIMIT_PER_MIN || 600),
+    },
+    monitoring: {
+      errorRateWarnRatio: Number(process.env.TELAGENT_MONITOR_ERROR_RATE_WARN_RATIO || 0.02),
+      errorRateCriticalRatio: Number(process.env.TELAGENT_MONITOR_ERROR_RATE_CRITICAL_RATIO || 0.05),
+      requestP95WarnMs: Number(process.env.TELAGENT_MONITOR_REQ_P95_WARN_MS || 250),
+      requestP95CriticalMs: Number(process.env.TELAGENT_MONITOR_REQ_P95_CRITICAL_MS || 500),
+      maintenanceStaleWarnSec: Number(process.env.TELAGENT_MONITOR_MAINT_STALE_WARN_SEC || 180),
+      maintenanceStaleCriticalSec: Number(process.env.TELAGENT_MONITOR_MAINT_STALE_CRITICAL_SEC || 300),
     },
   };
 }

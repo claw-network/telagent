@@ -9,6 +9,7 @@ import { GasService } from './services/gas-service.js';
 import { GroupService } from './services/group-service.js';
 import { IdentityAdapterService } from './services/identity-adapter-service.js';
 import { MessageService } from './services/message-service.js';
+import { NodeMonitoringService } from './services/node-monitoring-service.js';
 import { GroupRepository } from './storage/group-repository.js';
 
 export class TelagentNode {
@@ -21,6 +22,7 @@ export class TelagentNode {
   private readonly messageService: MessageService;
   private readonly attachmentService: AttachmentService;
   private readonly federationService: FederationService;
+  private readonly monitoringService: NodeMonitoringService;
   private readonly indexer: GroupIndexer;
   private readonly apiServer: ApiServer;
 
@@ -34,6 +36,16 @@ export class TelagentNode {
     this.messageService = new MessageService(this.groupService);
     this.attachmentService = new AttachmentService();
     this.federationService = new FederationService(config.federation);
+    this.monitoringService = new NodeMonitoringService({
+      thresholds: {
+        errorRateWarnRatio: config.monitoring.errorRateWarnRatio,
+        errorRateCriticalRatio: config.monitoring.errorRateCriticalRatio,
+        requestP95WarnMs: config.monitoring.requestP95WarnMs,
+        requestP95CriticalMs: config.monitoring.requestP95CriticalMs,
+        maintenanceStaleWarnSec: config.monitoring.maintenanceStaleWarnSec,
+        maintenanceStaleCriticalSec: config.monitoring.maintenanceStaleCriticalSec,
+      },
+    });
 
     this.indexer = new GroupIndexer(this.contracts, this.repo, {
       finalityDepth: config.chain.finalityDepth,
@@ -50,6 +62,7 @@ export class TelagentNode {
       messageService: this.messageService,
       attachmentService: this.attachmentService,
       federationService: this.federationService,
+      monitoringService: this.monitoringService,
     };
 
     this.apiServer = new ApiServer(runtime);
@@ -58,6 +71,7 @@ export class TelagentNode {
   async start(): Promise<void> {
     await this.indexer.start();
     await this.apiServer.start();
+    this.monitoringService.recordMailboxMaintenance(this.messageService.runMaintenance());
     this.startMailboxCleaner();
   }
 
@@ -77,7 +91,8 @@ export class TelagentNode {
       ? Math.max(5, Math.floor(this.config.mailboxCleanupIntervalSec))
       : 60;
     this.mailboxCleanupTimer = setInterval(() => {
-      this.messageService.runMaintenance();
+      const report = this.messageService.runMaintenance();
+      this.monitoringService.recordMailboxMaintenance(report);
     }, intervalSec * 1000);
     this.mailboxCleanupTimer.unref();
   }

@@ -1,5 +1,9 @@
 const outputEl = document.querySelector('#output');
 const activityEl = document.querySelector('#activity');
+const metricsSummaryEl = document.querySelector('#metrics-summary');
+const metricAlertsEl = document.querySelector('#metric-alerts');
+
+let metricsPollingTimer = null;
 
 const byId = (id) => document.querySelector(`#${id}`);
 
@@ -89,7 +93,8 @@ function regenerateScenario() {
   syncSenderDid();
 }
 
-async function callApi(action, method, path, body, expectedStatus) {
+async function callApi(action, method, path, body, expectedStatus, options = {}) {
+  const { silent = false } = options;
   const baseUrl = getBaseUrl();
   const request = {
     action,
@@ -119,15 +124,19 @@ async function callApi(action, method, path, body, expectedStatus) {
       payload,
     };
 
-    setOutput({
-      request,
-      response: responseRecord,
-    });
+    if (!silent) {
+      setOutput({
+        request,
+        response: responseRecord,
+      });
+    }
 
     const detail = ok
       ? `OK ${method} ${path}`
       : `Unexpected status for ${method} ${path}`;
-    addActivity(action, response.status, detail);
+    if (!silent) {
+      addActivity(action, response.status, detail);
+    }
 
     if (!ok) {
       throw new Error(`Expected status ${expectedStatus}, got ${response.status}`);
@@ -140,12 +149,87 @@ async function callApi(action, method, path, body, expectedStatus) {
     };
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    setOutput({
-      request,
-      error: message,
-    });
-    addActivity(action, 0, message);
+    if (!silent) {
+      setOutput({
+        request,
+        error: message,
+      });
+      addActivity(action, 0, message);
+    }
     throw error;
+  }
+}
+
+function formatPercent(value) {
+  return `${(value * 100).toFixed(2)}%`;
+}
+
+function renderMetrics(snapshot) {
+  if (!snapshot || typeof snapshot !== 'object') {
+    return;
+  }
+
+  const totals = snapshot.totals ?? {};
+  const mailbox = snapshot.mailboxMaintenance ?? {};
+
+  if (metricsSummaryEl) {
+    metricsSummaryEl.innerHTML = [
+      {
+        title: 'Requests',
+        value: totals.requests ?? 0,
+        sub: `2xx=${totals.status2xx ?? 0} / 4xx=${totals.status4xx ?? 0} / 5xx=${totals.status5xx ?? 0}`,
+      },
+      {
+        title: '5xx Rate',
+        value: formatPercent(totals.errorRateRatio ?? 0),
+        sub: 'Alerted by HTTP_5XX_RATE',
+      },
+      {
+        title: 'Latency p95',
+        value: `${Number(totals.p95LatencyMs ?? 0).toFixed(2)} ms`,
+        sub: `avg=${Number(totals.avgLatencyMs ?? 0).toFixed(2)} ms`,
+      },
+      {
+        title: 'Mailbox Stale',
+        value: `${mailbox.staleSec ?? 0} sec`,
+        sub: `runs=${mailbox.runs ?? 0}`,
+      },
+    ]
+      .map(
+        (item) => `
+          <article class="metric-card">
+            <p class="metric-title">${item.title}</p>
+            <p class="metric-value">${item.value}</p>
+            <p class="metric-sub">${item.sub}</p>
+          </article>
+        `,
+      )
+      .join('');
+  }
+
+  if (metricAlertsEl) {
+    const alerts = Array.isArray(snapshot.alerts) ? snapshot.alerts : [];
+    if (alerts.length === 0) {
+      metricAlertsEl.innerHTML = '<li class="alert-empty">No alert rules emitted.</li>';
+      return;
+    }
+
+    metricAlertsEl.innerHTML = alerts
+      .map((alert) => {
+        const level = String(alert.level || 'OK').toLowerCase();
+        const title = alert.title || alert.code || 'UNKNOWN_ALERT';
+        const message = alert.message || '';
+        return `
+          <li class="alert-row alert-${level}">
+            <span class="alert-badge">${alert.level}</span>
+            <div>
+              <div class="alert-title">${title}</div>
+              <div class="alert-message">${message}</div>
+            </div>
+          </li>
+        `;
+      })
+      .join('');
   }
 }
 
@@ -254,6 +338,43 @@ async function pullMessages() {
   byId('pull-cursor').value = typeof next === 'string' ? next : '';
 }
 
+async function fetchNodeMetrics(silent = false) {
+  const result = await callApi('node-metrics', 'GET', '/api/v1/node/metrics', undefined, 200, { silent });
+  const snapshot = result.payload?.data;
+  renderMetrics(snapshot);
+  if (!silent) {
+    addActivity('node-metrics', 200, 'Monitoring snapshot updated');
+  }
+}
+
+function setMetricsAutoRefresh(enabled) {
+  const button = byId('btn-toggle-metrics-poll');
+  if (!button) {
+    return;
+  }
+
+  if (!enabled) {
+    if (metricsPollingTimer) {
+      clearInterval(metricsPollingTimer);
+      metricsPollingTimer = null;
+    }
+    button.textContent = 'Start Metrics Auto Refresh';
+    addActivity('metrics-poll', 200, 'Auto refresh stopped');
+    return;
+  }
+
+  if (metricsPollingTimer) {
+    return;
+  }
+
+  metricsPollingTimer = setInterval(() => {
+    void fetchNodeMetrics(true).catch(() => {});
+  }, 10_000);
+  button.textContent = 'Stop Metrics Auto Refresh';
+  addActivity('metrics-poll', 200, 'Auto refresh started (10s interval)');
+  void fetchNodeMetrics(true).catch(() => {});
+}
+
 async function runHappyPath() {
   const runButton = byId('btn-run-flow');
   runButton.disabled = true;
@@ -281,6 +402,14 @@ byId('creator-did').addEventListener('input', syncSenderDid);
 
 byId('btn-self').addEventListener('click', () => {
   void callApi('identity-self', 'GET', '/api/v1/identities/self', undefined, 200);
+});
+
+byId('btn-node-metrics').addEventListener('click', () => {
+  void fetchNodeMetrics();
+});
+
+byId('btn-toggle-metrics-poll').addEventListener('click', () => {
+  setMetricsAutoRefresh(!metricsPollingTimer);
 });
 
 byId('btn-create-group').addEventListener('click', () => {

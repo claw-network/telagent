@@ -3,6 +3,7 @@ import test from 'node:test';
 
 import { ApiServer } from './api/server.js';
 import type { RuntimeContext } from './api/types.js';
+import { NodeMonitoringService } from './services/node-monitoring-service.js';
 
 class FakeIdentityService {
   async getSelf() {
@@ -137,6 +138,7 @@ async function startTestServer() {
     messageService: new FakeMessageService() as unknown as RuntimeContext['messageService'],
     attachmentService: new FakeAttachmentService() as unknown as RuntimeContext['attachmentService'],
     federationService: new FakeFederationService() as unknown as RuntimeContext['federationService'],
+    monitoringService: new NodeMonitoringService(),
   };
 
   const server = new ApiServer(context);

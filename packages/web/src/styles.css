@@ -63,6 +63,11 @@ h2 {
   font-size: 1.15rem;
 }
 
+h3 {
+  margin: 14px 0 8px;
+  font-size: 0.98rem;
+}
+
 .eyebrow {
   margin: 0 0 8px;
   font-size: 0.78rem;
@@ -129,6 +134,41 @@ select:focus {
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
+}
+
+.metric-grid {
+  margin-top: 10px;
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+}
+
+.metric-card {
+  margin: 0;
+  border: 1px solid #e1d5ba;
+  border-radius: 10px;
+  background: #fffdf8;
+  padding: 10px;
+}
+
+.metric-title {
+  margin: 0;
+  font-size: 0.76rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.metric-value {
+  margin: 6px 0 0;
+  font-size: 1.16rem;
+  font-weight: 800;
+}
+
+.metric-sub {
+  margin: 6px 0 0;
+  font-size: 0.78rem;
+  color: var(--muted);
 }
 
 button {
@@ -203,6 +243,69 @@ button.ghost {
 
 .activity .err {
   color: var(--danger);
+}
+
+.alerts {
+  margin: 8px 0 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 8px;
+}
+
+.alert-empty {
+  border: 1px dashed #d7cfba;
+  border-radius: 10px;
+  padding: 10px;
+  font-size: 0.83rem;
+  color: var(--muted);
+  background: #fffdfa;
+}
+
+.alert-row {
+  border: 1px solid #decfab;
+  border-radius: 10px;
+  background: #fffdfa;
+  padding: 8px 10px;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.alert-badge {
+  min-width: 66px;
+  text-align: center;
+  padding: 3px 8px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+
+.alert-title {
+  font-size: 0.87rem;
+  font-weight: 800;
+}
+
+.alert-message {
+  margin-top: 3px;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.alert-ok .alert-badge {
+  color: #0f6b5d;
+  background: #ddf3ef;
+}
+
+.alert-warn .alert-badge {
+  color: #86520e;
+  background: #ffe5c5;
+}
+
+.alert-critical .alert-badge {
+  color: #7d1e27;
+  background: #ffdbe0;
 }
 
 pre {
