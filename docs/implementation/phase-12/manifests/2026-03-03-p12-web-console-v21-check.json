@@ -1,0 +1,38 @@
+{
+  "phase": "Phase 12",
+  "taskId": "TA-P12-006",
+  "generatedAt": "2026-03-03T12:02:08.966Z",
+  "summary": {
+    "auditSnapshotPanelReady": true,
+    "riskBoardReady": true,
+    "dlqBatchReplayReady": true,
+    "requiredTokensChecked": 18
+  },
+  "decision": "PASS",
+  "details": {
+    "htmlChecks": [
+      "Audit & Emergency Panel v2.1",
+      "btn-audit-snapshot",
+      "btn-risk-refresh",
+      "btn-fed-replay-pending-fill",
+      "btn-fed-replay-batch",
+      "fed-replay-ids",
+      "audit-summary",
+      "risk-board-list"
+    ],
+    "jsChecks": [
+      "fetchAuditSnapshot",
+      "renderAuditSummary",
+      "renderRiskBoard",
+      "fillPendingReplayIds",
+      "replayFederationDlqBatch",
+      "/api/v1/node/audit-snapshot"
+    ],
+    "cssChecks": [
+      ".checkbox-label",
+      ".textarea-label",
+      ".risk-list",
+      ".risk-row"
+    ]
+  }
+}

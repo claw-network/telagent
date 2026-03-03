@@ -6,10 +6,14 @@ const groupStateSummaryEl = document.querySelector('#group-state-summary');
 const retractedListEl = document.querySelector('#retracted-list');
 const federationSummaryEl = document.querySelector('#federation-summary');
 const federationDlqListEl = document.querySelector('#federation-dlq-list');
+const auditSummaryEl = document.querySelector('#audit-summary');
+const riskBoardListEl = document.querySelector('#risk-board-list');
 
 let metricsPollingTimer = null;
 let latestFederationNodeInfo = null;
 let latestFederationDlqEntries = [];
+let latestMonitoringSnapshot = null;
+let latestAuditSnapshot = null;
 
 const byId = (id) => document.querySelector(`#${id}`);
 
@@ -177,6 +181,7 @@ function renderMetrics(snapshot) {
 
   const totals = snapshot.totals ?? {};
   const mailbox = snapshot.mailboxMaintenance ?? {};
+  const federationReplay = snapshot.federationDlqReplay ?? {};
 
   if (metricsSummaryEl) {
     metricsSummaryEl.innerHTML = [
@@ -199,6 +204,11 @@ function renderMetrics(snapshot) {
         title: 'Mailbox Stale',
         value: `${mailbox.staleSec ?? 0} sec`,
         sub: `runs=${mailbox.runs ?? 0}`,
+      },
+      {
+        title: 'DLQ Burn Rate',
+        value: Number(federationReplay.burnRate ?? 0).toFixed(2),
+        sub: `runs=${federationReplay.runs ?? 0} failed=${federationReplay.totalFailed ?? 0}`,
       },
     ]
       .map(
@@ -353,6 +363,170 @@ function renderFederationSummary() {
   ]);
 }
 
+function clampIntegerInput(raw, fallback, min, max) {
+  const value = Number.parseInt(String(raw ?? '').trim(), 10);
+  if (!Number.isFinite(value) || value < min) {
+    return fallback;
+  }
+  return Math.min(value, max);
+}
+
+function renderAuditSummary(snapshot) {
+  if (!snapshot || typeof snapshot !== 'object') {
+    renderStateCards(auditSummaryEl, []);
+    return;
+  }
+
+  const messages = snapshot.messages ?? {};
+  const groups = snapshot.groups ?? {};
+  const federation = snapshot.federation ?? {};
+  const dlq = federation.dlq ?? {};
+  const monitoring = snapshot.monitoring ?? {};
+  const replay = monitoring.federationDlqReplay ?? {};
+
+  renderStateCards(auditSummaryEl, [
+    {
+      title: 'Audit Snapshot',
+      main: snapshot.generatedAt || '-',
+      details: [
+        `sampleSize=${messages.sampleSize ?? '-'}`,
+        `retractionScanLimit=${messages.retractionScanLimit ?? '-'}`,
+      ],
+    },
+    {
+      title: 'Identity Isolation',
+      main: `revoked=${messages.revokedDidCount ?? 0}`,
+      details: [
+        `isolatedConversations=${messages.isolatedConversationCount ?? 0}`,
+        `isolationEvents=${messages.isolationEventCount ?? 0}`,
+      ],
+    },
+    {
+      title: 'Group & Reorg',
+      main: `groups=${groups.total ?? 0}`,
+      details: [
+        `active=${groups.stateCounts?.ACTIVE ?? 0}`,
+        `reorgedBack=${groups.stateCounts?.REORGED_BACK ?? 0}`,
+      ],
+    },
+    {
+      title: 'Federation Exposure',
+      main: `pendingDLQ=${dlq.pendingCount ?? 0}`,
+      details: [
+        `replayedDLQ=${dlq.replayedCount ?? 0}`,
+        `burnRate=${Number(replay.burnRate ?? 0).toFixed(2)}`,
+      ],
+    },
+  ]);
+}
+
+function riskPriority(level) {
+  if (level === 'critical') {
+    return 4;
+  }
+  if (level === 'high') {
+    return 3;
+  }
+  if (level === 'medium') {
+    return 2;
+  }
+  return 1;
+}
+
+function deriveRiskSignals() {
+  const signals = [];
+  const monitoring = latestMonitoringSnapshot ?? {};
+  const audit = latestAuditSnapshot ?? {};
+
+  const alerts = Array.isArray(monitoring.alerts) ? monitoring.alerts : [];
+  for (const alert of alerts) {
+    if (alert?.level === 'CRITICAL') {
+      signals.push({
+        level: 'critical',
+        title: `Monitoring Alert: ${alert.code || 'UNKNOWN'}`,
+        detail: alert.message || 'critical threshold reached',
+      });
+      continue;
+    }
+    if (alert?.level === 'WARN') {
+      signals.push({
+        level: 'high',
+        title: `Monitoring Alert: ${alert.code || 'UNKNOWN'}`,
+        detail: alert.message || 'warning threshold reached',
+      });
+    }
+  }
+
+  const messageAudit = audit.messages ?? {};
+  const isolationCount = Number(messageAudit.isolatedConversationCount ?? 0);
+  if (isolationCount > 0) {
+    signals.push({
+      level: isolationCount >= 10 ? 'high' : 'medium',
+      title: 'Revoked DID Isolation Active',
+      detail: `isolated conversations=${isolationCount}, events=${messageAudit.isolationEventCount ?? 0}`,
+    });
+  }
+
+  const pendingDlq = Number(audit.federation?.dlq?.pendingCount ?? latestFederationDlqEntries.filter((entry) => entry.status === 'PENDING').length);
+  if (pendingDlq > 0) {
+    signals.push({
+      level: pendingDlq >= 20 ? 'critical' : pendingDlq >= 8 ? 'high' : 'medium',
+      title: 'Federation DLQ Pending Backlog',
+      detail: `pending entries=${pendingDlq}`,
+    });
+  }
+
+  const reorgedBack = Number(audit.groups?.stateCounts?.REORGED_BACK ?? 0);
+  if (reorgedBack > 0) {
+    signals.push({
+      level: 'high',
+      title: 'Group Reorged Back Detected',
+      detail: `reorged_back groups=${reorgedBack}`,
+    });
+  }
+
+  if (signals.length === 0) {
+    signals.push({
+      level: 'low',
+      title: 'No High Risk Signals',
+      detail: 'Current snapshot does not show warn/critical indicators.',
+    });
+  }
+
+  return signals.sort((left, right) => riskPriority(right.level) - riskPriority(left.level));
+}
+
+function renderRiskBoard() {
+  if (!riskBoardListEl) {
+    return;
+  }
+
+  const signals = deriveRiskSignals();
+  riskBoardListEl.innerHTML = signals
+    .map((item) => {
+      const level = String(item.level || 'low').toLowerCase();
+      return `
+        <li class="risk-row risk-${level}">
+          <div class="risk-top">
+            <p class="risk-title">${item.title}</p>
+            <span class="risk-badge">${level.toUpperCase()}</span>
+          </div>
+          <p class="risk-detail">${item.detail}</p>
+        </li>
+      `;
+    })
+    .join('');
+}
+
+function parseReplayIds(value) {
+  return [...new Set(
+    String(value ?? '')
+      .split(/[\n,]/)
+      .map((item) => item.trim())
+      .filter(Boolean),
+  )];
+}
+
 function buildSendPayload() {
   const plain = byId('message-plain').value.trim();
   const explicitCiphertext = byId('ciphertext-hex').value.trim();
@@ -461,9 +635,41 @@ async function pullMessages() {
 async function fetchNodeMetrics(silent = false) {
   const result = await callApi('node-metrics', 'GET', '/api/v1/node/metrics', undefined, 200, { silent });
   const snapshot = result.payload?.data;
+  latestMonitoringSnapshot = snapshot;
   renderMetrics(snapshot);
+  renderRiskBoard();
   if (!silent) {
     addActivity('node-metrics', 200, 'Monitoring snapshot updated');
+  }
+}
+
+async function fetchAuditSnapshot(silent = false) {
+  const sampleSize = clampIntegerInput(byId('audit-sample-size')?.value, 20, 1, 100);
+  const retractionScanLimit = clampIntegerInput(byId('audit-retraction-limit')?.value, 2000, 1, 100_000);
+  if (byId('audit-sample-size')) {
+    byId('audit-sample-size').value = String(sampleSize);
+  }
+  if (byId('audit-retraction-limit')) {
+    byId('audit-retraction-limit').value = String(retractionScanLimit);
+  }
+
+  const result = await callApi(
+    'node-audit-snapshot',
+    'GET',
+    `/api/v1/node/audit-snapshot?sample_size=${sampleSize}&retraction_scan_limit=${retractionScanLimit}`,
+    undefined,
+    200,
+    { silent: true },
+  );
+  latestAuditSnapshot = result.payload?.data ?? {};
+  renderAuditSummary(latestAuditSnapshot);
+  renderRiskBoard();
+
+  if (!silent) {
+    setOutput({
+      auditSnapshot: latestAuditSnapshot,
+    });
+    addActivity('node-audit-snapshot', 200, 'Audit snapshot loaded');
   }
 }
 
@@ -571,6 +777,7 @@ async function fetchFederationNodeInfo() {
     const result = await callApi('federation-node-info', 'GET', '/api/v1/federation/node-info', undefined, 200, { silent: true });
     latestFederationNodeInfo = result.payload?.data ?? {};
     renderFederationSummary();
+    renderRiskBoard();
     setOutput({
       federationNodeInfo: latestFederationNodeInfo,
     });
@@ -593,6 +800,7 @@ async function fetchFederationDlq(silent = false) {
   latestFederationDlqEntries = Array.isArray(result.payload?.data) ? result.payload.data : [];
   renderFederationDlqList(latestFederationDlqEntries);
   renderFederationSummary();
+  renderRiskBoard();
   if (!silent) {
     setOutput({
       federationDlq: {
@@ -619,6 +827,7 @@ async function replayFederationDlq() {
       { silent: true },
     );
     await fetchFederationDlq(true);
+    await fetchNodeMetrics(true);
     setOutput({
       federationReplay: replay.payload?.data ?? {},
       federationDlq: latestFederationDlqEntries,
@@ -627,6 +836,52 @@ async function replayFederationDlq() {
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     addActivity('federation-dlq-replay', 0, message);
+  }
+}
+
+function fillPendingReplayIds() {
+  const pendingIds = latestFederationDlqEntries
+    .filter((entry) => entry?.status === 'PENDING')
+    .map((entry) => entry?.dlqId)
+    .filter(Boolean);
+  const maxItems = clampIntegerInput(byId('fed-replay-max-items')?.value, 20, 1, 200);
+  const selected = pendingIds.slice(0, maxItems);
+  byId('fed-replay-ids').value = selected.join('\n');
+  addActivity('federation-dlq-select', 200, `Selected ${selected.length} pending DLQ ids for batch replay`);
+}
+
+async function replayFederationDlqBatch() {
+  try {
+    const ids = parseReplayIds(byId('fed-replay-ids').value);
+    const maxItems = clampIntegerInput(byId('fed-replay-max-items')?.value, 20, 1, 200);
+    const stopOnError = Boolean(byId('fed-replay-stop-on-error')?.checked);
+
+    const payload = {
+      maxItems,
+      stopOnError,
+      ...(ids.length > 0 ? { ids } : {}),
+    };
+    const replay = await callApi(
+      'federation-dlq-replay-batch',
+      'POST',
+      '/api/v1/federation/dlq/replay',
+      payload,
+      200,
+      { silent: true },
+    );
+    await Promise.all([
+      fetchFederationDlq(true),
+      fetchNodeMetrics(true),
+    ]);
+    setOutput({
+      federationReplayBatch: replay.payload?.data ?? {},
+      selectedIds: ids,
+      federationDlq: latestFederationDlqEntries,
+    });
+    addActivity('federation-dlq-replay-batch', 200, `Batch replay executed (ids=${ids.length || 'auto'})`);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    addActivity('federation-dlq-replay-batch', 0, message);
   }
 }
 
@@ -691,6 +946,15 @@ byId('btn-node-metrics').addEventListener('click', () => {
   void fetchNodeMetrics();
 });
 
+byId('btn-audit-snapshot').addEventListener('click', () => {
+  void fetchAuditSnapshot();
+});
+
+byId('btn-risk-refresh').addEventListener('click', () => {
+  renderRiskBoard();
+  addActivity('risk-board', 200, 'Risk board recalculated');
+});
+
 byId('btn-toggle-metrics-poll').addEventListener('click', () => {
   setMetricsAutoRefresh(!metricsPollingTimer);
 });
@@ -749,6 +1013,14 @@ byId('btn-fed-replay').addEventListener('click', () => {
   void replayFederationDlq();
 });
 
+byId('btn-fed-replay-pending-fill').addEventListener('click', () => {
+  fillPendingReplayIds();
+});
+
+byId('btn-fed-replay-batch').addEventListener('click', () => {
+  void replayFederationDlqBatch();
+});
+
 byId('btn-clear-activity').addEventListener('click', () => {
   activityEl.innerHTML = '';
 });
@@ -756,6 +1028,11 @@ byId('btn-clear-activity').addEventListener('click', () => {
 regenerateScenario();
 renderStateCards(groupStateSummaryEl, []);
 renderFederationSummary();
+renderAuditSummary({});
+renderRiskBoard();
 renderRetractedList([]);
 renderFederationDlqList([]);
-setOutput({ status: 'ready', hint: 'Use "Run Full Happy Path" then inspect Group/Federation panels for Phase 11 ops view.' });
+setOutput({
+  status: 'ready',
+  hint: 'Run Happy Path, then use Audit & Emergency Panel v2.1 for audit snapshot, risk board, and DLQ batch replay.',
+});

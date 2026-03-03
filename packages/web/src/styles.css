@@ -98,6 +98,48 @@ header p {
   gap: 10px;
 }
 
+.checkbox-label {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-height: 46px;
+}
+
+.checkbox-label input[type='checkbox'] {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--accent-2);
+}
+
+.textarea-label {
+  margin-top: 12px;
+  display: grid;
+  gap: 6px;
+  color: var(--muted);
+  font-size: 0.88rem;
+  font-weight: 700;
+}
+
+textarea {
+  width: 100%;
+  resize: vertical;
+  min-height: 72px;
+  padding: 10px 11px;
+  color: var(--text);
+  background: var(--panel-solid);
+  border: 1px solid #d3c7ac;
+  border-radius: 11px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.82rem;
+}
+
+textarea:focus {
+  outline: 2px solid rgba(226, 135, 67, 0.3);
+  border-color: var(--accent);
+}
+
 label {
   display: grid;
   gap: 6px;
@@ -241,6 +283,72 @@ select:focus {
 .ops-sub {
   font-size: 0.79rem;
   color: var(--muted);
+}
+
+.risk-list {
+  margin: 8px 0 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 8px;
+}
+
+.risk-row {
+  border: 1px solid #decfab;
+  border-radius: 10px;
+  background: #fffdfa;
+  padding: 10px;
+  display: grid;
+  gap: 5px;
+}
+
+.risk-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.risk-badge {
+  min-width: 74px;
+  text-align: center;
+  padding: 3px 8px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+
+.risk-title {
+  margin: 0;
+  font-size: 0.88rem;
+  font-weight: 800;
+}
+
+.risk-detail {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.risk-critical .risk-badge {
+  color: #7d1e27;
+  background: #ffdbe0;
+}
+
+.risk-high .risk-badge {
+  color: #86520e;
+  background: #ffe5c5;
+}
+
+.risk-medium .risk-badge {
+  color: #0f6b5d;
+  background: #ddf3ef;
+}
+
+.risk-low .risk-badge {
+  color: #24425f;
+  background: #dfefff;
 }
 
 button {

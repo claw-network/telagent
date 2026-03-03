@@ -131,6 +131,34 @@
         </ul>
       </section>
 
+      <section class="panel">
+        <h2>Audit & Emergency Panel v2.1</h2>
+        <div class="grid">
+          <label>Audit Sample Size <input id="audit-sample-size" type="number" min="1" max="100" value="20" /></label>
+          <label>Retraction Scan Limit <input id="audit-retraction-limit" type="number" min="1" max="100000" value="2000" /></label>
+          <label>DLQ Replay Max Items <input id="fed-replay-max-items" type="number" min="1" max="200" value="20" /></label>
+          <label class="checkbox-label">
+            <span>Stop On Error</span>
+            <input id="fed-replay-stop-on-error" type="checkbox" />
+          </label>
+        </div>
+        <div class="button-row">
+          <button id="btn-audit-snapshot">GET /api/v1/node/audit-snapshot</button>
+          <button id="btn-risk-refresh">Refresh Risk Board</button>
+          <button id="btn-fed-replay-pending-fill">Fill Pending DLQ IDs</button>
+          <button id="btn-fed-replay-batch">POST /api/v1/federation/dlq/replay (batch ids)</button>
+        </div>
+        <label class="textarea-label">
+          DLQ IDs (one per line or comma separated)
+          <textarea id="fed-replay-ids" rows="4" placeholder="dlq-envelopes-..."></textarea>
+        </label>
+        <div id="audit-summary" class="state-grid"></div>
+        <h3>Risk Board</h3>
+        <ul id="risk-board-list" class="risk-list">
+          <li class="alert-empty">No risk signals loaded yet.</li>
+        </ul>
+      </section>
+
       <div class="split">
         <section class="panel">
           <div class="panel-head">

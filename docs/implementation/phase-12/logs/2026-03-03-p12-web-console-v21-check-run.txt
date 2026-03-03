@@ -1,0 +1,6 @@
+[TA-P12-006] auditSnapshotPanelReady=true
+[TA-P12-006] riskBoardReady=true
+[TA-P12-006] dlqBatchReplayReady=true
+[TA-P12-006] requiredTokensChecked=18
+[TA-P12-006] decision=PASS
+[TA-P12-006] output=/Users/xiasenhai/Workspace/OpenClaw/telagent/docs/implementation/phase-12/manifests/2026-03-03-p12-web-console-v21-check.json
