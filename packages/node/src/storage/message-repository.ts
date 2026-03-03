@@ -3,6 +3,8 @@ import Database from 'better-sqlite3';
 import type { Envelope } from '@telagent/protocol';
 
 import type {
+  DirectConversationParticipantCheckResult,
+  EnvelopeCursorKey,
   MailboxStore,
   ProvisionalRetractionRecord,
   StoredEnvelopeRecord,
@@ -41,12 +43,22 @@ CREATE TABLE IF NOT EXISTS mailbox_sequences (
   last_seq TEXT NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS mailbox_direct_conversations (
+  conversation_id TEXT PRIMARY KEY,
+  participant_a_hash TEXT NOT NULL,
+  participant_b_hash TEXT,
+  created_at_ms INTEGER NOT NULL,
+  updated_at_ms INTEGER NOT NULL
+);
+
 CREATE INDEX IF NOT EXISTS idx_mailbox_envelopes_sent ON mailbox_envelopes(sent_at_ms, conversation_id);
 CREATE INDEX IF NOT EXISTS idx_mailbox_envelopes_conversation_seq ON mailbox_envelopes(conversation_id, seq);
 CREATE INDEX IF NOT EXISTS idx_mailbox_envelopes_pull_cursor ON mailbox_envelopes(sent_at_ms, conversation_id, seq, envelope_id);
 CREATE INDEX IF NOT EXISTS idx_mailbox_envelopes_expires ON mailbox_envelopes(expires_at_ms);
 CREATE INDEX IF NOT EXISTS idx_mailbox_envelopes_provisional ON mailbox_envelopes(conversation_type, provisional);
 CREATE INDEX IF NOT EXISTS idx_mailbox_retractions_time ON mailbox_retractions(retracted_at_ms DESC);
+CREATE INDEX IF NOT EXISTS idx_mailbox_direct_conversations_a ON mailbox_direct_conversations(participant_a_hash);
+CREATE INDEX IF NOT EXISTS idx_mailbox_direct_conversations_b ON mailbox_direct_conversations(participant_b_hash);
 `;
 
 interface MailboxEnvelopeRow {
@@ -72,6 +84,11 @@ interface RetractionRow {
   conversationId: string;
   reason: 'REORGED_BACK';
   retractedAtMs: number;
+}
+
+interface DirectConversationRow {
+  participantAHash: string;
+  participantBHash: string | null;
 }
 
 export class MessageRepository implements MailboxStore {
@@ -243,7 +260,7 @@ export class MessageRepository implements MailboxStore {
     conversationId?: string;
     limit: number;
     afterSeq?: bigint;
-    afterKey?: { sentAtMs: number; conversationId: string; seq: bigint; envelopeId: string };
+    afterKey?: EnvelopeCursorKey;
   }): Promise<Envelope[]> {
     const rows = params.conversationId
       ? (() => {
@@ -383,6 +400,76 @@ export class MessageRepository implements MailboxStore {
       })();
 
     return rows.map((row) => this.toEnvelope(row));
+  }
+
+  async ensureDirectConversationParticipant(params: {
+    conversationId: string;
+    didHash: string;
+    observedAtMs: number;
+    maxParticipants?: number;
+  }): Promise<DirectConversationParticipantCheckResult> {
+    const maxParticipants = Math.max(2, params.maxParticipants ?? 2);
+    return this.db.transaction(() => {
+      const row = this.db
+        .prepare(
+          `SELECT
+            participant_a_hash AS participantAHash,
+            participant_b_hash AS participantBHash
+           FROM mailbox_direct_conversations
+           WHERE conversation_id = ?`,
+        )
+        .get(params.conversationId) as DirectConversationRow | undefined;
+
+      if (!row) {
+        this.db
+          .prepare(
+            `INSERT INTO mailbox_direct_conversations (
+              conversation_id, participant_a_hash, participant_b_hash, created_at_ms, updated_at_ms
+            ) VALUES (?, ?, NULL, ?, ?)`,
+          )
+          .run(params.conversationId, params.didHash, params.observedAtMs, params.observedAtMs);
+        return {
+          allowed: true,
+          participants: [params.didHash],
+        };
+      }
+
+      const participants = [row.participantAHash, row.participantBHash]
+        .filter((item): item is string => typeof item === 'string' && item.length > 0);
+
+      if (participants.includes(params.didHash)) {
+        this.db
+          .prepare(
+            `UPDATE mailbox_direct_conversations
+             SET updated_at_ms = ?
+             WHERE conversation_id = ?`,
+          )
+          .run(params.observedAtMs, params.conversationId);
+        return {
+          allowed: true,
+          participants,
+        };
+      }
+
+      if (participants.length >= maxParticipants || row.participantBHash) {
+        return {
+          allowed: false,
+          participants,
+        };
+      }
+
+      this.db
+        .prepare(
+          `UPDATE mailbox_direct_conversations
+           SET participant_b_hash = ?, updated_at_ms = ?
+           WHERE conversation_id = ?`,
+        )
+        .run(params.didHash, params.observedAtMs, params.conversationId);
+      return {
+        allowed: true,
+        participants: [...participants, params.didHash],
+      };
+    })();
   }
 
   async listProvisionalGroupRecords(): Promise<StoredEnvelopeRecord[]> {

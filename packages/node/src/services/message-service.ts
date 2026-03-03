@@ -137,6 +137,7 @@ export class MessageService {
   private readonly keyLifecycleService?: KeyLifecycleService;
   private readonly identityService?: MessageIdentityService;
   private readonly conversationIdsByDidHash = new Map<string, Set<string>>();
+  private readonly directConversationParticipantDidHashes = new Map<string, Set<string>>();
   private readonly activeConversationIds = new Set<string>();
   private readonly isolatedConversationById = new Map<string, MessageSessionIsolationRecord>();
   private readonly isolationEvents: MessageDidIsolationEvent[] = [];
@@ -245,6 +246,12 @@ export class MessageService {
       if (senderRecord.state === 'PENDING') {
         provisional = true;
       }
+    } else {
+      await this.assertDirectConversationParticipant({
+        conversationId: input.conversationId,
+        senderDidHash,
+        nowMs,
+      });
     }
 
     const seq = await this.nextSequence(input.conversationId);
@@ -567,6 +574,63 @@ export class MessageService {
       return conversationId.slice('group:'.length);
     }
     return conversationId;
+  }
+
+  private async assertDirectConversationParticipant(params: {
+    conversationId: string;
+    senderDidHash: string;
+    nowMs: number;
+  }): Promise<void> {
+    const check = this.repository
+      ? await this.repository.ensureDirectConversationParticipant({
+        conversationId: params.conversationId,
+        didHash: params.senderDidHash,
+        observedAtMs: params.nowMs,
+      })
+      : this.ensureDirectConversationParticipantInMemory(params.conversationId, params.senderDidHash);
+
+    if (check.allowed) {
+      return;
+    }
+
+    throw new TelagentError(
+      ErrorCodes.FORBIDDEN,
+      `senderDid is not a direct conversation participant for conversation(${params.conversationId})`,
+    );
+  }
+
+  private ensureDirectConversationParticipantInMemory(
+    conversationId: string,
+    didHash: string,
+  ): { allowed: boolean; participants: string[] } {
+    const bucket = this.directConversationParticipantDidHashes.get(conversationId);
+    if (!bucket) {
+      this.directConversationParticipantDidHashes.set(conversationId, new Set([didHash]));
+      return {
+        allowed: true,
+        participants: [didHash],
+      };
+    }
+
+    if (bucket.has(didHash)) {
+      return {
+        allowed: true,
+        participants: [...bucket],
+      };
+    }
+
+    if (bucket.size >= 2) {
+      return {
+        allowed: false,
+        participants: [...bucket],
+      };
+    }
+
+    bucket.add(didHash);
+    return {
+      allowed: true,
+      participants: [...bucket],
+    };
   }
 
   private recordConversationActivity(didHash: string, conversationId: string): void {

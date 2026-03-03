@@ -764,3 +764,63 @@ test('TA-P14-003 E2E pull cursor stays stable when cleanup happens between pages
   );
   assert.equal(pullPage2.data.cursor, null);
 });
+
+test('TA-P14-004 E2E direct conversation blocks non-participant sender with RFC7807', async (t) => {
+  const { server, baseUrl } = await startE2EServer(9_000);
+  t.after(async () => {
+    await server.stop();
+  });
+
+  const conversationId = 'direct:p14-acl-e2e';
+
+  const firstRes = await postJson(baseUrl, '/api/v1/messages', {
+    envelopeId: 'env-p14-acl-e2e-1',
+    senderDid: 'did:claw:zAlice',
+    conversationId,
+    conversationType: 'direct',
+    targetDomain: 'alpha.tel',
+    mailboxKeyId: 'mailbox-direct',
+    sealedHeader: '0x91',
+    ciphertext: '0x92',
+    contentType: 'text',
+    ttlSec: 120,
+  });
+  assert.equal(firstRes.status, 201);
+
+  const secondRes = await postJson(baseUrl, '/api/v1/messages', {
+    envelopeId: 'env-p14-acl-e2e-2',
+    senderDid: 'did:claw:zBob',
+    conversationId,
+    conversationType: 'direct',
+    targetDomain: 'alpha.tel',
+    mailboxKeyId: 'mailbox-direct',
+    sealedHeader: '0x93',
+    ciphertext: '0x94',
+    contentType: 'text',
+    ttlSec: 120,
+  });
+  assert.equal(secondRes.status, 201);
+
+  const rejectedRes = await postJson(baseUrl, '/api/v1/messages', {
+    envelopeId: 'env-p14-acl-e2e-3',
+    senderDid: 'did:claw:zCarol',
+    conversationId,
+    conversationType: 'direct',
+    targetDomain: 'alpha.tel',
+    mailboxKeyId: 'mailbox-direct',
+    sealedHeader: '0x95',
+    ciphertext: '0x96',
+    contentType: 'text',
+    ttlSec: 120,
+  });
+  assert.equal(rejectedRes.status, 403);
+  assert.match(rejectedRes.headers.get('content-type') ?? '', /application\/problem\+json/i);
+  const rejectedBody = (await rejectedRes.json()) as {
+    status: number;
+    code: string;
+    detail: string;
+  };
+  assert.equal(rejectedBody.status, 403);
+  assert.equal(rejectedBody.code, 'FORBIDDEN');
+  assert.match(rejectedBody.detail, /direct conversation participant/);
+});

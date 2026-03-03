@@ -224,8 +224,9 @@
 - 已完成：`TA-P14-001`（Phase 14 产品聚焦边界冻结）
 - 已完成：`TA-P14-002`（默认 Web 运维面板下线，回归核心聊天流程）
 - 已完成：`TA-P14-003`（消息拉取稳定游标改造，修复 cleanup/retraction 导致分页跳项风险）
+- 已完成：`TA-P14-004`（direct 会话参与方访问控制，非参与方写入返回 RFC7807）
 - 已规划：`TA-P15-001`（WebApp 工业级规划总纲冻结）
-- 下一批 Ready：执行 `TA-P14-004`（direct 会话访问控制）与 `TA-P14-005`（SDK 行为收敛）。
+- 下一批 Ready：执行 `TA-P14-005`（SDK 行为收敛）与 `TA-P14-006`（Phase 14 Gate 收口）。
 
 ## 4.2 Blockers（2026-03-03 更新）
 
@@ -414,7 +415,7 @@
 - `TA-P14-001`：DONE（产品聚焦边界冻结，见 `docs/implementation/phase-14/ta-p14-001-phase14-product-focus-boundary-2026-03-03.md`）。
 - `TA-P14-002`：DONE（默认 Web 运维面板下线，见 `docs/implementation/phase-14/ta-p14-002-web-ops-panel-removal-2026-03-03.md`）。
 - `TA-P14-003`：DONE（消息拉取稳定游标改造，见 `docs/implementation/phase-14/ta-p14-003-stable-pull-cursor-2026-03-03.md`）。
-- `TA-P14-004`：TODO（direct 会话参与方访问控制）。
+- `TA-P14-004`：DONE（direct 会话参与方访问控制，见 `docs/implementation/phase-14/ta-p14-004-direct-session-acl-2026-03-03.md`）。
 - `TA-P14-005`：TODO（TS/Python SDK 行为收敛）。
 - `TA-P14-006`：TODO（Phase 14 Gate 收口）。
 - 阶段状态：Phase 14 执行中（产品核心能力与高优缺陷收敛）。

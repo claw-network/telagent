@@ -1,0 +1,27 @@
+{
+  "phase": "Phase 14",
+  "taskId": "TA-P14-004",
+  "generatedAt": "2026-03-03T14:59:12.417Z",
+  "summary": {
+    "firstTwoParticipantsAccepted": true,
+    "nonParticipantRejectedRfc7807": true,
+    "existingParticipantAcceptedAfterRejection": true,
+    "rejectedErrorCode": "FORBIDDEN"
+  },
+  "decision": "PASS",
+  "details": {
+    "api": {
+      "rejectedStatus": 403,
+      "rejectedContentType": "application/problem+json; charset=utf-8",
+      "rejectedErrorCode": "FORBIDDEN",
+      "rejectedBody": {
+        "type": "https://telagent.dev/errors/forbidden",
+        "title": "Forbidden",
+        "status": 403,
+        "detail": "senderDid is not a direct conversation participant for conversation(direct:p14-acl-script)",
+        "instance": "/api/v1/messages",
+        "code": "FORBIDDEN"
+      }
+    }
+  }
+}

@@ -3,6 +3,8 @@ import { Pool, type PoolClient } from 'pg';
 import type { Envelope } from '@telagent/protocol';
 
 import type {
+  DirectConversationParticipantCheckResult,
+  EnvelopeCursorKey,
   MailboxStore,
   ProvisionalRetractionRecord,
   StoredEnvelopeRecord,
@@ -38,6 +40,11 @@ interface RetractionRow {
   conversation_id: string;
   reason: 'REORGED_BACK';
   retracted_at_ms: string;
+}
+
+interface DirectConversationRow {
+  participant_a_hash: string;
+  participant_b_hash: string | null;
 }
 
 function assertSchemaName(value: string): string {
@@ -102,6 +109,16 @@ export class PostgresMessageRepository implements MailboxStore {
       )
     `);
 
+    await this.pool.query(`
+      CREATE TABLE IF NOT EXISTS ${this.table('mailbox_direct_conversations')} (
+        conversation_id TEXT PRIMARY KEY,
+        participant_a_hash TEXT NOT NULL,
+        participant_b_hash TEXT,
+        created_at_ms BIGINT NOT NULL,
+        updated_at_ms BIGINT NOT NULL
+      )
+    `);
+
     await this.pool.query(
       `CREATE INDEX IF NOT EXISTS idx_mailbox_envelopes_sent ON ${this.table('mailbox_envelopes')}(sent_at_ms, conversation_id)`,
     );
@@ -119,6 +136,12 @@ export class PostgresMessageRepository implements MailboxStore {
     );
     await this.pool.query(
       `CREATE INDEX IF NOT EXISTS idx_mailbox_retractions_time ON ${this.table('mailbox_retractions')}(retracted_at_ms DESC)`,
+    );
+    await this.pool.query(
+      `CREATE INDEX IF NOT EXISTS idx_mailbox_direct_conversations_a ON ${this.table('mailbox_direct_conversations')}(participant_a_hash)`,
+    );
+    await this.pool.query(
+      `CREATE INDEX IF NOT EXISTS idx_mailbox_direct_conversations_b ON ${this.table('mailbox_direct_conversations')}(participant_b_hash)`,
     );
   }
 
@@ -274,7 +297,7 @@ export class PostgresMessageRepository implements MailboxStore {
     conversationId?: string;
     limit: number;
     afterSeq?: bigint;
-    afterKey?: { sentAtMs: number; conversationId: string; seq: bigint; envelopeId: string };
+    afterKey?: EnvelopeCursorKey;
   }): Promise<Envelope[]> {
     const result = params.conversationId
       ? typeof params.afterSeq !== 'undefined'
@@ -378,6 +401,71 @@ export class PostgresMessageRepository implements MailboxStore {
         );
 
     return result.rows.map((row) => this.toEnvelope(row));
+  }
+
+  async ensureDirectConversationParticipant(params: {
+    conversationId: string;
+    didHash: string;
+    observedAtMs: number;
+    maxParticipants?: number;
+  }): Promise<DirectConversationParticipantCheckResult> {
+    const maxParticipants = Math.max(2, params.maxParticipants ?? 2);
+    return this.withTransaction(async (client) => {
+      await client.query(
+        `INSERT INTO ${this.table('mailbox_direct_conversations')} (
+          conversation_id, participant_a_hash, participant_b_hash, created_at_ms, updated_at_ms
+        ) VALUES ($1, $2, NULL, $3, $4)
+        ON CONFLICT(conversation_id) DO NOTHING`,
+        [params.conversationId, params.didHash, params.observedAtMs, params.observedAtMs],
+      );
+
+      const found = await client.query<DirectConversationRow>(
+        `SELECT participant_a_hash, participant_b_hash
+         FROM ${this.table('mailbox_direct_conversations')}
+         WHERE conversation_id = $1
+         FOR UPDATE`,
+        [params.conversationId],
+      );
+
+      if (!found.rowCount || !found.rows[0]) {
+        throw new Error(`direct conversation row not found after upsert for conversation(${params.conversationId})`);
+      }
+
+      const row = found.rows[0];
+      const participants = [row.participant_a_hash, row.participant_b_hash]
+        .filter((item): item is string => typeof item === 'string' && item.length > 0);
+
+      if (participants.includes(params.didHash)) {
+        await client.query(
+          `UPDATE ${this.table('mailbox_direct_conversations')}
+           SET updated_at_ms = $2
+           WHERE conversation_id = $1`,
+          [params.conversationId, params.observedAtMs],
+        );
+        return {
+          allowed: true,
+          participants,
+        };
+      }
+
+      if (participants.length >= maxParticipants || row.participant_b_hash) {
+        return {
+          allowed: false,
+          participants,
+        };
+      }
+
+      await client.query(
+        `UPDATE ${this.table('mailbox_direct_conversations')}
+         SET participant_b_hash = $2, updated_at_ms = $3
+         WHERE conversation_id = $1`,
+        [params.conversationId, params.didHash, params.observedAtMs],
+      );
+      return {
+        allowed: true,
+        participants: [...participants, params.didHash],
+      };
+    });
   }
 
   async listProvisionalGroupRecords(): Promise<StoredEnvelopeRecord[]> {

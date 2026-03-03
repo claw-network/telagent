@@ -213,6 +213,87 @@ test('TA-P4-003 duplicate envelopeId with different payload is rejected', async 
   );
 });
 
+test('TA-P14-004 direct conversation rejects non-participant writer after two participants are established', async () => {
+  const { service } = createMessageService();
+  const conversationId = 'direct:p14-acl';
+
+  const first = await service.send(createDirectInput({
+    envelopeId: 'env-p14-acl-1',
+    senderDid: 'did:claw:zAlice',
+    conversationId,
+  }));
+  assert.equal(first.envelopeId, 'env-p14-acl-1');
+
+  const second = await service.send(createDirectInput({
+    envelopeId: 'env-p14-acl-2',
+    senderDid: 'did:claw:zBob',
+    conversationId,
+  }));
+  assert.equal(second.envelopeId, 'env-p14-acl-2');
+
+  await assert.rejects(
+    async () =>
+      service.send(createDirectInput({
+        envelopeId: 'env-p14-acl-3',
+        senderDid: 'did:claw:zCarol',
+        conversationId,
+      })),
+    (error) => {
+      assert.ok(error instanceof TelagentError);
+      assert.equal(error.code, ErrorCodes.FORBIDDEN);
+      assert.match(error.message, /direct conversation participant/);
+      return true;
+    },
+  );
+
+  const fromExisting = await service.send(createDirectInput({
+    envelopeId: 'env-p14-acl-4',
+    senderDid: 'did:claw:zBob',
+    conversationId,
+  }));
+  assert.equal(fromExisting.envelopeId, 'env-p14-acl-4');
+});
+
+test('TA-P14-004 direct conversation ACL remains effective after repository-backed restart', async (t) => {
+  const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'telagent-p14-direct-acl-'));
+  t.after(async () => {
+    await fs.rm(tempDir, { recursive: true, force: true });
+  });
+
+  const dbPath = path.join(tempDir, 'mailbox.sqlite');
+  const clock = createClock(12_000);
+  const groups = {} as ConstructorParameters<typeof MessageService>[0];
+
+  const repoA = new MessageRepository(dbPath);
+  const serviceA = new MessageService(groups, { clock, repository: repoA });
+  await serviceA.send(createDirectInput({
+    envelopeId: 'env-p14-acl-restart-1',
+    senderDid: 'did:claw:zAlice',
+    conversationId: 'direct:p14-acl-restart',
+  }));
+  await serviceA.send(createDirectInput({
+    envelopeId: 'env-p14-acl-restart-2',
+    senderDid: 'did:claw:zBob',
+    conversationId: 'direct:p14-acl-restart',
+  }));
+
+  const repoB = new MessageRepository(dbPath);
+  const serviceB = new MessageService(groups, { clock, repository: repoB });
+  await assert.rejects(
+    async () =>
+      serviceB.send(createDirectInput({
+        envelopeId: 'env-p14-acl-restart-3',
+        senderDid: 'did:claw:zCarol',
+        conversationId: 'direct:p14-acl-restart',
+      })),
+    (error) => {
+      assert.ok(error instanceof TelagentError);
+      assert.equal(error.code, ErrorCodes.FORBIDDEN);
+      return true;
+    },
+  );
+});
+
 test('TA-P4-004 cleanupExpired removes expired envelopes and releases dedupe key', async () => {
   const { service, clock } = createMessageService(1_000);
 

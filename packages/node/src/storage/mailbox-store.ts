@@ -19,6 +19,11 @@ export interface EnvelopeCursorKey {
   envelopeId: string;
 }
 
+export interface DirectConversationParticipantCheckResult {
+  allowed: boolean;
+  participants: string[];
+}
+
 export interface MailboxStore {
   init?(): Promise<void>;
   close?(): Promise<void>;
@@ -34,6 +39,12 @@ export interface MailboxStore {
     afterSeq?: bigint;
     afterKey?: EnvelopeCursorKey;
   }): Promise<Envelope[]>;
+  ensureDirectConversationParticipant(params: {
+    conversationId: string;
+    didHash: string;
+    observedAtMs: number;
+    maxParticipants?: number;
+  }): Promise<DirectConversationParticipantCheckResult>;
   listProvisionalGroupRecords(): Promise<StoredEnvelopeRecord[]>;
   retractEnvelope(params: {
     envelope: Envelope;

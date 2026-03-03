@@ -1,0 +1,6 @@
+[TA-P14-004] firstTwoParticipantsAccepted=true
+[TA-P14-004] nonParticipantRejectedRfc7807=true
+[TA-P14-004] existingParticipantAcceptedAfterRejection=true
+[TA-P14-004] rejectedErrorCode=FORBIDDEN
+[TA-P14-004] decision=PASS
+[TA-P14-004] output=/Users/xiasenhai/Workspace/OpenClaw/telagent/docs/implementation/phase-14/manifests/2026-03-03-p14-direct-session-acl-check.json
