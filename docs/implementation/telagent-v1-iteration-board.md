@@ -228,7 +228,7 @@
 - 已完成：`TA-P14-005`（TS/Python SDK 行为与错误语义收敛，覆盖 FORBIDDEN direct ACL 场景）
 - 已完成：`TA-P14-006`（Phase 14 Gate 收口，阶段关闭）
 - 已规划：`TA-P15-001`（WebApp 工业级规划总纲冻结）
-- 下一批 Ready：执行 `TA-P15-007`（Phase 15 Gate 评审与收口）。
+- 下一批 Ready：等待下一阶段立项（建议先冻结 Phase 16 目标与验收口径）。
 
 ## 4.2 Blockers（2026-03-03 更新）
 
@@ -430,8 +430,8 @@
 - `TA-P15-004`：DONE（多平台架构与共享核心层冻结，见 `docs/implementation/phase-15/ta-p15-004-webapp-multi-platform-architecture-2026-03-03.md` 与 `docs/implementation/phase-15/manifests/2026-03-03-p15-platform-architecture-check.json`）。
 - `TA-P15-005`：DONE（离线同步、冲突策略与性能预算冻结，见 `docs/implementation/phase-15/ta-p15-005-webapp-offline-sync-conflict-performance-2026-03-03.md` 与 `docs/implementation/phase-15/manifests/2026-03-03-p15-offline-sync-check.json`）。
 - `TA-P15-006`：DONE（客户端质量体系与发布门禁冻结，见 `docs/implementation/phase-15/ta-p15-006-webapp-quality-gates-and-release-readiness-2026-03-03.md` 与 `docs/implementation/phase-15/manifests/2026-03-03-p15-quality-gates-check.json`）。
-- `TA-P15-007`：TODO（进入 Gate 收口阶段）。
-- 阶段状态：Phase 15 执行中（IN_PROGRESS），下一任务 `TA-P15-007`。
+- `TA-P15-007`：DONE（Phase 15 Gate 收口，见 `docs/implementation/phase-15/ta-p15-007-phase15-gate-review-2026-03-03.md` 与 `docs/implementation/gates/phase-15-gate.md`）。
+- 阶段状态：Phase 15 已关闭（PASS）。
 
 ## 5. 周会与 Gate 节奏建议
 

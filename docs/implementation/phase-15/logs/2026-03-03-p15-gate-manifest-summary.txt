@@ -1,0 +1,6 @@
+2026-03-03-p15-functional-ia-check.json decision=PASS
+2026-03-03-p15-design-system-check.json decision=PASS
+2026-03-03-p15-platform-architecture-check.json decision=PASS
+2026-03-03-p15-offline-sync-check.json decision=PASS
+2026-03-03-p15-quality-gates-check.json decision=PASS
+summary total=5 failed=0
