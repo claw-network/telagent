@@ -27,6 +27,7 @@
 - `phase-8-gate.md`：Phase 8 评审记录
 - `phase-9-gate.md`：Phase 9 评审记录
 - `phase-10-gate.md`：Phase 10 评审记录
+- `phase-11-gate.md`：Phase 11 评审记录
 
 ## 3. 推荐流程
 

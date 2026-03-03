@@ -204,7 +204,9 @@
 - 已完成：`TA-P11-006`（Signal/MLS 密钥生命周期管理）
 - 已完成：`TA-P11-007`（revoked DID 会话失效链路）
 - 已完成：`TA-P11-008`（Agent SDK TypeScript v0）
-- 下一批 Ready：继续 Phase 11 执行（优先 `TA-P11-009`）
+- 已完成：`TA-P11-009`（Web Console v2 运营能力增强）
+- 已完成：`TA-P11-010`（Phase 11 Gate 评审与收口）
+- 下一批 Ready：进入下一阶段候选池规划（等待边界冻结）
 
 ## 4.2 Blockers（2026-03-03 更新）
 
@@ -347,9 +349,9 @@
 - `TA-P11-006`：DONE（Signal/MLS 密钥生命周期管理，见 `docs/implementation/phase-11/ta-p11-006-signal-mls-key-lifecycle-2026-03-03.md`）。
 - `TA-P11-007`：DONE（revoked DID 会话失效链路，见 `docs/implementation/phase-11/ta-p11-007-revoked-did-session-invalidation-2026-03-03.md`）。
 - `TA-P11-008`：DONE（Agent SDK TypeScript v0，见 `docs/implementation/phase-11/ta-p11-008-agent-sdk-typescript-v0-2026-03-03.md`）。
-- `TA-P11-009`：TODO（Web Console v2 运营能力增强）。
-- `TA-P11-010`：TODO（Phase 11 Gate 收口）。
-- 阶段状态：Phase 11 已启动，进入执行阶段。
+- `TA-P11-009`：DONE（Web Console v2 运营能力增强，见 `docs/implementation/phase-11/ta-p11-009-web-console-v2-ops-view-2026-03-03.md`）。
+- `TA-P11-010`：DONE（Phase 11 Gate 收口，见 `docs/implementation/phase-11/ta-p11-010-phase11-gate-review-2026-03-03.md` 与 `docs/implementation/gates/phase-11-gate.md`）。
+- 阶段状态：Phase 11 已关闭（Gate=PASS）。
 
 ## 5. 周会与 Gate 节奏建议
 

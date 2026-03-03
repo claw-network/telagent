@@ -1,0 +1,37 @@
+{
+  "phase": "Phase 11",
+  "taskId": "TA-P11-009",
+  "generatedAt": "2026-03-03T09:06:35.561Z",
+  "summary": {
+    "groupStateViewReady": true,
+    "rollbackEntryReady": true,
+    "federationViewReady": true,
+    "requiredTokensChecked": 17
+  },
+  "decision": "PASS",
+  "details": {
+    "htmlChecks": [
+      "Group State & Rollback Entry",
+      "Federation Ops View",
+      "btn-group-snapshot",
+      "btn-retracted",
+      "btn-fed-node-info",
+      "btn-fed-dlq",
+      "btn-fed-replay",
+      "retracted-list",
+      "federation-dlq-list"
+    ],
+    "jsChecks": [
+      "refreshGroupSnapshot",
+      "fetchRetractedEnvelopes",
+      "fetchFederationNodeInfo",
+      "fetchFederationDlq",
+      "replayFederationDlq"
+    ],
+    "cssChecks": [
+      ".state-grid",
+      ".ops-list",
+      ".ops-row"
+    ]
+  }
+}
