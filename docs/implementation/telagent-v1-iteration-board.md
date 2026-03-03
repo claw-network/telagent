@@ -228,7 +228,7 @@
 - 已完成：`TA-P14-005`（TS/Python SDK 行为与错误语义收敛，覆盖 FORBIDDEN direct ACL 场景）
 - 已完成：`TA-P14-006`（Phase 14 Gate 收口，阶段关闭）
 - 已规划：`TA-P15-001`（WebApp 工业级规划总纲冻结）
-- 下一批 Ready：执行 `TA-P15-005`（离线同步、冲突策略与性能预算）。
+- 下一批 Ready：执行 `TA-P15-006`（客户端质量体系与发布门禁）。
 
 ## 4.2 Blockers（2026-03-03 更新）
 
@@ -428,8 +428,9 @@
 - `TA-P15-002`：DONE（功能域与 IA 冻结，见 `docs/implementation/phase-15/ta-p15-002-webapp-functional-ia-freeze-2026-03-03.md` 与 `docs/implementation/phase-15/manifests/2026-03-03-p15-functional-ia-check.json`）。
 - `TA-P15-003`：DONE（设计系统与组件规范冻结，见 `docs/implementation/phase-15/ta-p15-003-webapp-design-system-and-component-spec-2026-03-03.md` 与 `docs/implementation/phase-15/manifests/2026-03-03-p15-design-system-check.json`）。
 - `TA-P15-004`：DONE（多平台架构与共享核心层冻结，见 `docs/implementation/phase-15/ta-p15-004-webapp-multi-platform-architecture-2026-03-03.md` 与 `docs/implementation/phase-15/manifests/2026-03-03-p15-platform-architecture-check.json`）。
-- `TA-P15-005` ~ `TA-P15-007`：TODO（进入离线同步、质量门禁与 Gate 收口阶段）。
-- 阶段状态：Phase 15 执行中（IN_PROGRESS），下一任务 `TA-P15-005`。
+- `TA-P15-005`：DONE（离线同步、冲突策略与性能预算冻结，见 `docs/implementation/phase-15/ta-p15-005-webapp-offline-sync-conflict-performance-2026-03-03.md` 与 `docs/implementation/phase-15/manifests/2026-03-03-p15-offline-sync-check.json`）。
+- `TA-P15-006` ~ `TA-P15-007`：TODO（进入质量门禁与 Gate 收口阶段）。
+- 阶段状态：Phase 15 执行中（IN_PROGRESS），下一任务 `TA-P15-006`。
 
 ## 5. 周会与 Gate 节奏建议
 

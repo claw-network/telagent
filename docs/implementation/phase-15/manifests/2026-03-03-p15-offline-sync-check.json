@@ -1,0 +1,40 @@
+{
+  "phase": "Phase 15",
+  "taskId": "TA-P15-005",
+  "generatedAt": "2026-03-03T16:45:00.000Z",
+  "summary": {
+    "queueStateCount": 5,
+    "conflictTypeCount": 5,
+    "performanceBudgetCategoryCount": 3,
+    "observabilityMetricCount": 10,
+    "apiPrefixConstraint": "/api/v1/*",
+    "didConstraint": "did:claw:*",
+    "didHashConstraint": "keccak256(utf8(did))",
+    "errorContract": "RFC7807 application/problem+json",
+    "decision": "PASS"
+  },
+  "checks": {
+    "taskDocExists": true,
+    "offlineModelFrozen": true,
+    "replayStrategyFrozen": true,
+    "conflictPolicyFrozen": true,
+    "performanceBudgetFrozen": true,
+    "apiPrefixConstraintDocumented": true,
+    "didConstraintDocumented": true,
+    "didHashConstraintDocumented": true,
+    "errorContractDocumented": true,
+    "webBuildPassed": true,
+    "webTestPassed": true,
+    "trackersUpdated": true
+  },
+  "evidence": {
+    "taskDoc": "docs/implementation/phase-15/ta-p15-005-webapp-offline-sync-conflict-performance-2026-03-03.md",
+    "phaseReadme": "docs/implementation/phase-15/README.md",
+    "wbs": "docs/implementation/telagent-v1-task-breakdown.md",
+    "iterationBoard": "docs/implementation/telagent-v1-iteration-board.md",
+    "webBuildLog": "docs/implementation/phase-15/logs/2026-03-03-p15-web-build-ta-p15-005.txt",
+    "webTestLog": "docs/implementation/phase-15/logs/2026-03-03-p15-web-test-ta-p15-005.txt",
+    "checkLog": "docs/implementation/phase-15/logs/2026-03-03-p15-offline-sync-check-run.txt"
+  },
+  "decision": "PASS"
+}
