@@ -1,0 +1,6 @@
+[TA-P12-003] revocationEventAccepted=true
+[TA-P12-003] relatedSessionsIsolated=true conversations=direct:revoked-p12,group:0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+[TA-P12-003] postRevokeSendBlocked=true blockedErrorCode=UNPROCESSABLE_ENTITY
+[TA-P12-003] auditTrailRecorded=true isolationEvents=1
+[TA-P12-003] decision=PASS
+[TA-P12-003] output=/Users/xiasenhai/Workspace/OpenClaw/telagent/docs/implementation/phase-12/manifests/2026-03-03-p12-revoked-did-isolation-check.json

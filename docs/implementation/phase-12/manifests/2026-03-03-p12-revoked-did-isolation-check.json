@@ -1,0 +1,87 @@
+{
+  "phase": "Phase 12",
+  "taskId": "TA-P12-003",
+  "generatedAt": "2026-03-03T11:20:57.596Z",
+  "summary": {
+    "revocationEventAccepted": true,
+    "relatedSessionsIsolated": true,
+    "postRevokeSendBlocked": true,
+    "blockedErrorCode": "UNPROCESSABLE_ENTITY",
+    "auditTrailRecorded": true
+  },
+  "decision": "PASS",
+  "details": {
+    "revokedDid": "did:claw:zRevokedP12",
+    "revocationEvent": {
+      "did": "did:claw:zRevokedP12",
+      "didHash": "0xf7ab6fb974c031fdd22dec1494a9b0542e03d7c5ac41da156977fa208c44281b",
+      "revokedAtMs": 1772536857594,
+      "source": "phase12-revocation-feed"
+    },
+    "isolatedConversations": [
+      {
+        "conversationId": "direct:revoked-p12",
+        "conversationIdHash": "079374811b6bec6c9558f746291b80d43ebf9b395bf2c2c5eaf9d15251c4dbdc",
+        "revokedDidHash": "0xf7ab6fb974c031fdd22dec1494a9b0542e03d7c5ac41da156977fa208c44281b",
+        "isolatedAtMs": 1772536857594,
+        "source": "phase12-revocation-feed"
+      },
+      {
+        "conversationId": "group:0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "conversationIdHash": "6357d79128af801d956ee1c5ce23deba46ba171b2a15c21e6aaafef5ec7c824d",
+        "revokedDidHash": "0xf7ab6fb974c031fdd22dec1494a9b0542e03d7c5ac41da156977fa208c44281b",
+        "isolatedAtMs": 1772536857594,
+        "source": "phase12-revocation-feed"
+      }
+    ],
+    "isolationEvents": [
+      {
+        "didHash": "0xf7ab6fb974c031fdd22dec1494a9b0542e03d7c5ac41da156977fa208c44281b",
+        "revokedAtMs": 1772536857594,
+        "source": "phase12-revocation-feed",
+        "isolatedConversationCount": 2,
+        "evictedConversationCount": 2,
+        "isolatedConversationIdHashes": [
+          "079374811b6bec6c9558f746291b80d43ebf9b395bf2c2c5eaf9d15251c4dbdc",
+          "6357d79128af801d956ee1c5ce23deba46ba171b2a15c21e6aaafef5ec7c824d"
+        ]
+      }
+    ],
+    "auditSnapshot": {
+      "activeEnvelopeCount": 2,
+      "retractedCount": 0,
+      "retractedByReason": {
+        "REORGED_BACK": 0
+      },
+      "sampledRetractions": [],
+      "revokedDidCount": 1,
+      "isolatedConversationCount": 2,
+      "isolationEventCount": 1,
+      "sampledIsolations": [
+        {
+          "conversationIdHash": "079374811b6bec6c9558f746291b80d43ebf9b395bf2c2c5eaf9d15251c4dbdc",
+          "revokedDidHash": "0xf7ab6fb974c031fdd22dec1494a9b0542e03d7c5ac41da156977fa208c44281b",
+          "isolatedAtMs": 1772536857594,
+          "source": "phase12-revocation-feed"
+        },
+        {
+          "conversationIdHash": "6357d79128af801d956ee1c5ce23deba46ba171b2a15c21e6aaafef5ec7c824d",
+          "revokedDidHash": "0xf7ab6fb974c031fdd22dec1494a9b0542e03d7c5ac41da156977fa208c44281b",
+          "isolatedAtMs": 1772536857594,
+          "source": "phase12-revocation-feed"
+        }
+      ],
+      "sampledIsolationEvents": [
+        {
+          "didHash": "0xf7ab6fb974c031fdd22dec1494a9b0542e03d7c5ac41da156977fa208c44281b",
+          "revokedAtMs": 1772536857594,
+          "source": "phase12-revocation-feed",
+          "isolatedConversationCount": 2,
+          "evictedConversationCount": 2
+        }
+      ],
+      "sampleSize": 5,
+      "retractionScanLimit": 20
+    }
+  }
+}

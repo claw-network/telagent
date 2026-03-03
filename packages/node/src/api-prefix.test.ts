@@ -30,6 +30,15 @@ class FakeIdentityService {
       resolvedAtMs: Date.now(),
     };
   }
+
+  notifyDidRevoked(did: string, options?: { source?: string; revokedAtMs?: number }) {
+    return {
+      did,
+      didHash: '0x' + 'f'.repeat(64),
+      revokedAtMs: options?.revokedAtMs ?? Date.now(),
+      source: options?.source ?? 'test',
+    };
+  }
 }
 
 class FakeGroupService {
@@ -291,6 +300,26 @@ test('routes only serve /api/v1/* prefix', async (t) => {
 
   const noPrefixAuditRes = await fetch(`${baseUrl}/v1/node/audit-snapshot`);
   assert.equal(noPrefixAuditRes.status, 404);
+
+  const revokeRes = await fetch(`${baseUrl}/api/v1/node/revocations`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({
+      did: 'did:claw:zSelf',
+      source: 'prefix-test',
+    }),
+  });
+  assert.equal(revokeRes.status, 201);
+
+  const noPrefixRevokeRes = await fetch(`${baseUrl}/v1/node/revocations`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({
+      did: 'did:claw:zSelf',
+      source: 'prefix-test',
+    }),
+  });
+  assert.equal(noPrefixRevokeRes.status, 404);
 });
 
 test('identity endpoint responds with data envelope', async (t) => {

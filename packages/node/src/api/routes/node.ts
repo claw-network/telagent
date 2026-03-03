@@ -1,9 +1,9 @@
 import { createHash } from 'node:crypto';
 
-import { ErrorCodes, TelagentError } from '@telagent/protocol';
+import { ErrorCodes, TelagentError, isDidClaw } from '@telagent/protocol';
 
 import { Router } from '../router.js';
-import { ok } from '../response.js';
+import { created, ok } from '../response.js';
 import { handleError } from '../route-utils.js';
 import type { RuntimeContext } from '../types.js';
 
@@ -24,6 +24,30 @@ export function nodeRoutes(ctx: RuntimeContext): Router {
   router.get('/metrics', ({ res }) => {
     const snapshot = ctx.monitoringService.snapshot();
     ok(res, snapshot, { self: '/api/v1/node/metrics' });
+  });
+
+  router.post('/revocations', ({ res, body, url }) => {
+    try {
+      const payload = assertRecord(body, 'revocation payload');
+      const did = assertDid(payload.did, 'did');
+      const source = assertOptionalString(payload.source, 'source') ?? 'node-api';
+      const revokedAtMs = parseOptionalPositiveInt(payload.revoked_at_ms, 'revoked_at_ms');
+
+      const revocation = ctx.identityService.notifyDidRevoked(did, {
+        source,
+        revokedAtMs,
+      });
+
+      created(
+        res,
+        {
+          revocation,
+        },
+        { self: `/api/v1/node/revocations?did_hash=${encodeURIComponent(revocation.didHash)}` },
+      );
+    } catch (error) {
+      handleError(res, error, url.pathname);
+    }
   });
 
   router.get('/audit-snapshot', async ({ res, query, url }) => {
@@ -144,6 +168,45 @@ function parsePositiveInt(raw: string | null, field: string, fallback: number, m
     throw new TelagentError(ErrorCodes.VALIDATION, `${field} must be a positive integer`);
   }
   return Math.min(value, max);
+}
+
+function parseOptionalPositiveInt(value: unknown, field: string): number | undefined {
+  if (typeof value === 'undefined' || value === null) {
+    return undefined;
+  }
+
+  if (typeof value !== 'number' || !Number.isInteger(value) || value <= 0) {
+    throw new TelagentError(ErrorCodes.VALIDATION, `${field} must be a positive integer`);
+  }
+  return value;
+}
+
+function assertRecord(value: unknown, name: string): Record<string, unknown> {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    throw new TelagentError(ErrorCodes.VALIDATION, `${name} must be an object`);
+  }
+  return value as Record<string, unknown>;
+}
+
+function assertDid(value: unknown, field: string): string {
+  if (typeof value !== 'string' || !value.trim()) {
+    throw new TelagentError(ErrorCodes.VALIDATION, `${field} is required`);
+  }
+  const did = value.trim();
+  if (!isDidClaw(did)) {
+    throw new TelagentError(ErrorCodes.VALIDATION, `${field} must use did:claw format`);
+  }
+  return did;
+}
+
+function assertOptionalString(value: unknown, field: string): string | undefined {
+  if (typeof value === 'undefined' || value === null) {
+    return undefined;
+  }
+  if (typeof value !== 'string' || !value.trim()) {
+    throw new TelagentError(ErrorCodes.VALIDATION, `${field} must be a non-empty string`);
+  }
+  return value.trim();
 }
 
 function digestForAudit(value: string): string {

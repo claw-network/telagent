@@ -60,6 +60,18 @@ function createGroupHarness() {
         joinedAtMs: Date.now(),
       }));
     },
+    listGroups() {
+      return [...stateByGroup.keys()].map((groupId) => ({
+        groupId,
+        creatorDid: 'did:claw:zCreator',
+        creatorDidHash: hashDid('did:claw:zCreator'),
+        groupDomain: 'alpha.tel',
+        domainProofHash: `0x${'1'.repeat(64)}`,
+        initialMlsStateHash: `0x${'2'.repeat(64)}`,
+        state: stateByGroup.get(groupId) ?? 'PENDING_ONCHAIN',
+        createdAtMs: Date.now(),
+      }));
+    },
   } as unknown as ConstructorParameters<typeof MessageService>[0];
 
   return {
@@ -115,9 +127,37 @@ function digest(input: string): string {
 
 class MutableIdentityService implements MessageIdentityService {
   private readonly revokedDids = new Set<string>();
+  private readonly revocationSubscribers = new Set<
+    (event: { did: string; didHash: string; revokedAtMs: number; source: string }) => void
+  >();
 
   revoke(did: string) {
     this.revokedDids.add(did);
+  }
+
+  subscribeDidRevocations(listener: (event: {
+    did: string;
+    didHash: string;
+    revokedAtMs: number;
+    source: string;
+  }) => void): () => void {
+    this.revocationSubscribers.add(listener);
+    return () => {
+      this.revocationSubscribers.delete(listener);
+    };
+  }
+
+  emitRevocation(did: string, source = 'test'): void {
+    this.revoke(did);
+    const event = {
+      did,
+      didHash: hashDid(did),
+      revokedAtMs: Date.now(),
+      source,
+    };
+    for (const listener of this.revocationSubscribers) {
+      listener(event);
+    }
   }
 
   async assertActiveDid(rawDid: string): Promise<void> {
@@ -313,6 +353,111 @@ test('TA-P12-002 buildAuditSnapshot normalizes sample and scan bounds', async ()
 
   assert.equal(snapshot.sampleSize, 1);
   assert.equal(snapshot.retractionScanLimit, 100_000);
+});
+
+test('TA-P12-003 revoked DID event isolates related sessions and evicts active sessions', async () => {
+  const groupId = `0x${'e'.repeat(64)}`;
+  const harness = createGroupHarness();
+  harness.setGroupState(groupId, 'ACTIVE');
+  harness.setMemberState(groupId, 'did:claw:zAlice', 'FINALIZED');
+
+  const identityService = new MutableIdentityService();
+  const service = new MessageService(harness.groups, {
+    clock: createClock(25_000),
+    identityService,
+  });
+
+  await service.send(createDirectInput({
+    envelopeId: 'env-isolation-direct-1',
+    conversationId: 'direct:isolation-case',
+  }));
+  await service.send({
+    envelopeId: 'env-isolation-group-1',
+    senderDid: 'did:claw:zAlice',
+    conversationId: `group:${groupId}`,
+    conversationType: 'group',
+    targetDomain: 'alpha.tel',
+    mailboxKeyId: 'mailbox-1',
+    sealedHeader: '0x11',
+    ciphertext: '0x33',
+    contentType: 'text',
+    ttlSec: 3600,
+  });
+
+  identityService.emitRevocation('did:claw:zAlice', 'test-revoke-feed');
+
+  const isolatedConversations = service.listIsolatedConversations(10);
+  const isolatedConversationIds = isolatedConversations.map((entry) => entry.conversationId).sort();
+  assert.deepEqual(
+    isolatedConversationIds,
+    [`direct:isolation-case`, `group:${groupId}`].sort(),
+  );
+
+  const isolationEvents = service.listIsolationEvents(10);
+  assert.equal(isolationEvents.length, 1);
+  assert.equal(isolationEvents[0].didHash, hashDid('did:claw:zAlice'));
+  assert.equal(isolationEvents[0].isolatedConversationCount, 2);
+  assert.equal(isolationEvents[0].evictedConversationCount, 2);
+
+  await assert.rejects(
+    async () =>
+      service.send(createDirectInput({
+        envelopeId: 'env-isolation-direct-2',
+        senderDid: 'did:claw:zBob',
+        conversationId: 'direct:isolation-case',
+      })),
+    (error) => {
+      assert.ok(error instanceof TelagentError);
+      assert.equal(error.code, ErrorCodes.UNPROCESSABLE);
+      assert.match(error.message, /isolated/);
+      return true;
+    },
+  );
+
+  await assert.rejects(
+    async () =>
+      service.send(createDirectInput({
+        envelopeId: 'env-isolation-direct-3',
+        senderDid: 'did:claw:zAlice',
+        conversationId: 'direct:new-after-revoke',
+      })),
+    (error) => {
+      assert.ok(error instanceof TelagentError);
+      assert.equal(error.code, ErrorCodes.UNPROCESSABLE);
+      assert.match(error.message, /revoked/);
+      return true;
+    },
+  );
+});
+
+test('TA-P12-003 buildAuditSnapshot includes revocation isolation evidence', async () => {
+  const identityService = new MutableIdentityService();
+  const groups = {} as ConstructorParameters<typeof MessageService>[0];
+  const service = new MessageService(groups, {
+    clock: createClock(27_000),
+    identityService,
+  });
+
+  await service.send(createDirectInput({
+    envelopeId: 'env-revoke-audit-1',
+    conversationId: 'direct:revoke-audit',
+  }));
+  identityService.emitRevocation('did:claw:zAlice', 'test-revoke-feed');
+
+  const snapshot = await service.buildAuditSnapshot({
+    sampleSize: 5,
+    retractionScanLimit: 20,
+  });
+
+  assert.equal(snapshot.revokedDidCount, 1);
+  assert.equal(snapshot.isolatedConversationCount, 1);
+  assert.equal(snapshot.isolationEventCount, 1);
+  assert.equal(snapshot.sampledIsolations.length, 1);
+  assert.equal(snapshot.sampledIsolations[0].conversationIdHash, digest('direct:revoke-audit'));
+  assert.equal(snapshot.sampledIsolations[0].revokedDidHash, hashDid('did:claw:zAlice'));
+  assert.equal(snapshot.sampledIsolationEvents.length, 1);
+  assert.equal(snapshot.sampledIsolationEvents[0].didHash, hashDid('did:claw:zAlice'));
+  assert.equal(snapshot.sampledIsolationEvents[0].evictedConversationCount, 1);
 });
 
 test('TA-P6-001 mailbox persists messages and seq after service restart', async (t) => {

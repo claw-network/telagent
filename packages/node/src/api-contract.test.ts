@@ -1,12 +1,22 @@
 import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
 import test from 'node:test';
 
-import { ErrorCodes, TelagentError } from '@telagent/protocol';
+import { ErrorCodes, TelagentError, hashDid } from '@telagent/protocol';
 
 import { ApiServer } from './api/server.js';
 import type { RuntimeContext } from './api/types.js';
 
+function digest(value: string): string {
+  return createHash('sha256').update(value).digest('hex');
+}
+
 class FakeIdentityService {
+  private readonly revokedDidHashes = new Set<string>();
+  private readonly revocationSubscribers = new Set<
+    (event: { did: string; didHash: string; revokedAtMs: number; source: string }) => void
+  >();
+
   async getSelf() {
     return {
       did: 'did:claw:zSelf',
@@ -27,6 +37,46 @@ class FakeIdentityService {
       isActive: true,
       resolvedAtMs: Date.now(),
     };
+  }
+
+  subscribeDidRevocations(listener: (event: {
+    did: string;
+    didHash: string;
+    revokedAtMs: number;
+    source: string;
+  }) => void): () => void {
+    this.revocationSubscribers.add(listener);
+    return () => {
+      this.revocationSubscribers.delete(listener);
+    };
+  }
+
+  notifyDidRevoked(
+    did: string,
+    options?: {
+      source?: string;
+      revokedAtMs?: number;
+    },
+  ) {
+    const didHash = hashDid(did);
+    this.revokedDidHashes.add(didHash);
+    const event = {
+      did,
+      didHash,
+      revokedAtMs: options?.revokedAtMs ?? Date.now(),
+      source: options?.source?.trim() || 'manual',
+    };
+    for (const subscriber of this.revocationSubscribers) {
+      subscriber(event);
+    }
+    return event;
+  }
+
+  async assertActiveDid(did: string) {
+    if (this.revokedDidHashes.has(hashDid(did))) {
+      throw new TelagentError(ErrorCodes.UNPROCESSABLE, 'DID is revoked or inactive');
+    }
+    return this.resolve(did);
   }
 }
 
@@ -139,21 +189,91 @@ class FakeGasService {
 }
 
 class FakeMessageService {
-  send() {
+  private nextSeq = 1n;
+  private readonly trackedConversationIdsByDidHash = new Map<string, Set<string>>();
+  private readonly isolatedConversationById = new Map<string, {
+    didHash: string;
+    isolatedAtMs: number;
+    source: string;
+  }>();
+  private readonly isolationEvents: Array<{
+    didHash: string;
+    revokedAtMs: number;
+    source: string;
+    isolatedConversationCount: number;
+    evictedConversationCount: number;
+  }> = [];
+  private readonly revokedDidHashes = new Set<string>();
+
+  constructor(private readonly identityService: FakeIdentityService) {
+    this.identityService.subscribeDidRevocations((event) => {
+      this.revokedDidHashes.add(event.didHash);
+      const relatedConversationIds = [...(this.trackedConversationIdsByDidHash.get(event.didHash) ?? [])];
+      for (const conversationId of relatedConversationIds) {
+        this.isolatedConversationById.set(conversationId, {
+          didHash: event.didHash,
+          isolatedAtMs: event.revokedAtMs,
+          source: event.source,
+        });
+      }
+      this.isolationEvents.push({
+        didHash: event.didHash,
+        revokedAtMs: event.revokedAtMs,
+        source: event.source,
+        isolatedConversationCount: relatedConversationIds.length,
+        evictedConversationCount: relatedConversationIds.length,
+      });
+    });
+  }
+
+  async send(input: {
+    envelopeId?: string;
+    senderDid: string;
+    conversationId: string;
+    conversationType: 'direct' | 'group';
+    targetDomain: string;
+    mailboxKeyId: string;
+    sealedHeader: string;
+    ciphertext: string;
+    contentType: 'text' | 'image' | 'file' | 'control';
+    ttlSec: number;
+  }) {
+    if (this.isolatedConversationById.has(input.conversationId)) {
+      throw new TelagentError(
+        ErrorCodes.UNPROCESSABLE,
+        `conversation(${input.conversationId}) is isolated due to revoked DID`,
+      );
+    }
+
+    const senderDidHash = hashDid(input.senderDid);
+    if (this.revokedDidHashes.has(senderDidHash)) {
+      throw new TelagentError(ErrorCodes.UNPROCESSABLE, `senderDid(${input.senderDid}) is revoked and isolated`);
+    }
+    await this.identityService.assertActiveDid(input.senderDid);
+
+    const tracked = this.trackedConversationIdsByDidHash.get(senderDidHash);
+    if (tracked) {
+      tracked.add(input.conversationId);
+    } else {
+      this.trackedConversationIdsByDidHash.set(senderDidHash, new Set([input.conversationId]));
+    }
+
+    const seq = this.nextSeq;
+    this.nextSeq += 1n;
     return {
-      envelopeId: 'env-1',
-      conversationId: 'group:0x' + 'b'.repeat(64),
-      conversationType: 'group',
+      envelopeId: input.envelopeId ?? `env-${seq}`,
+      conversationId: input.conversationId,
+      conversationType: input.conversationType,
       routeHint: {
-        targetDomain: 'alpha.tel',
-        mailboxKeyId: 'mailbox-1',
+        targetDomain: input.targetDomain,
+        mailboxKeyId: input.mailboxKeyId,
       },
-      sealedHeader: '0x11',
-      seq: 1n,
-      ciphertext: '0x22',
-      contentType: 'text',
+      sealedHeader: input.sealedHeader,
+      seq,
+      ciphertext: input.ciphertext,
+      contentType: input.contentType,
       sentAtMs: Date.now(),
-      ttlSec: 3600,
+      ttlSec: input.ttlSec,
       provisional: false,
     };
   }
@@ -177,6 +297,7 @@ class FakeMessageService {
   }
 
   async buildAuditSnapshot(options?: { sampleSize?: number; retractionScanLimit?: number }) {
+    const sampleSize = Math.max(1, Math.min(100, options?.sampleSize ?? 20));
     return {
       activeEnvelopeCount: 1,
       retractedCount: 1,
@@ -190,8 +311,28 @@ class FakeMessageService {
           reason: 'REORGED_BACK',
           retractedAtMs: Date.now(),
         },
-      ].slice(0, Math.max(1, Math.min(100, options?.sampleSize ?? 20))),
-      sampleSize: Math.max(1, Math.min(100, options?.sampleSize ?? 20)),
+      ].slice(0, sampleSize),
+      revokedDidCount: this.revokedDidHashes.size,
+      isolatedConversationCount: this.isolatedConversationById.size,
+      isolationEventCount: this.isolationEvents.length,
+      sampledIsolations: [...this.isolatedConversationById.entries()]
+        .slice(0, sampleSize)
+        .map(([conversationId, isolation]) => ({
+          conversationIdHash: digest(conversationId),
+          revokedDidHash: isolation.didHash,
+          isolatedAtMs: isolation.isolatedAtMs,
+          source: isolation.source,
+        })),
+      sampledIsolationEvents: this.isolationEvents
+        .slice(0, sampleSize)
+        .map((event) => ({
+          didHash: event.didHash,
+          revokedAtMs: event.revokedAtMs,
+          source: event.source,
+          isolatedConversationCount: event.isolatedConversationCount,
+          evictedConversationCount: event.evictedConversationCount,
+        })),
+      sampleSize,
       retractionScanLimit: Math.max(1, Math.min(100_000, options?.retractionScanLimit ?? 2_000)),
     };
   }
@@ -545,12 +686,14 @@ class FakeKeyLifecycleService {
 }
 
 async function startTestServer() {
+  const identityService = new FakeIdentityService();
+  const messageService = new FakeMessageService(identityService);
   const context: RuntimeContext = {
     config: { host: '127.0.0.1', port: 0 },
-    identityService: new FakeIdentityService() as unknown as RuntimeContext['identityService'],
+    identityService: identityService as unknown as RuntimeContext['identityService'],
     groupService: new FakeGroupService() as unknown as RuntimeContext['groupService'],
     gasService: new FakeGasService() as unknown as RuntimeContext['gasService'],
-    messageService: new FakeMessageService() as unknown as RuntimeContext['messageService'],
+    messageService: messageService as unknown as RuntimeContext['messageService'],
     attachmentService: new FakeAttachmentService() as unknown as RuntimeContext['attachmentService'],
     federationService: new FakeFederationService() as unknown as RuntimeContext['federationService'],
     monitoringService: new FakeMonitoringService() as unknown as RuntimeContext['monitoringService'],
@@ -742,6 +885,98 @@ test('node audit snapshot rejects invalid query with RFC7807 response', async (t
   assert.equal(body.instance, '/api/v1/node/audit-snapshot');
   assert.equal(body.code, 'VALIDATION_ERROR');
   assert.match(body.type, /^https:\/\/telagent\.dev\/errors\/validation-error$/);
+});
+
+test('TA-P12-003 revoked DID event isolates session and rejects message send with RFC7807', async (t) => {
+  const { server, baseUrl } = await startTestServer();
+  t.after(async () => {
+    await server.stop();
+  });
+
+  const initialSend = await fetch(`${baseUrl}/api/v1/messages`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({
+      senderDid: 'did:claw:zSelf',
+      conversationId: 'direct:revoked-contract',
+      conversationType: 'direct',
+      targetDomain: 'alpha.tel',
+      mailboxKeyId: 'mailbox-1',
+      sealedHeader: '0x11',
+      ciphertext: '0x22',
+      contentType: 'text',
+      ttlSec: 3600,
+    }),
+  });
+  assert.equal(initialSend.status, 201);
+
+  const revokeRes = await fetch(`${baseUrl}/api/v1/node/revocations`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({
+      did: 'did:claw:zSelf',
+      source: 'contract-test',
+    }),
+  });
+  assert.equal(revokeRes.status, 201);
+  const revokeBody = (await revokeRes.json()) as {
+    data: {
+      revocation: {
+        did: string;
+        didHash: string;
+        source: string;
+      };
+    };
+  };
+  assert.equal(revokeBody.data.revocation.did, 'did:claw:zSelf');
+  assert.equal(revokeBody.data.revocation.source, 'contract-test');
+  assert.equal(revokeBody.data.revocation.didHash.length, 66);
+
+  const blockedSend = await fetch(`${baseUrl}/api/v1/messages`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({
+      senderDid: 'did:claw:zSelf',
+      conversationId: 'direct:revoked-contract',
+      conversationType: 'direct',
+      targetDomain: 'alpha.tel',
+      mailboxKeyId: 'mailbox-1',
+      sealedHeader: '0x11',
+      ciphertext: '0x33',
+      contentType: 'text',
+      ttlSec: 3600,
+    }),
+  });
+
+  assert.equal(blockedSend.status, 422);
+  assert.match(blockedSend.headers.get('content-type') ?? '', /^application\/problem\+json/);
+  const blockedBody = (await blockedSend.json()) as {
+    title: string;
+    status: number;
+    code: string;
+    type: string;
+    instance: string;
+  };
+  assert.equal(blockedBody.title, 'Unprocessable Entity');
+  assert.equal(blockedBody.status, 422);
+  assert.equal(blockedBody.code, 'UNPROCESSABLE_ENTITY');
+  assert.equal(blockedBody.instance, '/api/v1/messages');
+  assert.match(blockedBody.type, /^https:\/\/telagent\.dev\/errors\/unprocessable-entity$/);
+
+  const auditRes = await fetch(`${baseUrl}/api/v1/node/audit-snapshot?sample_size=5&retraction_scan_limit=100`);
+  assert.equal(auditRes.status, 200);
+  const auditBody = (await auditRes.json()) as {
+    data: {
+      messages: {
+        revokedDidCount: number;
+        isolatedConversationCount: number;
+        isolationEventCount: number;
+      };
+    };
+  };
+  assert.equal(auditBody.data.messages.revokedDidCount, 1);
+  assert.equal(auditBody.data.messages.isolatedConversationCount, 1);
+  assert.equal(auditBody.data.messages.isolationEventCount, 1);
 });
 
 test('not found uses RFC7807 shape', async (t) => {

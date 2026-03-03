@@ -11,8 +11,57 @@ export interface IdentityView {
   resolvedAtMs: number;
 }
 
+export interface DidRevocationEvent {
+  did: AgentDID;
+  didHash: string;
+  revokedAtMs: number;
+  source: string;
+}
+
+export type DidRevocationListener = (event: DidRevocationEvent) => void;
+
 export class IdentityAdapterService {
+  private readonly revocationListeners = new Set<DidRevocationListener>();
+
   constructor(private readonly contracts: ContractProvider) {}
+
+  subscribeDidRevocations(listener: DidRevocationListener): () => void {
+    this.revocationListeners.add(listener);
+    return () => {
+      this.revocationListeners.delete(listener);
+    };
+  }
+
+  notifyDidRevoked(
+    rawDid: string,
+    options?: {
+      source?: string;
+      revokedAtMs?: number;
+      didHash?: string;
+    },
+  ): DidRevocationEvent {
+    if (!isDidClaw(rawDid)) {
+      throw new TelagentError(ErrorCodes.VALIDATION, 'DID must use did:claw format');
+    }
+
+    const did = rawDid as AgentDID;
+    const event: DidRevocationEvent = {
+      did,
+      didHash: options?.didHash ?? hashDid(did),
+      revokedAtMs: options?.revokedAtMs ?? Date.now(),
+      source: options?.source?.trim() || 'manual',
+    };
+
+    for (const listener of this.revocationListeners) {
+      try {
+        listener(event);
+      } catch {
+        // keep revocation fan-out best-effort to avoid blocking caller path
+      }
+    }
+
+    return event;
+  }
 
   async getSelf(): Promise<IdentityView> {
     return this.resolve(this.contracts.config.selfDid);
@@ -49,6 +98,11 @@ export class IdentityAdapterService {
   async assertActiveDid(rawDid: string): Promise<IdentityView> {
     const identity = await this.resolve(rawDid);
     if (!identity.isActive) {
+      this.notifyDidRevoked(identity.did, {
+        source: 'identity-active-check',
+        revokedAtMs: identity.resolvedAtMs,
+        didHash: identity.didHash,
+      });
       throw new TelagentError(ErrorCodes.UNPROCESSABLE, 'DID is revoked or inactive');
     }
     return identity;

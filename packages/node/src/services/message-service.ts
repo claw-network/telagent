@@ -36,8 +36,16 @@ export interface MessageServiceClock {
   now(): number;
 }
 
+export interface MessageDidRevocationEvent {
+  did: string;
+  didHash: string;
+  revokedAtMs: number;
+  source: string;
+}
+
 export interface MessageIdentityService {
   assertActiveDid(rawDid: string): Promise<unknown>;
+  subscribeDidRevocations?(listener: (event: MessageDidRevocationEvent) => void): () => void;
 }
 
 const SystemClock: MessageServiceClock = {
@@ -67,11 +75,44 @@ export interface MessageAuditRetractionSample {
   retractedAtMs: number;
 }
 
+export interface MessageSessionIsolationRecord {
+  conversationId: string;
+  conversationIdHash: string;
+  revokedDidHash: string;
+  isolatedAtMs: number;
+  source: string;
+}
+
+export interface MessageDidIsolationEvent {
+  didHash: string;
+  revokedAtMs: number;
+  source: string;
+  isolatedConversationCount: number;
+  evictedConversationCount: number;
+  isolatedConversationIdHashes: string[];
+}
+
 export interface MessageAuditSnapshot {
   activeEnvelopeCount: number;
   retractedCount: number;
   retractedByReason: Record<'REORGED_BACK', number>;
   sampledRetractions: MessageAuditRetractionSample[];
+  revokedDidCount: number;
+  isolatedConversationCount: number;
+  isolationEventCount: number;
+  sampledIsolations: Array<{
+    conversationIdHash: string;
+    revokedDidHash: string;
+    isolatedAtMs: number;
+    source: string;
+  }>;
+  sampledIsolationEvents: Array<{
+    didHash: string;
+    revokedAtMs: number;
+    source: string;
+    isolatedConversationCount: number;
+    evictedConversationCount: number;
+  }>;
   sampleSize: number;
   retractionScanLimit: number;
 }
@@ -86,6 +127,12 @@ export class MessageService {
   private readonly repository?: MailboxStore;
   private readonly keyLifecycleService?: KeyLifecycleService;
   private readonly identityService?: MessageIdentityService;
+  private readonly conversationIdsByDidHash = new Map<string, Set<string>>();
+  private readonly activeConversationIds = new Set<string>();
+  private readonly isolatedConversationById = new Map<string, MessageSessionIsolationRecord>();
+  private readonly isolationEvents: MessageDidIsolationEvent[] = [];
+  private readonly revokedDidHashes = new Set<string>();
+  private disposeRevocationSubscription?: () => void;
 
   constructor(
     private readonly groups: GroupService,
@@ -102,6 +149,12 @@ export class MessageService {
     this.repository = options?.repository;
     this.keyLifecycleService = options?.keyLifecycleService;
     this.identityService = options?.identityService;
+
+    if (this.identityService?.subscribeDidRevocations) {
+      this.disposeRevocationSubscription = this.identityService.subscribeDidRevocations((event) => {
+        this.recordDidRevocation(event);
+      });
+    }
   }
 
   async send(input: SendMessageInput): Promise<Envelope> {
@@ -143,6 +196,9 @@ export class MessageService {
     if (!isDidClaw(input.senderDid)) {
       throw new TelagentError(ErrorCodes.VALIDATION, 'senderDid must use did:claw format');
     }
+    const senderDidHash = this.normalizeHash(hashDid(input.senderDid));
+    this.assertConversationNotIsolated(input.conversationId);
+    this.assertDidNotRevoked(input.senderDid, senderDidHash);
 
     if (this.identityService) {
       await this.identityService.assertActiveDid(input.senderDid);
@@ -168,8 +224,7 @@ export class MessageService {
       provisional = chainState.state !== 'ACTIVE';
 
       const members = this.groups.listMembers(groupId);
-      const senderDidHash = hashDid(input.senderDid);
-      const senderRecord = members.find((item) => item.didHash.toLowerCase() === senderDidHash.toLowerCase());
+      const senderRecord = members.find((item) => this.normalizeHash(item.didHash) === senderDidHash);
 
       if (!senderRecord) {
         throw new TelagentError(ErrorCodes.FORBIDDEN, 'Sender is not a group member');
@@ -208,6 +263,7 @@ export class MessageService {
       envelope,
       idempotencySignature: signature,
     });
+    this.recordConversationActivity(senderDidHash, input.conversationId);
 
     return envelope;
   }
@@ -243,6 +299,13 @@ export class MessageService {
     };
   }
 
+  dispose(): void {
+    if (this.disposeRevocationSubscription) {
+      this.disposeRevocationSubscription();
+      this.disposeRevocationSubscription = undefined;
+    }
+  }
+
   async listRetracted(limit = 50): Promise<ProvisionalRetractionRecord[]> {
     if (this.repository) {
       return this.repository.listRetractions(limit);
@@ -251,6 +314,76 @@ export class MessageService {
     return Array.from(this.retractedByEnvelopeId.values())
       .sort((a, b) => b.retractedAtMs - a.retractedAtMs)
       .slice(0, Math.max(1, limit));
+  }
+
+  listIsolatedConversations(limit = 50): MessageSessionIsolationRecord[] {
+    return Array.from(this.isolatedConversationById.values())
+      .sort((left, right) => right.isolatedAtMs - left.isolatedAtMs)
+      .slice(0, Math.max(1, limit))
+      .map((item) => ({ ...item }));
+  }
+
+  listIsolationEvents(limit = 50): MessageDidIsolationEvent[] {
+    return this.isolationEvents
+      .slice()
+      .sort((left, right) => right.revokedAtMs - left.revokedAtMs)
+      .slice(0, Math.max(1, limit))
+      .map((item) => ({
+        ...item,
+        isolatedConversationIdHashes: [...item.isolatedConversationIdHashes],
+      }));
+  }
+
+  recordDidRevocation(event: MessageDidRevocationEvent): MessageDidIsolationEvent {
+    if (!isDidClaw(event.did)) {
+      throw new TelagentError(ErrorCodes.VALIDATION, 'DID must use did:claw format');
+    }
+
+    const didHash = this.normalizeHash(event.didHash);
+    const revokedAtMs = this.normalizePositiveInt(event.revokedAtMs, this.clock.now(), Number.MAX_SAFE_INTEGER);
+    const source = event.source.trim() || 'unknown';
+
+    this.revokedDidHashes.add(didHash);
+
+    const relatedConversationIds = new Set<string>([
+      ...this.listTrackedConversationsByDidHash(didHash),
+      ...this.findGroupConversationsByDidHash(didHash),
+    ]);
+
+    let evictedConversationCount = 0;
+    const isolatedConversationIdHashes: string[] = [];
+    for (const conversationId of relatedConversationIds) {
+      if (!this.isolatedConversationById.has(conversationId)) {
+        this.isolatedConversationById.set(conversationId, {
+          conversationId,
+          conversationIdHash: this.digestForAudit(conversationId),
+          revokedDidHash: didHash,
+          isolatedAtMs: revokedAtMs,
+          source,
+        });
+      }
+      const current = this.isolatedConversationById.get(conversationId)!;
+      isolatedConversationIdHashes.push(current.conversationIdHash);
+
+      if (this.activeConversationIds.delete(conversationId)) {
+        evictedConversationCount += 1;
+      }
+    }
+
+    const isolationEvent: MessageDidIsolationEvent = {
+      didHash,
+      revokedAtMs,
+      source,
+      isolatedConversationCount: relatedConversationIds.size,
+      evictedConversationCount,
+      isolatedConversationIdHashes,
+    };
+    this.isolationEvents.push(isolationEvent);
+
+    return {
+      ...isolationEvent,
+      isolatedConversationIdHashes: [...isolationEvent.isolatedConversationIdHashes],
+    };
   }
 
   async buildAuditSnapshot(options?: {
@@ -281,6 +414,22 @@ export class MessageService {
         conversationIdHash: this.digestForAudit(entry.conversationId),
         reason: entry.reason,
         retractedAtMs: entry.retractedAtMs,
+      })),
+      revokedDidCount: this.revokedDidHashes.size,
+      isolatedConversationCount: this.isolatedConversationById.size,
+      isolationEventCount: this.isolationEvents.length,
+      sampledIsolations: this.listIsolatedConversations(sampleSize).map((entry) => ({
+        conversationIdHash: entry.conversationIdHash,
+        revokedDidHash: entry.revokedDidHash,
+        isolatedAtMs: entry.isolatedAtMs,
+        source: entry.source,
+      })),
+      sampledIsolationEvents: this.listIsolationEvents(sampleSize).map((entry) => ({
+        didHash: entry.didHash,
+        revokedAtMs: entry.revokedAtMs,
+        source: entry.source,
+        isolatedConversationCount: entry.isolatedConversationCount,
+        evictedConversationCount: entry.evictedConversationCount,
       })),
       sampleSize,
       retractionScanLimit,
@@ -406,6 +555,74 @@ export class MessageService {
     return conversationId;
   }
 
+  private recordConversationActivity(didHash: string, conversationId: string): void {
+    this.activeConversationIds.add(conversationId);
+
+    const bucket = this.conversationIdsByDidHash.get(didHash);
+    if (bucket) {
+      bucket.add(conversationId);
+      return;
+    }
+
+    this.conversationIdsByDidHash.set(didHash, new Set([conversationId]));
+  }
+
+  private listTrackedConversationsByDidHash(didHash: string): string[] {
+    return [...(this.conversationIdsByDidHash.get(didHash) ?? [])];
+  }
+
+  private findGroupConversationsByDidHash(didHash: string): string[] {
+    const groupReader = this.groups as unknown as {
+      listGroups?: () => Array<{ groupId: string }>;
+      listMembers?: (groupId: string) => Array<{ didHash: string; state: string }>;
+    };
+
+    if (typeof groupReader.listGroups !== 'function' || typeof groupReader.listMembers !== 'function') {
+      return [];
+    }
+
+    const matched: string[] = [];
+    for (const group of groupReader.listGroups()) {
+      if (!group?.groupId) {
+        continue;
+      }
+
+      try {
+        const members = groupReader.listMembers(group.groupId);
+        const containsDid = members.some((member) =>
+          this.normalizeHash(member.didHash) === didHash && member.state !== 'REMOVED'
+        );
+        if (containsDid) {
+          matched.push(`group:${group.groupId}`);
+        }
+      } catch {
+        // group may not be queryable for all adapters/mocks; skip best-effort
+      }
+    }
+
+    return matched;
+  }
+
+  private assertConversationNotIsolated(conversationId: string): void {
+    if (!this.isolatedConversationById.has(conversationId)) {
+      return;
+    }
+    throw new TelagentError(
+      ErrorCodes.UNPROCESSABLE,
+      `conversation(${conversationId}) is isolated due to revoked DID`,
+    );
+  }
+
+  private assertDidNotRevoked(senderDid: string, didHash: string): void {
+    if (!this.revokedDidHashes.has(didHash)) {
+      return;
+    }
+    throw new TelagentError(
+      ErrorCodes.UNPROCESSABLE,
+      `senderDid(${senderDid}) is revoked and isolated`,
+    );
+  }
+
   private async persistEnvelope(record: StoredEnvelopeRecord): Promise<void> {
     if (this.repository) {
       await this.repository.saveEnvelope(record);
@@ -483,6 +700,10 @@ export class MessageService {
       return fallback;
     }
     return Math.min(max, Math.max(1, Math.floor(value)));
+  }
+
+  private normalizeHash(value: string): string {
+    return value.trim().toLowerCase();
   }
 
   private digestForAudit(input: string): string {

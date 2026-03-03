@@ -109,6 +109,7 @@ export class TelagentNode {
     this.stopMailboxCleaner();
     await this.apiServer.stop();
     await this.indexer.stop();
+    this.messageService.dispose();
     if (this.mailboxStore.close) {
       await this.mailboxStore.close();
     }
