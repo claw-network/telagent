@@ -153,7 +153,7 @@ flowchart LR
 | TA-P14-006 | Phase 14 | Phase 14 Gate 评审与收口 | TL + QA | 0.5 | TA-P14-002, TA-P14-003, TA-P14-004, TA-P14-005 | gate 结论文档 | Phase 14 正式关闭 | DONE |
 | TA-P15-001 | Phase 15 | Web App 工业级规划总纲冻结 | TL + FE + BE + QA + DX | 1 | TA-P14-001 | industrial planning doc | 功能/架构/平台/质量主线冻结 | DONE |
 | TA-P15-002 | Phase 15 | 功能域与 IA 设计（会话/消息/群组/身份） | FE + Product + BE | 2 | TA-P15-001 | IA + feature matrix | 关键用户旅程与页面结构冻结 | DONE |
-| TA-P15-003 | Phase 15 | 设计系统与组件规范 | FE + Design | 2 | TA-P15-001 | design tokens + component spec | 主题、组件、可访问性基线可复用 | TODO |
+| TA-P15-003 | Phase 15 | 设计系统与组件规范 | FE + Design | 2 | TA-P15-001 | design tokens + component spec | 主题、组件、可访问性基线可复用 | DONE |
 | TA-P15-004 | Phase 15 | 多平台架构（Web/PWA/Desktop/Mobile） | FE + DX + BE | 2 | TA-P15-001 | platform architecture doc | 共享核心层与平台适配边界冻结 | TODO |
 | TA-P15-005 | Phase 15 | 离线同步与冲突解决策略 | FE + BE + QA | 2 | TA-P15-004 | offline-sync strategy + test plan | 离线队列、重放、冲突策略可验证 | TODO |
 | TA-P15-006 | Phase 15 | 客户端质量体系与发布门禁 | QA + FE + SRE | 1.5 | TA-P15-002, TA-P15-003, TA-P15-004, TA-P15-005 | quality gates + release checklist | 单测/E2E/性能/崩溃门禁成体系 | TODO |
@@ -367,7 +367,7 @@ flowchart LR
 | --- | --- | --- | --- | --- |
 | TA-P15-001 | DONE | `docs/implementation/phase-15/ta-p15-001-webapp-industrial-program-2026-03-03.md`, `docs/implementation/phase-15/README.md` | 无 | 进入 `TA-P15-002`（功能域与 IA 设计） |
 | TA-P15-002 | DONE | `docs/implementation/phase-15/ta-p15-002-webapp-functional-ia-freeze-2026-03-03.md`, `docs/implementation/phase-15/README.md`, `docs/implementation/phase-15/logs/2026-03-03-p15-node-build.txt`, `docs/implementation/phase-15/logs/2026-03-03-p15-node-test.txt`, `docs/implementation/phase-15/logs/2026-03-03-p15-functional-ia-check-run.txt`, `docs/implementation/phase-15/manifests/2026-03-03-p15-functional-ia-check.json` | 无 | 进入 `TA-P15-003`（设计系统与组件规范） |
-| TA-P15-003 | TODO | `docs/implementation/phase-15/README.md` | 无 | 冻结设计系统、组件规范与可访问性基线 |
+| TA-P15-003 | DONE | `docs/implementation/phase-15/ta-p15-003-webapp-design-system-and-component-spec-2026-03-03.md`, `docs/implementation/phase-15/README.md`, `docs/implementation/phase-15/logs/2026-03-03-p15-web-build.txt`, `docs/implementation/phase-15/logs/2026-03-03-p15-web-test.txt`, `docs/implementation/phase-15/logs/2026-03-03-p15-design-system-check-run.txt`, `docs/implementation/phase-15/manifests/2026-03-03-p15-design-system-check.json` | 无 | 进入 `TA-P15-004`（多平台架构与共享核心层设计） |
 | TA-P15-004 | TODO | `docs/implementation/phase-15/README.md` | 无 | 冻结多平台架构与共享核心层边界 |
 | TA-P15-005 | TODO | `docs/implementation/phase-15/README.md` | 无 | 冻结离线同步、冲突解决与性能预算 |
 | TA-P15-006 | TODO | `docs/implementation/phase-15/README.md` | 无 | 建立客户端质量门禁与发布体系 |
