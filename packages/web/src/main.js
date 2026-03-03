@@ -2,8 +2,14 @@ const outputEl = document.querySelector('#output');
 const activityEl = document.querySelector('#activity');
 const metricsSummaryEl = document.querySelector('#metrics-summary');
 const metricAlertsEl = document.querySelector('#metric-alerts');
+const groupStateSummaryEl = document.querySelector('#group-state-summary');
+const retractedListEl = document.querySelector('#retracted-list');
+const federationSummaryEl = document.querySelector('#federation-summary');
+const federationDlqListEl = document.querySelector('#federation-dlq-list');
 
 let metricsPollingTimer = null;
+let latestFederationNodeInfo = null;
+let latestFederationDlqEntries = [];
 
 const byId = (id) => document.querySelector(`#${id}`);
 
@@ -233,6 +239,120 @@ function renderMetrics(snapshot) {
   }
 }
 
+function renderStateCards(target, cards) {
+  if (!target) {
+    return;
+  }
+  if (!Array.isArray(cards) || cards.length === 0) {
+    target.innerHTML = '<article class="state-card"><p class="state-title">No Data</p><p class="state-main">-</p></article>';
+    return;
+  }
+
+  target.innerHTML = cards
+    .map((card) => {
+      const details = Array.isArray(card.details) ? card.details : [];
+      return `
+        <article class="state-card">
+          <p class="state-title">${card.title}</p>
+          <p class="state-main">${card.main}</p>
+          <div class="state-kv">${details.map((line) => `<span>${line}</span>`).join('')}</div>
+        </article>
+      `;
+    })
+    .join('');
+}
+
+function renderRetractedList(items) {
+  if (!retractedListEl) {
+    return;
+  }
+
+  if (!Array.isArray(items) || items.length === 0) {
+    retractedListEl.innerHTML = '<li class="alert-empty">No retracted envelopes found.</li>';
+    return;
+  }
+
+  retractedListEl.innerHTML = items
+    .map((item) => {
+      const envelopeId = item?.envelopeId || 'unknown';
+      const conversationId = item?.conversationId || 'unknown';
+      const reason = item?.reason || 'unknown';
+      const retractedAtMs = Number(item?.retractedAtMs || 0);
+      const stamp = retractedAtMs > 0 ? new Date(retractedAtMs).toLocaleString() : 'unknown';
+      return `
+        <li class="ops-row">
+          <div class="ops-head"><span>${reason}</span><span>${stamp}</span></div>
+          <div class="ops-sub">conversation=${conversationId}</div>
+          <div class="ops-sub">envelope=${envelopeId}</div>
+        </li>
+      `;
+    })
+    .join('');
+}
+
+function renderFederationDlqList(entries) {
+  if (!federationDlqListEl) {
+    return;
+  }
+  if (!Array.isArray(entries) || entries.length === 0) {
+    federationDlqListEl.innerHTML = '<li class="alert-empty">No DLQ entries.</li>';
+    return;
+  }
+
+  federationDlqListEl.innerHTML = entries
+    .map((entry) => {
+      const status = entry?.status || 'UNKNOWN';
+      const scope = entry?.scope || 'unknown';
+      const sequence = entry?.sequence ?? '-';
+      const dlqId = entry?.dlqId || 'unknown';
+      return `
+        <li class="ops-row">
+          <div class="ops-head"><span>${scope}</span><span>${status}</span></div>
+          <div class="ops-sub">sequence=${sequence}</div>
+          <div class="ops-sub">${dlqId}</div>
+        </li>
+      `;
+    })
+    .join('');
+}
+
+function renderFederationSummary() {
+  const info = latestFederationNodeInfo || {};
+  const capabilities = Array.isArray(info.capabilities) ? info.capabilities.join(', ') : '-';
+  const protocol = info.protocolVersion || '-';
+  const domain = info.domain || '-';
+  const securityMode = info.security?.mode || '-';
+  const dlq = info.dlq || {};
+  const pendingCount = dlq.pendingCount ?? latestFederationDlqEntries.filter((entry) => entry.status === 'PENDING').length;
+  const replayedCount = dlq.replayedCount ?? latestFederationDlqEntries.filter((entry) => entry.status === 'REPLAYED').length;
+
+  renderStateCards(federationSummaryEl, [
+    {
+      title: 'Federation Node',
+      main: domain,
+      details: [
+        `protocol=${protocol}`,
+        `security=${securityMode}`,
+      ],
+    },
+    {
+      title: 'Capabilities',
+      main: capabilities || '-',
+      details: [
+        `supported=${Array.isArray(info.supportedProtocolVersions) ? info.supportedProtocolVersions.join(', ') : '-'}`,
+      ],
+    },
+    {
+      title: 'DLQ',
+      main: `pending=${pendingCount}`,
+      details: [
+        `replayed=${replayedCount}`,
+        `entries=${latestFederationDlqEntries.length}`,
+      ],
+    },
+  ]);
+}
+
 function buildSendPayload() {
   const plain = byId('message-plain').value.trim();
   const explicitCiphertext = byId('ciphertext-hex').value.trim();
@@ -347,6 +467,169 @@ async function fetchNodeMetrics(silent = false) {
   }
 }
 
+async function refreshGroupSnapshot() {
+  const groupId = byId('group-id').value.trim();
+  if (!groupId) {
+    addActivity('group-snapshot', 0, 'groupId is required');
+    return;
+  }
+
+  try {
+    const encodedGroupId = encodeURIComponent(groupId);
+    const [groupRes, chainRes, allMembersRes, pendingRes, finalizedRes] = await Promise.all([
+      callApi('group-state-group', 'GET', `/api/v1/groups/${encodedGroupId}`, undefined, 200, { silent: true }),
+      callApi('group-state-chain', 'GET', `/api/v1/groups/${encodedGroupId}/chain-state`, undefined, 200, { silent: true }),
+      callApi('group-state-members-all', 'GET', `/api/v1/groups/${encodedGroupId}/members?view=all&page=1&per_page=500`, undefined, 200, { silent: true }),
+      callApi('group-state-members-pending', 'GET', `/api/v1/groups/${encodedGroupId}/members?view=pending&page=1&per_page=500`, undefined, 200, { silent: true }),
+      callApi('group-state-members-finalized', 'GET', `/api/v1/groups/${encodedGroupId}/members?view=finalized&page=1&per_page=500`, undefined, 200, { silent: true }),
+    ]);
+
+    const group = groupRes.payload?.data ?? {};
+    const chainState = chainRes.payload?.data ?? {};
+    const allMembers = Array.isArray(allMembersRes.payload?.data) ? allMembersRes.payload.data : [];
+    const pendingMembers = Array.isArray(pendingRes.payload?.data) ? pendingRes.payload.data : [];
+    const finalizedMembers = Array.isArray(finalizedRes.payload?.data) ? finalizedRes.payload.data : [];
+
+    renderStateCards(groupStateSummaryEl, [
+      {
+        title: 'Group',
+        main: group.groupId || groupId,
+        details: [
+          `domain=${group.groupDomain || '-'}`,
+          `creator=${group.creatorDid || '-'}`,
+        ],
+      },
+      {
+        title: 'Chain State',
+        main: chainState.state || '-',
+        details: [
+          `block=${chainState.blockNumber ?? '-'}`,
+          `tx=${chainState.finalizedTxHash || chainState.pendingTxHash || '-'}`,
+        ],
+      },
+      {
+        title: 'Members',
+        main: `all=${allMembers.length}`,
+        details: [
+          `pending=${pendingMembers.length}`,
+          `finalized=${finalizedMembers.length}`,
+        ],
+      },
+    ]);
+
+    setOutput({
+      snapshot: {
+        group,
+        chainState,
+        members: {
+          all: allMembers,
+          pending: pendingMembers,
+          finalized: finalizedMembers,
+        },
+      },
+    });
+    addActivity('group-snapshot', 200, 'Group status snapshot refreshed');
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    addActivity('group-snapshot', 0, message);
+  }
+}
+
+async function fetchRetractedEnvelopes() {
+  try {
+    const conversationId = byId('conversation-id').value.trim();
+    const query = new URLSearchParams();
+    query.set('limit', '100');
+    if (conversationId) {
+      query.set('conversation_id', conversationId);
+    }
+    const result = await callApi(
+      'messages-retracted',
+      'GET',
+      `/api/v1/messages/retracted?${query.toString()}`,
+      undefined,
+      200,
+      { silent: true },
+    );
+    const items = Array.isArray(result.payload?.data?.items) ? result.payload.data.items : [];
+    renderRetractedList(items);
+    setOutput({
+      retracted: {
+        count: items.length,
+        items,
+      },
+    });
+    addActivity('messages-retracted', 200, `Loaded ${items.length} rollback entries`);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    addActivity('messages-retracted', 0, message);
+  }
+}
+
+async function fetchFederationNodeInfo() {
+  try {
+    const result = await callApi('federation-node-info', 'GET', '/api/v1/federation/node-info', undefined, 200, { silent: true });
+    latestFederationNodeInfo = result.payload?.data ?? {};
+    renderFederationSummary();
+    setOutput({
+      federationNodeInfo: latestFederationNodeInfo,
+    });
+    addActivity('federation-node-info', 200, 'Federation node-info updated');
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    addActivity('federation-node-info', 0, message);
+  }
+}
+
+async function fetchFederationDlq(silent = false) {
+  const result = await callApi(
+    'federation-dlq',
+    'GET',
+    '/api/v1/federation/dlq?status=all&page=1&per_page=50',
+    undefined,
+    200,
+    { silent: true },
+  );
+  latestFederationDlqEntries = Array.isArray(result.payload?.data) ? result.payload.data : [];
+  renderFederationDlqList(latestFederationDlqEntries);
+  renderFederationSummary();
+  if (!silent) {
+    setOutput({
+      federationDlq: {
+        total: result.payload?.meta?.pagination?.total ?? latestFederationDlqEntries.length,
+        entries: latestFederationDlqEntries,
+      },
+    });
+    addActivity('federation-dlq', 200, `Loaded ${latestFederationDlqEntries.length} DLQ entries`);
+  }
+  return result;
+}
+
+async function replayFederationDlq() {
+  try {
+    const replay = await callApi(
+      'federation-dlq-replay',
+      'POST',
+      '/api/v1/federation/dlq/replay',
+      {
+        maxItems: 20,
+        stopOnError: false,
+      },
+      200,
+      { silent: true },
+    );
+    await fetchFederationDlq(true);
+    setOutput({
+      federationReplay: replay.payload?.data ?? {},
+      federationDlq: latestFederationDlqEntries,
+    });
+    addActivity('federation-dlq-replay', 200, 'Replay executed and DLQ view refreshed');
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    addActivity('federation-dlq-replay', 0, message);
+  }
+}
+
 function setMetricsAutoRefresh(enabled) {
   const button = byId('btn-toggle-metrics-poll');
   if (!button) {
@@ -444,9 +727,35 @@ byId('btn-run-flow').addEventListener('click', () => {
   void runHappyPath();
 });
 
+byId('btn-group-snapshot').addEventListener('click', () => {
+  void refreshGroupSnapshot();
+});
+
+byId('btn-retracted').addEventListener('click', () => {
+  void fetchRetractedEnvelopes();
+});
+
+byId('btn-fed-node-info').addEventListener('click', () => {
+  void fetchFederationNodeInfo();
+});
+
+byId('btn-fed-dlq').addEventListener('click', () => {
+  void fetchFederationDlq().catch((error) => {
+    addActivity('federation-dlq', 0, error instanceof Error ? error.message : String(error));
+  });
+});
+
+byId('btn-fed-replay').addEventListener('click', () => {
+  void replayFederationDlq();
+});
+
 byId('btn-clear-activity').addEventListener('click', () => {
   activityEl.innerHTML = '';
 });
 
 regenerateScenario();
-setOutput({ status: 'ready', hint: 'Use "Run Full Happy Path" for TA-P5-001 flow validation.' });
+renderStateCards(groupStateSummaryEl, []);
+renderFederationSummary();
+renderRetractedList([]);
+renderFederationDlqList([]);
+setOutput({ status: 'ready', hint: 'Use "Run Full Happy Path" then inspect Group/Federation panels for Phase 11 ops view.' });

@@ -51,5 +51,43 @@ export function messageRoutes(ctx: RuntimeContext): Router {
     }
   });
 
+  router.get('/retracted', async ({ res, query, url }) => {
+    try {
+      const limit = parsePositiveInt(query.get('limit'), 'limit') ?? 50;
+      const conversationId = query.get('conversation_id') ?? undefined;
+      const all = await ctx.messageService.listRetracted(limit);
+      const items = conversationId
+        ? all.filter((entry) => entry.conversationId === conversationId)
+        : all;
+
+      const selfQuery = new URLSearchParams();
+      selfQuery.set('limit', String(limit));
+      if (conversationId) {
+        selfQuery.set('conversation_id', conversationId);
+      }
+
+      ok(
+        res,
+        {
+          items,
+        },
+        { self: `/api/v1/messages/retracted?${selfQuery.toString()}` },
+      );
+    } catch (error) {
+      handleError(res, error, url.pathname);
+    }
+  });
+
   return router;
+}
+
+function parsePositiveInt(raw: string | null, field: string): number | undefined {
+  if (!raw || !raw.trim()) {
+    return undefined;
+  }
+  const value = Number.parseInt(raw, 10);
+  if (!Number.isInteger(value) || value <= 0) {
+    throw new TelagentError(ErrorCodes.VALIDATION, `${field} must be a positive integer`);
+  }
+  return value;
 }

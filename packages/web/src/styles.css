@@ -171,6 +171,78 @@ select:focus {
   color: var(--muted);
 }
 
+.state-grid {
+  margin-top: 12px;
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.state-card {
+  margin: 0;
+  border: 1px solid #e1d5ba;
+  border-radius: 10px;
+  background: #fffdf8;
+  padding: 10px;
+  display: grid;
+  gap: 8px;
+}
+
+.state-title {
+  margin: 0;
+  font-size: 0.8rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.state-main {
+  margin: 0;
+  font-size: 1.12rem;
+  font-weight: 800;
+}
+
+.state-kv {
+  margin: 0;
+  display: grid;
+  gap: 4px;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.ops-list {
+  margin: 8px 0 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 8px;
+  max-height: 260px;
+  overflow: auto;
+}
+
+.ops-row {
+  border: 1px solid #decfab;
+  border-radius: 10px;
+  background: #fffdfa;
+  padding: 9px 10px;
+  display: grid;
+  gap: 4px;
+}
+
+.ops-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.ops-sub {
+  font-size: 0.79rem;
+  color: var(--muted);
+}
+
 button {
   cursor: pointer;
   color: #fff;

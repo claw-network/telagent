@@ -142,6 +142,17 @@ class FakeMessageService {
       nextCursor: null,
     };
   }
+
+  listRetracted() {
+    return [
+      {
+        envelopeId: 'env-retracted-1',
+        conversationId: 'group:0x' + 'b'.repeat(64),
+        reason: 'REORGED_BACK',
+        retractedAtMs: Date.now(),
+      },
+    ];
+  }
 }
 
 class FakeAttachmentService {
@@ -690,6 +701,9 @@ test('messages, attachments and federation endpoints are accessible', async (t) 
 
   const pullRes = await fetch(`${baseUrl}/api/v1/messages/pull?limit=20`);
   assert.equal(pullRes.status, 200);
+
+  const retractedRes = await fetch(`${baseUrl}/api/v1/messages/retracted?limit=20`);
+  assert.equal(retractedRes.status, 200);
 
   const initUploadRes = await fetch(`${baseUrl}/api/v1/attachments/init-upload`, {
     method: 'POST',

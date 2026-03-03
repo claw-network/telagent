@@ -89,6 +89,9 @@ class FakeMessageService {
   pull() {
     return { items: [], nextCursor: null };
   }
+  listRetracted() {
+    return [];
+  }
 }
 
 class FakeAttachmentService {

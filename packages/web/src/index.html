@@ -104,6 +104,33 @@
         </div>
       </section>
 
+      <section class="panel">
+        <h2>Group State & Rollback Entry</h2>
+        <div class="button-row">
+          <button id="btn-group-snapshot">Refresh Group Snapshot</button>
+          <button id="btn-retracted">GET /api/v1/messages/retracted</button>
+        </div>
+        <div id="group-state-summary" class="state-grid"></div>
+        <h3>Retracted Envelopes (Rollback Audit)</h3>
+        <ul id="retracted-list" class="ops-list">
+          <li class="alert-empty">No rollback data loaded yet.</li>
+        </ul>
+      </section>
+
+      <section class="panel">
+        <h2>Federation Ops View</h2>
+        <div class="button-row">
+          <button id="btn-fed-node-info">GET /api/v1/federation/node-info</button>
+          <button id="btn-fed-dlq">GET /api/v1/federation/dlq?status=all</button>
+          <button id="btn-fed-replay">POST /api/v1/federation/dlq/replay</button>
+        </div>
+        <div id="federation-summary" class="state-grid"></div>
+        <h3>DLQ Entries</h3>
+        <ul id="federation-dlq-list" class="ops-list">
+          <li class="alert-empty">No federation data loaded yet.</li>
+        </ul>
+      </section>
+
       <div class="split">
         <section class="panel">
           <div class="panel-head">
