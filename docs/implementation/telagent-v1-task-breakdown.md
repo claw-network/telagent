@@ -6,7 +6,7 @@
 
 ## 1. 使用说明
 
-- **执行顺序**：按 `Phase 0 -> Phase 7` 串行推进，禁止跨 Gate 跳阶段。
+- **执行顺序**：按 `Phase 0 -> Phase 8` 串行推进，禁止跨 Gate 跳阶段。
 - **状态字段**：`TODO | IN_PROGRESS | BLOCKED | DONE`。
 - **估算单位**：人日（PD）。
 - **依赖格式**：`-` 表示无依赖；多个依赖用逗号分隔任务 ID。
@@ -23,6 +23,7 @@ flowchart LR
   P4 --> P5["Phase 5\nMVP 验收"]
   P5 --> P6["Phase 6\n发布后改进"]
   P6 --> P7["Phase 7\nPostgres 压测与故障演练"]
+  P7 --> P8["Phase 8\n联邦韧性与可观测增强"]
 ```
 
 ## 3. 分阶段任务清单
@@ -100,6 +101,10 @@ flowchart LR
 | TA-P7-002 | Phase 7 | 多实例并发一致性校验（共享 Postgres mailbox） | Backend Engineer + QA | 1.5 | TA-P7-001 | 多实例检查脚本+manifest | `duplicateSeqCount=0` 且 `missingSeqCount=0` | DONE |
 | TA-P7-003 | Phase 7 | Postgres 故障演练（重启恢复） | SRE + Backend | 1 | TA-P7-002 | 故障演练脚本+manifest | `persistedAcrossRestart=true` 且 `sequenceContinuesAfterRestart=true` | DONE |
 | TA-P7-004 | Phase 7 | Phase 7 Gate 评审与收口 | TL + QA | 0.5 | TA-P7-003 | gate 结论文档 | Phase 7 正式关闭 | DONE |
+| TA-P8-001 | Phase 8 | 冻结联邦韧性增强范围与验收标准 | TL + BE + SRE + QA | 0.5 | TA-P7-004 | Phase 8 boundary doc | 风险映射、验收项、证据模板冻结 | DONE |
+| TA-P8-002 | Phase 8 | 联邦 group-state 版本防回退与 split-brain 检测 | Backend Engineer | 1 | TA-P8-001 | federation service upgrade | stale/split-brain 冲突可拒绝且可观测 | DONE |
+| TA-P8-003 | Phase 8 | 跨 AZ 延迟/脑裂模拟脚本与机读清单 | Backend Engineer + QA | 1 | TA-P8-002 | resilience check script + manifest | 4/4 场景 PASS 且计数正确 | DONE |
+| TA-P8-004 | Phase 8 | Phase 8 Gate 评审与收口 | TL + QA | 0.5 | TA-P8-003 | gate 结论文档 | Phase 8 正式关闭 | DONE |
 
 ## 4. 执行节奏建议（按部就班）
 
@@ -213,7 +218,7 @@ flowchart LR
 | TA-P6-001 | DONE | `docs/implementation/phase-6/ta-p6-001-mailbox-persistence-2026-03-03.md`, `packages/node/src/storage/message-repository.ts`, `packages/node/src/services/message-service.ts`, `packages/node/src/services/message-service.test.ts`, `packages/node/scripts/run-phase6-mailbox-persistence-check.ts`, `docs/implementation/phase-6/manifests/2026-03-03-p6-mailbox-persistence-check.json`, `docs/implementation/phase-6/logs/2026-03-03-p6-node-test.txt`, `docs/implementation/phase-6/logs/2026-03-03-p6-mailbox-persistence-check-run.txt` | 无 | 进入 `TA-P6-002` 多实例共享状态方案设计 |
 | TA-P6-002 | DONE | `docs/implementation/phase-6/ta-p6-002-mailbox-multi-instance-adr-2026-03-03.md`, `docs/implementation/phase-6/manifests/2026-03-03-p6-mailbox-multi-instance-adr.json`, `docs/implementation/phase-6/README.md` | 无 | 进入 `TA-P6-003`（store adapter + Postgres backend 实现） |
 | TA-P6-003 | DONE | `docs/implementation/phase-6/ta-p6-003-mailbox-store-adapter-postgres-2026-03-03.md`, `packages/node/src/storage/mailbox-store.ts`, `packages/node/src/storage/postgres-message-repository.ts`, `packages/node/src/config.ts`, `packages/node/src/app.ts`, `packages/node/src/services/message-service.ts`, `packages/node/src/config.test.ts`, `packages/node/scripts/run-phase6-store-backend-check.ts`, `docs/implementation/phase-6/manifests/2026-03-03-p6-store-backend-check.json`, `docs/implementation/phase-6/logs/2026-03-03-p6-store-backend-check-run.txt` | 无 | 进入 `TA-P6-004`（发布后稳定性回归与 Gate） |
-| TA-P6-004 | DONE | `docs/implementation/phase-6/ta-p6-004-phase6-gate-review-2026-03-03.md`, `docs/implementation/gates/phase-6-gate.md`, `docs/implementation/phase-6/README.md`, `docs/implementation/phase-6/logs/2026-03-03-p6-workspace-test.txt` | 无 | Phase 6 已关闭；Phase 7 已收口，进入 Phase 8 规划 |
+| TA-P6-004 | DONE | `docs/implementation/phase-6/ta-p6-004-phase6-gate-review-2026-03-03.md`, `docs/implementation/gates/phase-6-gate.md`, `docs/implementation/phase-6/README.md`, `docs/implementation/phase-6/logs/2026-03-03-p6-workspace-test.txt` | 无 | Phase 6 已关闭；Phase 7/Phase 8 已收口，进入 Phase 9 规划 |
 
 ## 13. Phase 7 Postgres 集群压测与故障演练（2026-03-03）
 
@@ -222,4 +227,13 @@ flowchart LR
 | TA-P7-001 | DONE | `docs/implementation/phase-7/ta-p7-001-phase7-boundary-acceptance-2026-03-03.md`, `docs/implementation/phase-7/README.md` | 无 | 进入 `TA-P7-002` 多实例一致性校验 |
 | TA-P7-002 | DONE | `docs/implementation/phase-7/ta-p7-002-postgres-multi-instance-check-2026-03-03.md`, `packages/node/scripts/run-phase7-postgres-multi-instance-check.ts`, `docs/implementation/phase-7/manifests/2026-03-03-p7-postgres-multi-instance-check.json`, `docs/implementation/phase-7/logs/2026-03-03-p7-postgres-multi-instance-check-run.txt` | 无 | 进入 `TA-P7-003` 故障演练 |
 | TA-P7-003 | DONE | `docs/implementation/phase-7/ta-p7-003-postgres-fault-drill-2026-03-03.md`, `packages/node/scripts/run-phase7-postgres-fault-drill.ts`, `docs/implementation/phase-7/manifests/2026-03-03-p7-postgres-fault-drill.json`, `docs/implementation/phase-7/logs/2026-03-03-p7-postgres-fault-drill-run.txt` | 无 | 进入 `TA-P7-004` Gate 收口 |
-| TA-P7-004 | DONE | `docs/implementation/phase-7/ta-p7-004-phase7-gate-review-2026-03-03.md`, `docs/implementation/gates/phase-7-gate.md`, `docs/implementation/phase-7/logs/2026-03-03-p7-node-build.txt`, `docs/implementation/phase-7/logs/2026-03-03-p7-node-test.txt` | 无 | Phase 7 已关闭，进入 Phase 8 规划 |
+| TA-P7-004 | DONE | `docs/implementation/phase-7/ta-p7-004-phase7-gate-review-2026-03-03.md`, `docs/implementation/gates/phase-7-gate.md`, `docs/implementation/phase-7/logs/2026-03-03-p7-node-build.txt`, `docs/implementation/phase-7/logs/2026-03-03-p7-node-test.txt` | 无 | Phase 7 已关闭，Phase 8 已收口，进入 Phase 9 规划 |
+
+## 14. Phase 8 联邦韧性与可观测增强（2026-03-03）
+
+| Task ID | 状态 | 证据链接 | 阻塞项 | 下一步动作 |
+| --- | --- | --- | --- | --- |
+| TA-P8-001 | DONE | `docs/implementation/phase-8/ta-p8-001-phase8-boundary-acceptance-2026-03-03.md`, `docs/implementation/phase-8/README.md` | 无 | 进入 `TA-P8-002` 联邦状态同步韧性改造 |
+| TA-P8-002 | DONE | `docs/implementation/phase-8/ta-p8-002-federation-state-version-guard-2026-03-03.md`, `packages/node/src/services/federation-service.ts`, `packages/node/src/services/federation-service.test.ts`, `packages/node/src/api/routes/federation.ts`, `packages/node/src/api-contract.test.ts` | 无 | 进入 `TA-P8-003` 脚本化演练 |
+| TA-P8-003 | DONE | `docs/implementation/phase-8/ta-p8-003-federation-resilience-check-2026-03-03.md`, `packages/node/scripts/run-phase8-federation-resilience-check.ts`, `docs/implementation/phase-8/manifests/2026-03-03-p8-federation-resilience-check.json`, `docs/implementation/phase-8/logs/2026-03-03-p8-federation-resilience-check-run.txt` | 无 | 进入 `TA-P8-004` Gate 收口 |
+| TA-P8-004 | DONE | `docs/implementation/phase-8/ta-p8-004-phase8-gate-review-2026-03-03.md`, `docs/implementation/gates/phase-8-gate.md`, `docs/implementation/phase-8/logs/2026-03-03-p8-node-build.txt`, `docs/implementation/phase-8/logs/2026-03-03-p8-node-test.txt`, `docs/implementation/phase-8/logs/2026-03-03-p8-workspace-test.txt` | 无 | Phase 8 已关闭，进入 Phase 9 规划 |

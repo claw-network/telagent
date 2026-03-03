@@ -32,4 +32,4 @@
 - `TA-P7-002`：DONE
 - `TA-P7-003`：DONE
 - `TA-P7-004`：DONE（Phase 7 Gate=PASS）
-- 下一步：进入 Phase 8 规划（联邦跨域韧性与运营可观测性增强）。
+- 下一步：Phase 8 已完成并关闭（见 `docs/implementation/phase-8/README.md`），进入 Phase 9 规划。

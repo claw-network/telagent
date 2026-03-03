@@ -32,4 +32,4 @@
 
 ## 5. 下一步
 
-进入 Phase 8 规划（联邦跨域韧性与运营可观测性增强）。
+Phase 8 已完成并关闭（见 `docs/implementation/gates/phase-8-gate.md`），进入 Phase 9 规划。

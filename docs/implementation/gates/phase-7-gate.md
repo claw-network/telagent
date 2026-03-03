@@ -28,7 +28,7 @@
 
 | 风险/阻塞 | 影响 | Owner | 截止日期 | 状态 |
 | --- | --- | --- | --- | --- |
-| 未覆盖跨可用区复制延迟/脑裂场景 | 影响生产级跨 AZ 风险评估充分性 | SRE/BE | 2026-03-12 | Accepted（Phase 8 收口） |
+| 未覆盖跨可用区复制延迟/脑裂场景 | 影响生产级跨 AZ 风险评估充分性 | SRE/BE | 2026-03-12 | Closed（Phase 8 已收口，见 `docs/implementation/gates/phase-8-gate.md`） |
 
 ## 4) 条件放行补丁项（仅 CONDITIONAL PASS 填写）
 
