@@ -228,6 +228,7 @@
 - `TA-P1-007`：DONE（testnet 部署成功，已生成 `2026-03-02-testnet-deploy-manifest.json`）。
 - `TA-P1-008`：DONE（testnet 升级回滚演练成功，`rollbackSucceeded=true`）。
 - `TA-P1-009`：DONE（ABI + local/testnet 统一地址清单已归档）。
+- `TA-P1-010`：DONE（ClawRouter 模块注册脚本 + 幂等校验通过，见 `docs/implementation/phase-1/ta-p1-010-router-module-registration-2026-03-03.md`）。
 - `TA-P1-011`：DONE（`docs/implementation/gates/phase-1-gate.md` 结论 `PASS`）。
 - 阶段结论：Phase 1 已正式关闭，可进入 Phase 2。
 

@@ -1,0 +1,9 @@
+
+> @telagent/contracts@0.1.0 build /Users/xiasenhai/workspace/private-repo/Bots/telagent/packages/contracts
+> hardhat compile
+
+WARNING: You are currently using Node.js v25.6.1, which is not supported by Hardhat. This can lead to unexpected behavior. See https://v2.hardhat.org/nodejs-versions
+
+
+Nothing to compile
+No need to generate any newer typings.

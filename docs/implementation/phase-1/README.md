@@ -2,7 +2,7 @@
 
 - 文档版本：v1.0
 - 状态：Phase 1 已 Gate 通过并关闭（`TA-P1-001` ~ `TA-P1-011`）
-- 最后更新：2026-03-02
+- 最后更新：2026-03-03
 
 ## 1. 产出目录
 
@@ -20,6 +20,7 @@
 | TA-P1-007 | `ta-p1-007-deploy-script-checkpoint-2026-03-02.md` | 部署脚本检查点（已完成，含 testnet 成功部署） |
 | TA-P1-008 | `ta-p1-008-rollback-runbook-2026-03-02.md` | 回滚脚本与 Runbook（已完成，含 testnet 回滚演练） |
 | TA-P1-009 | `ta-p1-009-abi-address-manifest-2026-03-02.md` | ABI 与地址清单（已完成，含 local+testnet 清单） |
+| TA-P1-010 | `ta-p1-010-router-module-registration-2026-03-03.md` | ClawRouter 模块注册与幂等校验（已完成） |
 | TA-P1-011 | `../gates/phase-1-gate.md` | Phase 1 Gate 评审结论（PASS） |
 
 ## 2. 产物目录
@@ -33,6 +34,10 @@
 - `manifests/2026-03-02-testnet-rollback-drill.txt`
 - `manifests/2026-03-02-deploy-manifest.json`
 - `manifests/2026-03-02-telagent-group-registry-abi.json`
+- `manifests/2026-03-03-p1-router-module-check.json`
+- `logs/2026-03-03-p1-contracts-build.txt`
+- `logs/2026-03-03-p1-contracts-test.txt`
+- `logs/2026-03-03-p1-router-module-check-run.txt`
 
 ## 3. 使用说明
 

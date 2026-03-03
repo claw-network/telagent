@@ -3,6 +3,7 @@
 - Phase：`Phase 1（合约与部署）`
 - Gate 编号：`TA-GATE-P1`
 - 评审日期：`2026-03-02`
+- 最近更新：`2026-03-03`
 - 主持人（TL）：`Benjamin Linus`
 - 参与人：`Benjamin Linus（TL/CE/QA/SE 代理签核）`
 - 结论：`PASS`
@@ -13,6 +14,7 @@
 - [x] 合约测试报告已归档
 - [x] 测试网部署记录与地址清单已归档
 - [x] 回滚 Runbook 与演练结果已归档
+- [x] ClawRouter 模块注册与查询校验已归档（`TA-P1-010`）
 
 ## 2) Exit Criteria 核对
 
@@ -24,6 +26,7 @@
 | 测试网部署成功并输出地址 | 通过 | `docs/implementation/phase-1/manifests/2026-03-02-testnet-deploy-manifest.json`，`docs/implementation/phase-1/manifests/2026-03-02-testnet-deploy-success.txt` | proxy/implementation/txHash 已归档 |
 | 测试网回滚演练成功 | 通过 | `docs/implementation/phase-1/manifests/2026-03-02-testnet-rollback-drill.json`，`docs/implementation/phase-1/manifests/2026-03-02-testnet-rollback-drill.txt` | `rollbackSucceeded=true` |
 | ABI 与地址清单可供下游接入 | 通过 | `docs/implementation/phase-1/manifests/2026-03-02-telagent-group-registry-abi.json`，`docs/implementation/phase-1/manifests/2026-03-02-deploy-manifest.json` | 已覆盖 local + testnet |
+| ClawRouter 模块注册后可查询且重复执行幂等 | 通过 | `docs/implementation/phase-1/ta-p1-010-router-module-registration-2026-03-03.md`，`docs/implementation/phase-1/manifests/2026-03-03-p1-router-module-check.json` | `decision=PASS` |
 
 ## 3) 风险与阻塞
 
@@ -37,7 +40,7 @@
 
 ## 5) 结论说明
 
-- 决策摘要：Phase 1 合约交付、权限约束、事件模型、测试网部署、回滚演练、ABI/地址清单均已完成，关键阻塞已关闭，满足进入下一阶段条件。
+- 决策摘要：Phase 1 合约交付、权限约束、事件模型、测试网部署、回滚演练、ABI/地址清单与可选 Router 模块注册均已完成，关键阻塞已关闭，满足进入下一阶段条件。
 - 是否允许进入 Phase 2：`YES`
 - 下一次复核时间（如需）：`N/A`
 
