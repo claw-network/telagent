@@ -82,7 +82,7 @@ flowchart LR
 | TA-P4-011 | Phase 4 | 压测（<=500 成员群） | SRE + QA | 2 | TA-P4-009 | 压测报告 | 核心 SLO 达到目标 | DONE |
 | TA-P4-012 | Phase 4 | 消息通道阶段 Gate 评审 | PM/Tech Lead | 0.5 | TA-P4-010, TA-P4-011 | Gate 结论 | Phase 4 正式关闭 | DONE |
 
-| TA-P5-001 | Phase 5 | Web 管理台打通建群/邀请/接受/聊天 | Frontend Engineer | 2 | TA-P4-009 | Web 功能闭环 | 全流程可操作可演示 | TODO |
+| TA-P5-001 | Phase 5 | Web 管理台打通建群/邀请/接受/聊天 | Frontend Engineer | 2 | TA-P4-009 | Web 功能闭环 | 全流程可操作可演示 | DONE |
 | TA-P5-002 | Phase 5 | 监控面板与告警规则落地 | SRE/DevOps | 1.5 | TA-P4-011 | Dashboard + Alert | 指标/告警可用 | TODO |
 | TA-P5-003 | Phase 5 | 故障注入演练（链拥堵/reorg/联邦故障） | QA + SRE | 1.5 | TA-P5-002 | 演练报告 | 演练项全部可恢复 | TODO |
 | TA-P5-004 | Phase 5 | 安全评审与上线检查清单 | Security Engineer | 1 | TA-P5-003 | Security checklist | 高危风险清零 | TODO |
@@ -180,3 +180,9 @@ flowchart LR
 | TA-P4-010 | DONE | `docs/implementation/phase-4/ta-p4-010-e2e-offline-24h-dedupe-order-2026-03-03.md`, `packages/node/src/phase4-e2e.test.ts`, `docs/implementation/phase-4/logs/2026-03-03-p4-node-test.txt`, `docs/implementation/phase-4/logs/2026-03-03-p4-workspace-test.txt` | 无 | 进入 `TA-P4-011` |
 | TA-P4-011 | DONE | `docs/implementation/phase-4/ta-p4-011-load-test-500-members-2026-03-03.md`, `packages/node/scripts/run-phase4-load-test.ts`, `docs/implementation/phase-4/logs/2026-03-03-p4-load-test-run.txt`, `docs/implementation/phase-4/manifests/2026-03-03-p4-load-test.json`, `docs/implementation/phase-4/logs/2026-03-03-p4-node-test.txt`, `docs/implementation/phase-4/logs/2026-03-03-p4-workspace-test.txt` | 无 | 进入 `TA-P4-012` |
 | TA-P4-012 | DONE | `docs/implementation/phase-4/ta-p4-012-phase4-gate-review-2026-03-03.md`, `docs/implementation/gates/phase-4-gate.md`, `docs/implementation/phase-4/README.md` | 无 | Phase 4 已关闭，进入 `TA-P5-001` |
+
+## 11. Phase 5 启动执行（2026-03-03）
+
+| Task ID | 状态 | 证据链接 | 阻塞项 | 下一步动作 |
+| --- | --- | --- | --- | --- |
+| TA-P5-001 | DONE | `docs/implementation/phase-5/ta-p5-001-web-console-flow-2026-03-03.md`, `packages/web/src/index.html`, `packages/web/src/main.js`, `packages/web/src/styles.css`, `docs/implementation/phase-5/logs/2026-03-03-p5-web-build.txt`, `docs/implementation/phase-5/logs/2026-03-03-p5-workspace-test.txt` | 无 | 进入 `TA-P5-002` |

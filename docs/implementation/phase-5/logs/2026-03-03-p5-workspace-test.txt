@@ -1,0 +1,75 @@
+Scope: 4 of 5 workspace projects
+packages/protocol pretest$ pnpm build
+packages/contracts test$ hardhat test
+packages/web test$ echo 'no tests for web package'
+packages/web test: no tests for web package
+packages/web test: Done
+packages/contracts test: WARNING: You are currently using Node.js v25.6.1, which is not supported by Hardhat. This can lead to unexpected behavior. See https://v2.hardhat.org/nodejs-versions
+packages/protocol pretest: > @telagent/protocol@0.1.0 build /Users/xiasenhai/workspace/private-repo/Bots/telagent/packages/protocol
+packages/protocol pretest: > tsc -p tsconfig.json
+packages/protocol pretest: Done
+packages/protocol test$ node --test dist/**/*.test.js
+packages/contracts test:   TelagentGroupRegistry
+packages/protocol test: ✔ isDidClaw validates did:claw format (0.881834ms)
+packages/protocol test: ✔ hashDid is deterministic bytes32 hex (1.864541ms)
+packages/protocol test: ℹ tests 2
+packages/protocol test: ℹ suites 0
+packages/protocol test: ℹ pass 2
+packages/protocol test: ℹ fail 0
+packages/protocol test: ℹ cancelled 0
+packages/protocol test: ℹ skipped 0
+packages/protocol test: ℹ todo 0
+packages/protocol test: ℹ duration_ms 320.536667
+packages/protocol test: Done
+packages/contracts test:     ✔ creates group when caller controls active DID (602ms)
+packages/contracts test:     ✔ rejects createGroup if caller is not DID controller
+packages/contracts test:     ✔ enforces member invite/accept/remove lifecycle
+packages/contracts test:     ✔ rejects revoked DID participation
+packages/contracts test:     ✔ rejects duplicate invite and duplicate accept (40ms)
+packages/contracts test:     ✔ rejects invite and remove when caller is not group owner
+packages/contracts test:     ✔ rejects acceptInvite when caller is not the invited DID controller
+packages/contracts test:     ✔ rejects removing group owner
+packages/contracts test:   8 passing (799ms)
+packages/contracts test: Done
+packages/node pretest$ pnpm build
+packages/node pretest: > @telagent/node@0.1.0 build /Users/xiasenhai/workspace/private-repo/Bots/telagent/packages/node
+packages/node pretest: > tsc -p tsconfig.json
+packages/node pretest: Done
+packages/node test$ node --test dist/*.test.js dist/**/*.test.js
+packages/node test: ✔ created response returns data envelope and Location header (60.03175ms)
+packages/node test: ✔ list response returns paginated envelope shape (11.320417ms)
+packages/node test: ✔ validation errors use RFC7807 shape and problem+json content type (6.066042ms)
+packages/node test: ✔ not found uses RFC7807 shape (27.46125ms)
+packages/node test: ✔ identities and groups endpoints are accessible with expected status codes (34.364125ms)
+packages/node test: ✔ messages, attachments and federation endpoints are accessible (17.724166ms)
+packages/node test: ✔ routes only serve /api/v1/* prefix (75.075666ms)
+packages/node test: ✔ identity endpoint responds with data envelope (15.077541ms)
+packages/node test: ✔ finalityDepth only materializes finalized blocks (66.185125ms)
+packages/node test: ✔ reorg rollback replays canonical events and restores deterministic view (33.300375ms)
+packages/node test: ✔ TA-P4-009 E2E main path: create -> invite -> accept -> group chat (text/image/file) (143.414834ms)
+packages/node test: ✔ TA-P4-010 E2E offline 24h pull keeps dedupe and per-conversation order (18.455875ms)
+packages/node test: ✔ TA-P4-006 init-upload sanitizes filename and emits attachment objectKey (1.313083ms)
+packages/node test: ✔ TA-P4-006 complete-upload enforces manifest and checksum integrity (0.500375ms)
+packages/node test: ✔ TA-P4-006 complete-upload is idempotent and rejects checksum divergence (0.150917ms)
+packages/node test: ✔ TA-P4-006 expired upload sessions are cleaned and cannot be completed (0.122667ms)
+packages/node test: ✔ TA-P4-007 federation envelopes support idempotent retries (2.023ms)
+packages/node test: ✔ TA-P4-007 federation auth token is enforced when configured (0.593458ms)
+packages/node test: ✔ TA-P4-007 federation rate limit rejects burst traffic (0.734875ms)
+packages/node test: ✔ TA-P4-008 group-state sync enforces domain consistency (0.8825ms)
+packages/node test: ✔ TA-P4-008 node-info publishes domain and federation security policy (1.396542ms)
+packages/node test: ✔ assertSufficient throws INSUFFICIENT_GAS_TOKEN_BALANCE when native balance is not enough (1.092959ms)
+packages/node test: ✔ TA-P4-002 sequence allocator keeps per-conversation monotonic order (1.026334ms)
+packages/node test: ✔ TA-P4-003 dedupe keeps idempotent writes for same envelopeId (0.19375ms)
+packages/node test: ✔ TA-P4-003 duplicate envelopeId with different payload is rejected (0.293416ms)
+packages/node test: ✔ TA-P4-004 cleanupExpired removes expired envelopes and releases dedupe key (0.1865ms)
+packages/node test: ✔ TA-P4-005 provisional envelopes are retracted when group is reorged back (1.495291ms)
+packages/node test: ✔ TA-P4-005 send is rejected when group chain state is REORGED_BACK (0.45175ms)
+packages/node test: ℹ tests 28
+packages/node test: ℹ suites 0
+packages/node test: ℹ pass 28
+packages/node test: ℹ fail 0
+packages/node test: ℹ cancelled 0
+packages/node test: ℹ skipped 0
+packages/node test: ℹ todo 0
+packages/node test: ℹ duration_ms 577.814583
+packages/node test: Done

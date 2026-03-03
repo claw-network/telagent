@@ -3,88 +3,110 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>TelAgent Console</title>
+    <title>TelAgent Mission Console</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
     <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
-    <div class="bg-orb orb-a"></div>
-    <div class="bg-orb orb-b"></div>
+    <div class="bg-grid"></div>
     <main class="layout">
       <header>
-        <h1>TelAgent Control Deck</h1>
-        <p>ClawIdentity-backed group and message operations over <code>/api/v1/*</code>.</p>
+        <p class="eyebrow">Phase 5 / TA-P5-001</p>
+        <h1>TelAgent Mission Console</h1>
+        <p>
+          End-to-end console for <code>/api/v1/*</code> group flow:
+          <strong>create -> invite -> accept -> chat -> pull</strong>.
+        </p>
       </header>
 
       <section class="panel">
-        <h2>Connection</h2>
-        <label>
-          API Base URL
-          <input id="api-base" value="http://127.0.0.1:9528" />
-        </label>
-      </section>
-
-      <section class="panel">
-        <h2>Identity</h2>
-        <button id="btn-self">GET /api/v1/identities/self</button>
-      </section>
-
-      <section class="panel">
-        <h2>Create Group</h2>
+        <h2>Connection & Actors</h2>
         <div class="grid">
-          <label>Creator DID <input id="creator-did" placeholder="did:claw:..." /></label>
+          <label>API Base URL <input id="api-base" value="http://127.0.0.1:9528" /></label>
+          <label>Creator DID (A) <input id="creator-did" value="did:claw:zAlice" /></label>
+          <label>Invitee DID (B) <input id="invitee-did" value="did:claw:zBob" /></label>
+          <label>Group Domain <input id="group-domain" value="alpha.tel" /></label>
+          <label>Target Domain <input id="target-domain" value="alpha.tel" /></label>
+          <label>Mailbox Key <input id="mailbox-key" value="mailbox-main" /></label>
+        </div>
+        <div class="button-row">
+          <button id="btn-self">GET /api/v1/identities/self</button>
+          <button id="btn-randomize">Regenerate IDs/Hashes</button>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2>Group Setup</h2>
+        <div class="grid">
           <label>Group ID (bytes32) <input id="group-id" placeholder="0x..." /></label>
-          <label>Domain <input id="group-domain" placeholder="example.org" /></label>
+          <label>Invite ID (bytes32) <input id="invite-id" placeholder="0x..." /></label>
           <label>Domain Proof Hash <input id="domain-proof-hash" placeholder="0x..." /></label>
-          <label>Initial MLS Hash <input id="mls-hash" placeholder="0x..." /></label>
+          <label>Initial MLS Hash <input id="initial-mls-hash" placeholder="0x..." /></label>
+          <label>Invite MLS Commit Hash <input id="invite-mls-hash" placeholder="0x..." /></label>
+          <label>Accept MLS Welcome Hash <input id="accept-mls-hash" placeholder="0x..." /></label>
         </div>
-        <button id="btn-create-group">POST /api/v1/groups</button>
+        <div class="button-row">
+          <button id="btn-create-group">1) Create Group</button>
+          <button id="btn-invite">2) Invite B</button>
+          <button id="btn-accept">3) Accept Invite (B)</button>
+          <button id="btn-list-members">GET Members</button>
+          <button id="btn-chain-state">GET Chain State</button>
+        </div>
       </section>
 
       <section class="panel">
-        <h2>Invite Member</h2>
+        <h2>Chat Composer</h2>
         <div class="grid">
-          <label>Group ID <input id="invite-group-id" placeholder="0x..." /></label>
-          <label>Invite ID <input id="invite-id" placeholder="0x..." /></label>
-          <label>Inviter DID <input id="inviter-did" placeholder="did:claw:..." /></label>
-          <label>Invitee DID <input id="invitee-did" placeholder="did:claw:..." /></label>
-          <label>MLS Commit Hash <input id="invite-mls-hash" placeholder="0x..." /></label>
-        </div>
-        <button id="btn-invite">POST /api/v1/groups/:groupId/invites</button>
-      </section>
-
-      <section class="panel">
-        <h2>Send Message</h2>
-        <div class="grid">
-          <label>Sender DID <input id="sender-did" placeholder="did:claw:..." /></label>
+          <label>Sender DID <input id="sender-did" value="did:claw:zAlice" /></label>
           <label>Conversation ID <input id="conversation-id" placeholder="group:0x..." /></label>
-          <label>Type
+          <label>Conversation Type
             <select id="conversation-type">
-              <option value="group">group</option>
+              <option value="group" selected>group</option>
               <option value="direct">direct</option>
             </select>
           </label>
-          <label>Target Domain <input id="target-domain" placeholder="relay.example.org" /></label>
-          <label>Mailbox Key <input id="mailbox-key" placeholder="mbx-1" /></label>
-          <label>Sealed Header (hex) <input id="sealed-header" placeholder="0x..." /></label>
-          <label>Ciphertext (hex) <input id="ciphertext" placeholder="0x..." /></label>
           <label>Content Type
             <select id="content-type">
               <option value="text">text</option>
               <option value="image">image</option>
               <option value="file">file</option>
+              <option value="control">control</option>
             </select>
           </label>
+          <label>Message (plain text) <input id="message-plain" value="Hello from TelAgent v1" /></label>
+          <label>Ciphertext (hex override) <input id="ciphertext-hex" placeholder="0x..." /></label>
+          <label>Sealed Header (hex) <input id="sealed-header" value="0x11" /></label>
+          <label>Attachment Manifest Hash (image/file) <input id="attachment-manifest-hash" placeholder="0x..." /></label>
+          <label>TTL (sec) <input id="ttl-sec" value="2592000" /></label>
+          <label>Pull Limit <input id="pull-limit" value="20" /></label>
+          <label>Pull Cursor <input id="pull-cursor" placeholder="optional" /></label>
         </div>
-        <button id="btn-send-message">POST /api/v1/messages</button>
+        <div class="button-row">
+          <button id="btn-send-message">4) Send Message</button>
+          <button id="btn-pull">5) Pull Messages</button>
+          <button id="btn-run-flow">Run Full Happy Path</button>
+        </div>
       </section>
 
-      <section class="panel">
-        <h2>Output</h2>
-        <pre id="output">Ready.</pre>
-      </section>
+      <div class="split">
+        <section class="panel">
+          <div class="panel-head">
+            <h2>Activity</h2>
+            <button id="btn-clear-activity" class="ghost">Clear</button>
+          </div>
+          <ul id="activity" class="activity"></ul>
+        </section>
+
+        <section class="panel">
+          <h2>Last Response</h2>
+          <pre id="output">Ready.</pre>
+        </section>
+      </div>
     </main>
 
     <script type="module" src="./main.js"></script>
