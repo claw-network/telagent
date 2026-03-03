@@ -550,6 +550,21 @@ class FakeMonitoringService {
         lastRetracted: 0,
         staleSec: 2,
       },
+      federationDlqReplay: {
+        runs: 1,
+        totalProcessed: 2,
+        totalReplayed: 2,
+        totalFailed: 0,
+        errorBudgetRatio: 0.01,
+        burnRate: 0,
+        lastRunAt: new Date().toISOString(),
+        lastProcessed: 2,
+        lastReplayed: 2,
+        lastFailed: 0,
+        lastPendingBefore: 2,
+        lastPendingAfter: 0,
+        lastBurnRate: 0,
+      },
       alerts: [
         {
           code: 'HTTP_5XX_RATE',
@@ -558,6 +573,14 @@ class FakeMonitoringService {
           value: 0,
           threshold: 0.02,
           message: 'ok',
+        },
+        {
+          code: 'FEDERATION_DLQ_BURN_RATE',
+          level: 'WARN',
+          title: 'Federation DLQ burn rate',
+          value: 2.5,
+          threshold: 2,
+          message: 'warn',
         },
       ],
     };
@@ -977,6 +1000,34 @@ test('TA-P12-003 revoked DID event isolates session and rejects message send wit
   assert.equal(auditBody.data.messages.revokedDidCount, 1);
   assert.equal(auditBody.data.messages.isolatedConversationCount, 1);
   assert.equal(auditBody.data.messages.isolationEventCount, 1);
+});
+
+test('TA-P12-004 node metrics exposes federation DLQ replay burn-rate section', async (t) => {
+  const { server, baseUrl } = await startTestServer();
+  t.after(async () => {
+    await server.stop();
+  });
+
+  const response = await fetch(`${baseUrl}/api/v1/node/metrics`);
+  assert.equal(response.status, 200);
+
+  const body = (await response.json()) as {
+    data: {
+      federationDlqReplay: {
+        runs: number;
+        totalProcessed: number;
+        burnRate: number;
+        errorBudgetRatio: number;
+      };
+      alerts: Array<{ code: string }>;
+    };
+  };
+
+  assert.equal(body.data.federationDlqReplay.runs, 1);
+  assert.equal(body.data.federationDlqReplay.totalProcessed, 2);
+  assert.equal(body.data.federationDlqReplay.errorBudgetRatio, 0.01);
+  assert.equal(body.data.federationDlqReplay.burnRate, 0);
+  assert.equal(body.data.alerts.some((alert) => alert.code === 'FEDERATION_DLQ_BURN_RATE'), true);
 });
 
 test('not found uses RFC7807 shape', async (t) => {

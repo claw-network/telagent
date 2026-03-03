@@ -5,6 +5,7 @@ import { GroupIndexer } from './indexer/group-indexer.js';
 import { AttachmentService } from './services/attachment-service.js';
 import { ContractProvider } from './services/contract-provider.js';
 import { FederationService } from './services/federation-service.js';
+import { FederationSloService } from './services/federation-slo-service.js';
 import { GasService } from './services/gas-service.js';
 import { GroupService } from './services/group-service.js';
 import { IdentityAdapterService } from './services/identity-adapter-service.js';
@@ -30,6 +31,7 @@ export class TelagentNode {
   private readonly messageService: MessageService;
   private readonly attachmentService: AttachmentService;
   private readonly federationService: FederationService;
+  private readonly federationSloService: FederationSloService;
   private readonly monitoringService: NodeMonitoringService;
   private readonly indexer: GroupIndexer;
   private readonly apiServer: ApiServer;
@@ -70,8 +72,16 @@ export class TelagentNode {
         requestP95CriticalMs: config.monitoring.requestP95CriticalMs,
         maintenanceStaleWarnSec: config.monitoring.maintenanceStaleWarnSec,
         maintenanceStaleCriticalSec: config.monitoring.maintenanceStaleCriticalSec,
+        federationDlqErrorBudgetRatio: config.monitoring.federationDlqErrorBudgetRatio,
+        federationDlqBurnRateWarn: config.monitoring.federationDlqBurnRateWarn,
+        federationDlqBurnRateCritical: config.monitoring.federationDlqBurnRateCritical,
       },
     });
+    this.federationSloService = new FederationSloService(
+      this.federationService,
+      this.monitoringService,
+      config.federationSlo,
+    );
 
     this.indexer = new GroupIndexer(this.contracts, this.repo, {
       finalityDepth: config.chain.finalityDepth,
@@ -102,11 +112,14 @@ export class TelagentNode {
     await this.indexer.start();
     await this.apiServer.start();
     this.monitoringService.recordMailboxMaintenance(await this.messageService.runMaintenance());
+    this.federationSloService.runOnce();
     this.startMailboxCleaner();
+    this.federationSloService.start();
   }
 
   async stop(): Promise<void> {
     this.stopMailboxCleaner();
+    this.federationSloService.stop();
     await this.apiServer.stop();
     await this.indexer.stop();
     this.messageService.dispose();

@@ -81,3 +81,36 @@ test('TA-P5-002 monitoring emits warning/critical alerts when thresholds are exc
   assert.equal(byCode.get('HTTP_P95_LATENCY')?.level, 'CRITICAL');
   assert.equal(byCode.get('MAILBOX_MAINTENANCE_STALE')?.level, 'CRITICAL');
 });
+
+test('TA-P12-004 federation DLQ burn-rate alert is emitted and tracked', () => {
+  const clock = createClock(3_000_000);
+  const monitoring = new NodeMonitoringService({
+    clock,
+    thresholds: {
+      federationDlqErrorBudgetRatio: 0.1,
+      federationDlqBurnRateWarn: 2,
+      federationDlqBurnRateCritical: 4,
+    },
+  });
+
+  monitoring.recordFederationDlqReplay({
+    processed: 10,
+    replayed: 5,
+    failed: 5,
+    pendingBefore: 10,
+    pendingAfter: 5,
+  });
+
+  const snapshot = monitoring.snapshot();
+  assert.equal(snapshot.federationDlqReplay.runs, 1);
+  assert.equal(snapshot.federationDlqReplay.totalProcessed, 10);
+  assert.equal(snapshot.federationDlqReplay.totalFailed, 5);
+  assert.equal(snapshot.federationDlqReplay.errorBudgetRatio, 0.1);
+  assert.equal(snapshot.federationDlqReplay.burnRate, 5);
+  assert.equal(snapshot.federationDlqReplay.lastBurnRate, 5);
+  assert.equal(snapshot.federationDlqReplay.lastPendingBefore, 10);
+  assert.equal(snapshot.federationDlqReplay.lastPendingAfter, 5);
+
+  const byCode = new Map(snapshot.alerts.map((item) => [item.code, item]));
+  assert.equal(byCode.get('FEDERATION_DLQ_BURN_RATE')?.level, 'CRITICAL');
+});

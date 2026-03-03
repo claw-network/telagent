@@ -25,6 +25,9 @@ export interface MonitoringConfig {
   requestP95CriticalMs: number;
   maintenanceStaleWarnSec: number;
   maintenanceStaleCriticalSec: number;
+  federationDlqErrorBudgetRatio: number;
+  federationDlqBurnRateWarn: number;
+  federationDlqBurnRateCritical: number;
 }
 
 export type FederationPinningMode = 'disabled' | 'enforced' | 'report-only';
@@ -51,6 +54,12 @@ export interface DomainProofConfig {
   requestTimeoutMs: number;
 }
 
+export interface FederationSloConfig {
+  replayIntervalSec: number;
+  replayBatchSize: number;
+  replayStopOnError: boolean;
+}
+
 export interface AppConfig {
   host: string;
   port: number;
@@ -61,6 +70,7 @@ export interface AppConfig {
   federation: FederationConfig;
   monitoring: MonitoringConfig;
   domainProof: DomainProofConfig;
+  federationSlo: FederationSloConfig;
 }
 
 export function loadConfigFromEnv(): AppConfig {
@@ -178,6 +188,21 @@ export function loadConfigFromEnv(): AppConfig {
       requestP95CriticalMs: Number(process.env.TELAGENT_MONITOR_REQ_P95_CRITICAL_MS || 500),
       maintenanceStaleWarnSec: Number(process.env.TELAGENT_MONITOR_MAINT_STALE_WARN_SEC || 180),
       maintenanceStaleCriticalSec: Number(process.env.TELAGENT_MONITOR_MAINT_STALE_CRITICAL_SEC || 300),
+      federationDlqErrorBudgetRatio: parsePositiveNumber(
+        process.env.TELAGENT_MONITOR_FED_DLQ_ERROR_BUDGET_RATIO,
+        0.01,
+        'TELAGENT_MONITOR_FED_DLQ_ERROR_BUDGET_RATIO',
+      ),
+      federationDlqBurnRateWarn: parsePositiveNumber(
+        process.env.TELAGENT_MONITOR_FED_DLQ_BURN_RATE_WARN,
+        2,
+        'TELAGENT_MONITOR_FED_DLQ_BURN_RATE_WARN',
+      ),
+      federationDlqBurnRateCritical: parsePositiveNumber(
+        process.env.TELAGENT_MONITOR_FED_DLQ_BURN_RATE_CRITICAL,
+        5,
+        'TELAGENT_MONITOR_FED_DLQ_BURN_RATE_CRITICAL',
+      ),
     },
     domainProof: {
       mode: parseDomainProofMode(process.env.TELAGENT_DOMAIN_PROOF_MODE),
@@ -192,6 +217,19 @@ export function loadConfigFromEnv(): AppConfig {
         5_000,
         'TELAGENT_DOMAIN_PROOF_HTTP_TIMEOUT_MS',
       ),
+    },
+    federationSlo: {
+      replayIntervalSec: parsePositiveInteger(
+        process.env.TELAGENT_FEDERATION_DLQ_REPLAY_INTERVAL_SEC,
+        60,
+        'TELAGENT_FEDERATION_DLQ_REPLAY_INTERVAL_SEC',
+      ),
+      replayBatchSize: parsePositiveInteger(
+        process.env.TELAGENT_FEDERATION_DLQ_REPLAY_BATCH_SIZE,
+        100,
+        'TELAGENT_FEDERATION_DLQ_REPLAY_BATCH_SIZE',
+      ),
+      replayStopOnError: parseBoolean(process.env.TELAGENT_FEDERATION_DLQ_REPLAY_STOP_ON_ERROR, false),
     },
   };
 }
@@ -221,6 +259,17 @@ function parsePositiveInteger(raw: string | undefined, fallback: number, fieldNa
   const value = Number.parseInt(raw, 10);
   if (!Number.isInteger(value) || value <= 0) {
     throw new Error(`${fieldName} must be a positive integer`);
+  }
+  return value;
+}
+
+function parsePositiveNumber(raw: string | undefined, fallback: number, fieldName: string): number {
+  if (typeof raw === 'undefined' || !raw.trim()) {
+    return fallback;
+  }
+  const value = Number(raw);
+  if (!Number.isFinite(value) || value <= 0) {
+    throw new Error(`${fieldName} must be a positive number`);
   }
   return value;
 }

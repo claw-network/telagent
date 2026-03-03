@@ -291,3 +291,61 @@ test('federation pinning map requires domain=keys format', async () => {
     },
   );
 });
+
+test('federation SLO automation config defaults are applied', async () => {
+  await withEnv(
+    {
+      TELAGENT_FEDERATION_DLQ_REPLAY_INTERVAL_SEC: undefined,
+      TELAGENT_FEDERATION_DLQ_REPLAY_BATCH_SIZE: undefined,
+      TELAGENT_FEDERATION_DLQ_REPLAY_STOP_ON_ERROR: undefined,
+      TELAGENT_MONITOR_FED_DLQ_ERROR_BUDGET_RATIO: undefined,
+      TELAGENT_MONITOR_FED_DLQ_BURN_RATE_WARN: undefined,
+      TELAGENT_MONITOR_FED_DLQ_BURN_RATE_CRITICAL: undefined,
+    },
+    async () => {
+      const config = loadConfigFromEnv();
+      assert.equal(config.federationSlo.replayIntervalSec, 60);
+      assert.equal(config.federationSlo.replayBatchSize, 100);
+      assert.equal(config.federationSlo.replayStopOnError, false);
+      assert.equal(config.monitoring.federationDlqErrorBudgetRatio, 0.01);
+      assert.equal(config.monitoring.federationDlqBurnRateWarn, 2);
+      assert.equal(config.monitoring.federationDlqBurnRateCritical, 5);
+    },
+  );
+});
+
+test('federation SLO automation config accepts custom values', async () => {
+  await withEnv(
+    {
+      TELAGENT_FEDERATION_DLQ_REPLAY_INTERVAL_SEC: '15',
+      TELAGENT_FEDERATION_DLQ_REPLAY_BATCH_SIZE: '42',
+      TELAGENT_FEDERATION_DLQ_REPLAY_STOP_ON_ERROR: 'true',
+      TELAGENT_MONITOR_FED_DLQ_ERROR_BUDGET_RATIO: '0.02',
+      TELAGENT_MONITOR_FED_DLQ_BURN_RATE_WARN: '1.5',
+      TELAGENT_MONITOR_FED_DLQ_BURN_RATE_CRITICAL: '4.5',
+    },
+    async () => {
+      const config = loadConfigFromEnv();
+      assert.equal(config.federationSlo.replayIntervalSec, 15);
+      assert.equal(config.federationSlo.replayBatchSize, 42);
+      assert.equal(config.federationSlo.replayStopOnError, true);
+      assert.equal(config.monitoring.federationDlqErrorBudgetRatio, 0.02);
+      assert.equal(config.monitoring.federationDlqBurnRateWarn, 1.5);
+      assert.equal(config.monitoring.federationDlqBurnRateCritical, 4.5);
+    },
+  );
+});
+
+test('federation SLO burn-rate thresholds require positive values', async () => {
+  await withEnv(
+    {
+      TELAGENT_MONITOR_FED_DLQ_BURN_RATE_WARN: '0',
+    },
+    async () => {
+      assert.throws(
+        () => loadConfigFromEnv(),
+        /TELAGENT_MONITOR_FED_DLQ_BURN_RATE_WARN must be a positive number/,
+      );
+    },
+  );
+});

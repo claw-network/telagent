@@ -147,6 +147,7 @@ export function nodeRoutes(ctx: RuntimeContext): Router {
             totals: monitoring.totals,
             alerts: monitoring.alerts,
             mailboxMaintenance: monitoring.mailboxMaintenance,
+            federationDlqReplay: monitoring.federationDlqReplay,
           },
         },
         { self: selfLink },

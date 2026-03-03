@@ -1,0 +1,254 @@
+{
+  "phase": "Phase 12",
+  "taskId": "TA-P12-004",
+  "generatedAt": "2026-03-03T11:42:06.292Z",
+  "summary": {
+    "autoReplayPass": true,
+    "burnRateWarnPass": true,
+    "burnRateCriticalPass": true,
+    "schedulerTickPass": true
+  },
+  "decision": "PASS",
+  "details": {
+    "warnRun": {
+      "ranAtMs": 1772582500000,
+      "pendingBefore": 10,
+      "pendingAfter": 2,
+      "replay": {
+        "processed": 10,
+        "replayed": 8,
+        "failed": 2,
+        "results": [
+          {
+            "dlqId": "dlq-envelopes-1772582500000-1",
+            "sequence": 1,
+            "scope": "envelopes",
+            "status": "REPLAYED",
+            "replayedAtMs": 1772582500000
+          },
+          {
+            "dlqId": "dlq-envelopes-1772582500000-2",
+            "sequence": 2,
+            "scope": "envelopes",
+            "status": "REPLAYED",
+            "replayedAtMs": 1772582500000
+          },
+          {
+            "dlqId": "dlq-envelopes-1772582500000-3",
+            "sequence": 3,
+            "scope": "envelopes",
+            "status": "REPLAYED",
+            "replayedAtMs": 1772582500000
+          },
+          {
+            "dlqId": "dlq-envelopes-1772582500000-4",
+            "sequence": 4,
+            "scope": "envelopes",
+            "status": "REPLAYED",
+            "replayedAtMs": 1772582500000
+          },
+          {
+            "dlqId": "dlq-envelopes-1772582500000-5",
+            "sequence": 5,
+            "scope": "envelopes",
+            "status": "REPLAYED",
+            "replayedAtMs": 1772582500000
+          },
+          {
+            "dlqId": "dlq-envelopes-1772582500000-6",
+            "sequence": 6,
+            "scope": "envelopes",
+            "status": "REPLAYED",
+            "replayedAtMs": 1772582500000
+          },
+          {
+            "dlqId": "dlq-envelopes-1772582500000-7",
+            "sequence": 7,
+            "scope": "envelopes",
+            "status": "REPLAYED",
+            "replayedAtMs": 1772582500000
+          },
+          {
+            "dlqId": "dlq-envelopes-1772582500000-8",
+            "sequence": 8,
+            "scope": "envelopes",
+            "status": "REPLAYED",
+            "replayedAtMs": 1772582500000
+          },
+          {
+            "dlqId": "dlq-group-state-sync-1772582500000-9",
+            "sequence": 9,
+            "scope": "group-state-sync",
+            "status": "FAILED",
+            "replayedAtMs": 1772582500000,
+            "errorCode": "VALIDATION_ERROR",
+            "errorMessage": "state must be one of PENDING_ONCHAIN|ACTIVE|REORGED_BACK"
+          },
+          {
+            "dlqId": "dlq-group-state-sync-1772582500000-10",
+            "sequence": 10,
+            "scope": "group-state-sync",
+            "status": "FAILED",
+            "replayedAtMs": 1772582500000,
+            "errorCode": "VALIDATION_ERROR",
+            "errorMessage": "state must be one of PENDING_ONCHAIN|ACTIVE|REORGED_BACK"
+          }
+        ]
+      }
+    },
+    "criticalRun": {
+      "ranAtMs": 1772582501000,
+      "pendingBefore": 12,
+      "pendingAfter": 8,
+      "replay": {
+        "processed": 12,
+        "replayed": 4,
+        "failed": 8,
+        "results": [
+          {
+            "dlqId": "dlq-group-state-sync-1772582500000-9",
+            "sequence": 9,
+            "scope": "group-state-sync",
+            "status": "FAILED",
+            "replayedAtMs": 1772582501000,
+            "errorCode": "VALIDATION_ERROR",
+            "errorMessage": "state must be one of PENDING_ONCHAIN|ACTIVE|REORGED_BACK"
+          },
+          {
+            "dlqId": "dlq-group-state-sync-1772582500000-10",
+            "sequence": 10,
+            "scope": "group-state-sync",
+            "status": "FAILED",
+            "replayedAtMs": 1772582501000,
+            "errorCode": "VALIDATION_ERROR",
+            "errorMessage": "state must be one of PENDING_ONCHAIN|ACTIVE|REORGED_BACK"
+          },
+          {
+            "dlqId": "dlq-envelopes-1772582501000-11",
+            "sequence": 11,
+            "scope": "envelopes",
+            "status": "REPLAYED",
+            "replayedAtMs": 1772582501000
+          },
+          {
+            "dlqId": "dlq-envelopes-1772582501000-12",
+            "sequence": 12,
+            "scope": "envelopes",
+            "status": "REPLAYED",
+            "replayedAtMs": 1772582501000
+          },
+          {
+            "dlqId": "dlq-envelopes-1772582501000-13",
+            "sequence": 13,
+            "scope": "envelopes",
+            "status": "REPLAYED",
+            "replayedAtMs": 1772582501000
+          },
+          {
+            "dlqId": "dlq-envelopes-1772582501000-14",
+            "sequence": 14,
+            "scope": "envelopes",
+            "status": "REPLAYED",
+            "replayedAtMs": 1772582501000
+          },
+          {
+            "dlqId": "dlq-group-state-sync-1772582501000-15",
+            "sequence": 15,
+            "scope": "group-state-sync",
+            "status": "FAILED",
+            "replayedAtMs": 1772582501000,
+            "errorCode": "VALIDATION_ERROR",
+            "errorMessage": "state must be one of PENDING_ONCHAIN|ACTIVE|REORGED_BACK"
+          },
+          {
+            "dlqId": "dlq-group-state-sync-1772582501000-16",
+            "sequence": 16,
+            "scope": "group-state-sync",
+            "status": "FAILED",
+            "replayedAtMs": 1772582501000,
+            "errorCode": "VALIDATION_ERROR",
+            "errorMessage": "state must be one of PENDING_ONCHAIN|ACTIVE|REORGED_BACK"
+          },
+          {
+            "dlqId": "dlq-group-state-sync-1772582501000-17",
+            "sequence": 17,
+            "scope": "group-state-sync",
+            "status": "FAILED",
+            "replayedAtMs": 1772582501000,
+            "errorCode": "VALIDATION_ERROR",
+            "errorMessage": "state must be one of PENDING_ONCHAIN|ACTIVE|REORGED_BACK"
+          },
+          {
+            "dlqId": "dlq-group-state-sync-1772582501000-18",
+            "sequence": 18,
+            "scope": "group-state-sync",
+            "status": "FAILED",
+            "replayedAtMs": 1772582501000,
+            "errorCode": "VALIDATION_ERROR",
+            "errorMessage": "state must be one of PENDING_ONCHAIN|ACTIVE|REORGED_BACK"
+          },
+          {
+            "dlqId": "dlq-group-state-sync-1772582501000-19",
+            "sequence": 19,
+            "scope": "group-state-sync",
+            "status": "FAILED",
+            "replayedAtMs": 1772582501000,
+            "errorCode": "VALIDATION_ERROR",
+            "errorMessage": "state must be one of PENDING_ONCHAIN|ACTIVE|REORGED_BACK"
+          },
+          {
+            "dlqId": "dlq-group-state-sync-1772582501000-20",
+            "sequence": 20,
+            "scope": "group-state-sync",
+            "status": "FAILED",
+            "replayedAtMs": 1772582501000,
+            "errorCode": "VALIDATION_ERROR",
+            "errorMessage": "state must be one of PENDING_ONCHAIN|ACTIVE|REORGED_BACK"
+          }
+        ]
+      }
+    },
+    "warnAlert": {
+      "code": "FEDERATION_DLQ_BURN_RATE",
+      "title": "Federation DLQ burn rate",
+      "level": "WARN",
+      "value": 2,
+      "threshold": 2,
+      "message": "Federation DLQ burn rate=2.0000 (warn=2, critical=4)"
+    },
+    "criticalAlert": {
+      "code": "FEDERATION_DLQ_BURN_RATE",
+      "title": "Federation DLQ burn rate",
+      "level": "CRITICAL",
+      "value": 6.666666666666666,
+      "threshold": 4,
+      "message": "Federation DLQ burn rate=6.6667 (warn=2, critical=4)"
+    },
+    "warnBurnRate": 2,
+    "criticalBurnRate": 4.545454545454545,
+    "pendingBeforeScheduler": 9,
+    "pendingAfterScheduler": 8,
+    "schedulerRunsDelta": 1,
+    "finalFederationDlq": {
+      "pendingCount": 8,
+      "replayedCount": 13,
+      "replaySuccessCount": 13,
+      "replayFailedCount": 18
+    },
+    "finalMonitoringReplay": {
+      "runs": 3,
+      "totalProcessed": 31,
+      "totalReplayed": 13,
+      "totalFailed": 18,
+      "errorBudgetRatio": 0.1,
+      "burnRate": 5.806451612903226,
+      "lastRunAt": "2026-03-04T00:01:42.000Z",
+      "lastProcessed": 9,
+      "lastReplayed": 1,
+      "lastFailed": 8,
+      "lastPendingBefore": 9,
+      "lastPendingAfter": 8,
+      "lastBurnRate": 8.888888888888888
+    }
+  }
+}
