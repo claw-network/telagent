@@ -73,3 +73,4 @@ pnpm --filter @telagent/node exec tsx scripts/run-cross-node-chat-check.ts
 - `ta-p17-002-persistent-federation-outbox-2026-03-04.md`
 - `ta-p17-003-two-node-chat-check-2026-03-04.md`
 - `ta-p17-004-phase17-gate-prep-2026-03-04.md`
+- `two-node-one-click-checklist-2026-03-04.md`（含 nohup 与 systemd 两套命令清单）

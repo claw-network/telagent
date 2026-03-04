@@ -479,6 +479,7 @@
 - `TA-P17-001`：DONE（sequencer 归属策略 + 远端 sequencer 提交路径落地，见 `packages/node/src/services/sequencer-domain.ts`, `packages/node/src/api/routes/messages.ts`, `packages/node/src/api/routes/federation.ts`）。
 - `TA-P17-002`：DONE（联邦出站持久化 outbox + 重试退避落地，见 `packages/node/src/services/federation-delivery-service.ts`, `packages/node/src/storage/mailbox-store.ts`, `packages/node/src/storage/message-repository.ts`, `packages/node/src/storage/postgres-message-repository.ts`）。
 - `TA-P17-003`：IN_PROGRESS（双节点联调脚本已就绪，见 `packages/node/scripts/run-cross-node-chat-check.ts`；待实机执行并归档报告 `docs/implementation/phase-17/cross-node-chat-check-report.json`）。
+- `TA-P17-003` 附加执行文档：`docs/implementation/phase-17/two-node-one-click-checklist-2026-03-04.md`（含 nohup / systemd 两套命令清单）。
 - `TA-P17-004`：TODO（Gate 草案已建立，见 `docs/implementation/gates/phase-17-gate.md`；待 P17-003 证据入档后完成结论）。
 - 测试状态：`pnpm --filter @telagent/node test` 已通过（`97/97`）。
 - 阶段状态：Phase 17 处于执行中，当前无代码阻塞，唯一阻塞为“云端双节点实机执行窗口”。
