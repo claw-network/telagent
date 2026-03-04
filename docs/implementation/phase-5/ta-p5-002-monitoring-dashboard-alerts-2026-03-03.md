@@ -11,7 +11,7 @@
 
 1. 指标可采集（Node 运行指标可被查询）
 2. 告警可计算（阈值规则可自动评估）
-3. 面板可查看（Web 控制台可展示指标与告警状态）
+3. 面板可查看（Console可展示指标与告警状态）
 
 ## 2. 实现
 
@@ -34,7 +34,7 @@
   - `packages/node/src/config.ts`
   - `.env.example` 新增 `TELAGENT_MONITOR_*` 配置项
 
-### 2.2 Web 监控面板
+### 2.2 Console 监控面板
 
 - 页面扩展：`packages/web/src/index.html`
   - 新增 Monitoring Dashboard 区块
@@ -62,7 +62,7 @@
 
 - Node 构建日志：`docs/implementation/phase-5/logs/2026-03-03-p5-node-build.txt`
 - Node 测试日志：`docs/implementation/phase-5/logs/2026-03-03-p5-node-test.txt`
-- Web 构建日志：`docs/implementation/phase-5/logs/2026-03-03-p5-web-build.txt`
+- Console 构建日志：`docs/implementation/phase-5/logs/2026-03-03-p5-console-build.txt`
 - 工作区测试日志：`docs/implementation/phase-5/logs/2026-03-03-p5-workspace-test.txt`
 - 结论：监控指标、告警规则、面板展示均已可用，满足 TA-P5-002 验收目标。
 

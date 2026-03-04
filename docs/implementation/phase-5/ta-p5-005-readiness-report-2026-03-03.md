@@ -13,7 +13,7 @@
 
 ### 2.1 功能闭环
 
-- Web 管理台闭环：`docs/implementation/phase-5/ta-p5-001-web-console-flow-2026-03-03.md`
+- Console 闭环：`docs/implementation/phase-5/ta-p5-001-console-flow-2026-03-03.md`
 - E2E 主链路：`docs/implementation/phase-4/ta-p4-009-e2e-main-path-2026-03-03.md`
 - 离线 24h 拉取 + 去重排序：`docs/implementation/phase-4/ta-p4-010-e2e-offline-24h-dedupe-order-2026-03-03.md`
 
@@ -59,7 +59,7 @@
 
 - Node build：`docs/implementation/phase-5/logs/2026-03-03-p5-closeout-node-build.txt`
 - Node test：`docs/implementation/phase-5/logs/2026-03-03-p5-closeout-node-test.txt`
-- Web build：`docs/implementation/phase-5/logs/2026-03-03-p5-closeout-web-build.txt`
+- Console build：`docs/implementation/phase-5/logs/2026-03-03-p5-closeout-console-build.txt`
 - Workspace test：`docs/implementation/phase-5/logs/2026-03-03-p5-closeout-workspace-test.txt`
 
 ## 7. 下一步

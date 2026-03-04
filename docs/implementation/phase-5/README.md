@@ -8,7 +8,7 @@
 
 | Task ID | 文档 | 说明 |
 | --- | --- | --- |
-| TA-P5-001 | `ta-p5-001-web-console-flow-2026-03-03.md` | Web 管理台建群/邀请/接受/聊天闭环 |
+| TA-P5-001 | `ta-p5-001-console-flow-2026-03-03.md` | Console建群/邀请/接受/聊天闭环 |
 | TA-P5-002 | `ta-p5-002-monitoring-dashboard-alerts-2026-03-03.md` | 监控面板与告警规则落地 |
 | TA-P5-003 | `ta-p5-003-fault-injection-drill-2026-03-03.md` | 链拥堵/reorg/联邦故障注入演练 |
 | TA-P5-004 | `ta-p5-004-security-review-checklist-2026-03-03.md` | 安全评审与上线检查清单（高危风险清零） |
@@ -20,13 +20,13 @@
 - 构建/测试日志：
   - `logs/2026-03-03-p5-node-build.txt`
   - `logs/2026-03-03-p5-node-test.txt`
-  - `logs/2026-03-03-p5-web-build.txt`
+  - `logs/2026-03-03-p5-console-build.txt`
   - `logs/2026-03-03-p5-workspace-test.txt`
   - `logs/2026-03-03-p5-fault-injection-run.txt`
   - `logs/2026-03-03-p5-security-review-run.txt`
   - `logs/2026-03-03-p5-closeout-node-build.txt`
   - `logs/2026-03-03-p5-closeout-node-test.txt`
-  - `logs/2026-03-03-p5-closeout-web-build.txt`
+  - `logs/2026-03-03-p5-closeout-console-build.txt`
   - `logs/2026-03-03-p5-closeout-workspace-test.txt`
 - 面板与告警基线：
   - `manifests/2026-03-03-p5-monitoring-dashboard.json`

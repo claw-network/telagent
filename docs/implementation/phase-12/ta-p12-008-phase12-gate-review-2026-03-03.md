@@ -12,7 +12,7 @@
 ## 2. 回归范围
 
 1. `@telagent/node` build/test 回归（覆盖 `TA-P12-002/003/004/007`）；
-2. `@telagent/web` build/test 与 v2.1 面板检查脚本（覆盖 `TA-P12-006`）；
+2. `@telagent/console` build/test 与 v2.1 面板检查脚本（覆盖 `TA-P12-006`）；
 3. Python SDK Beta build/test 与 quickstart 检查（覆盖 `TA-P12-005`）；
 4. Phase 12 全量 manifest 决策汇总校验（`TA-P12-001` ~ `TA-P12-007`）。
 
@@ -20,9 +20,9 @@
 
 - Node build：`docs/implementation/phase-12/logs/2026-03-03-p12-node-build.txt`
 - Node test：`docs/implementation/phase-12/logs/2026-03-03-p12-node-test.txt`
-- Web build：`docs/implementation/phase-12/logs/2026-03-03-p12-web-build.txt`
-- Web test：`docs/implementation/phase-12/logs/2026-03-03-p12-web-test.txt`
-- Web v2.1 检查：`docs/implementation/phase-12/logs/2026-03-03-p12-web-console-v21-check-run.txt`
+- Console build：`docs/implementation/phase-12/logs/2026-03-03-p12-console-build.txt`
+- Console test：`docs/implementation/phase-12/logs/2026-03-03-p12-console-test.txt`
+- Console v2.1 检查：`docs/implementation/phase-12/logs/2026-03-03-p12-console-v21-check-run.txt`
 - Python SDK build：`docs/implementation/phase-12/logs/2026-03-03-p12-sdk-python-build.txt`
 - Python SDK test：`docs/implementation/phase-12/logs/2026-03-03-p12-sdk-python-test.txt`
 - Python SDK quickstart 检查：`docs/implementation/phase-12/logs/2026-03-03-p12-python-sdk-quickstart-check-run.txt`

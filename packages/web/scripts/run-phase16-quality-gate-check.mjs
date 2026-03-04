@@ -32,12 +32,12 @@ async function main() {
   const requiredManifestPaths = [
     path.resolve(manifestsRoot, '2026-03-03-p16-ts-framework-check.json'),
     path.resolve(manifestsRoot, '2026-03-03-p16-identity-node-diagnostics-check.json'),
-    path.resolve(manifestsRoot, '2026-03-03-p16-web-contract-regression-check.json'),
+    path.resolve(manifestsRoot, '2026-03-03-p16-console-contract-regression-check.json'),
   ];
   const requiredLogPaths = [
-    path.resolve(logsRoot, '2026-03-03-p16-web-typecheck-ta-p16-007.txt'),
-    path.resolve(logsRoot, '2026-03-03-p16-web-build-ta-p16-007.txt'),
-    path.resolve(logsRoot, '2026-03-03-p16-web-test-ta-p16-007.txt'),
+    path.resolve(logsRoot, '2026-03-03-p16-console-typecheck-ta-p16-007.txt'),
+    path.resolve(logsRoot, '2026-03-03-p16-console-build-ta-p16-007.txt'),
+    path.resolve(logsRoot, '2026-03-03-p16-console-test-ta-p16-007.txt'),
   ];
 
   const manifestResults = [];

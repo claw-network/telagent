@@ -24,17 +24,17 @@
 | revoked DID 实时会话隔离（订阅+驱逐）可用 | PASS | `docs/implementation/phase-12/manifests/2026-03-03-p12-revoked-did-isolation-check.json` | `decision=PASS` |
 | 联邦 SLO 自动化（DLQ 自动重放 + burn-rate）可用 | PASS | `docs/implementation/phase-12/manifests/2026-03-03-p12-federation-slo-automation-check.json` | `decision=PASS` |
 | Agent SDK Python Beta 可在 30 分钟内完成主路径集成 | PASS | `docs/implementation/phase-12/manifests/2026-03-03-p12-python-sdk-quickstart-check.json` | `decision=PASS` |
-| Web Console v2.1 运营与应急面板可用 | PASS | `docs/implementation/phase-12/manifests/2026-03-03-p12-web-console-v21-check.json` | `decision=PASS` |
+| Console v2.1 运营与应急面板可用 | PASS | `docs/implementation/phase-12/manifests/2026-03-03-p12-console-v21-check.json` | `decision=PASS` |
 | 多节点密钥轮换编排脚本（分批+回滚）可复现 | PASS | `docs/implementation/phase-12/manifests/2026-03-03-p12-key-rotation-orchestrator-check.json` | `decision=PASS` |
 | Phase 12 manifests 汇总校验通过 | PASS | `docs/implementation/phase-12/logs/2026-03-03-p12-gate-manifest-summary.txt` | `failed=0` |
-| 回归测试通过 | PASS | `docs/implementation/phase-12/logs/2026-03-03-p12-node-test.txt`, `docs/implementation/phase-12/logs/2026-03-03-p12-web-test.txt`, `docs/implementation/phase-12/logs/2026-03-03-p12-sdk-python-test.txt` | node `78/78`, web `no tests`, python `2/2` |
+| 回归测试通过 | PASS | `docs/implementation/phase-12/logs/2026-03-03-p12-node-test.txt`, `docs/implementation/phase-12/logs/2026-03-03-p12-console-test.txt`, `docs/implementation/phase-12/logs/2026-03-03-p12-sdk-python-test.txt` | node `78/78`, web `no tests`, python `2/2` |
 
 ## 3) 风险与阻塞
 
 | 风险/阻塞 | 影响 | Owner | 截止日期 | 状态 |
 | --- | --- | --- | --- | --- |
 | 本地 Node 版本 `v24.11.1` 与工程范围 `>=22 <25` 一致 | 无额外风险 | DevEx | 持续跟踪 | ACCEPTED |
-| Web 包暂无自动化单测（仅脚本化结构检查） | UI 回归主要依赖专项脚本 | Frontend | 后续迭代 | ACCEPTED |
+| Console 包暂无自动化单测（仅脚本化结构检查） | UI 回归主要依赖专项脚本 | Frontend | 后续迭代 | ACCEPTED |
 | 无新增硬阻塞项 | - | - | - | N/A |
 
 ## 4) 条件放行补丁项（仅 CONDITIONAL PASS 填写）

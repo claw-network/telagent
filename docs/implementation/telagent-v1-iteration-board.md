@@ -22,7 +22,7 @@
 | SE | Security Engineer | 鉴权、DomainProof、联邦安全 | 40% |
 | QA | QA Engineer | 契约/集成/E2E/回归 | 70%（后半程高峰） |
 | SRE | SRE/DevOps | 监控、压测、发布准备 | 40%（Phase 4/5 高峰） |
-| FE | Frontend Engineer | Web 管理台闭环 | 60%（Phase 5 高峰） |
+| FE | Frontend Engineer | Console 闭环 | 60%（Phase 5 高峰） |
 | TL | Tech Lead/PM | Gate 主持、风险决策、上线审批 | 30% |
 
 ## 3. 周度迭代计划（11 周 + 发布后滚动窗口）
@@ -146,7 +146,7 @@
 - 计划任务：`TA-P5-001` `TA-P5-002` `TA-P5-003` `TA-P5-004` `TA-P5-005` `TA-P5-006`
 - 建议 Owner：`FE(主)` + `SRE` + `QA` + `SE` + `TL`
 - 周交付：
-  - Web 管理台闭环演示
+  - Console 闭环演示
   - 监控/告警上线
   - 故障注入与安全检查结果
   - Readiness 报告与 Go/No-Go 结论
@@ -168,7 +168,7 @@
 - 已完成：`TA-P4-010`（E2E 离线 24h 拉取 + 去重排序）
 - 已完成：`TA-P4-011`（<=500 成员群压测与 SLO 验证）
 - 已完成：`TA-P4-012`（Phase 4 Gate 评审与阶段关闭）
-- 已完成：`TA-P5-001`（Web 管理台建群/邀请/接受/聊天闭环）
+- 已完成：`TA-P5-001`（Console建群/邀请/接受/聊天闭环）
 - 已完成：`TA-P5-002`（监控面板与告警规则落地）
 - 已完成：`TA-P5-003`（链拥堵/reorg/联邦故障注入演练）
 - 已完成：`TA-P5-004`（安全评审与上线检查清单）
@@ -204,14 +204,14 @@
 - 已完成：`TA-P11-006`（Signal/MLS 密钥生命周期管理）
 - 已完成：`TA-P11-007`（revoked DID 会话失效链路）
 - 已完成：`TA-P11-008`（Agent SDK TypeScript v0）
-- 已完成：`TA-P11-009`（Web Console v2 运营能力增强）
+- 已完成：`TA-P11-009`（Console v2 运营能力增强）
 - 已完成：`TA-P11-010`（Phase 11 Gate 评审与收口）
 - 已完成：`TA-P12-001`（Phase 12 候选池冻结）
 - 已完成：`TA-P12-002`（链上/链下审计快照导出（脱敏））
 - 已完成：`TA-P12-003`（revoked DID 实时会话隔离（订阅+驱逐））
 - 已完成：`TA-P12-004`（联邦 SLO 自动化：DLQ 自动重放 + burn-rate 告警）
 - 已完成：`TA-P12-005`（Agent SDK Python Beta）
-- 已完成：`TA-P12-006`（Web Console v2.1 运营与应急面板）
+- 已完成：`TA-P12-006`（Console v2.1 运营与应急面板）
 - 已完成：`TA-P12-007`（多节点密钥轮换编排脚本）
 - 已完成：`TA-P12-008`（Phase 12 Gate 评审与收口）
 - 已完成：`TA-P13-001`（Phase 13 边界与验收冻结）
@@ -312,7 +312,7 @@
 
 ## 4.10 Phase 5 启动快照（2026-03-03）
 
-- `TA-P5-001`：DONE（Web 管理台闭环已打通，见 `docs/implementation/phase-5/ta-p5-001-web-console-flow-2026-03-03.md`）。
+- `TA-P5-001`：DONE（Console 闭环已打通，见 `docs/implementation/phase-5/ta-p5-001-console-flow-2026-03-03.md`）。
 - `TA-P5-002`：DONE（监控指标/告警规则/面板已落地，见 `docs/implementation/phase-5/ta-p5-002-monitoring-dashboard-alerts-2026-03-03.md`）。
 - `TA-P5-003`：DONE（故障注入 3/3 通过，见 `docs/implementation/phase-5/ta-p5-003-fault-injection-drill-2026-03-03.md`）。
 - `TA-P5-004`：DONE（安全检查 10/10 通过，高危风险清零，见 `docs/implementation/phase-5/ta-p5-004-security-review-checklist-2026-03-03.md`）。
@@ -324,7 +324,7 @@
 - `TA-P6-002`：DONE（多实例共享状态 ADR 已冻结，见 `docs/implementation/phase-6/ta-p6-002-mailbox-multi-instance-adr-2026-03-03.md`）。
 - `TA-P6-003`：DONE（store adapter + Postgres backend 已实现，见 `docs/implementation/phase-6/ta-p6-003-mailbox-store-adapter-postgres-2026-03-03.md`）。
 - `TA-P6-004`：DONE（Phase 6 Gate=PASS，见 `docs/implementation/phase-6/ta-p6-004-phase6-gate-review-2026-03-03.md`）。
-- 构建结果：`@telagent/console` build 通过（日志：`docs/implementation/phase-5/logs/2026-03-03-p5-web-build.txt`）。
+- 构建结果：`@telagent/console` build 通过（日志：`docs/implementation/phase-5/logs/2026-03-03-p5-console-build.txt`）。
 - 回归结果：`@telagent/node` 与 workspace tests 通过（日志：`docs/implementation/phase-5/logs/2026-03-03-p5-node-test.txt`, `docs/implementation/phase-5/logs/2026-03-03-p5-workspace-test.txt`）。
 - 阶段状态：Phase 5 已关闭（Gate=PASS），Phase 6 发布后改进已完成并关闭（Gate=PASS）。
 
@@ -384,7 +384,7 @@
 - `TA-P11-006`：DONE（Signal/MLS 密钥生命周期管理，见 `docs/implementation/phase-11/ta-p11-006-signal-mls-key-lifecycle-2026-03-03.md`）。
 - `TA-P11-007`：DONE（revoked DID 会话失效链路，见 `docs/implementation/phase-11/ta-p11-007-revoked-did-session-invalidation-2026-03-03.md`）。
 - `TA-P11-008`：DONE（Agent SDK TypeScript v0，见 `docs/implementation/phase-11/ta-p11-008-agent-sdk-typescript-v0-2026-03-03.md`）。
-- `TA-P11-009`：DONE（Web Console v2 运营能力增强，见 `docs/implementation/phase-11/ta-p11-009-web-console-v2-ops-view-2026-03-03.md`）。
+- `TA-P11-009`：DONE（Console v2 运营能力增强，见 `docs/implementation/phase-11/ta-p11-009-console-v2-ops-view-2026-03-03.md`）。
 - `TA-P11-010`：DONE（Phase 11 Gate 收口，见 `docs/implementation/phase-11/ta-p11-010-phase11-gate-review-2026-03-03.md` 与 `docs/implementation/gates/phase-11-gate.md`）。
 - 阶段状态：Phase 11 已关闭（Gate=PASS）。
 
@@ -400,8 +400,8 @@
 - `TA-P12-004` 机读清单：`docs/implementation/phase-12/manifests/2026-03-03-p12-federation-slo-automation-check.json`。
 - `TA-P12-005`：DONE（Agent SDK Python Beta，见 `docs/implementation/phase-12/ta-p12-005-agent-sdk-python-beta-2026-03-03.md`）。
 - `TA-P12-005` 机读清单：`docs/implementation/phase-12/manifests/2026-03-03-p12-python-sdk-quickstart-check.json`。
-- `TA-P12-006`：DONE（Web Console v2.1 运营与应急面板，见 `docs/implementation/phase-12/ta-p12-006-web-console-v21-ops-emergency-panel-2026-03-03.md`）。
-- `TA-P12-006` 机读清单：`docs/implementation/phase-12/manifests/2026-03-03-p12-web-console-v21-check.json`。
+- `TA-P12-006`：DONE（Console v2.1 运营与应急面板，见 `docs/implementation/phase-12/ta-p12-006-console-v21-ops-emergency-panel-2026-03-03.md`）。
+- `TA-P12-006` 机读清单：`docs/implementation/phase-12/manifests/2026-03-03-p12-console-v21-check.json`。
 - `TA-P12-007`：DONE（多节点密钥轮换编排脚本，见 `docs/implementation/phase-12/ta-p12-007-multi-node-key-rotation-orchestrator-2026-03-03.md`）。
 - `TA-P12-007` 机读清单：`docs/implementation/phase-12/manifests/2026-03-03-p12-key-rotation-orchestrator-check.json`。
 - `TA-P12-008`：DONE（Gate=PASS，见 `docs/implementation/phase-12/ta-p12-008-phase12-gate-review-2026-03-03.md` 与 `docs/implementation/gates/phase-12-gate.md`）。
@@ -428,7 +428,7 @@
 ## 4.19 Phase 14 产品聚焦与缺陷收敛快照（2026-03-03）
 
 - `TA-P14-001`：DONE（产品聚焦边界冻结，见 `docs/implementation/phase-14/ta-p14-001-phase14-product-focus-boundary-2026-03-03.md`）。
-- `TA-P14-002`：DONE（默认 Console 运维面板下线，见 `docs/implementation/phase-14/ta-p14-002-web-ops-panel-removal-2026-03-03.md`）。
+- `TA-P14-002`：DONE（默认 Console 运维面板下线，见 `docs/implementation/phase-14/ta-p14-002-console-ops-panel-removal-2026-03-03.md`）。
 - `TA-P14-003`：DONE（消息拉取稳定游标改造，见 `docs/implementation/phase-14/ta-p14-003-stable-pull-cursor-2026-03-03.md`）。
 - `TA-P14-004`：DONE（direct 会话参与方访问控制，见 `docs/implementation/phase-14/ta-p14-004-direct-session-acl-2026-03-03.md`）。
 - `TA-P14-005`：DONE（TS/Python SDK 行为收敛，见 `docs/implementation/phase-14/ta-p14-005-sdk-parity-and-error-semantics-2026-03-03.md`）。
@@ -437,12 +437,12 @@
 
 ## 4.20 Phase 15 Console 工业级设计与多平台快照（2026-03-03）
 
-- `TA-P15-001`：DONE（Console 工业级规划总纲冻结，见 `docs/implementation/phase-15/ta-p15-001-webapp-industrial-program-2026-03-03.md`）。
-- `TA-P15-002`：DONE（功能域与 IA 冻结，见 `docs/implementation/phase-15/ta-p15-002-webapp-functional-ia-freeze-2026-03-03.md` 与 `docs/implementation/phase-15/manifests/2026-03-03-p15-functional-ia-check.json`）。
-- `TA-P15-003`：DONE（设计系统与组件规范冻结，见 `docs/implementation/phase-15/ta-p15-003-webapp-design-system-and-component-spec-2026-03-03.md` 与 `docs/implementation/phase-15/manifests/2026-03-03-p15-design-system-check.json`）。
-- `TA-P15-004`：DONE（多平台架构与共享核心层冻结，见 `docs/implementation/phase-15/ta-p15-004-webapp-multi-platform-architecture-2026-03-03.md` 与 `docs/implementation/phase-15/manifests/2026-03-03-p15-platform-architecture-check.json`）。
-- `TA-P15-005`：DONE（离线同步、冲突策略与性能预算冻结，见 `docs/implementation/phase-15/ta-p15-005-webapp-offline-sync-conflict-performance-2026-03-03.md` 与 `docs/implementation/phase-15/manifests/2026-03-03-p15-offline-sync-check.json`）。
-- `TA-P15-006`：DONE（客户端质量体系与发布门禁冻结，见 `docs/implementation/phase-15/ta-p15-006-webapp-quality-gates-and-release-readiness-2026-03-03.md` 与 `docs/implementation/phase-15/manifests/2026-03-03-p15-quality-gates-check.json`）。
+- `TA-P15-001`：DONE（Console 工业级规划总纲冻结，见 `docs/implementation/phase-15/ta-p15-001-console-industrial-program-2026-03-03.md`）。
+- `TA-P15-002`：DONE（功能域与 IA 冻结，见 `docs/implementation/phase-15/ta-p15-002-console-functional-ia-freeze-2026-03-03.md` 与 `docs/implementation/phase-15/manifests/2026-03-03-p15-functional-ia-check.json`）。
+- `TA-P15-003`：DONE（设计系统与组件规范冻结，见 `docs/implementation/phase-15/ta-p15-003-console-design-system-and-component-spec-2026-03-03.md` 与 `docs/implementation/phase-15/manifests/2026-03-03-p15-design-system-check.json`）。
+- `TA-P15-004`：DONE（多平台架构与共享核心层冻结，见 `docs/implementation/phase-15/ta-p15-004-console-multi-platform-architecture-2026-03-03.md` 与 `docs/implementation/phase-15/manifests/2026-03-03-p15-platform-architecture-check.json`）。
+- `TA-P15-005`：DONE（离线同步、冲突策略与性能预算冻结，见 `docs/implementation/phase-15/ta-p15-005-console-offline-sync-conflict-performance-2026-03-03.md` 与 `docs/implementation/phase-15/manifests/2026-03-03-p15-offline-sync-check.json`）。
+- `TA-P15-006`：DONE（客户端质量体系与发布门禁冻结，见 `docs/implementation/phase-15/ta-p15-006-console-quality-gates-and-release-readiness-2026-03-03.md` 与 `docs/implementation/phase-15/manifests/2026-03-03-p15-quality-gates-check.json`）。
 - `TA-P15-007`：DONE（Phase 15 Gate 收口，见 `docs/implementation/phase-15/ta-p15-007-phase15-gate-review-2026-03-03.md` 与 `docs/implementation/gates/phase-15-gate.md`）。
 - 阶段状态：Phase 15 已关闭（PASS）。
 
@@ -451,9 +451,9 @@
 - `TA-P16-001`：DONE（历史 JS 原型，已 superseded）。
 - `TA-P16-002`：DONE（历史 JS 原型增强，已 superseded）。
 - `TA-P16-003`：DONE（历史 JS 原型增强，已 superseded）。
-- `TA-P16-004`：DONE（技术栈重规划完成，见 `docs/implementation/phase-16/ta-p16-004-webapp-ts-react-vite-rebaseline-2026-03-03.md`）。
+- `TA-P16-004`：DONE（技术栈重规划完成，见 `docs/implementation/phase-16/ta-p16-004-console-ts-react-vite-rebaseline-2026-03-03.md`）。
 - `TA-P16-005`：DONE（身份与节点诊断增强，见 `docs/implementation/phase-16/ta-p16-005-identity-node-diagnostics-ts-baseline-2026-03-03.md` 与 `docs/implementation/phase-16/manifests/2026-03-03-p16-identity-node-diagnostics-check.json`）。
-- `TA-P16-006`：DONE（Console 契约回归与异常语义增强，见 `docs/implementation/phase-16/ta-p16-006-web-contract-regression-and-error-semantics-2026-03-03.md` 与 `docs/implementation/phase-16/manifests/2026-03-03-p16-web-contract-regression-check.json`）。
+- `TA-P16-006`：DONE（Console 契约回归与异常语义增强，见 `docs/implementation/phase-16/ta-p16-006-console-contract-regression-and-error-semantics-2026-03-03.md` 与 `docs/implementation/phase-16/manifests/2026-03-03-p16-console-contract-regression-check.json`）。
 - `TA-P16-007`：DONE（质量收口与 Gate，见 `docs/implementation/phase-16/ta-p16-007-phase16-quality-closure-and-gate-2026-03-03.md`、`docs/implementation/phase-16/manifests/2026-03-03-p16-quality-gate-check.json`、`docs/implementation/gates/phase-16-gate.md`）。
 - Phase 16 manifests 汇总：`docs/implementation/phase-16/logs/2026-03-03-p16-gate-manifest-summary.txt`（`failed=0`）。
 - 阶段状态：Phase 16 已关闭（PASS）。

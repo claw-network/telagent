@@ -45,15 +45,15 @@
 ## 4. 验证
 
 1. 构建：
-   - `corepack pnpm --filter @telagent/web build`
+   - `corepack pnpm --filter @telagent/console build`
 2. 测试：
-   - `corepack pnpm --filter @telagent/web test`
+   - `corepack pnpm --filter @telagent/console test`
 3. 专项脚本：
    - `node packages/web/scripts/run-phase16-groups-domain-check.mjs`
 
 ## 5. 证据
 
-- 构建日志：`docs/implementation/phase-16/logs/2026-03-03-p16-web-build-ta-p16-003.txt`
-- 测试日志：`docs/implementation/phase-16/logs/2026-03-03-p16-web-test-ta-p16-003.txt`
+- 构建日志：`docs/implementation/phase-16/logs/2026-03-03-p16-console-build-ta-p16-003.txt`
+- 测试日志：`docs/implementation/phase-16/logs/2026-03-03-p16-console-test-ta-p16-003.txt`
 - 专项检查日志：`docs/implementation/phase-16/logs/2026-03-03-p16-groups-domain-check-run.txt`
 - 机读清单：`docs/implementation/phase-16/manifests/2026-03-03-p16-groups-domain-check.json`

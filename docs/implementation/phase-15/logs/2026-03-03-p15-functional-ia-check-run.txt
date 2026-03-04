@@ -1,6 +1,6 @@
 [TA-P15-002] functional IA check run
 generated_at=2026-03-03T15:22:32Z
-doc=docs/implementation/phase-15/ta-p15-002-webapp-functional-ia-freeze-2026-03-03.md
+doc=docs/implementation/phase-15/ta-p15-002-console-functional-ia-freeze-2026-03-03.md
 
 [check] section headers
 8:## 1. 目标
@@ -45,11 +45,11 @@ doc=docs/implementation/phase-15/ta-p15-002-webapp-functional-ia-freeze-2026-03-
 103:- [x] DID 与错误语义约束显式写入（`did:claw:*` + RFC7807）。
 
 [check] tracker rows
-docs/implementation/telagent-v1-iteration-board.md:428:- `TA-P15-002`：DONE（功能域与 IA 冻结，见 `docs/implementation/phase-15/ta-p15-002-webapp-functional-ia-freeze-2026-03-03.md` 与 `docs/implementation/phase-15/manifests/2026-03-03-p15-functional-ia-check.json`）。
+docs/implementation/telagent-v1-iteration-board.md:428:- `TA-P15-002`：DONE（功能域与 IA 冻结，见 `docs/implementation/phase-15/ta-p15-002-console-functional-ia-freeze-2026-03-03.md` 与 `docs/implementation/phase-15/manifests/2026-03-03-p15-functional-ia-check.json`）。
 docs/implementation/telagent-v1-task-breakdown.md:155:| TA-P15-002 | Phase 15 | 功能域与 IA 设计（会话/消息/群组/身份） | FE + Product + BE | 2 | TA-P15-001 | IA + feature matrix | 关键用户旅程与页面结构冻结 | DONE |
 docs/implementation/telagent-v1-task-breakdown.md:159:| TA-P15-006 | Phase 15 | 客户端质量体系与发布门禁 | QA + FE + SRE | 1.5 | TA-P15-002, TA-P15-003, TA-P15-004, TA-P15-005 | quality gates + release checklist | 单测/E2E/性能/崩溃门禁成体系 | TODO |
-docs/implementation/telagent-v1-task-breakdown.md:368:| TA-P15-001 | DONE | `docs/implementation/phase-15/ta-p15-001-webapp-industrial-program-2026-03-03.md`, `docs/implementation/phase-15/README.md` | 无 | 进入 `TA-P15-002`（功能域与 IA 设计） |
-docs/implementation/telagent-v1-task-breakdown.md:369:| TA-P15-002 | DONE | `docs/implementation/phase-15/ta-p15-002-webapp-functional-ia-freeze-2026-03-03.md`, `docs/implementation/phase-15/README.md`, `docs/implementation/phase-15/logs/2026-03-03-p15-node-build.txt`, `docs/implementation/phase-15/logs/2026-03-03-p15-node-test.txt`, `docs/implementation/phase-15/logs/2026-03-03-p15-functional-ia-check-run.txt`, `docs/implementation/phase-15/manifests/2026-03-03-p15-functional-ia-check.json` | 无 | 进入 `TA-P15-003`（设计系统与组件规范） |
+docs/implementation/telagent-v1-task-breakdown.md:368:| TA-P15-001 | DONE | `docs/implementation/phase-15/ta-p15-001-console-industrial-program-2026-03-03.md`, `docs/implementation/phase-15/README.md` | 无 | 进入 `TA-P15-002`（功能域与 IA 设计） |
+docs/implementation/telagent-v1-task-breakdown.md:369:| TA-P15-002 | DONE | `docs/implementation/phase-15/ta-p15-002-console-functional-ia-freeze-2026-03-03.md`, `docs/implementation/phase-15/README.md`, `docs/implementation/phase-15/logs/2026-03-03-p15-node-build.txt`, `docs/implementation/phase-15/logs/2026-03-03-p15-node-test.txt`, `docs/implementation/phase-15/logs/2026-03-03-p15-functional-ia-check-run.txt`, `docs/implementation/phase-15/manifests/2026-03-03-p15-functional-ia-check.json` | 无 | 进入 `TA-P15-003`（设计系统与组件规范） |
 docs/implementation/phase-15/README.md:4:- 状态：IN_PROGRESS（`TA-P15-002` 已完成，推进 `TA-P15-003`）
 docs/implementation/phase-15/README.md:20:| TA-P15-002 | DONE | 功能域与信息架构（IA）冻结 |
 

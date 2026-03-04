@@ -13,7 +13,7 @@
 | TA-P12-003 | `ta-p12-003-revoked-did-realtime-session-isolation-2026-03-03.md` | revoked DID 实时会话隔离（订阅+驱逐） |
 | TA-P12-004 | `ta-p12-004-federation-slo-automation-2026-03-03.md` | 联邦 SLO 自动化（DLQ 自动重放 + burn-rate 告警） |
 | TA-P12-005 | `ta-p12-005-agent-sdk-python-beta-2026-03-03.md` | Agent SDK Python Beta |
-| TA-P12-006 | `ta-p12-006-web-console-v21-ops-emergency-panel-2026-03-03.md` | Web Console v2.1 运营与应急面板 |
+| TA-P12-006 | `ta-p12-006-console-v21-ops-emergency-panel-2026-03-03.md` | Console v2.1 运营与应急面板 |
 | TA-P12-007 | `ta-p12-007-multi-node-key-rotation-orchestrator-2026-03-03.md` | 多节点密钥轮换编排脚本 |
 | TA-P12-008 | `ta-p12-008-phase12-gate-review-2026-03-03.md` | Phase 12 Gate 评审与收口 |
 
@@ -25,7 +25,7 @@
   - `ta-p12-003-revoked-did-realtime-session-isolation-2026-03-03.md`
   - `ta-p12-004-federation-slo-automation-2026-03-03.md`
   - `ta-p12-005-agent-sdk-python-beta-2026-03-03.md`
-  - `ta-p12-006-web-console-v21-ops-emergency-panel-2026-03-03.md`
+  - `ta-p12-006-console-v21-ops-emergency-panel-2026-03-03.md`
   - `ta-p12-007-multi-node-key-rotation-orchestrator-2026-03-03.md`
   - `ta-p12-008-phase12-gate-review-2026-03-03.md`
   - `../gates/phase-12-gate.md`
@@ -35,7 +35,7 @@
   - `manifests/2026-03-03-p12-revoked-did-isolation-check.json`
   - `manifests/2026-03-03-p12-federation-slo-automation-check.json`
   - `manifests/2026-03-03-p12-python-sdk-quickstart-check.json`
-  - `manifests/2026-03-03-p12-web-console-v21-check.json`
+  - `manifests/2026-03-03-p12-console-v21-check.json`
   - `manifests/2026-03-03-p12-key-rotation-orchestrator-check.json`
 - 日志：
   - `logs/2026-03-03-p12-node-build.txt`
@@ -46,9 +46,9 @@
   - `logs/2026-03-03-p12-sdk-python-build.txt`
   - `logs/2026-03-03-p12-sdk-python-test.txt`
   - `logs/2026-03-03-p12-python-sdk-quickstart-check-run.txt`
-  - `logs/2026-03-03-p12-web-build.txt`
-  - `logs/2026-03-03-p12-web-test.txt`
-  - `logs/2026-03-03-p12-web-console-v21-check-run.txt`
+  - `logs/2026-03-03-p12-console-build.txt`
+  - `logs/2026-03-03-p12-console-test.txt`
+  - `logs/2026-03-03-p12-console-v21-check-run.txt`
   - `logs/2026-03-03-p12-key-rotation-orchestrator-check-run.txt`
   - `logs/2026-03-03-p12-gate-manifest-summary.txt`
 

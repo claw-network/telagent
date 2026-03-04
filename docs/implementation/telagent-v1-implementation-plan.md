@@ -1,7 +1,7 @@
 # TelAgent v1 实施计划
 
 - 文档版本：v1.2
-- 适用范围：TelAgent MVP（协议后端 + Web 管理台）
+- 适用范围：TelAgent MVP（协议后端 + Console）
 - 计划周期：11 周（Phase 0-5）+ 滚动迭代（Phase 6+）
 - 最后更新：2026-03-03
 
@@ -24,7 +24,7 @@
 - **Security Engineer**：鉴权、联邦安全、威胁建模
 - **QA Engineer**：契约测试、集成测试、E2E 与回归
 - **SRE/DevOps**：监控、告警、压测、发布流程
-- **Frontend Engineer**：Web 管理台流程闭环
+- **Frontend Engineer**：Console流程闭环
 
 ## 4. 时间线与里程碑
 
@@ -163,7 +163,7 @@
 
 ### 关键工作
 
-1. Web 管理台串联全流程
+1. Console串联全流程
 2. 压测与故障注入（链延迟、重试、重组）
 3. SLO 评估与告警规则校准
 4. 产出 Readiness 报告与 Go/No-Go 决策
@@ -282,7 +282,7 @@
 ### 关键工作
 
 1. 完成技术栈纠偏：由 JS 原型切换到 `TypeScript + React + Vite`（`TA-P16-004`）；
-2. 落地路由化 Web 壳层（会话/群组/身份/设置）与运行态面板；
+2. 落地路由化 Console 壳层（会话/群组/身份/设置）与运行态面板；
 3. 落地统一 API Client，强制 `/api/v1/*` 前缀并内建 RFC7807 解析；
 4. 在前端输入与 API 层统一 DID 约束（仅 `did:claw:*`）；
 5. 在 TS 基线上分批补齐身份、节点诊断、契约回归与质量门禁；
@@ -292,7 +292,7 @@
 
 - Phase 16 任务与证据文档（`docs/implementation/phase-16/`）；
 - Console 端 TS 代码基线（`packages/web/src/*` + `packages/web/scripts/*`）；
-- Web 构建/测试日志与专项检查 manifest；
+- Console 构建/测试日志与专项检查 manifest；
 - Phase 16 WBS 与迭代看板同步条目。
 
 ### Exit Criteria
@@ -300,7 +300,7 @@
 - `TA-P16-001` ~ `TA-P16-007` 全部完成并具备可验证证据；
 - Console API 调用路径仅使用 `/api/v1/*`；
 - DID 输入校验仅接受 `did:claw:*`；
-- RFC7807 错误链路可在 Web 侧稳定识别并展示；
+- RFC7807 错误链路可在 Console 侧稳定识别并展示；
 - Phase 16 Gate 结论为 `PASS`。
 
 ### 阶段进展（2026-03-03）

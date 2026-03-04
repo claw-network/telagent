@@ -1,0 +1,7 @@
+[TA-P16-006] apiPrefixContractReady=true
+[TA-P16-006] rfc7807ErrorSemanticsReady=true
+[TA-P16-006] didContractGuardReady=true
+[TA-P16-006] webContractRegressionTestsReady=true
+[TA-P16-006] requiredTokensChecked=14
+[TA-P16-006] decision=PASS
+[TA-P16-006] output=/Users/xiasenhai/Workspace/OpenClaw/telagent/docs/implementation/phase-16/manifests/2026-03-03-p16-console-contract-regression-check.json

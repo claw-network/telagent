@@ -1,7 +1,0 @@
-.                                        |  WARN  Unsupported engine: wanted: {"node":">=22 <25"} (current: {"node":"v25.6.1","pnpm":"10.18.1"})
-[TA-P11-009] groupStateViewReady=true
-[TA-P11-009] rollbackEntryReady=true
-[TA-P11-009] federationViewReady=true
-[TA-P11-009] requiredTokensChecked=17
-[TA-P11-009] decision=PASS
-[TA-P11-009] output=/Users/xiasenhai/workspace/private-repo/Bots/telagent/docs/implementation/phase-11/manifests/2026-03-03-p11-web-console-v2-check.json

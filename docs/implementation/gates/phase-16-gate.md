@@ -21,10 +21,10 @@
 | --- | --- | --- | --- |
 | JS -> TS/React/Vite 技术栈重规划完成（`TA-P16-004`） | PASS | `docs/implementation/phase-16/manifests/2026-03-03-p16-ts-framework-check.json` | `decision=PASS` |
 | 身份与节点诊断增强完成（`TA-P16-005`） | PASS | `docs/implementation/phase-16/manifests/2026-03-03-p16-identity-node-diagnostics-check.json` | DID 解析 + keccak hash + node metrics 诊断 |
-| Console 契约回归与异常语义增强完成（`TA-P16-006`） | PASS | `docs/implementation/phase-16/manifests/2026-03-03-p16-web-contract-regression-check.json` | `/api/v1/*` + RFC7807 + DID 约束 |
+| Console 契约回归与异常语义增强完成（`TA-P16-006`） | PASS | `docs/implementation/phase-16/manifests/2026-03-03-p16-console-contract-regression-check.json` | `/api/v1/*` + RFC7807 + DID 约束 |
 | Phase 16 质量收口完成（`TA-P16-007`） | PASS | `docs/implementation/phase-16/manifests/2026-03-03-p16-quality-gate-check.json` | qualityGateReady=true |
 | manifests 汇总校验通过 | PASS | `docs/implementation/phase-16/logs/2026-03-03-p16-gate-manifest-summary.txt` | `failed=0` |
-| Console 质量门禁通过 | PASS | `docs/implementation/phase-16/logs/2026-03-03-p16-web-typecheck-ta-p16-007.txt`, `docs/implementation/phase-16/logs/2026-03-03-p16-web-build-ta-p16-007.txt`, `docs/implementation/phase-16/logs/2026-03-03-p16-web-test-ta-p16-007.txt` | `typecheck/build/test` 全通过 |
+| Console 质量门禁通过 | PASS | `docs/implementation/phase-16/logs/2026-03-03-p16-console-typecheck-ta-p16-007.txt`, `docs/implementation/phase-16/logs/2026-03-03-p16-console-build-ta-p16-007.txt`, `docs/implementation/phase-16/logs/2026-03-03-p16-console-test-ta-p16-007.txt` | `typecheck/build/test` 全通过 |
 
 ## 3) 风险与阻塞
 

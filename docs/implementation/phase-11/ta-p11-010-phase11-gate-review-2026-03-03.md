@@ -13,7 +13,7 @@
 
 1. `@telagent/node` build/test 回归；
 2. `@telagent/sdk` build/test 回归；
-3. `@telagent/web` build + v2 控制台检查脚本；
+3. `@telagent/console` build + v2 控制台检查脚本；
 4. Phase 11 各子任务机读清单复核（P11-003~P11-009）。
 
 ## 3. 证据
@@ -22,8 +22,8 @@
 - Node test：`docs/implementation/phase-11/logs/2026-03-03-p11-node-test.txt`
 - SDK build：`docs/implementation/phase-11/logs/2026-03-03-p11-sdk-build.txt`
 - SDK test：`docs/implementation/phase-11/logs/2026-03-03-p11-sdk-test.txt`
-- Web build：`docs/implementation/phase-11/logs/2026-03-03-p11-web-build.txt`
-- Web Console v2 检查：`docs/implementation/phase-11/logs/2026-03-03-p11-web-console-v2-check-run.txt`
+- Console build：`docs/implementation/phase-11/logs/2026-03-03-p11-console-build.txt`
+- Console v2 检查：`docs/implementation/phase-11/logs/2026-03-03-p11-console-v2-check-run.txt`
 - Gate 文档：`docs/implementation/gates/phase-11-gate.md`
 
 ## 4. Gate 结论

@@ -14,7 +14,7 @@
 - [x] DomainProof 自动挑战与轮转证据已归档
 - [x] 联邦 pinning、DLQ/replay 证据已归档
 - [x] Key lifecycle 与 revoked DID 会话失效证据已归档
-- [x] Agent SDK v0 与 Web Console v2 证据已归档
+- [x] Agent SDK v0 与 Console v2 证据已归档
 
 ## 2) Exit Criteria 核对
 
@@ -27,7 +27,7 @@
 | Signal/MLS 密钥生命周期流程可验证 | PASS | `docs/implementation/phase-11/manifests/2026-03-03-p11-key-lifecycle-check.json` | 轮换/撤销/恢复闭环通过 |
 | revoked DID 无法继续发送新消息 | PASS | `docs/implementation/phase-11/manifests/2026-03-03-p11-revoked-did-session-check.json` | `postRevokeSendBlocked=true` |
 | Agent SDK v0 可在 30 分钟内完成建群+发消息集成 | PASS | `docs/implementation/phase-11/manifests/2026-03-03-p11-sdk-quickstart-check.json` | `integratesWithin30Minutes=true` |
-| Web Console v2 支持群状态/回滚入口/联邦视图 | PASS | `docs/implementation/phase-11/manifests/2026-03-03-p11-web-console-v2-check.json` | `decision=PASS` |
+| Console v2 支持群状态/回滚入口/联邦视图 | PASS | `docs/implementation/phase-11/manifests/2026-03-03-p11-console-v2-check.json` | `decision=PASS` |
 | 回归测试通过 | PASS | `docs/implementation/phase-11/logs/2026-03-03-p11-node-test.txt`, `docs/implementation/phase-11/logs/2026-03-03-p11-sdk-test.txt` | node `63/63`, sdk `2/2` |
 
 ## 3) 风险与阻塞

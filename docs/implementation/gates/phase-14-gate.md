@@ -19,7 +19,7 @@
 
 | 条目 | 结果 | 证据路径 | 备注 |
 | --- | --- | --- | --- |
-| 默认 Web 运维面板下线（保留核心链路） | PASS | `docs/implementation/phase-14/manifests/2026-03-03-p14-web-ops-removal-check.json` | `decision=PASS` |
+| 默认 Web 运维面板下线（保留核心链路） | PASS | `docs/implementation/phase-14/manifests/2026-03-03-p14-console-ops-removal-check.json` | `decision=PASS` |
 | 消息拉取稳定游标改造通过（TA-P14-003） | PASS | `docs/implementation/phase-14/manifests/2026-03-03-p14-stable-pull-cursor-check.json` | `global/conversation cursor stable` |
 | direct 会话参与方访问控制通过（TA-P14-004） | PASS | `docs/implementation/phase-14/manifests/2026-03-03-p14-direct-session-acl-check.json` | `403 + RFC7807 + code=FORBIDDEN` |
 | TS/Python SDK 行为收敛通过（TA-P14-005） | PASS | `docs/implementation/phase-14/manifests/2026-03-03-p14-sdk-parity-check.json` | identity encoding + direct ACL error semantics parity |

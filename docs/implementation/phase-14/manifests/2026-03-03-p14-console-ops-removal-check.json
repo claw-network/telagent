@@ -1,0 +1,32 @@
+{
+  "phase": "Phase 14",
+  "taskId": "TA-P14-002",
+  "generatedAt": "2026-03-03T14:25:38Z",
+  "summary": {
+    "webBuildPass": true,
+    "opsPanelMarkersAbsent": true,
+    "apiPrefixV1Only": true
+  },
+  "decision": "PASS",
+  "details": {
+    "changedFiles": [
+      "packages/web/src/index.html",
+      "packages/web/src/main.js"
+    ],
+    "removedPanels": [
+      "Monitoring Dashboard",
+      "Group State & Rollback Entry",
+      "Federation Ops View",
+      "Audit & Emergency Panel v2.1"
+    ],
+    "commands": [
+      "corepack pnpm --filter @telagent/console build",
+      "rg removed-markers check",
+      "rg /api/ prefix check"
+    ],
+    "evidence": {
+      "buildLog": "docs/implementation/phase-14/logs/2026-03-03-p14-console-build.txt",
+      "checkLog": "docs/implementation/phase-14/logs/2026-03-03-p14-console-ops-removal-check.txt"
+    }
+  }
+}

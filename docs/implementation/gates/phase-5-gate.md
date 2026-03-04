@@ -19,7 +19,7 @@
 
 | 条目 | 结果 | 证据路径 | 备注 |
 | --- | --- | --- | --- |
-| 关键 E2E 全绿 | PASS | `docs/implementation/phase-4/ta-p4-009-e2e-main-path-2026-03-03.md`, `docs/implementation/phase-4/ta-p4-010-e2e-offline-24h-dedupe-order-2026-03-03.md`, `docs/implementation/phase-5/ta-p5-001-web-console-flow-2026-03-03.md` | 建群/邀请/接受/聊天主链路与离线场景均通过 |
+| 关键 E2E 全绿 | PASS | `docs/implementation/phase-4/ta-p4-009-e2e-main-path-2026-03-03.md`, `docs/implementation/phase-4/ta-p4-010-e2e-offline-24h-dedupe-order-2026-03-03.md`, `docs/implementation/phase-5/ta-p5-001-console-flow-2026-03-03.md` | 建群/邀请/接受/聊天主链路与离线场景均通过 |
 | SLO 达标 | PASS | `docs/implementation/phase-4/ta-p4-011-load-test-500-members-2026-03-03.md`, `docs/implementation/phase-5/ta-p5-002-monitoring-dashboard-alerts-2026-03-03.md`, `docs/implementation/phase-5/manifests/2026-03-03-p5-monitoring-dashboard.json` | 500 成员目标达成，监控/告警规则已上线 |
 | 发布委员会批准上线 | PASS | `docs/implementation/phase-5/ta-p5-005-readiness-report-2026-03-03.md`, `docs/implementation/phase-5/manifests/2026-03-03-p5-readiness-report.json`, `docs/implementation/phase-5/ta-p5-006-mvp-signoff-version-freeze-2026-03-03.md` | Go/No-Go 结论为 GO，完成签字与冻结 |
 | 安全高危风险清零 | PASS | `docs/implementation/phase-5/ta-p5-004-security-review-checklist-2026-03-03.md`, `docs/implementation/phase-5/manifests/2026-03-03-p5-security-review.json` | 安全检查 10/10 通过，critical/high open=0 |

@@ -1,0 +1,17 @@
+
+> @telagent/console@0.1.0 test /Users/xiasenhai/Workspace/OpenClaw/telagent/packages/web
+> vitest run
+
+
+ RUN  v4.0.18 /Users/xiasenhai/Workspace/OpenClaw/telagent/packages/web
+
+ ✓ src/core/group-domain.test.ts (6 tests) 5ms
+ ✓ src/core/session-domain.test.ts (4 tests) 6ms
+ ✓ src/core/api-client.test.ts (9 tests) 38ms
+ ✓ src/core/identity-node-diagnostics.test.ts (4 tests) 5ms
+
+ Test Files  4 passed (4)
+      Tests  23 passed (23)
+   Start at  00:57:55
+   Duration  398ms (transform 205ms, setup 0ms, import 443ms, tests 54ms, environment 1ms)
+

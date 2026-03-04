@@ -33,7 +33,7 @@
 
 - Node build：`docs/implementation/phase-5/logs/2026-03-03-p5-closeout-node-build.txt`
 - Node test：`docs/implementation/phase-5/logs/2026-03-03-p5-closeout-node-test.txt`
-- Web build：`docs/implementation/phase-5/logs/2026-03-03-p5-closeout-web-build.txt`
+- Console build：`docs/implementation/phase-5/logs/2026-03-03-p5-closeout-console-build.txt`
 - Workspace test：`docs/implementation/phase-5/logs/2026-03-03-p5-closeout-workspace-test.txt`
 
 ## 5. 下一步

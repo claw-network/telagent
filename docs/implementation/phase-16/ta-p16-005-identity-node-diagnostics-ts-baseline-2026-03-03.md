@@ -47,8 +47,8 @@
 
 ## 5. 证据
 
-- 类型检查日志：`docs/implementation/phase-16/logs/2026-03-03-p16-web-typecheck-ta-p16-005.txt`
-- 构建日志：`docs/implementation/phase-16/logs/2026-03-03-p16-web-build-ta-p16-005.txt`
-- 测试日志：`docs/implementation/phase-16/logs/2026-03-03-p16-web-test-ta-p16-005.txt`
+- 类型检查日志：`docs/implementation/phase-16/logs/2026-03-03-p16-console-typecheck-ta-p16-005.txt`
+- 构建日志：`docs/implementation/phase-16/logs/2026-03-03-p16-console-build-ta-p16-005.txt`
+- 测试日志：`docs/implementation/phase-16/logs/2026-03-03-p16-console-test-ta-p16-005.txt`
 - 专项检查日志：`docs/implementation/phase-16/logs/2026-03-03-p16-identity-node-diagnostics-check-run.txt`
 - 机读清单：`docs/implementation/phase-16/manifests/2026-03-03-p16-identity-node-diagnostics-check.json`

@@ -36,7 +36,7 @@
     },
     {
       "taskId": "TA-P12-006",
-      "name": "Web Console v2.1 运营与应急面板",
+      "name": "Console v2.1 运营与应急面板",
       "priority": "SHOULD",
       "acceptanceHint": "新增审计快照查询、DLQ 批量重放、风险看板"
     },

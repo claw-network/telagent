@@ -10,7 +10,7 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "check:phase16:005": "node scripts/run-phase16-identity-node-diagnostics-check.mjs",
-    "check:phase16:006": "node scripts/run-phase16-web-contract-regression-check.mjs",
+    "check:phase16:006": "node scripts/run-phase16-console-contract-regression-check.mjs",
     "check:phase16:007": "node scripts/run-phase16-quality-gate-check.mjs"
   },
   "dependencies": {

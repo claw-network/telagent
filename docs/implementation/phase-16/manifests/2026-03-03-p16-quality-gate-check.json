@@ -1,7 +1,7 @@
 {
   "phase": "Phase 16",
   "taskId": "TA-P16-007",
-  "generatedAt": "2026-03-03T16:58:26.201Z",
+  "generatedAt": "2026-03-04T00:23:03.340Z",
   "summary": {
     "checkedManifestCount": 3,
     "passedManifestCount": 3,
@@ -27,7 +27,7 @@
         "passed": true
       },
       {
-        "path": "/Users/xiasenhai/Workspace/OpenClaw/telagent/docs/implementation/phase-16/manifests/2026-03-03-p16-web-contract-regression-check.json",
+        "path": "/Users/xiasenhai/Workspace/OpenClaw/telagent/docs/implementation/phase-16/manifests/2026-03-03-p16-console-contract-regression-check.json",
         "exists": true,
         "taskId": "TA-P16-006",
         "decision": "PASS",
@@ -36,15 +36,15 @@
     ],
     "logs": [
       {
-        "path": "/Users/xiasenhai/Workspace/OpenClaw/telagent/docs/implementation/phase-16/logs/2026-03-03-p16-web-typecheck-ta-p16-007.txt",
+        "path": "/Users/xiasenhai/Workspace/OpenClaw/telagent/docs/implementation/phase-16/logs/2026-03-03-p16-console-typecheck-ta-p16-007.txt",
         "exists": true
       },
       {
-        "path": "/Users/xiasenhai/Workspace/OpenClaw/telagent/docs/implementation/phase-16/logs/2026-03-03-p16-web-build-ta-p16-007.txt",
+        "path": "/Users/xiasenhai/Workspace/OpenClaw/telagent/docs/implementation/phase-16/logs/2026-03-03-p16-console-build-ta-p16-007.txt",
         "exists": true
       },
       {
-        "path": "/Users/xiasenhai/Workspace/OpenClaw/telagent/docs/implementation/phase-16/logs/2026-03-03-p16-web-test-ta-p16-007.txt",
+        "path": "/Users/xiasenhai/Workspace/OpenClaw/telagent/docs/implementation/phase-16/logs/2026-03-03-p16-console-test-ta-p16-007.txt",
         "exists": true
       }
     ]

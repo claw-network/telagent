@@ -1,0 +1,24 @@
+
+> @telagent/console@0.1.0 test /Users/xiasenhai/Workspace/OpenClaw/telagent/packages/web
+> node --test test/**/*.test.js
+
+✔ assertApiV1Path only accepts /api/v1/* (1.242745ms)
+✔ isDidClaw validates did:claw format (0.209106ms)
+✔ toCiphertextHex encodes utf8 text (0.185581ms)
+✔ createEnvelopeId builds deterministic prefix (0.2205ms)
+✔ request parses RFC7807 errors to ApiProblemError (28.177462ms)
+✔ getData/postData extract envelope data (1.745156ms)
+✔ sendMessage enforces did:claw sender (0.383441ms)
+✔ ensureSessionRuntime creates and reuses runtime by conversation (0.866536ms)
+✔ mergeMessagesByEnvelope dedupes by envelope and sorts by seq (0.852024ms)
+✔ recordPullSuccess and recordPullFailure update runtime state (1.734662ms)
+✔ recordSendFailure and recordSendSuccess update retry payload (0.273955ms)
+✔ formatIsoOrDash returns dash for invalid text (1.098621ms)
+ℹ tests 12
+ℹ suites 0
+ℹ pass 12
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 120.169004

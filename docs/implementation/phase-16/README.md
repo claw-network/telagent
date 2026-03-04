@@ -26,32 +26,32 @@ Phase 16 已完成从历史 JS 原型到 `TypeScript + React + Vite` 的实现�
 
 ## 3. 任务文档
 
-- `ta-p16-001-web-app-runtime-shell-and-api-client-2026-03-03.md`（历史归档，superseded）
+- `ta-p16-001-console-runtime-shell-and-api-client-2026-03-03.md`（历史归档，superseded）
 - `ta-p16-002-sessions-domain-stability-retry-2026-03-03.md`（历史归档，superseded）
 - `ta-p16-003-groups-domain-validation-chain-state-linkage-2026-03-03.md`（历史归档，superseded）
-- `ta-p16-004-webapp-ts-react-vite-rebaseline-2026-03-03.md`
+- `ta-p16-004-console-ts-react-vite-rebaseline-2026-03-03.md`
 - `ta-p16-005-identity-node-diagnostics-ts-baseline-2026-03-03.md`
-- `ta-p16-006-web-contract-regression-and-error-semantics-2026-03-03.md`
+- `ta-p16-006-console-contract-regression-and-error-semantics-2026-03-03.md`
 - `ta-p16-007-phase16-quality-closure-and-gate-2026-03-03.md`
 
 ## 4. 日志与机读清单
 
-- `logs/2026-03-03-p16-web-typecheck-ta-p16-004.txt`
-- `logs/2026-03-03-p16-web-build-ta-p16-004.txt`
-- `logs/2026-03-03-p16-web-test-ta-p16-004.txt`
+- `logs/2026-03-03-p16-console-typecheck-ta-p16-004.txt`
+- `logs/2026-03-03-p16-console-build-ta-p16-004.txt`
+- `logs/2026-03-03-p16-console-test-ta-p16-004.txt`
 - `logs/2026-03-03-p16-ts-framework-check-run.txt`
 - `manifests/2026-03-03-p16-ts-framework-check.json`
-- `logs/2026-03-03-p16-web-typecheck-ta-p16-005.txt`
-- `logs/2026-03-03-p16-web-build-ta-p16-005.txt`
-- `logs/2026-03-03-p16-web-test-ta-p16-005.txt`
+- `logs/2026-03-03-p16-console-typecheck-ta-p16-005.txt`
+- `logs/2026-03-03-p16-console-build-ta-p16-005.txt`
+- `logs/2026-03-03-p16-console-test-ta-p16-005.txt`
 - `logs/2026-03-03-p16-identity-node-diagnostics-check-run.txt`
 - `manifests/2026-03-03-p16-identity-node-diagnostics-check.json`
-- `logs/2026-03-03-p16-web-test-ta-p16-006.txt`
-- `logs/2026-03-03-p16-web-contract-regression-check-run.txt`
-- `manifests/2026-03-03-p16-web-contract-regression-check.json`
-- `logs/2026-03-03-p16-web-typecheck-ta-p16-007.txt`
-- `logs/2026-03-03-p16-web-build-ta-p16-007.txt`
-- `logs/2026-03-03-p16-web-test-ta-p16-007.txt`
+- `logs/2026-03-03-p16-console-test-ta-p16-006.txt`
+- `logs/2026-03-03-p16-console-contract-regression-check-run.txt`
+- `manifests/2026-03-03-p16-console-contract-regression-check.json`
+- `logs/2026-03-03-p16-console-typecheck-ta-p16-007.txt`
+- `logs/2026-03-03-p16-console-build-ta-p16-007.txt`
+- `logs/2026-03-03-p16-console-test-ta-p16-007.txt`
 - `logs/2026-03-03-p16-quality-gate-check-run.txt`
 - `logs/2026-03-03-p16-gate-manifest-summary.txt`
 - `manifests/2026-03-03-p16-quality-gate-check.json`

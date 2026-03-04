@@ -1,0 +1,5 @@
+
+> @telagent/console@0.1.0 build /Users/xiasenhai/workspace/private-repo/Bots/telagent/packages/web
+> node scripts/build.mjs
+
+web assets copied to dist

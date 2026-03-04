@@ -12,8 +12,9 @@ async function main() {
   const scriptDir = path.dirname(fileURLToPath(import.meta.url));
   const webRoot = path.resolve(scriptDir, '..');
   const repoRoot = path.resolve(scriptDir, '../../..');
-  const outputPath = process.env.P11_WEB_CONSOLE_OUTPUT_PATH
-    ?? path.resolve(repoRoot, 'docs/implementation/phase-11/manifests/2026-03-03-p11-web-console-v2-check.json');
+  const outputPath = process.env.P11_CONSOLE_V2_OUTPUT_PATH
+    ?? process.env.P11_WEB_CONSOLE_OUTPUT_PATH
+    ?? path.resolve(repoRoot, 'docs/implementation/phase-11/manifests/2026-03-03-p11-console-v2-check.json');
 
   const html = await fs.readFile(path.resolve(webRoot, 'src/index.html'), 'utf8');
   const css = await fs.readFile(path.resolve(webRoot, 'src/styles.css'), 'utf8');

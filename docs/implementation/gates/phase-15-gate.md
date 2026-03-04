@@ -1,6 +1,6 @@
 # TelAgent v1 Phase 15 Gate
 
-- Phase：`Phase 15（Web App 工业级设计与多平台建设）`
+- Phase：`Phase 15（Console 工业级设计与多平台建设）`
 - Gate 编号：`TA-GATE-P15`
 - 实际评审日期：`2026-03-03`
 - 最近更新：`2026-03-03`
@@ -19,7 +19,7 @@
 
 | 条目 | 结果 | 证据路径 | 备注 |
 | --- | --- | --- | --- |
-| 工业级规划总纲冻结（`TA-P15-001`） | PASS | `docs/implementation/phase-15/ta-p15-001-webapp-industrial-program-2026-03-03.md` | scope frozen |
+| 工业级规划总纲冻结（`TA-P15-001`） | PASS | `docs/implementation/phase-15/ta-p15-001-console-industrial-program-2026-03-03.md` | scope frozen |
 | 功能域与 IA 冻结（`TA-P15-002`） | PASS | `docs/implementation/phase-15/manifests/2026-03-03-p15-functional-ia-check.json` | decision=PASS |
 | 设计系统与组件规范冻结（`TA-P15-003`） | PASS | `docs/implementation/phase-15/manifests/2026-03-03-p15-design-system-check.json` | decision=PASS |
 | 多平台架构冻结（`TA-P15-004`） | PASS | `docs/implementation/phase-15/manifests/2026-03-03-p15-platform-architecture-check.json` | decision=PASS |
@@ -32,7 +32,7 @@
 
 | 风险/阻塞 | 影响 | Owner | 截止日期 | 状态 |
 | --- | --- | --- | --- | --- |
-| Web 包当前测试命令为占位输出（`no tests for web package`） | Web 端自动化回归覆盖度有限 | Frontend + QA | 后续实现阶段 | ACCEPTED |
+| Console 包当前测试命令为占位输出（`no tests for console package`） | Console 端自动化回归覆盖度有限 | Frontend + QA | 后续实现阶段 | ACCEPTED |
 | 无新增硬阻塞项 | - | - | - | N/A |
 
 ## 4) 条件放行补丁项（仅 CONDITIONAL PASS 填写）

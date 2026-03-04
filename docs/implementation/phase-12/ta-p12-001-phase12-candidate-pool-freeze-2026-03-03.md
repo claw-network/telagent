@@ -34,7 +34,7 @@
 ### SHOULD（资源允许时纳入）
 
 4. `TA-P12-005`：Agent SDK Python Beta
-5. `TA-P12-006`：Web Console v2.1 运营与应急面板
+5. `TA-P12-006`：Console v2.1 运营与应急面板
 
 ### COULD（可选）
 

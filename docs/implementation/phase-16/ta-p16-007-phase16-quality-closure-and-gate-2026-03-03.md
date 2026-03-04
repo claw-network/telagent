@@ -7,7 +7,7 @@
 
 ## 1. 目标
 
-完成 Phase 16 收口，形成可重复执行的 Web 交付门禁与 Gate 证据链：
+完成 Phase 16 收口，形成可重复执行的 Console 交付门禁与 Gate 证据链：
 
 1. 质量门禁（typecheck/build/test）可重复执行并通过；
 2. Phase 16 manifests 汇总结论可机读；
@@ -40,9 +40,9 @@
 
 ## 5. 证据
 
-- 类型检查日志：`docs/implementation/phase-16/logs/2026-03-03-p16-web-typecheck-ta-p16-007.txt`
-- 构建日志：`docs/implementation/phase-16/logs/2026-03-03-p16-web-build-ta-p16-007.txt`
-- 测试日志：`docs/implementation/phase-16/logs/2026-03-03-p16-web-test-ta-p16-007.txt`
+- 类型检查日志：`docs/implementation/phase-16/logs/2026-03-03-p16-console-typecheck-ta-p16-007.txt`
+- 构建日志：`docs/implementation/phase-16/logs/2026-03-03-p16-console-build-ta-p16-007.txt`
+- 测试日志：`docs/implementation/phase-16/logs/2026-03-03-p16-console-test-ta-p16-007.txt`
 - 专项检查日志：`docs/implementation/phase-16/logs/2026-03-03-p16-quality-gate-check-run.txt`
 - manifest 汇总日志：`docs/implementation/phase-16/logs/2026-03-03-p16-gate-manifest-summary.txt`
 - 机读清单：`docs/implementation/phase-16/manifests/2026-03-03-p16-quality-gate-check.json`

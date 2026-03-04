@@ -18,7 +18,7 @@
 5. 密钥生命周期：Signal/MLS 设备密钥轮换、撤销与恢复。
 6. 身份强约束：revoked DID 触发会话失效与链下隔离。
 7. 开发者体验：Agent SDK（TypeScript）首版。
-8. 运营控制台：Web Console v2（群状态、回滚入口、联邦视图）。
+8. 运营控制台：Console v2（群状态、回滚入口、联邦视图）。
 9. 审计能力：不泄露明文的链上/链下审计快照导出。
 
 ## 3. 不在范围
@@ -40,7 +40,7 @@
 - `TA-P11-006`：Signal/MLS 密钥生命周期管理
 - `TA-P11-007`：revoked DID 会话失效链路
 - `TA-P11-008`：Agent SDK（TypeScript）v0
-- `TA-P11-009`：Web Console v2 运维能力
+- `TA-P11-009`：Console v2 运维能力
 - `TA-P11-010`：Phase 11 Gate 收口
 
 ## 5. 验收标准

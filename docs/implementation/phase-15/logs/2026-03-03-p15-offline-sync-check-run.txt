@@ -1,6 +1,6 @@
 [TA-P15-005] offline sync strategy check run
 generated_at=2026-03-03T15:37:15Z
-doc=docs/implementation/phase-15/ta-p15-005-webapp-offline-sync-conflict-performance-2026-03-03.md
+doc=docs/implementation/phase-15/ta-p15-005-console-offline-sync-conflict-performance-2026-03-03.md
 
 [check] section headers
 8:## 1. 目标
@@ -47,37 +47,37 @@ doc=docs/implementation/phase-15/ta-p15-005-webapp-offline-sync-conflict-perform
 142:3. 体验指标：`offlineRecoveryLatencyMs`, `sendAckLatencyMs`。
 143:4. 审计要求：日志中 DID 仅保留脱敏片段，完整 DID hash 使用 `keccak256(utf8(did))`。
 150:- [x] `/api/v1/*`、`did:claw:*`、DID hash、RFC7807 约束显式写入。
-156:- 任务文档：`docs/implementation/phase-15/ta-p15-005-webapp-offline-sync-conflict-performance-2026-03-03.md`
+156:- 任务文档：`docs/implementation/phase-15/ta-p15-005-console-offline-sync-conflict-performance-2026-03-03.md`
 159:- 专项检查日志：`docs/implementation/phase-15/logs/2026-03-03-p15-offline-sync-check-run.txt`
 160:- 机读清单：`docs/implementation/phase-15/manifests/2026-03-03-p15-offline-sync-check.json`
 
-[check] web build/test outputs
+[check] console build/test outputs
 
-> @telagent/web@0.1.0 build /Users/xiasenhai/Workspace/OpenClaw/telagent/packages/web
+> @telagent/console@0.1.0 build /Users/xiasenhai/Workspace/OpenClaw/telagent/packages/web
 > node scripts/build.mjs
 
 web assets copied to dist
 ---
 
-> @telagent/web@0.1.0 test /Users/xiasenhai/Workspace/OpenClaw/telagent/packages/web
-> echo 'no tests for web package'
+> @telagent/console@0.1.0 test /Users/xiasenhai/Workspace/OpenClaw/telagent/packages/web
+> echo 'no tests for console package'
 
-no tests for web package
+no tests for console package
 
 [check] tracker rows
 docs/implementation/phase-15/README.md:4:- 状态：IN_PROGRESS（`TA-P15-005` 已完成，推进 `TA-P15-006`）
 docs/implementation/phase-15/README.md:23:| TA-P15-005 | DONE | 离线同步、冲突策略与性能预算 |
 docs/implementation/phase-15/README.md:24:| TA-P15-006 | TODO | 客户端质量体系（测试/观测/发布） |
 docs/implementation/telagent-v1-iteration-board.md:231:- 下一批 Ready：执行 `TA-P15-006`（客户端质量体系与发布门禁）。
-docs/implementation/telagent-v1-iteration-board.md:431:- `TA-P15-005`：DONE（离线同步、冲突策略与性能预算冻结，见 `docs/implementation/phase-15/ta-p15-005-webapp-offline-sync-conflict-performance-2026-03-03.md` 与 `docs/implementation/phase-15/manifests/2026-03-03-p15-offline-sync-check.json`）。
+docs/implementation/telagent-v1-iteration-board.md:431:- `TA-P15-005`：DONE（离线同步、冲突策略与性能预算冻结，见 `docs/implementation/phase-15/ta-p15-005-console-offline-sync-conflict-performance-2026-03-03.md` 与 `docs/implementation/phase-15/manifests/2026-03-03-p15-offline-sync-check.json`）。
 docs/implementation/telagent-v1-iteration-board.md:432:- `TA-P15-006` ~ `TA-P15-007`：TODO（进入质量门禁与 Gate 收口阶段）。
 docs/implementation/telagent-v1-iteration-board.md:433:- 阶段状态：Phase 15 执行中（IN_PROGRESS），下一任务 `TA-P15-006`。
 docs/implementation/telagent-v1-task-breakdown.md:10:- **状态字段**：`TODO | IN_PROGRESS | BLOCKED | DONE`。
 docs/implementation/telagent-v1-task-breakdown.md:158:| TA-P15-005 | Phase 15 | 离线同步与冲突解决策略 | FE + BE + QA | 2 | TA-P15-004 | offline-sync strategy + test plan | 离线队列、重放、冲突策略可验证 | DONE |
 docs/implementation/telagent-v1-task-breakdown.md:159:| TA-P15-006 | Phase 15 | 客户端质量体系与发布门禁 | QA + FE + SRE | 1.5 | TA-P15-002, TA-P15-003, TA-P15-004, TA-P15-005 | quality gates + release checklist | 单测/E2E/性能/崩溃门禁成体系 | TODO |
 docs/implementation/telagent-v1-task-breakdown.md:160:| TA-P15-007 | Phase 15 | Phase 15 Gate 评审与收口 | TL + QA | 0.5 | TA-P15-006 | gate 结论文档 | Phase 15 正式关闭 | TODO |
-docs/implementation/telagent-v1-task-breakdown.md:371:| TA-P15-004 | DONE | `docs/implementation/phase-15/ta-p15-004-webapp-multi-platform-architecture-2026-03-03.md`, `docs/implementation/phase-15/README.md`, `docs/implementation/phase-15/logs/2026-03-03-p15-web-build-ta-p15-004.txt`, `docs/implementation/phase-15/logs/2026-03-03-p15-web-test-ta-p15-004.txt`, `docs/implementation/phase-15/logs/2026-03-03-p15-platform-architecture-check-run.txt`, `docs/implementation/phase-15/manifests/2026-03-03-p15-platform-architecture-check.json` | 无 | 进入 `TA-P15-005`（离线同步、冲突策略与性能预算） |
-docs/implementation/telagent-v1-task-breakdown.md:372:| TA-P15-005 | DONE | `docs/implementation/phase-15/ta-p15-005-webapp-offline-sync-conflict-performance-2026-03-03.md`, `docs/implementation/phase-15/README.md`, `docs/implementation/phase-15/logs/2026-03-03-p15-web-build-ta-p15-005.txt`, `docs/implementation/phase-15/logs/2026-03-03-p15-web-test-ta-p15-005.txt`, `docs/implementation/phase-15/logs/2026-03-03-p15-offline-sync-check-run.txt`, `docs/implementation/phase-15/manifests/2026-03-03-p15-offline-sync-check.json` | 无 | 进入 `TA-P15-006`（客户端质量体系与发布门禁） |
+docs/implementation/telagent-v1-task-breakdown.md:371:| TA-P15-004 | DONE | `docs/implementation/phase-15/ta-p15-004-console-multi-platform-architecture-2026-03-03.md`, `docs/implementation/phase-15/README.md`, `docs/implementation/phase-15/logs/2026-03-03-p15-console-build-ta-p15-004.txt`, `docs/implementation/phase-15/logs/2026-03-03-p15-console-test-ta-p15-004.txt`, `docs/implementation/phase-15/logs/2026-03-03-p15-platform-architecture-check-run.txt`, `docs/implementation/phase-15/manifests/2026-03-03-p15-platform-architecture-check.json` | 无 | 进入 `TA-P15-005`（离线同步、冲突策略与性能预算） |
+docs/implementation/telagent-v1-task-breakdown.md:372:| TA-P15-005 | DONE | `docs/implementation/phase-15/ta-p15-005-console-offline-sync-conflict-performance-2026-03-03.md`, `docs/implementation/phase-15/README.md`, `docs/implementation/phase-15/logs/2026-03-03-p15-console-build-ta-p15-005.txt`, `docs/implementation/phase-15/logs/2026-03-03-p15-console-test-ta-p15-005.txt`, `docs/implementation/phase-15/logs/2026-03-03-p15-offline-sync-check-run.txt`, `docs/implementation/phase-15/manifests/2026-03-03-p15-offline-sync-check.json` | 无 | 进入 `TA-P15-006`（客户端质量体系与发布门禁） |
 docs/implementation/telagent-v1-task-breakdown.md:373:| TA-P15-006 | TODO | `docs/implementation/phase-15/README.md` | 无 | 建立客户端质量门禁与发布体系 |
 
 [result] PASS

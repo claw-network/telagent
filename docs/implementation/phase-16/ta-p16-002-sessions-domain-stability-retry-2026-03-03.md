@@ -7,7 +7,7 @@
 
 ## 1. 目标
 
-在 Phase 16 既有 Web 运行时基线上，完善会话域关键交互，确保“看得见游标、失败可重试、状态可追踪”：
+在 Phase 16 既有 Console 运行时基线上，完善会话域关键交互，确保“看得见游标、失败可重试、状态可追踪”：
 
 1. 会话拉取游标与最近拉取状态可视化；
 2. 支持 `Refresh From Start`（重置游标 + 重拉）与 `Retry Last Pull`；
@@ -41,15 +41,15 @@
 ## 4. 验证
 
 1. 构建：
-   - `corepack pnpm --filter @telagent/web build`
+   - `corepack pnpm --filter @telagent/console build`
 2. 测试：
-   - `corepack pnpm --filter @telagent/web test`
+   - `corepack pnpm --filter @telagent/console test`
 3. 专项脚本：
    - `node packages/web/scripts/run-phase16-sessions-domain-check.mjs`
 
 ## 5. 证据
 
-- 构建日志：`docs/implementation/phase-16/logs/2026-03-03-p16-web-build-ta-p16-002.txt`
-- 测试日志：`docs/implementation/phase-16/logs/2026-03-03-p16-web-test-ta-p16-002.txt`
+- 构建日志：`docs/implementation/phase-16/logs/2026-03-03-p16-console-build-ta-p16-002.txt`
+- 测试日志：`docs/implementation/phase-16/logs/2026-03-03-p16-console-test-ta-p16-002.txt`
 - 专项检查日志：`docs/implementation/phase-16/logs/2026-03-03-p16-sessions-domain-check-run.txt`
 - 机读清单：`docs/implementation/phase-16/manifests/2026-03-03-p16-sessions-domain-check.json`

@@ -9,7 +9,7 @@
 Phase 14 回归 P2P 应用核心体验，聚焦“可用性、正确性、收敛速度”。
 
 - 不在 Phase 14 推进重运维面板与运维导向 UI。
-- Web App 的工业级功能与多平台能力，统一放入 Phase 15 规划与执行。
+- Console 的工业级功能与多平台能力，统一放入 Phase 15 规划与执行。
 
 ## 2. 任务清单
 
@@ -25,13 +25,13 @@ Phase 14 回归 P2P 应用核心体验，聚焦“可用性、正确性、收敛
 ## 3. 当前证据
 
 - `ta-p14-001-phase14-product-focus-boundary-2026-03-03.md`
-- `ta-p14-002-web-ops-panel-removal-2026-03-03.md`
+- `ta-p14-002-console-ops-panel-removal-2026-03-03.md`
 - `ta-p14-003-stable-pull-cursor-2026-03-03.md`
 - `ta-p14-004-direct-session-acl-2026-03-03.md`
 - `ta-p14-005-sdk-parity-and-error-semantics-2026-03-03.md`
 - `ta-p14-006-phase14-gate-review-2026-03-03.md`
-- `logs/2026-03-03-p14-web-build.txt`
-- `logs/2026-03-03-p14-web-ops-removal-check.txt`
+- `logs/2026-03-03-p14-console-build.txt`
+- `logs/2026-03-03-p14-console-ops-removal-check.txt`
 - `logs/2026-03-03-p14-node-build.txt`
 - `logs/2026-03-03-p14-node-test.txt`
 - `logs/2026-03-03-p14-stable-pull-cursor-check-run.txt`
@@ -41,7 +41,7 @@ Phase 14 回归 P2P 应用核心体验，聚焦“可用性、正确性、收敛
 - `logs/2026-03-03-p14-sdk-ts-test.txt`
 - `logs/2026-03-03-p14-sdk-python-test.txt`
 - `logs/2026-03-03-p14-sdk-parity-check-run.txt`
-- `logs/2026-03-03-p14-gate-web-build.txt`
+- `logs/2026-03-03-p14-gate-console-build.txt`
 - `logs/2026-03-03-p14-gate-node-build.txt`
 - `logs/2026-03-03-p14-gate-node-test.txt`
 - `logs/2026-03-03-p14-gate-sdk-ts-test.txt`
@@ -50,7 +50,7 @@ Phase 14 回归 P2P 应用核心体验，聚焦“可用性、正确性、收敛
 - `logs/2026-03-03-p14-gate-direct-session-acl-check-run.txt`
 - `logs/2026-03-03-p14-gate-sdk-parity-check-run.txt`
 - `logs/2026-03-03-p14-gate-manifest-summary.txt`
-- `manifests/2026-03-03-p14-web-ops-removal-check.json`
+- `manifests/2026-03-03-p14-console-ops-removal-check.json`
 - `manifests/2026-03-03-p14-stable-pull-cursor-check.json`
 - `manifests/2026-03-03-p14-direct-session-acl-check.json`
 - `manifests/2026-03-03-p14-sdk-parity-check.json`

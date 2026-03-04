@@ -38,7 +38,7 @@ v1 目标：
 - 私聊与群聊消息投递（至少一次 + 会话内有序）
 - 附件上传编排（init/complete）
 - 联邦节点接口（envelopes/group-state/receipts/node-info）
-- Web 管理台（建群、邀请、接受、基础聊天）
+- Console（建群、邀请、接受、基础聊天）
 
 ### 4.2 Out of Scope（v1）
 
@@ -72,7 +72,7 @@ v1 目标：
 
 ```mermaid
 flowchart LR
-    Web["Web Console"] --> API["TelAgent Node API (/api/v1/*)"]
+    Web["Console"] --> API["TelAgent Node API (/api/v1/*)"]
     API --> IdentityAdapter["IdentityAdapterService"]
     API --> GroupService["GroupService"]
     API --> MessageService["MessageService"]
