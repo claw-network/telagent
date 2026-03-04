@@ -34,7 +34,7 @@
 - `phase-14-gate.md`：Phase 14 评审记录
 - `phase-15-gate.md`：Phase 15 评审记录
 - `phase-16-gate.md`：Phase 16 评审记录
-- `phase-17-gate.md`：Phase 17 评审记录（草案）
+- `phase-17-gate.md`：Phase 17 评审记录（PASS）
 
 ## 3. 推荐流程
 

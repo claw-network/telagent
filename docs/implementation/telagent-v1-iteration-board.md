@@ -255,13 +255,13 @@
 - 已完成：`TA-P16-007`（质量收口与 Phase 16 Gate 评审）
 - 已完成：`TA-P17-001`（sequencer 归属解析 + `/api/v1/federation/messages/submit` 远端提交链路）
 - 已完成：`TA-P17-002`（SQLite/Postgres 持久化 outbox + 重试退避回放）
-- 进行中：`TA-P17-003`（双节点云端联调脚本与机读报告）
-- 待开始：`TA-P17-004`（Phase 17 Gate 收口）
-- 当前结论：Phase 17 已启动，等待双节点实机证据后 Gate 收口。
+- 已完成：`TA-P17-003`（双节点云端联调脚本与机读报告）
+- 已完成：`TA-P17-004`（Phase 17 Gate 收口）
+- 当前结论：Phase 17 已关闭（PASS）。
 
 ## 4.2 Blockers（2026-03-04 更新）
 
-- 当前阻塞：`TA-P17-003` 需双云节点联调窗口（缺少统一运行时参数与执行时段）。
+- 当前阻塞：无。
 - 已知环境注意：首次运行 Node 索引器测试前需确保 `better-sqlite3` 本地绑定可用（若缺失可执行 `pnpm run build-release` 于 `node_modules/.pnpm/better-sqlite3@12.6.2/node_modules/better-sqlite3`）。
 
 ## 4.3 Definition of Done（每个任务统一标准）
@@ -478,11 +478,11 @@
 
 - `TA-P17-001`：DONE（sequencer 归属策略 + 远端 sequencer 提交路径落地，见 `packages/node/src/services/sequencer-domain.ts`, `packages/node/src/api/routes/messages.ts`, `packages/node/src/api/routes/federation.ts`）。
 - `TA-P17-002`：DONE（联邦出站持久化 outbox + 重试退避落地，见 `packages/node/src/services/federation-delivery-service.ts`, `packages/node/src/storage/mailbox-store.ts`, `packages/node/src/storage/message-repository.ts`, `packages/node/src/storage/postgres-message-repository.ts`）。
-- `TA-P17-003`：IN_PROGRESS（双节点联调脚本已就绪，见 `packages/node/scripts/run-cross-node-chat-check.ts`；待实机执行并归档报告 `docs/implementation/phase-17/cross-node-chat-check-report.json`）。
-- `TA-P17-003` 附加执行文档：`docs/implementation/phase-17/two-node-one-click-checklist-2026-03-04.md`（含 nohup / systemd 两套命令清单）。
-- `TA-P17-004`：TODO（Gate 草案已建立，见 `docs/implementation/gates/phase-17-gate.md`；待 P17-003 证据入档后完成结论）。
-- 测试状态：`pnpm --filter @telagent/node test` 已通过（`97/97`）。
-- 阶段状态：Phase 17 处于执行中，当前无代码阻塞，唯一阻塞为“云端双节点实机执行窗口”。
+- `TA-P17-003`：DONE（双节点联调脚本执行完成并归档报告，见 `docs/implementation/phase-17/cross-node-chat-check-report.json`）。
+- `TA-P17-003` 附加执行文档：`docs/implementation/phase-17/two-node-one-click-checklist-2026-03-04.md`、`docs/implementation/phase-17/two-node-cloud-runtime-2026-03-04.md`。
+- `TA-P17-004`：DONE（Gate 结论已输出，见 `docs/implementation/gates/phase-17-gate.md`）。
+- 测试状态：`pnpm --filter @telagent/node test` 已通过（`97/97`），日志见 `docs/implementation/phase-17/logs/2026-03-04-p17-node-test.txt`。
+- 阶段状态：Phase 17 已关闭（PASS）。
 
 ## 5. 周会与 Gate 节奏建议
 

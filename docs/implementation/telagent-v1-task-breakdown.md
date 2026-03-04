@@ -169,8 +169,8 @@ flowchart LR
 | TA-P16-007 | Phase 16 | Console 质量收口与 Phase 16 Gate 评审 | Frontend + QA + DX + TL | 1.5 | TA-P16-006 | quality checklist + gate + manifests | Console 交付门禁可重复执行且阶段 Gate PASS | DONE |
 | TA-P17-001 | Phase 17 | sequencer 归属与远端 sequencer 提交路径落地（group=min-rule/direct） | Backend + Protocol | 1.5 | TA-P16-007 | sequencer resolver + `/api/v1/federation/messages/submit` | 远端 sequencer 分配可用，现有消息契约测试无回归 | DONE |
 | TA-P17-002 | Phase 17 | 联邦出站持久化队列（SQLite/Postgres）与退避重放 | Backend + SRE | 2 | TA-P17-001 | persistent federation outbox + replay loop | 进程重启后 pending 任务不丢失，重试/清理语义可验证 | DONE |
-| TA-P17-003 | Phase 17 | 双云节点直连聊天闭环检查脚本与机读报告 | Backend + QA | 1 | TA-P17-002 | cross-node check script + report schema | A->B/B->A 互发可自动校验并输出 PASS/FAIL 报告 | IN_PROGRESS |
-| TA-P17-004 | Phase 17 | Phase 17 Gate 评审与收口 | TL + QA + Backend | 0.5 | TA-P17-001, TA-P17-002, TA-P17-003 | gate record + evidence checklist | Gate 结论明确且可指导下一位 agent 接力 | TODO |
+| TA-P17-003 | Phase 17 | 双云节点直连聊天闭环检查脚本与机读报告 | Backend + QA | 1 | TA-P17-002 | cross-node check script + report schema | A->B/B->A 互发可自动校验并输出 PASS/FAIL 报告 | DONE |
+| TA-P17-004 | Phase 17 | Phase 17 Gate 评审与收口 | TL + QA + Backend | 0.5 | TA-P17-001, TA-P17-002, TA-P17-003 | gate record + evidence checklist | Gate 结论明确且可指导下一位 agent 接力 | DONE |
 
 ## 4. 执行节奏建议（按部就班）
 
@@ -404,5 +404,5 @@ flowchart LR
 | --- | --- | --- | --- | --- |
 | TA-P17-001 | DONE | `docs/implementation/phase-17/ta-p17-001-sequencer-routing-and-submit-2026-03-04.md`, `packages/node/src/services/sequencer-domain.ts`, `packages/node/src/api/routes/messages.ts`, `packages/node/src/api/routes/federation.ts` | 无 | 进入 `TA-P17-002` 持久化 outbox 改造 |
 | TA-P17-002 | DONE | `docs/implementation/phase-17/ta-p17-002-persistent-federation-outbox-2026-03-04.md`, `packages/node/src/services/federation-delivery-service.ts`, `packages/node/src/services/federation-delivery-service.test.ts`, `packages/node/src/storage/message-repository.ts`, `packages/node/src/storage/postgres-message-repository.ts` | 无 | 进入 `TA-P17-003` 双节点联调脚本与报告 |
-| TA-P17-003 | IN_PROGRESS | `docs/implementation/phase-17/ta-p17-003-two-node-chat-check-2026-03-04.md`, `docs/implementation/phase-17/two-node-one-click-checklist-2026-03-04.md`, `packages/node/scripts/run-cross-node-chat-check.ts`, `docs/implementation/phase-17/README.md`, `README.md`, `README_CN.md` | 缺少双云节点运行时参数与实机执行窗口 | 在两台云节点注入环境变量后执行脚本，产出 `docs/implementation/phase-17/cross-node-chat-check-report.json` |
-| TA-P17-004 | TODO | `docs/implementation/phase-17/ta-p17-004-phase17-gate-prep-2026-03-04.md`, `docs/implementation/gates/phase-17-gate.md` | 需先完成 TA-P17-003 实机报告 | 完成 Gate 证据补齐并形成 PASS/CONDITIONAL PASS 结论 |
+| TA-P17-003 | DONE | `docs/implementation/phase-17/ta-p17-003-two-node-chat-check-2026-03-04.md`, `docs/implementation/phase-17/two-node-one-click-checklist-2026-03-04.md`, `docs/implementation/phase-17/two-node-cloud-runtime-2026-03-04.md`, `packages/node/scripts/run-cross-node-chat-check.ts`, `docs/implementation/phase-17/cross-node-chat-check-report.json` | 无 | 进入 `TA-P17-004` Gate 收口 |
+| TA-P17-004 | DONE | `docs/implementation/phase-17/ta-p17-004-phase17-gate-prep-2026-03-04.md`, `docs/implementation/gates/phase-17-gate.md` | 无 | Phase 17 关闭（PASS），等待下阶段任务编排 |

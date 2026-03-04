@@ -16,25 +16,32 @@
 在本地仓库根目录执行：
 
 ```bash
-cd /Users/xiasenhai/workspace/private-repo/Bots/telagent
+cd /Users/xiasenhai/Workspace/OpenClaw/telagent
 
-export TELAGENT_NODE_A_URL="https://node-a.example.com:9529"
-export TELAGENT_NODE_B_URL="https://node-b.example.com:9529"
+export TELAGENT_NODE_A_URL="https://alex.telagent.org"
+export TELAGENT_NODE_B_URL="https://bess.telagent.org"
 
 # 必须与各节点 TELAGENT_FEDERATION_SELF_DOMAIN 保持一致
-export TELAGENT_NODE_A_DOMAIN="node-a.example.com:9529"
-export TELAGENT_NODE_B_DOMAIN="node-b.example.com:9529"
+export TELAGENT_NODE_A_DOMAIN="alex.telagent.org"
+export TELAGENT_NODE_B_DOMAIN="bess.telagent.org"
 
 # 自动获取 DID
 export TELAGENT_NODE_A_DID="$(curl -fsS "${TELAGENT_NODE_A_URL}/api/v1/identities/self" | jq -r '.data.did')"
 export TELAGENT_NODE_B_DID="$(curl -fsS "${TELAGENT_NODE_B_URL}/api/v1/identities/self" | jq -r '.data.did')"
 
 # 一键联调
-pnpm --filter @telagent/node exec tsx packages/node/scripts/run-cross-node-chat-check.ts
+pnpm --filter @telagent/node exec tsx scripts/run-cross-node-chat-check.ts
 
 # 查看报告
 jq . docs/implementation/phase-17/cross-node-chat-check-report.json
 ```
+
+### 2.1 本次实机验证参数（2026-03-04）
+
+| 节点 | 域名 | IP | URL | DID |
+| --- | --- | --- | --- | --- |
+| Node A | `alex.telagent.org` | `173.249.46.252` | `https://alex.telagent.org` | `did:claw:z6tor6XFy7EYf6GJrqknsgjvEHZxoZbC1KQQkLBvmNyXn` |
+| Node B | `bess.telagent.org` | `167.86.93.216` | `https://bess.telagent.org` | `did:claw:z7ToozkCFGsnkJB5HDub6J7cN5EKAxcr4CHfPiazcLkFw` |
 
 ## 3. 模式 B：一键下发配置 + 启动节点 + 联调（nohup）
 
@@ -138,11 +145,11 @@ export TELAGENT_NODE_A_DID="${NODE_A_DID}"
 export TELAGENT_NODE_B_DID="${NODE_B_DID}"
 
 echo "[4/4] run cross-node chat check"
-cd /Users/xiasenhai/workspace/private-repo/Bots/telagent
-pnpm --filter @telagent/node exec tsx packages/node/scripts/run-cross-node-chat-check.ts
+cd /Users/xiasenhai/Workspace/OpenClaw/telagent
+pnpm --filter @telagent/node exec tsx scripts/run-cross-node-chat-check.ts
 
 echo "=== REPORT ==="
-jq . /Users/xiasenhai/workspace/private-repo/Bots/telagent/docs/implementation/phase-17/cross-node-chat-check-report.json
+jq . /Users/xiasenhai/Workspace/OpenClaw/telagent/docs/implementation/phase-17/cross-node-chat-check-report.json
 BASH
 
 chmod +x /tmp/telagent-two-node-smoke.sh
@@ -216,3 +223,9 @@ systemd 启动后，回到“模式 A”执行联调脚本即可。
    - 临时改用内网 `http://10.x.x.x:9529` 进行验证，后续补 TLS。
 4. 报告超时：
    - 增大 `TELAGENT_CROSS_NODE_TIMEOUT_MS`，并确认两端 `pnpm --filter @telagent/node test` 已通过。
+5. Caddy 在 Ubuntu 24.04 默认版本若触发 `tls-alpn-01` 异常：
+   - 在 `/etc/caddy/Caddyfile` 的站点块中使用：
+     - `tls { issuer acme { disable_tlsalpn_challenge } }`
+   - 重新加载后通过 `http-01` 申请证书。
+6. `keyId(... ) not found`（通常发生在远端 sequencer 校验 sender key）：
+   - 确认联调脚本使用最新版本（已自动在两端预注册 A/B DID 的 signal key）。

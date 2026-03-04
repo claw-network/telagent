@@ -1,7 +1,7 @@
 {
   "phase": "Cross-node Delivery",
   "taskId": "TA-P17-003",
-  "generatedAt": "2026-03-04T12:41:21.741Z",
+  "generatedAt": "2026-03-04T13:40:45.071Z",
   "input": {
     "nodeAUrl": "https://alex.telagent.org",
     "nodeBUrl": "https://bess.telagent.org",
@@ -12,14 +12,14 @@
   },
   "checks": {
     "nodeAToNodeB": {
-      "envelopeId": "env-cross-node-a-1772628078880",
+      "envelopeId": "env-cross-node-a-1772631642225",
       "delivered": true,
-      "latencyMs": 1636
+      "latencyMs": 1667
     },
     "nodeBToNodeA": {
-      "envelopeId": "env-cross-node-b-1772628078880",
+      "envelopeId": "env-cross-node-b-1772631642225",
       "delivered": true,
-      "latencyMs": 326
+      "latencyMs": 322
     }
   },
   "decision": "PASS"
