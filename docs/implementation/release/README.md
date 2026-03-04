@@ -1,7 +1,7 @@
 # TelAgent v1 发布执行产出
 
-- 文档版本：v1.1
-- 状态：`v0.1.0` 已发布；`v0.2.0` 发布编排进行中
+- 文档版本：v1.2
+- 状态：发布执行完成（`v0.1.0`、`v0.2.0` tag 已发布）
 - 最后更新：2026-03-04
 
 ## 1. 产出目录
@@ -20,10 +20,14 @@
 - 运行日志：
   - `logs/2026-03-03-v0.1.0-release-preflight-run.txt`
   - `logs/2026-03-03-v0.1.0-tag-push.txt`
+  - `logs/2026-03-04-v0.2.0-release-preflight-run.txt`
+  - `logs/2026-03-04-v0.2.0-dual-cloud-smoke-check-run.txt`
+  - `logs/2026-03-04-v0.2.0-rollback-drill-run.txt`
+  - `logs/2026-03-04-v0.2.0-tag-push.txt`
+  - `logs/2026-03-04-v0.2.0-tag-record-run.txt`
 - 机读清单（已归档）：
   - `manifests/2026-03-03-v0.1.0-release-preflight.json`
   - `manifests/2026-03-03-v0.1.0-release-tag.json`
-- 机读清单（待执行）：
   - `manifests/2026-03-04-v0.2.0-release-preflight.json`
   - `manifests/2026-03-04-v0.2.0-dual-cloud-smoke-check.json`
   - `manifests/2026-03-04-v0.2.0-rollback-drill.json`
@@ -33,8 +37,8 @@
 
 - `TA-RLS-001`：DONE
 - `TA-RLS-002`：DONE
-- `TA-RLS-003`：TODO
-- `TA-RLS-004`：TODO
-- `TA-RLS-005`：TODO
-- `TA-RLS-006`：TODO
-- 发布状态：`v0.1.0` 已创建并推送远端，`v0.2.0` 进入发布编排阶段。
+- `TA-RLS-003`：DONE（`decision=READY_FOR_TAG`）
+- `TA-RLS-004`：DONE（`decision=PASS`）
+- `TA-RLS-005`：DONE（`decision=PASS`）
+- `TA-RLS-006`：DONE（`decision=RELEASED`）
+- 发布状态：`v0.1.0`、`v0.2.0` 标签均已创建并推送远端。

@@ -2,7 +2,7 @@
 
 - Task ID：TA-RLS-005
 - 阶段：Release Execution
-- 状态：TODO
+- 状态：DONE
 - 负责人角色：SRE / Backend / TL
 
 ## 1. 目标
@@ -33,9 +33,8 @@ export TELAGENT_NODE_B_URL="https://bess.telagent.org"
 export TELAGENT_NODE_A_DID="did:claw:z6tor6XFy7EYf6GJrqknsgjvEHZxoZbC1KQQkLBvmNyXn"
 export TELAGENT_NODE_B_DID="did:claw:z7ToozkCFGsnkJB5HDub6J7cN5EKAxcr4CHfPiazcLkFw"
 
-# 示例：用你实际回滚命令替换
 export TELAGENT_ROLLBACK_TARGET_TAG="v0.1.0"
-export TELAGENT_ROLLBACK_DRILL_COMMAND="echo 'replace-with-real-rollback-command'"
+export TELAGENT_ROLLBACK_DRILL_COMMAND="ssh -i ~/.ssh/id_ed25519_clawnet -o BatchMode=yes -o StrictHostKeyChecking=accept-new root@173.249.46.252 'set -e; systemctl restart telagent-node; systemctl is-active telagent-node' && ssh -i ~/.ssh/id_ed25519_clawnet -o BatchMode=yes -o StrictHostKeyChecking=accept-new root@167.86.93.216 'set -e; systemctl restart telagent-node; systemctl is-active telagent-node'"
 
 corepack pnpm --filter @telagent/node exec tsx scripts/run-release-v020-rollback-drill.ts
 ```
@@ -43,15 +42,26 @@ corepack pnpm --filter @telagent/node exec tsx scripts/run-release-v020-rollback
 ## 5. 输出物
 
 - 机读报告：`docs/implementation/release/manifests/2026-03-04-v0.2.0-rollback-drill.json`
+- 运行日志：`docs/implementation/release/logs/2026-03-04-v0.2.0-rollback-drill-run.txt`
 - 复用联调报告：`docs/implementation/phase-17/cross-node-chat-check-report.json`
 
-## 6. 验收标准
+## 6. 执行结果（2026-03-04）
+
+- 决策：`decision=PASS`
+- 回滚目标：`v0.1.0`（存在校验通过）
+- 演练命令输出：`active / active`（双节点服务重启后恢复）
+- 回滚前后快照：
+  - Node A DID 一致：`did:claw:z6tor6XFy7EYf6GJrqknsgjvEHZxoZbC1KQQkLBvmNyXn`
+  - Node B DID 一致：`did:claw:z7ToozkCFGsnkJB5HDub6J7cN5EKAxcr4CHfPiazcLkFw`
+- 回滚后联调：`postRollbackCrossNodeDecision=PASS`
+
+## 7. 验收标准
 
 - `decision == PASS`
 - 回滚目标 tag 校验通过
 - 回滚后跨节点联调仍为 `PASS`
 - 回滚前后节点身份与域名快照一致
 
-## 7. 后续
+## 8. 后续
 
-- 通过后进入 `TA-RLS-006`（打 tag 与 Release Note 归档）
+- 已进入并完成 `TA-RLS-006`（打 tag 与 Release Note 归档）

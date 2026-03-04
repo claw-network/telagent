@@ -2,7 +2,7 @@
 
 - Task ID：TA-RLS-003
 - 阶段：Release Execution
-- 状态：TODO
+- 状态：DONE
 - 负责人角色：Release Owner / TL / QA / SRE
 
 ## 1. 目标
@@ -39,13 +39,23 @@ corepack pnpm --filter @telagent/node exec tsx scripts/run-release-v020-prefligh
 ## 5. 输出物
 
 - 机读报告：`docs/implementation/release/manifests/2026-03-04-v0.2.0-release-preflight.json`
+- 运行日志：`docs/implementation/release/logs/2026-03-04-v0.2.0-release-preflight-run.txt`
 - 控制台摘要：`checks x/y PASS`、`decision=READY_FOR_TAG|BLOCKED`
 
-## 6. 验收标准
+## 6. 执行结果（2026-03-04）
+
+- 结果：`checks=6/6 PASS`
+- 决策：`decision=READY_FOR_TAG`
+- 关键字段：
+  - `release.version=0.2.0`
+  - `release.targetTag=v0.2.0`
+  - `release.commit=1a3c2f1e46d98c44de2552421e0aaddd3cd36109`
+
+## 7. 验收标准
 
 - 报告 `decision == READY_FOR_TAG`
 - 任一校验失败则阻断发版，并回写失败原因到报告
 
-## 7. 后续
+## 8. 后续
 
-- 通过后进入 `TA-RLS-004`（双云持续联调门禁）
+- 已进入并完成 `TA-RLS-004`（双云持续联调门禁）

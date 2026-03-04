@@ -1,0 +1,37 @@
+{
+  "phase": "Release",
+  "taskId": "TA-RLS-004",
+  "generatedAt": "2026-03-04T14:11:24.592Z",
+  "thresholds": {
+    "maxLatencyMs": 3000,
+    "maxCombinedLatencyMs": 5000
+  },
+  "input": {
+    "nodeAUrl": "https://alex.telagent.org",
+    "nodeBUrl": "https://bess.telagent.org",
+    "nodeADomain": "alex.telagent.org",
+    "nodeBDomain": "bess.telagent.org",
+    "nodeADid": "did:claw:z6tor6XFy7EYf6GJrqknsgjvEHZxoZbC1KQQkLBvmNyXn",
+    "nodeBDid": "did:claw:z7ToozkCFGsnkJB5HDub6J7cN5EKAxcr4CHfPiazcLkFw"
+  },
+  "execution": {
+    "command": "corepack pnpm --filter @telagent/node exec tsx scripts/run-cross-node-chat-check.ts",
+    "commandStdoutTail": "[cross-node] report written: /Users/xiasenhai/Workspace/OpenClaw/telagent/docs/implementation/phase-17/cross-node-chat-check-report.json\n{\n  \"phase\": \"Cross-node Delivery\",\n  \"taskId\": \"TA-P17-003\",\n  \"generatedAt\": \"2026-03-04T14:11:24.557Z\",\n  \"input\": {\n    \"nodeAUrl\": \"https://alex.telagent.org\",\n    \"nodeBUrl\": \"https://bess.telagent.org\",\n    \"nodeADid\": \"did:claw:z6tor6XFy7EYf6GJrqknsgjvEHZxoZbC1KQQkLBvmNyXn\",\n    \"nodeBDid\": \"did:claw:z7ToozkCFGsnkJB5HDub6J7cN5EKAxcr4CHfPiazcLkFw\",\n    \"nodeADomain\": \"alex.telagent.org\",\n    \"nodeBDomain\": \"bess.telagent.org\"\n  },\n  \"checks\": {\n    \"nodeAToNodeB\": {\n      \"envelopeId\": \"env-cross-node-a-1772633482998\",\n      \"delivered\": true,\n      \"latencyMs\": 348\n    },\n    \"nodeBToNodeA\": {\n      \"envelopeId\": \"env-cross-node-b-1772633482998\",\n      \"delivered\": true,\n      \"latencyMs\": 323\n    }\n  },\n  \"decision\": \"PASS\"\n}"
+  },
+  "checks": {
+    "crossNodeDecision": "PASS",
+    "nodeAToNodeB": {
+      "delivered": true,
+      "latencyMs": 348,
+      "withinThreshold": true
+    },
+    "nodeBToNodeA": {
+      "delivered": true,
+      "latencyMs": 323,
+      "withinThreshold": true
+    },
+    "combinedLatencyMs": 671,
+    "combinedWithinThreshold": true
+  },
+  "decision": "PASS"
+}

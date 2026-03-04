@@ -30,11 +30,11 @@
 ## 验收结果
 
 - 运行脚本：`pnpm --filter @telagent/node exec tsx scripts/run-cross-node-chat-check.ts`
-- 报告时间：`2026-03-04T13:40:45.071Z`
+- 报告时间：`2026-03-04T14:12:31.469Z`
 - 结果：`decision = PASS`
 - 明细：
-  - `checks.nodeAToNodeB.delivered = true`（`latencyMs = 1667`）
-  - `checks.nodeBToNodeA.delivered = true`（`latencyMs = 322`）
+  - `checks.nodeAToNodeB.delivered = true`（`latencyMs = 1656`）
+  - `checks.nodeBToNodeA.delivered = true`（`latencyMs = 324`）
 
 ## 关键输出
 

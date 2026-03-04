@@ -2,7 +2,7 @@
 
 - Task ID：TA-RLS-006
 - 阶段：Release Execution
-- 状态：TODO
+- 状态：DONE
 - 负责人角色：Release Owner / TL
 
 ## 1. 目标
@@ -35,9 +35,22 @@ corepack pnpm --filter @telagent/node exec tsx scripts/run-release-v020-tag-reco
 ## 4. 输出物
 
 - 机读报告：`docs/implementation/release/manifests/2026-03-04-v0.2.0-release-tag.json`
+- 运行日志：`docs/implementation/release/logs/2026-03-04-v0.2.0-tag-record-run.txt`
+- 标签推送日志：`docs/implementation/release/logs/2026-03-04-v0.2.0-tag-push.txt`
 - 发布文档：`docs/implementation/release/ta-rls-006-v0.2.0-tag-and-release-note-2026-03-04.md`
 
-## 5. 验收标准
+## 5. 执行结果（2026-03-04）
+
+- 标签信息：
+  - `tag=v0.2.0`
+  - `type=annotated`
+  - `message=TelAgent v0.2.0`
+  - `commit=1a3c2f1e46d98c44de2552421e0aaddd3cd36109`
+  - `pushedToOrigin=true`
+- 标签记录脚本结论：`decision=RELEASED`
+- 依赖检查：preflight / dual-cloud / rollback 三项均为通过状态
+
+## 6. 验收标准
 
 - 标签 `v0.2.0` 本地与远端均存在
 - 脚本输出 `decision == RELEASED`

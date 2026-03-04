@@ -1,0 +1,2 @@
+[TA-RLS-004] decision=PASS
+[TA-RLS-004] output=/Users/xiasenhai/Workspace/OpenClaw/telagent/docs/implementation/release/manifests/2026-03-04-v0.2.0-dual-cloud-smoke-check.json

@@ -1,0 +1,46 @@
+{
+  "phase": "Release",
+  "taskId": "TA-RLS-005",
+  "generatedAt": "2026-03-04T14:12:33.980Z",
+  "drill": {
+    "rollbackTargetTag": "v0.1.0",
+    "rollbackCommand": "ssh -i ~/.ssh/id_ed25519_clawnet -o BatchMode=yes -o StrictHostKeyChecking=accept-new root@173.249.46.252 'set -e; systemctl restart telagent-node; systemctl is-active telagent-node' && ssh -i ~/.ssh/id_ed25519_clawnet -o BatchMode=yes -o StrictHostKeyChecking=accept-new root@167.86.93.216 'set -e; systemctl restart telagent-node; systemctl is-active telagent-node'",
+    "rollbackCommandOutputTail": "active\nactive"
+  },
+  "input": {
+    "nodeAUrl": "https://alex.telagent.org",
+    "nodeBUrl": "https://bess.telagent.org",
+    "expectedNodeADid": "did:claw:z6tor6XFy7EYf6GJrqknsgjvEHZxoZbC1KQQkLBvmNyXn",
+    "expectedNodeBDid": "did:claw:z7ToozkCFGsnkJB5HDub6J7cN5EKAxcr4CHfPiazcLkFw"
+  },
+  "checks": {
+    "rollbackTargetTagExists": true,
+    "before": {
+      "nodeA": {
+        "url": "https://alex.telagent.org",
+        "did": "did:claw:z6tor6XFy7EYf6GJrqknsgjvEHZxoZbC1KQQkLBvmNyXn",
+        "domain": "alex.telagent.org"
+      },
+      "nodeB": {
+        "url": "https://bess.telagent.org",
+        "did": "did:claw:z7ToozkCFGsnkJB5HDub6J7cN5EKAxcr4CHfPiazcLkFw",
+        "domain": "bess.telagent.org"
+      }
+    },
+    "after": {
+      "nodeA": {
+        "url": "https://alex.telagent.org",
+        "did": "did:claw:z6tor6XFy7EYf6GJrqknsgjvEHZxoZbC1KQQkLBvmNyXn",
+        "domain": "alex.telagent.org"
+      },
+      "nodeB": {
+        "url": "https://bess.telagent.org",
+        "did": "did:claw:z7ToozkCFGsnkJB5HDub6J7cN5EKAxcr4CHfPiazcLkFw",
+        "domain": "bess.telagent.org"
+      }
+    },
+    "postRollbackCrossNodeDecision": "PASS",
+    "postRollbackCrossNodeDeliveredBoth": true
+  },
+  "decision": "PASS"
+}

@@ -269,11 +269,11 @@
 - 已完成：`TA-P17-002`（SQLite/Postgres 持久化 outbox + 重试退避回放）
 - 已完成：`TA-P17-003`（双节点云端联调脚本与机读报告）
 - 已完成：`TA-P17-004`（Phase 17 Gate 收口）
-- 当前结论：Phase 17 已关闭（PASS）。
-- 待执行：`TA-RLS-003`（`v0.2.0` preflight）
-- 待执行：`TA-RLS-004`（双云门禁与告警基线）
-- 待执行：`TA-RLS-005`（回滚与恢复演练）
-- 待执行：`TA-RLS-006`（`v0.2.0` 标签发布与 Release Note）
+- 已完成：`TA-RLS-003`（`v0.2.0` preflight，`decision=READY_FOR_TAG`）
+- 已完成：`TA-RLS-004`（双云门禁与告警基线，`decision=PASS`）
+- 已完成：`TA-RLS-005`（回滚与恢复演练，`decision=PASS`）
+- 已完成：`TA-RLS-006`（`v0.2.0` 标签发布与 Release Note，`decision=RELEASED`）
+- 当前结论：Phase 17 已关闭（PASS），`v0.2.0` 发布编排已完成。
 
 ## 4.2 Blockers（2026-03-04 更新）
 
@@ -502,11 +502,11 @@
 
 ## 4.23 Release `v0.2.0` 发布编排（2026-03-04）
 
-- `TA-RLS-003`：TODO（`v0.2.0` 发布前置检查，脚本：`packages/node/scripts/run-release-v020-preflight.ts`，文档：`docs/implementation/release/ta-rls-003-v0.2.0-preflight-2026-03-04.md`）。
-- `TA-RLS-004`：TODO（双云门禁与告警基线，脚本：`packages/node/scripts/run-release-v020-dual-cloud-smoke-check.ts`，文档：`docs/implementation/release/ta-rls-004-dual-cloud-smoke-and-alerting-2026-03-04.md`）。
-- `TA-RLS-005`：TODO（回滚与恢复演练，脚本：`packages/node/scripts/run-release-v020-rollback-drill.ts`，文档：`docs/implementation/release/ta-rls-005-v0.2.0-rollback-and-recovery-drill-2026-03-04.md`）。
-- `TA-RLS-006`：TODO（`v0.2.0` 标签发布与 Release Note，脚本：`packages/node/scripts/run-release-v020-tag-record.ts`，文档：`docs/implementation/release/ta-rls-006-v0.2.0-tag-and-release-note-2026-03-04.md`）。
-- 阶段目标：形成 4 份机读清单并完成 `v0.2.0` 标签归档。
+- `TA-RLS-003`：DONE（`v0.2.0` 发布前置检查，脚本：`packages/node/scripts/run-release-v020-preflight.ts`，清单：`docs/implementation/release/manifests/2026-03-04-v0.2.0-release-preflight.json`，`decision=READY_FOR_TAG`）。
+- `TA-RLS-004`：DONE（双云门禁与告警基线，脚本：`packages/node/scripts/run-release-v020-dual-cloud-smoke-check.ts`，清单：`docs/implementation/release/manifests/2026-03-04-v0.2.0-dual-cloud-smoke-check.json`，`decision=PASS`）。
+- `TA-RLS-005`：DONE（回滚与恢复演练，脚本：`packages/node/scripts/run-release-v020-rollback-drill.ts`，清单：`docs/implementation/release/manifests/2026-03-04-v0.2.0-rollback-drill.json`，`decision=PASS`）。
+- `TA-RLS-006`：DONE（`v0.2.0` 标签发布与 Release Note，脚本：`packages/node/scripts/run-release-v020-tag-record.ts`，清单：`docs/implementation/release/manifests/2026-03-04-v0.2.0-release-tag.json`，`decision=RELEASED`）。
+- 阶段结果：4 份机读清单全部归档，`v0.2.0` 标签已推送远端。
 
 ## 5. 周会与 Gate 节奏建议
 

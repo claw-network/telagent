@@ -2,7 +2,7 @@
 
 - Task ID：TA-RLS-004
 - 阶段：Release Execution
-- 状态：TODO
+- 状态：DONE
 - 负责人角色：SRE / Backend / QA
 
 ## 1. 目标
@@ -42,15 +42,27 @@ corepack pnpm --filter @telagent/node exec tsx scripts/run-release-v020-dual-clo
 ## 5. 输出物
 
 - 机读报告：`docs/implementation/release/manifests/2026-03-04-v0.2.0-dual-cloud-smoke-check.json`
+- 运行日志：`docs/implementation/release/logs/2026-03-04-v0.2.0-dual-cloud-smoke-check-run.txt`
 - 原始联调报告：`docs/implementation/phase-17/cross-node-chat-check-report.json`
 
-## 6. 验收标准
+## 6. 执行结果（2026-03-04）
+
+- 决策：`decision=PASS`
+- 延迟结果：
+  - `nodeAToNodeB.latencyMs=348`
+  - `nodeBToNodeA.latencyMs=323`
+  - `combinedLatencyMs=671`
+- 阈值配置：
+  - `maxLatencyMs=3000`
+  - `maxCombinedLatencyMs=5000`
+
+## 7. 验收标准
 
 - `decision == PASS`
 - `nodeAToNodeB.delivered == true`
 - `nodeBToNodeA.delivered == true`
 - 时延满足阈值约束（单向/合并）
 
-## 7. 后续
+## 8. 后续
 
-- 通过后进入 `TA-RLS-005`（回滚与恢复演练）
+- 已进入并完成 `TA-RLS-005`（回滚与恢复演练）

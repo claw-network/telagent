@@ -1,0 +1,12 @@
+# v0.2.0 tag push log
+generated_at=2026-03-04T22:13:09+0800
+
+$ git show -s --format=%H\ %ci\ %s v0.2.0
+tag v0.2.0
+Tagger: Benjamin Linus <benjamin-linus@outlook.com>
+
+TelAgent v0.2.0
+1a3c2f1e46d98c44de2552421e0aaddd3cd36109 2026-03-04 22:10:07 +0800 release(v0.2.0): scaffold execution tasks and gate scripts
+
+$ git ls-remote --tags origin refs/tags/v0.2.0
+8a53d2b12f817c5dc6f69e5f8a7b2692aa1303a0	refs/tags/v0.2.0
