@@ -209,6 +209,10 @@ async function run(): Promise<CheckReport> {
 
   await ensureSignalKey(options.nodeA.url, options.nodeA.did, options.nodeA.mailboxKeyId);
   await ensureSignalKey(options.nodeB.url, options.nodeB.did, options.nodeB.mailboxKeyId);
+  // Remote sequencer submit may validate sender key on the opposite node.
+  // Pre-register cross keys on both sides to make the check repeatable after node restart.
+  await ensureSignalKey(options.nodeA.url, options.nodeB.did, options.nodeB.mailboxKeyId);
+  await ensureSignalKey(options.nodeB.url, options.nodeA.did, options.nodeA.mailboxKeyId);
 
   const conversationId = `direct:${options.nodeA.did}--${options.nodeB.did}`;
   const envelopeA = `env-cross-node-a-${Date.now()}`;
@@ -285,7 +289,7 @@ async function run(): Promise<CheckReport> {
 async function main(): Promise<void> {
   const report = await run();
 
-  const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
+  const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..', '..');
   const reportDir = path.join(rootDir, 'docs', 'implementation', 'phase-17');
   await fs.mkdir(reportDir, { recursive: true });
 

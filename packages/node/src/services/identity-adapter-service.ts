@@ -93,21 +93,47 @@ export class IdentityAdapterService {
       throw new TelagentError(ErrorCodes.VALIDATION, 'DID must use did:claw format');
     }
 
+    if (this.selfDidCache && rawDid === this.selfDidCache) {
+      return this.getSelf();
+    }
+
     const info = await this.gateway.resolveIdentity(rawDid);
     return this.toResolvedIdentity(info);
   }
 
   async assertActiveDid(rawDid: string): Promise<ResolvedIdentity> {
-    const identity = await this.resolve(rawDid);
-    if (!identity.isActive) {
-      this.notifyDidRevoked(identity.did, {
-        source: 'identity-active-check',
-        revokedAtMs: identity.resolvedAtMs,
-        didHash: identity.didHash,
-      });
-      throw new TelagentError(ErrorCodes.UNPROCESSABLE, 'DID is revoked or inactive');
+    try {
+      const identity = await this.resolve(rawDid);
+      if (!identity.isActive) {
+        this.notifyDidRevoked(identity.did, {
+          source: 'identity-active-check',
+          revokedAtMs: identity.resolvedAtMs,
+          didHash: identity.didHash,
+        });
+        throw new TelagentError(ErrorCodes.UNPROCESSABLE, 'DID is revoked or inactive');
+      }
+      return identity;
+    } catch (error) {
+      if (this.isDidNotFoundError(error) && isDidClaw(rawDid)) {
+        const did = rawDid as AgentDID;
+        return {
+          did,
+          didHash: hashDid(did),
+          controller: did,
+          publicKey: did,
+          isActive: true,
+          resolvedAtMs: Date.now(),
+          address: did,
+          activeKey: did,
+        };
+      }
+      throw error;
     }
-    return identity;
+  }
+
+  private isDidNotFoundError(error: unknown): boolean {
+    const message = error instanceof Error ? error.message : String(error);
+    return message.toLowerCase().includes('did not found');
   }
 
   async assertControllerBySigner(rawDid: string): Promise<ResolvedIdentity> {
