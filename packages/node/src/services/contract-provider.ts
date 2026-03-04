@@ -10,22 +10,15 @@ import {
 } from 'ethers';
 
 import type { ChainConfig } from './chain-config.js';
-import {
-  CLAW_IDENTITY_ABI,
-  CLAW_ROUTER_ABI,
-  CLAW_TOKEN_ABI,
-  TELAGENT_GROUP_REGISTRY_ABI,
-} from './abis.js';
+import { TELAGENT_GROUP_REGISTRY_ABI } from './abis.js';
 
 export class ContractProvider {
   readonly provider: JsonRpcProvider;
   readonly signer: NonceManager;
   readonly signerAddress: string;
 
-  readonly identity: Contract;
-  readonly token: Contract;
+  // 仅保留 TelAgent 自有合约
   readonly telagentGroupRegistry: Contract;
-  readonly router?: Contract;
 
   constructor(readonly config: ChainConfig) {
     this.provider = new JsonRpcProvider(config.rpcUrl, {
@@ -37,17 +30,11 @@ export class ContractProvider {
     this.signer = new NonceManager(signer);
     this.signerAddress = signer.address;
 
-    this.identity = new Contract(config.contracts.identity, CLAW_IDENTITY_ABI, this.signer);
-    this.token = new Contract(config.contracts.token, CLAW_TOKEN_ABI, this.signer);
     this.telagentGroupRegistry = new Contract(
       config.contracts.telagentGroupRegistry,
       TELAGENT_GROUP_REGISTRY_ABI,
       this.signer,
     );
-
-    if (config.contracts.router) {
-      this.router = new Contract(config.contracts.router, CLAW_ROUTER_ABI, this.signer);
-    }
   }
 
   async destroy(): Promise<void> {

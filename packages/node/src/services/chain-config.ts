@@ -3,9 +3,9 @@ import { z } from 'zod';
 const EthAddress = z.string().regex(/^0x[a-fA-F0-9]{40}$/, 'Invalid Ethereum address');
 
 export const ContractAddressesSchema = z.object({
-  identity: EthAddress,
-  token: EthAddress,
-  router: EthAddress.optional(),
+  // identity: 已删除 — Identity 通过 ClawNet SDK 获取
+  // token: 已删除 — Token 余额通过 ClawNet SDK 查询
+  // router: 已删除 — Router 不再直连
   telagentGroupRegistry: EthAddress,
 });
 
@@ -30,7 +30,7 @@ export const ChainConfigSchema = z.object({
   chainId: z.number().int().positive(),
   contracts: ContractAddressesSchema,
   signer: SignerConfigSchema,
-  selfDid: z.string().regex(/^did:claw:[A-Za-z0-9]+$/),
+  // selfDid 已删除 — DID 从 ClawNet Node 获取，不再手动配置
   finalityDepth: z.number().int().min(1).default(12),
 });
 

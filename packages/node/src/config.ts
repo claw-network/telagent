@@ -1,7 +1,5 @@
-import { mkdirSync } from 'node:fs';
-import { join } from 'node:path';
-
 import { ChainConfigSchema, type ChainConfig } from './services/chain-config.js';
+import { resolveTelagentPaths, type TelagentStoragePaths } from './storage/telagent-paths.js';
 
 export interface FederationConfig {
   selfDomain: string;
@@ -64,13 +62,23 @@ export interface FederationSloConfig {
   replayStopOnError: boolean;
 }
 
+export interface ClawNetConfig {
+  nodeUrl?: string;
+  passphrase?: string;
+  apiKey?: string;
+  timeoutMs: number;
+  autoDiscover: boolean;
+  autoStart: boolean;
+}
+
 export interface AppConfig {
   host: string;
   port: number;
-  dataDir: string;
+  paths: TelagentStoragePaths;
   mailboxCleanupIntervalSec: number;
   mailboxStore: MailboxStoreConfig;
   chain: ChainConfig;
+  clawnet: ClawNetConfig;
   federation: FederationConfig;
   monitoring: MonitoringConfig;
   domainProof: DomainProofConfig;
@@ -78,18 +86,41 @@ export interface AppConfig {
 }
 
 export function loadConfigFromEnv(): AppConfig {
+  // ── 破坏性变更检测 ────────────────────────────────────
+  if (process.env.TELAGENT_DATA_DIR) {
+    throw new Error(
+      'TELAGENT_DATA_DIR is removed. Use TELAGENT_HOME instead. ' +
+      'Default: ~/.telagent. See migration guide.',
+    );
+  }
+  if (process.env.TELAGENT_SELF_DID) {
+    throw new Error(
+      'TELAGENT_SELF_DID is removed. DID is now obtained from ClawNet Node automatically. ' +
+      'Remove this env var and ensure ClawNet Node is running.',
+    );
+  }
+  if (process.env.TELAGENT_IDENTITY_CONTRACT) {
+    throw new Error(
+      'TELAGENT_IDENTITY_CONTRACT is removed. Identity is now resolved via ClawNet SDK. ' +
+      'Remove this env var.',
+    );
+  }
+  if (process.env.TELAGENT_TOKEN_CONTRACT) {
+    throw new Error(
+      'TELAGENT_TOKEN_CONTRACT is removed. Token balance is now queried via ClawNet SDK. ' +
+      'Remove this env var.',
+    );
+  }
+
+  const paths = resolveTelagentPaths();
+
   const host = process.env.TELAGENT_API_HOST || '127.0.0.1';
-  const port = Number(process.env.TELAGENT_API_PORT || 9528);
-  const dataDir = process.env.TELAGENT_DATA_DIR || '.telagent';
-  mkdirSync(dataDir, { recursive: true });
+  const port = Number(process.env.TELAGENT_API_PORT || 9529);
 
   const chain = ChainConfigSchema.parse({
     rpcUrl: process.env.TELAGENT_CHAIN_RPC_URL,
     chainId: Number(process.env.TELAGENT_CHAIN_ID || 7625),
     contracts: {
-      identity: process.env.TELAGENT_IDENTITY_CONTRACT,
-      token: process.env.TELAGENT_TOKEN_CONTRACT,
-      router: process.env.TELAGENT_ROUTER_CONTRACT,
       telagentGroupRegistry: process.env.TELAGENT_GROUP_REGISTRY_CONTRACT,
     },
     signer: {
@@ -98,9 +129,16 @@ export function loadConfigFromEnv(): AppConfig {
       path: process.env.TELAGENT_SIGNER_PATH,
       index: Number(process.env.TELAGENT_SIGNER_INDEX || 0),
     },
-    selfDid: process.env.TELAGENT_SELF_DID,
     finalityDepth: Number(process.env.TELAGENT_FINALITY_DEPTH || 12),
   });
+
+  const clawnet: ClawNetConfig = {
+    nodeUrl: process.env.TELAGENT_CLAWNET_NODE_URL || undefined,
+    apiKey: process.env.TELAGENT_CLAWNET_API_KEY || undefined,
+    timeoutMs: Number(process.env.TELAGENT_CLAWNET_TIMEOUT_MS || 30_000),
+    autoDiscover: parseBoolean(process.env.TELAGENT_CLAWNET_AUTO_DISCOVER, true),
+    autoStart: parseBoolean(process.env.TELAGENT_CLAWNET_AUTO_START, true),
+  };
 
   const allowedSourceDomains = (process.env.TELAGENT_FEDERATION_ALLOWED_DOMAINS || '')
     .split(',')
@@ -124,7 +162,7 @@ export function loadConfigFromEnv(): AppConfig {
 
   const mailboxStore: MailboxStoreConfig = {
     backend: mailboxStoreBackend,
-    sqlitePath: process.env.TELAGENT_MAILBOX_SQLITE_PATH || resolveDataPath(dataDir, 'mailbox.sqlite'),
+    sqlitePath: process.env.TELAGENT_MAILBOX_SQLITE_PATH || paths.mailboxDb,
   };
 
   if (mailboxStoreBackend === 'postgres') {
@@ -167,10 +205,11 @@ export function loadConfigFromEnv(): AppConfig {
   return {
     host,
     port,
-    dataDir,
+    paths,
     mailboxCleanupIntervalSec: Number(process.env.TELAGENT_MAILBOX_CLEANUP_INTERVAL_SEC || 60),
     mailboxStore,
     chain,
+    clawnet,
     federation: {
       selfDomain: process.env.TELAGENT_FEDERATION_SELF_DOMAIN || host,
       authToken: process.env.TELAGENT_FEDERATION_AUTH_TOKEN || undefined,
@@ -256,10 +295,6 @@ export function loadConfigFromEnv(): AppConfig {
       replayStopOnError: parseBoolean(process.env.TELAGENT_FEDERATION_DLQ_REPLAY_STOP_ON_ERROR, false),
     },
   };
-}
-
-export function resolveDataPath(dataDir: string, filename: string): string {
-  return join(dataDir, filename);
 }
 
 function parseBoolean(raw: string | undefined, fallback: boolean): boolean {

@@ -13,6 +13,11 @@
     "node": ">=22 <25",
     "pnpm": ">=10.18.1 <11"
   },
+  "pnpm": {
+    "overrides": {
+      "@claw-network/protocol": "0.2.2"
+    }
+  },
   "devDependencies": {
     "typescript": "^5.9.3"
   }

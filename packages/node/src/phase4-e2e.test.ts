@@ -86,10 +86,6 @@ class FakeGasService {
   async getNativeGasBalance() {
     return 1_000_000n;
   }
-
-  async getTokenBalance() {
-    return 1_000_000n;
-  }
 }
 
 class FakeFederationService {
@@ -177,6 +173,69 @@ class FakeKeyLifecycleService {
     return [this.assertCanUseKey()];
   }
 }
+
+class FakeClawNetGatewayService {
+  async getBalance(did?: string) {
+    return {
+      did: did ?? 'did:claw:zAlice',
+      address: `0x${'1'.repeat(40)}`,
+      native: '1000000000000000000',
+      token: '1000000000000000000',
+    };
+  }
+
+  async getNonce() {
+    return {
+      nonce: 1,
+      address: `0x${'1'.repeat(40)}`,
+    };
+  }
+
+  async getSelfIdentity() {
+    return {
+      did: 'did:claw:zAlice',
+      address: `0x${'1'.repeat(40)}`,
+      isActive: true,
+      controller: `0x${'1'.repeat(40)}`,
+      activeKey: '0x11',
+      document: {
+        capabilities: ['chat'],
+        keyHistory: [],
+      },
+    };
+  }
+
+  async resolveIdentity(did: string) {
+    return {
+      ...(await this.getSelfIdentity()),
+      did,
+    };
+  }
+}
+
+class FakeSessionManager {
+  async unlock() {
+    return {
+      sessionToken: 'tses_test_token',
+      expiresAt: new Date(Date.now() + 60_000),
+      scope: ['transfer', 'escrow', 'market', 'contract', 'reputation', 'identity'],
+    };
+  }
+
+  lock() {}
+
+  getSessionInfo() {
+    return {
+      active: true,
+      expiresAt: new Date(Date.now() + 60_000),
+      scope: ['transfer'],
+      operationsUsed: 0,
+      createdAt: new Date(),
+    };
+  }
+}
+
+class FakeNonceManager {}
 
 class FakeGroupService {
   private readonly groups = new Map<string, GroupRecord>();
@@ -369,6 +428,9 @@ async function startE2EServer(startMs?: number): Promise<{
     federationService: new FakeFederationService() as unknown as RuntimeContext['federationService'],
     monitoringService,
     keyLifecycleService: new FakeKeyLifecycleService() as unknown as RuntimeContext['keyLifecycleService'],
+    clawnetGateway: new FakeClawNetGatewayService() as unknown as RuntimeContext['clawnetGateway'],
+    sessionManager: new FakeSessionManager() as unknown as RuntimeContext['sessionManager'],
+    nonceManager: new FakeNonceManager() as unknown as RuntimeContext['nonceManager'],
   };
 
   const server = new ApiServer(context);

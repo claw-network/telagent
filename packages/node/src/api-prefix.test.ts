@@ -254,6 +254,66 @@ class FakeKeyLifecycleService {
   }
 }
 
+class FakeClawNetGatewayService {
+  async getBalance(did?: string) {
+    return {
+      did: did ?? 'did:claw:zSelf',
+      address: '0x' + '1'.repeat(40),
+      native: '1000000000000000000',
+      token: '2000000000000000000',
+    };
+  }
+
+  async getNonce() {
+    return {
+      nonce: 1,
+      address: '0x' + '1'.repeat(40),
+    };
+  }
+
+  async resolveIdentity(did: string) {
+    return {
+      did,
+      address: '0x' + '2'.repeat(40),
+      isActive: true,
+      controller: '0x' + '2'.repeat(40),
+      activeKey: '0x22',
+      document: {
+        capabilities: ['chat'],
+        keyHistory: [],
+      },
+    };
+  }
+
+  async getSelfIdentity() {
+    return this.resolveIdentity('did:claw:zSelf');
+  }
+}
+
+class FakeSessionManager {
+  async unlock() {
+    return {
+      sessionToken: 'tses_test_token',
+      expiresAt: new Date(Date.now() + 60_000),
+      scope: ['transfer', 'escrow', 'market', 'contract', 'reputation', 'identity'],
+    };
+  }
+
+  lock() {}
+
+  getSessionInfo() {
+    return {
+      active: true,
+      expiresAt: new Date(Date.now() + 60_000),
+      scope: ['transfer'],
+      operationsUsed: 0,
+      createdAt: new Date(),
+    };
+  }
+}
+
+class FakeNonceManager {}
+
 async function startTestServer() {
   const context: RuntimeContext = {
     config: { host: '127.0.0.1', port: 0 },
@@ -265,6 +325,9 @@ async function startTestServer() {
     federationService: new FakeFederationService() as unknown as RuntimeContext['federationService'],
     monitoringService: new NodeMonitoringService(),
     keyLifecycleService: new FakeKeyLifecycleService() as unknown as RuntimeContext['keyLifecycleService'],
+    clawnetGateway: new FakeClawNetGatewayService() as unknown as RuntimeContext['clawnetGateway'],
+    sessionManager: new FakeSessionManager() as unknown as RuntimeContext['sessionManager'],
+    nonceManager: new FakeNonceManager() as unknown as RuntimeContext['nonceManager'],
   };
 
   const server = new ApiServer(context);

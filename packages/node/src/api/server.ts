@@ -12,6 +12,8 @@ import { identityRoutes } from './routes/identities.js';
 import { keyRoutes } from './routes/keys.js';
 import { messageRoutes } from './routes/messages.js';
 import { nodeRoutes } from './routes/node.js';
+import { clawnetRoutes } from './routes/clawnet.js';
+import { sessionRoutes } from './routes/session.js';
 import { walletRoutes } from './routes/wallets.js';
 import type { RuntimeContext } from './types.js';
 
@@ -26,6 +28,8 @@ function buildRouter(ctx: RuntimeContext): Router {
   router.mount('/api/v1/messages', messageRoutes(ctx));
   router.mount('/api/v1/attachments', attachmentRoutes(ctx));
   router.mount('/api/v1/federation', federationRoutes(ctx));
+  router.mount('/api/v1/session', sessionRoutes(ctx));
+  router.mount('/api/v1/clawnet', clawnetRoutes(ctx));
 
   return router;
 }

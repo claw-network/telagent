@@ -1,14 +1,16 @@
 import { ErrorCodes, TelagentError, hashDid, isDidClaw, type AgentDID } from '@telagent/protocol';
 
-import type { ContractProvider } from './contract-provider.js';
+import type { ClawNetGatewayService, IdentityInfo } from '../clawnet/gateway-service.js';
 
-export interface IdentityView {
+export interface ResolvedIdentity {
   did: AgentDID;
   didHash: string;
   controller: string;
   publicKey: string;
   isActive: boolean;
   resolvedAtMs: number;
+  address: string;
+  activeKey: string;
 }
 
 export interface DidRevocationEvent {
@@ -21,9 +23,13 @@ export interface DidRevocationEvent {
 export type DidRevocationListener = (event: DidRevocationEvent) => void;
 
 export class IdentityAdapterService {
+  private selfDidCache: AgentDID | null = null;
+  private selfAddressCache: string | null = null;
   private readonly revocationListeners = new Set<DidRevocationListener>();
 
-  constructor(private readonly contracts: ContractProvider) {}
+  constructor(
+    private readonly gateway: ClawNetGatewayService,
+  ) {}
 
   subscribeDidRevocations(listener: DidRevocationListener): () => void {
     this.revocationListeners.add(listener);
@@ -63,39 +69,35 @@ export class IdentityAdapterService {
     return event;
   }
 
-  async getSelf(): Promise<IdentityView> {
-    return this.resolve(this.contracts.config.selfDid);
+  async getSelf(): Promise<ResolvedIdentity> {
+    const info = await this.gateway.getSelfIdentity();
+    const resolved = this.toResolvedIdentity(info);
+    this.selfDidCache = resolved.did;
+    this.selfAddressCache = resolved.address;
+    return resolved;
   }
 
-  async resolve(rawDid: string): Promise<IdentityView> {
+  getSelfDid(): AgentDID {
+    if (!this.selfDidCache) {
+      throw new TelagentError(ErrorCodes.CONFLICT, 'Identity not initialized. Call init() first.');
+    }
+    return this.selfDidCache;
+  }
+
+  async init(): Promise<void> {
+    await this.getSelf();
+  }
+
+  async resolve(rawDid: string): Promise<ResolvedIdentity> {
     if (!isDidClaw(rawDid)) {
       throw new TelagentError(ErrorCodes.VALIDATION, 'DID must use did:claw format');
     }
 
-    const did = rawDid as AgentDID;
-    const didHash = hashDid(did);
-
-    const [isActive, controller, activeKey] = await Promise.all([
-      this.contracts.identity.isActive(didHash) as Promise<boolean>,
-      this.contracts.identity.getController(didHash) as Promise<string>,
-      this.contracts.identity.getActiveKey(didHash) as Promise<string>,
-    ]);
-
-    if (controller === '0x0000000000000000000000000000000000000000') {
-      throw new TelagentError(ErrorCodes.NOT_FOUND, 'DID not registered on ClawIdentity');
-    }
-
-    return {
-      did,
-      didHash,
-      controller,
-      publicKey: activeKey,
-      isActive,
-      resolvedAtMs: Date.now(),
-    };
+    const info = await this.gateway.resolveIdentity(rawDid);
+    return this.toResolvedIdentity(info);
   }
 
-  async assertActiveDid(rawDid: string): Promise<IdentityView> {
+  async assertActiveDid(rawDid: string): Promise<ResolvedIdentity> {
     const identity = await this.resolve(rawDid);
     if (!identity.isActive) {
       this.notifyDidRevoked(identity.did, {
@@ -108,15 +110,35 @@ export class IdentityAdapterService {
     return identity;
   }
 
-  async assertControllerBySigner(rawDid: string): Promise<IdentityView> {
+  async assertControllerBySigner(rawDid: string): Promise<ResolvedIdentity> {
     const identity = await this.assertActiveDid(rawDid);
-    const signerAddress = this.contracts.signerAddress.toLowerCase();
+    const self = await this.getSelf();
+    const signerAddress = (this.selfAddressCache ?? self.address).toLowerCase();
     if (identity.controller.toLowerCase() !== signerAddress) {
       throw new TelagentError(
         ErrorCodes.FORBIDDEN,
-        `Signer ${this.contracts.signerAddress} is not controller for DID ${identity.did}`,
+        `Signer ${self.address} is not controller for DID ${identity.did}`,
       );
     }
     return identity;
+  }
+
+  private toResolvedIdentity(info: IdentityInfo): ResolvedIdentity {
+    const did = info.did as AgentDID;
+    const controller = info.controller || info.address;
+    if (!controller) {
+      throw new TelagentError(ErrorCodes.NOT_FOUND, 'DID controller not found in ClawNet identity');
+    }
+
+    return {
+      did,
+      didHash: hashDid(did),
+      controller,
+      publicKey: info.activeKey,
+      isActive: info.isActive,
+      resolvedAtMs: Date.now(),
+      address: info.address,
+      activeKey: info.activeKey,
+    };
   }
 }

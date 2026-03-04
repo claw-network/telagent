@@ -7,7 +7,23 @@ export type GroupState = 'PENDING_ONCHAIN' | 'ACTIVE' | 'REORGED_BACK';
 export type MembershipState = 'PENDING' | 'FINALIZED' | 'REMOVED';
 
 export type ConversationType = 'direct' | 'group';
-export type ContentType = 'text' | 'image' | 'file' | 'control';
+// ── 基础消息类型 ──────────────────────────────────
+export type BaseContentType = 'text' | 'image' | 'file' | 'control';
+
+// ── TelAgent 扩展消息类型（telagent/* 命名空间，与 RFC §4.2 对齐） ──
+export type TelagentContentType =
+  | 'telagent/identity-card'       // 展示 Identity + Reputation 卡片
+  | 'telagent/transfer-request'    // 转账请求
+  | 'telagent/transfer-receipt'    // 转账完成回执
+  | 'telagent/task-listing'        // 任务发布卡片
+  | 'telagent/task-bid'            // 竞标通知
+  | 'telagent/escrow-created'      // 托管创建通知
+  | 'telagent/escrow-released'     // 托管释放通知
+  | 'telagent/milestone-update'    // 里程碑进度更新
+  | 'telagent/review-card';        // 评价卡片
+
+// ── 联合类型 ──────────────────────────────────────
+export type ContentType = BaseContentType | TelagentContentType;
 
 export interface RouteHint {
   targetDomain: string;

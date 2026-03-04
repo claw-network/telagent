@@ -19,9 +19,8 @@ export class GasService {
     return this.contracts.provider.getBalance(address ?? this.contracts.signerAddress);
   }
 
-  async getTokenBalance(address?: string): Promise<bigint> {
-    return this.contracts.token.balanceOf(address ?? this.contracts.signerAddress) as Promise<bigint>;
-  }
+  // getTokenBalance() 已删除 — Token 余额通过 ClawNet SDK 查询:
+  // clawnetGateway.getBalance({ did })
 
   async preflight(tx: { to: string; data: string }): Promise<GasPreflightResult> {
     const signer = this.contracts.signerAddress;

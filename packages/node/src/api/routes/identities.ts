@@ -9,7 +9,16 @@ export function identityRoutes(ctx: RuntimeContext): Router {
   router.get('/self', async ({ res, url }) => {
     try {
       const identity = await ctx.identityService.getSelf();
-      ok(res, identity, { self: '/api/v1/identities/self' });
+      const fullIdentity = await ctx.clawnetGateway.resolveIdentity(identity.did);
+      ok(
+        res,
+        {
+          ...identity,
+          capabilities: (fullIdentity.document?.capabilities as unknown[]) ?? [],
+          keyHistory: (fullIdentity.document?.keyHistory as unknown[]) ?? [],
+        },
+        { self: '/api/v1/identities/self' },
+      );
     } catch (error) {
       handleError(res, error, url.pathname);
     }
@@ -18,7 +27,16 @@ export function identityRoutes(ctx: RuntimeContext): Router {
   router.get('/:did', async ({ res, params, url }) => {
     try {
       const identity = await ctx.identityService.resolve(params.did);
-      ok(res, identity, { self: `/api/v1/identities/${encodeURIComponent(params.did)}` });
+      const fullIdentity = await ctx.clawnetGateway.resolveIdentity(params.did);
+      ok(
+        res,
+        {
+          ...identity,
+          capabilities: (fullIdentity.document?.capabilities as unknown[]) ?? [],
+          keyHistory: (fullIdentity.document?.keyHistory as unknown[]) ?? [],
+        },
+        { self: `/api/v1/identities/${encodeURIComponent(params.did)}` },
+      );
     } catch (error) {
       handleError(res, error, url.pathname);
     }
