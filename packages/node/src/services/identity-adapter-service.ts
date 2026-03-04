@@ -125,20 +125,19 @@ export class IdentityAdapterService {
 
   private toResolvedIdentity(info: IdentityInfo): ResolvedIdentity {
     const did = info.did as AgentDID;
-    const controller = info.controller || info.address;
-    if (!controller) {
-      throw new TelagentError(ErrorCodes.NOT_FOUND, 'DID controller not found in ClawNet identity');
-    }
+    const controller = (info.controller || info.address || info.did || '').trim();
+    const address = (info.address || info.controller || info.did || '').trim();
+    const publicKey = (info.activeKey || info.publicKey || info.did || '').trim();
 
     return {
       did,
       didHash: hashDid(did),
-      controller,
-      publicKey: info.activeKey,
-      isActive: info.isActive,
+      controller: controller || did,
+      publicKey: publicKey || did,
+      isActive: info.isActive ?? true,
       resolvedAtMs: Date.now(),
-      address: info.address,
-      activeKey: info.activeKey,
+      address: address || did,
+      activeKey: publicKey || did,
     };
   }
 }

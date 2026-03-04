@@ -21,10 +21,11 @@ export interface ClawNetGatewayConfig {
 
 export interface IdentityInfo {
   did: string;
-  address: string;
-  isActive: boolean;
-  controller: string;
-  activeKey: string;
+  address?: string;
+  isActive?: boolean;
+  controller?: string;
+  activeKey?: string;
+  publicKey?: string;
   document?: Record<string, unknown>;
 }
 
@@ -87,12 +88,12 @@ export class ClawNetGatewayService {
 
   async getSelfIdentity(): Promise<IdentityInfo> {
     const result = await this.unsafeClient.identity.get();
-    return result as IdentityInfo;
+    return this.normalizeIdentityInfo(result);
   }
 
   async resolveIdentity(did: string): Promise<IdentityInfo> {
     const result = await this.unsafeClient.identity.resolve(did);
-    return result as IdentityInfo;
+    return this.normalizeIdentityInfo(result);
   }
 
   async getBalance(did?: string): Promise<BalanceInfo> {
@@ -158,6 +159,76 @@ export class ClawNetGatewayService {
   async searchMarkets(params?: { q?: string; type?: string }): Promise<unknown[]> {
     const result = await this.unsafeClient.markets.search(params as any);
     return result as unknown[];
+  }
+
+  private normalizeIdentityInfo(raw: unknown): IdentityInfo {
+    const source = (raw ?? {}) as Record<string, unknown>;
+
+    const did = this.pickString(source, [
+      'did',
+      'id',
+    ]);
+    if (!did) {
+      throw new Error('ClawNet identity payload missing did');
+    }
+
+    const address = this.pickString(source, [
+      'address',
+      'walletAddress',
+      'evmAddress',
+      'owner',
+      'controller',
+    ]);
+
+    const controller = this.pickString(source, [
+      'controller',
+      'owner',
+      'address',
+      'walletAddress',
+      'evmAddress',
+    ]);
+
+    const activeKey = this.pickString(source, [
+      'activeKey',
+      'publicKey',
+      'key',
+    ]);
+
+    const isActive = this.pickBoolean(source, [
+      'isActive',
+      'active',
+      'enabled',
+    ]) ?? true;
+
+    return {
+      did,
+      address,
+      isActive,
+      controller,
+      activeKey,
+      publicKey: this.pickString(source, ['publicKey']),
+      document: source,
+    };
+  }
+
+  private pickString(source: Record<string, unknown>, keys: string[]): string | undefined {
+    for (const key of keys) {
+      const value = source[key];
+      if (typeof value === 'string' && value.trim()) {
+        return value.trim();
+      }
+    }
+    return undefined;
+  }
+
+  private pickBoolean(source: Record<string, unknown>, keys: string[]): boolean | undefined {
+    for (const key of keys) {
+      const value = source[key];
+      if (typeof value === 'boolean') {
+        return value;
+      }
+    }
+    return undefined;
   }
 
   async createServiceContract(
