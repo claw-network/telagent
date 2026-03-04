@@ -6,7 +6,7 @@
 
 ## 1. 使用说明
 
-- **执行顺序**：按 `Phase 0 -> Phase 17` 串行推进，禁止跨 Gate 跳阶段。
+- **执行顺序**：按 `Phase 0 -> Phase 17 -> Release(v0.2.0)` 串行推进，禁止跨 Gate 跳阶段。
 - **状态字段**：`TODO | IN_PROGRESS | BLOCKED | DONE`。
 - **估算单位**：人日（PD）。
 - **依赖格式**：`-` 表示无依赖；多个依赖用逗号分隔任务 ID。
@@ -33,6 +33,7 @@ flowchart LR
   P14 --> P15["Phase 15\nConsole 工业级设计与多平台建设"]
   P15 --> P16["Phase 16\nConsole 实装冲刺"]
   P16 --> P17["Phase 17\n跨节点自动投递闭环加固"]
+  P17 --> R2["Release\nv0.2.0 发布编排"]
 ```
 
 ## 3. 分阶段任务清单
@@ -171,6 +172,10 @@ flowchart LR
 | TA-P17-002 | Phase 17 | 联邦出站持久化队列（SQLite/Postgres）与退避重放 | Backend + SRE | 2 | TA-P17-001 | persistent federation outbox + replay loop | 进程重启后 pending 任务不丢失，重试/清理语义可验证 | DONE |
 | TA-P17-003 | Phase 17 | 双云节点直连聊天闭环检查脚本与机读报告 | Backend + QA | 1 | TA-P17-002 | cross-node check script + report schema | A->B/B->A 互发可自动校验并输出 PASS/FAIL 报告 | DONE |
 | TA-P17-004 | Phase 17 | Phase 17 Gate 评审与收口 | TL + QA + Backend | 0.5 | TA-P17-001, TA-P17-002, TA-P17-003 | gate record + evidence checklist | Gate 结论明确且可指导下一位 agent 接力 | DONE |
+| TA-RLS-003 | Release | `v0.2.0` 发布前置检查（Phase 6~17 + 双云联调 + 版本一致性） | Release Owner + TL + QA + SRE | 1 | TA-P17-004 | v0.2.0 preflight script + manifest | `decision=READY_FOR_TAG` | TODO |
+| TA-RLS-004 | Release | 双云联调门禁与告警阈值校验 | SRE + Backend + QA | 1 | TA-RLS-003 | dual-cloud smoke script + manifest | `decision=PASS` 且延迟阈值达标 | TODO |
+| TA-RLS-005 | Release | `v0.2.0` 回滚与恢复演练 | SRE + Backend + TL | 1 | TA-RLS-004 | rollback drill script + manifest | `decision=PASS` 且回滚后跨节点联调仍可达 | TODO |
+| TA-RLS-006 | Release | 创建 `v0.2.0` 标签并归档 Release Note | Release Owner + TL | 0.5 | TA-RLS-005 | tag evidence script + release note | 标签推送成功且 `decision=RELEASED` | TODO |
 
 ## 4. 执行节奏建议（按部就班）
 
@@ -406,3 +411,12 @@ flowchart LR
 | TA-P17-002 | DONE | `docs/implementation/phase-17/ta-p17-002-persistent-federation-outbox-2026-03-04.md`, `packages/node/src/services/federation-delivery-service.ts`, `packages/node/src/services/federation-delivery-service.test.ts`, `packages/node/src/storage/message-repository.ts`, `packages/node/src/storage/postgres-message-repository.ts` | 无 | 进入 `TA-P17-003` 双节点联调脚本与报告 |
 | TA-P17-003 | DONE | `docs/implementation/phase-17/ta-p17-003-two-node-chat-check-2026-03-04.md`, `docs/implementation/phase-17/two-node-one-click-checklist-2026-03-04.md`, `docs/implementation/phase-17/two-node-cloud-runtime-2026-03-04.md`, `packages/node/scripts/run-cross-node-chat-check.ts`, `docs/implementation/phase-17/cross-node-chat-check-report.json` | 无 | 进入 `TA-P17-004` Gate 收口 |
 | TA-P17-004 | DONE | `docs/implementation/phase-17/ta-p17-004-phase17-gate-prep-2026-03-04.md`, `docs/implementation/gates/phase-17-gate.md` | 无 | Phase 17 关闭（PASS），等待下阶段任务编排 |
+
+## 24. Release `v0.2.0` 发布编排（2026-03-04）
+
+| Task ID | 状态 | 证据链接 | 阻塞项 | 下一步动作 |
+| --- | --- | --- | --- | --- |
+| TA-RLS-003 | TODO | `docs/implementation/release/ta-rls-003-v0.2.0-preflight-2026-03-04.md`, `packages/node/scripts/run-release-v020-preflight.ts` | 待执行 preflight 并生成机读清单 | 运行脚本并产出 `docs/implementation/release/manifests/2026-03-04-v0.2.0-release-preflight.json` |
+| TA-RLS-004 | TODO | `docs/implementation/release/ta-rls-004-dual-cloud-smoke-and-alerting-2026-03-04.md`, `packages/node/scripts/run-release-v020-dual-cloud-smoke-check.ts` | 依赖 TA-RLS-003 READY_FOR_TAG | 执行双云联调门禁并生成 `docs/implementation/release/manifests/2026-03-04-v0.2.0-dual-cloud-smoke-check.json` |
+| TA-RLS-005 | TODO | `docs/implementation/release/ta-rls-005-v0.2.0-rollback-and-recovery-drill-2026-03-04.md`, `packages/node/scripts/run-release-v020-rollback-drill.ts` | 依赖 TA-RLS-004 PASS | 执行回滚演练并生成 `docs/implementation/release/manifests/2026-03-04-v0.2.0-rollback-drill.json` |
+| TA-RLS-006 | TODO | `docs/implementation/release/ta-rls-006-v0.2.0-tag-and-release-note-2026-03-04.md`, `packages/node/scripts/run-release-v020-tag-record.ts` | 依赖 TA-RLS-005 PASS | 创建并推送 `v0.2.0` 标签，归档 `docs/implementation/release/manifests/2026-03-04-v0.2.0-release-tag.json` |

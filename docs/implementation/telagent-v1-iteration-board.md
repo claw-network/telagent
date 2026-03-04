@@ -1,10 +1,10 @@
 # TelAgent v1 迭代看板（按周排期）
 
-- 文档版本：v1.0
+- 文档版本：v1.1
 - 最后更新：2026-03-04
 - 基线计划起始日：2026-03-02（周一）
 - 基线计划结束日：2026-05-17（周日）
-- 适用范围：Phase 0 -> Phase 17（发布后改进 + 联邦灰度兼容 + 自动化回滚 + v1.1/v1.2/v0.2.0 + Console 工业化增强 + Console 实装冲刺 + 跨节点自动投递闭环加固）
+- 适用范围：Phase 0 -> Phase 17 -> Release(v0.2.0)（发布后改进 + 联邦灰度兼容 + 自动化回滚 + v1.1/v1.2/v0.2.0 + Console 工业化增强 + Console 实装冲刺 + 跨节点自动投递闭环加固 + 发布编排）
 
 ## 1. 看板目的
 
@@ -164,6 +164,18 @@
   - 双节点云端联调报告（A->B / B->A）
 - 周末 Gate：完成 `phase-17-gate.md` 正式结论。
 
+## Week 13（滚动窗口）- Release `v0.2.0`
+
+- 目标：完成 `v0.2.0` 发布编排（前置检查 -> 双云门禁 -> 回滚演练 -> tag 归档）。
+- 计划任务：`TA-RLS-003` `TA-RLS-004` `TA-RLS-005` `TA-RLS-006`
+- 建议 Owner：`Release Owner(主)` + `SRE` + `BE-2` + `QA` + `TL`
+- 周交付：
+  - `v0.2.0` preflight 报告（`READY_FOR_TAG`）
+  - 双云门禁报告（`PASS`）
+  - 回滚演练报告（`PASS`）
+  - `v0.2.0` tag 与 release note 证据清单
+- 周末 Gate：确认发布证据完整并完成 `v0.2.0` 标签发布。
+
 ## 4. 当前可执行看板（即刻启动）
 
 ## 4.1 Ready This Week（2026-03-04 更新）
@@ -258,6 +270,10 @@
 - 已完成：`TA-P17-003`（双节点云端联调脚本与机读报告）
 - 已完成：`TA-P17-004`（Phase 17 Gate 收口）
 - 当前结论：Phase 17 已关闭（PASS）。
+- 待执行：`TA-RLS-003`（`v0.2.0` preflight）
+- 待执行：`TA-RLS-004`（双云门禁与告警基线）
+- 待执行：`TA-RLS-005`（回滚与恢复演练）
+- 待执行：`TA-RLS-006`（`v0.2.0` 标签发布与 Release Note）
 
 ## 4.2 Blockers（2026-03-04 更新）
 
@@ -483,6 +499,14 @@
 - `TA-P17-004`：DONE（Gate 结论已输出，见 `docs/implementation/gates/phase-17-gate.md`）。
 - 测试状态：`pnpm --filter @telagent/node test` 已通过（`97/97`），日志见 `docs/implementation/phase-17/logs/2026-03-04-p17-node-test.txt`。
 - 阶段状态：Phase 17 已关闭（PASS）。
+
+## 4.23 Release `v0.2.0` 发布编排（2026-03-04）
+
+- `TA-RLS-003`：TODO（`v0.2.0` 发布前置检查，脚本：`packages/node/scripts/run-release-v020-preflight.ts`，文档：`docs/implementation/release/ta-rls-003-v0.2.0-preflight-2026-03-04.md`）。
+- `TA-RLS-004`：TODO（双云门禁与告警基线，脚本：`packages/node/scripts/run-release-v020-dual-cloud-smoke-check.ts`，文档：`docs/implementation/release/ta-rls-004-dual-cloud-smoke-and-alerting-2026-03-04.md`）。
+- `TA-RLS-005`：TODO（回滚与恢复演练，脚本：`packages/node/scripts/run-release-v020-rollback-drill.ts`，文档：`docs/implementation/release/ta-rls-005-v0.2.0-rollback-and-recovery-drill-2026-03-04.md`）。
+- `TA-RLS-006`：TODO（`v0.2.0` 标签发布与 Release Note，脚本：`packages/node/scripts/run-release-v020-tag-record.ts`，文档：`docs/implementation/release/ta-rls-006-v0.2.0-tag-and-release-note-2026-03-04.md`）。
+- 阶段目标：形成 4 份机读清单并完成 `v0.2.0` 标签归档。
 
 ## 5. 周会与 Gate 节奏建议
 
