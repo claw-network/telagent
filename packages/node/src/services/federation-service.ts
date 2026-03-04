@@ -225,6 +225,30 @@ export class FederationService {
     };
   }
 
+  getSelfDomain(): string {
+    return this.selfDomain;
+  }
+
+  getProtocolVersion(): string {
+    return this.protocolVersion;
+  }
+
+  getAuthToken(): string | undefined {
+    return this.authToken;
+  }
+
+  authorizeIngress(meta: FederationRequestMeta): { sourceDomain: string; protocolVersion: string } {
+    const sourceDomain = this.assertAndNormalizeSourceDomain(meta.sourceDomain);
+    this.assertAuthorized(meta.authToken);
+    this.assertSourcePinning(sourceDomain, meta.sourceKeyId);
+    const protocolVersion = this.assertAndResolveProtocolVersion(meta.protocolVersion);
+    this.recordProtocolAcceptance(
+      protocolVersion,
+      typeof meta.protocolVersion === 'string' && meta.protocolVersion.trim().length > 0,
+    );
+    return { sourceDomain, protocolVersion };
+  }
+
   receiveEnvelope(
     payload: Record<string, unknown>,
     meta: FederationRequestMeta,

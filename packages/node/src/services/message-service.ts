@@ -32,6 +32,25 @@ export interface SendMessageInput {
   ttlSec: number;
 }
 
+export interface IngestEnvelopeInput {
+  envelopeId: string;
+  conversationId: string;
+  conversationType: 'direct' | 'group';
+  routeHint: {
+    targetDomain: string;
+    mailboxKeyId: string;
+  };
+  sealedHeader: string;
+  seq: bigint;
+  epoch?: number;
+  ciphertext: string;
+  contentType: 'text' | 'image' | 'file' | 'control';
+  attachmentManifestHash?: string;
+  sentAtMs: number;
+  ttlSec: number;
+  provisional?: boolean;
+}
+
 export interface MessageServiceClock {
   now(): number;
 }
@@ -280,6 +299,52 @@ export class MessageService {
       idempotencySignature: signature,
     });
     this.recordConversationActivity(senderDidHash, input.conversationId);
+
+    return envelope;
+  }
+
+  async ingestFederatedEnvelope(raw: Record<string, unknown>): Promise<Envelope> {
+    const nowMs = this.clock.now();
+    await this.runMaintenance(nowMs);
+
+    const envelope = this.normalizeEnvelopeForIngestion(raw);
+    const signature = this.buildEnvelopeIdempotencySignature(envelope);
+
+    const existing = await this.getEnvelopeById(envelope.envelopeId);
+    if (existing) {
+      const existingSignature = await this.getIdempotencySignature(envelope.envelopeId);
+      if (existingSignature !== signature) {
+        throw new TelagentError(
+          ErrorCodes.CONFLICT,
+          `envelopeId(${envelope.envelopeId}) already exists with a different payload`,
+        );
+      }
+      return existing;
+    }
+
+    const existingSignature = await this.getIdempotencySignature(envelope.envelopeId);
+    if (existingSignature) {
+      if (existingSignature !== signature) {
+        throw new TelagentError(
+          ErrorCodes.CONFLICT,
+          `envelopeId(${envelope.envelopeId}) already exists with a different payload`,
+        );
+      }
+      const retracted = await this.getRetraction(envelope.envelopeId);
+      if (retracted) {
+        throw new TelagentError(
+          ErrorCodes.CONFLICT,
+          `envelopeId(${envelope.envelopeId}) was retracted due to ${retracted.reason}`,
+        );
+      }
+      throw new TelagentError(ErrorCodes.CONFLICT, `envelopeId(${envelope.envelopeId}) already exists`);
+    }
+
+    await this.persistEnvelope({
+      envelope,
+      idempotencySignature: signature,
+    });
+    this.activeConversationIds.add(envelope.conversationId);
 
     return envelope;
   }
@@ -567,6 +632,152 @@ export class MessageService {
       epoch: input.epoch ?? null,
       ttlSec: input.ttlSec,
     });
+  }
+
+  private buildEnvelopeIdempotencySignature(envelope: Envelope): string {
+    return JSON.stringify({
+      envelopeId: envelope.envelopeId,
+      conversationId: envelope.conversationId,
+      conversationType: envelope.conversationType,
+      routeHint: {
+        targetDomain: envelope.routeHint.targetDomain,
+        mailboxKeyId: envelope.routeHint.mailboxKeyId,
+      },
+      sealedHeader: envelope.sealedHeader,
+      seq: envelope.seq.toString(),
+      epoch: envelope.epoch ?? null,
+      ciphertext: envelope.ciphertext,
+      contentType: envelope.contentType,
+      attachmentManifestHash: envelope.attachmentManifestHash ?? null,
+      sentAtMs: envelope.sentAtMs,
+      ttlSec: envelope.ttlSec,
+      provisional: envelope.provisional ?? false,
+    });
+  }
+
+  private normalizeEnvelopeForIngestion(raw: Record<string, unknown>): Envelope {
+    const envelopeId = this.requiredString(raw.envelopeId, 'envelopeId');
+    const conversationId = this.requiredString(raw.conversationId, 'conversationId');
+    const conversationType = this.requiredConversationType(raw.conversationType);
+    const routeHint = this.requiredRecord(raw.routeHint, 'routeHint');
+    const targetDomain = this.requiredString(routeHint.targetDomain, 'routeHint.targetDomain');
+    const mailboxKeyId = this.requiredString(routeHint.mailboxKeyId, 'routeHint.mailboxKeyId');
+    const sealedHeader = this.requiredString(raw.sealedHeader, 'sealedHeader');
+    const seq = this.requiredBigInt(raw.seq, 'seq');
+    const epoch = this.optionalInteger(raw.epoch, 'epoch');
+    const ciphertext = this.requiredString(raw.ciphertext, 'ciphertext');
+    const contentType = this.requiredContentType(raw.contentType);
+    const attachmentManifestHash = this.optionalString(raw.attachmentManifestHash);
+    const sentAtMs = this.requiredNonNegativeInteger(raw.sentAtMs, 'sentAtMs');
+    const ttlSec = this.requiredPositiveInteger(raw.ttlSec, 'ttlSec');
+    const provisional = this.optionalBoolean(raw.provisional, 'provisional');
+
+    return {
+      envelopeId,
+      conversationId,
+      conversationType,
+      routeHint: {
+        targetDomain,
+        mailboxKeyId,
+      },
+      sealedHeader,
+      seq,
+      epoch,
+      ciphertext,
+      contentType,
+      attachmentManifestHash,
+      sentAtMs,
+      ttlSec,
+      provisional,
+    };
+  }
+
+  private requiredRecord(input: unknown, field: string): Record<string, unknown> {
+    if (!input || typeof input !== 'object') {
+      throw new TelagentError(ErrorCodes.VALIDATION, `${field} must be an object`);
+    }
+    return input as Record<string, unknown>;
+  }
+
+  private requiredString(input: unknown, field: string): string {
+    if (typeof input !== 'string' || !input.trim()) {
+      throw new TelagentError(ErrorCodes.VALIDATION, `${field} must be a non-empty string`);
+    }
+    return input;
+  }
+
+  private optionalString(input: unknown): string | undefined {
+    if (typeof input === 'undefined' || input === null) {
+      return undefined;
+    }
+    if (typeof input !== 'string' || !input.trim()) {
+      throw new TelagentError(ErrorCodes.VALIDATION, 'attachmentManifestHash must be a non-empty string when provided');
+    }
+    return input;
+  }
+
+  private requiredBigInt(input: unknown, field: string): bigint {
+    if (typeof input === 'bigint') {
+      if (input < 0n) {
+        throw new TelagentError(ErrorCodes.VALIDATION, `${field} must be non-negative`);
+      }
+      return input;
+    }
+    if (typeof input === 'number' && Number.isInteger(input) && input >= 0) {
+      return BigInt(input);
+    }
+    if (typeof input === 'string' && /^\d+$/.test(input)) {
+      return BigInt(input);
+    }
+    throw new TelagentError(ErrorCodes.VALIDATION, `${field} must be a non-negative integer`);
+  }
+
+  private requiredConversationType(input: unknown): 'direct' | 'group' {
+    if (input === 'direct' || input === 'group') {
+      return input;
+    }
+    throw new TelagentError(ErrorCodes.VALIDATION, 'conversationType must be direct or group');
+  }
+
+  private requiredContentType(input: unknown): 'text' | 'image' | 'file' | 'control' {
+    if (input === 'text' || input === 'image' || input === 'file' || input === 'control') {
+      return input;
+    }
+    throw new TelagentError(ErrorCodes.VALIDATION, 'contentType must be one of text|image|file|control');
+  }
+
+  private optionalInteger(input: unknown, field: string): number | undefined {
+    if (typeof input === 'undefined' || input === null) {
+      return undefined;
+    }
+    if (typeof input !== 'number' || !Number.isInteger(input) || input < 0) {
+      throw new TelagentError(ErrorCodes.VALIDATION, `${field} must be a non-negative integer when provided`);
+    }
+    return input;
+  }
+
+  private requiredNonNegativeInteger(input: unknown, field: string): number {
+    if (typeof input !== 'number' || !Number.isInteger(input) || input < 0) {
+      throw new TelagentError(ErrorCodes.VALIDATION, `${field} must be a non-negative integer`);
+    }
+    return input;
+  }
+
+  private requiredPositiveInteger(input: unknown, field: string): number {
+    if (typeof input !== 'number' || !Number.isInteger(input) || input <= 0) {
+      throw new TelagentError(ErrorCodes.VALIDATION, `${field} must be a positive integer`);
+    }
+    return input;
+  }
+
+  private optionalBoolean(input: unknown, field: string): boolean | undefined {
+    if (typeof input === 'undefined' || input === null) {
+      return undefined;
+    }
+    if (typeof input !== 'boolean') {
+      throw new TelagentError(ErrorCodes.VALIDATION, `${field} must be boolean when provided`);
+    }
+    return input;
   }
 
   private resolveGroupId(conversationId: string): string {

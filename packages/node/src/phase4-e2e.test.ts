@@ -747,6 +747,42 @@ test('TA-P4-010 E2E offline 24h pull keeps dedupe and per-conversation order', a
   assert.ok(clock.now() - allItems[0].sentAtMs >= 86_400_000);
 });
 
+test('TA-P4-011 federation envelope ingest writes into mailbox pull view', async (t) => {
+  const { server, baseUrl, clock } = await startE2EServer();
+  t.after(async () => {
+    await server.stop();
+  });
+
+  const conversationId = 'direct:did:claw:zAlice--did:claw:zBob';
+  const sentAtMs = clock.now();
+  const envelopeId = 'fed-ingest-1';
+
+  const ingestRes = await postJson(baseUrl, '/api/v1/federation/envelopes', {
+    envelopeId,
+    conversationId,
+    conversationType: 'direct',
+    routeHint: {
+      targetDomain: 'node-e2e.tel',
+      mailboxKeyId: 'mailbox-fed',
+    },
+    sealedHeader: '0x11',
+    seq: '1',
+    ciphertext: '0x22',
+    contentType: 'text',
+    sentAtMs,
+    ttlSec: 3600,
+    sourceDomain: 'node-remote.tel',
+  });
+  assert.equal(ingestRes.status, 201);
+
+  const pullRes = await getJson(baseUrl, `/api/v1/messages/pull?conversation_id=${encodeURIComponent(conversationId)}&limit=10`);
+  assert.equal(pullRes.status, 200);
+  const pullBody = (await pullRes.json()) as DataEnvelope<{ items: JsonEnvelope[] }>;
+  assert.equal(pullBody.data.items.length, 1);
+  assert.equal(pullBody.data.items[0].envelopeId, envelopeId);
+  assert.equal(pullBody.data.items[0].seq, '1');
+});
+
 test('TA-P14-003 E2E pull cursor stays stable when cleanup happens between pages', async (t) => {
   const { server, baseUrl, clock } = await startE2EServer(8_000);
   t.after(async () => {

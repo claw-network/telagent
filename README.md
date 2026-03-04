@@ -29,6 +29,9 @@ The current codebase already implements the ClawNet deep integration baseline:
 - ClawNet gateway API namespace (`/api/v1/clawnet/*`)
 - strict `/api/v1/*` API prefix enforcement
 - ClawNet-style success envelopes and RFC7807 error responses
+- deterministic sequencer ownership for direct/group chats
+- persistent federation outbox (SQLite/Postgres) with retry backoff
+- cross-node submit path (`/api/v1/federation/messages/submit`) for remote sequencer assignment
 
 ## Repository structure
 
@@ -67,6 +70,7 @@ Key endpoint groups:
   - `POST /api/v1/attachments/init-upload`
   - `POST /api/v1/attachments/complete-upload`
   - `POST /api/v1/federation/envelopes`
+  - `POST /api/v1/federation/messages/submit`
   - `POST /api/v1/federation/group-state/sync`
   - `POST /api/v1/federation/receipts`
   - `GET /api/v1/federation/node-info`
@@ -152,3 +156,27 @@ pnpm --filter @telagent/protocol build
 pnpm --filter @telagent/node build
 pnpm --filter @telagent/node test
 ```
+
+## Two-node cloud smoke check
+
+To validate cross-node auto delivery on two deployed TelAgent nodes:
+
+1) Export node endpoints, DID, and federation domains:
+
+```bash
+export TELAGENT_NODE_A_URL=https://node-a.example.com
+export TELAGENT_NODE_A_DID=did:claw:zNodeA
+export TELAGENT_NODE_A_DOMAIN=node-a.example.com
+export TELAGENT_NODE_B_URL=https://node-b.example.com
+export TELAGENT_NODE_B_DID=did:claw:zNodeB
+export TELAGENT_NODE_B_DOMAIN=node-b.example.com
+```
+
+2) Run the phase check script:
+
+```bash
+pnpm --filter @telagent/node exec tsx scripts/run-cross-node-chat-check.ts
+```
+
+The script writes a machine-readable report to:
+`docs/implementation/phase-17/cross-node-chat-check-report.json`

@@ -2,6 +2,7 @@ import type { AttachmentService } from '../services/attachment-service.js';
 import type { ClawNetGatewayService } from '../clawnet/gateway-service.js';
 import type { NonceManager } from '../clawnet/nonce-manager.js';
 import type { SessionManager } from '../clawnet/session-manager.js';
+import type { FederationDeliveryService } from '../services/federation-delivery-service.js';
 import type { FederationService } from '../services/federation-service.js';
 import type { GasService } from '../services/gas-service.js';
 import type { GroupService } from '../services/group-service.js';
@@ -28,4 +29,5 @@ export interface RuntimeContext {
   clawnetGateway: ClawNetGatewayService;
   sessionManager: SessionManager;
   nonceManager: NonceManager;
+  federationDeliveryService?: FederationDeliveryService;
 }

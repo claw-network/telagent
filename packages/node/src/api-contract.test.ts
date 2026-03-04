@@ -278,6 +278,42 @@ class FakeMessageService {
     };
   }
 
+  async ingestFederatedEnvelope(raw: Record<string, unknown>) {
+    const routeHint = raw.routeHint as Record<string, unknown>;
+    const seqRaw = raw.seq;
+    const seq = typeof seqRaw === 'bigint'
+      ? seqRaw
+      : typeof seqRaw === 'number'
+        ? BigInt(seqRaw)
+        : BigInt(typeof seqRaw === 'string' ? seqRaw : '0');
+
+    const contentType = raw.contentType === 'image'
+      || raw.contentType === 'file'
+      || raw.contentType === 'control'
+      ? raw.contentType
+      : 'text';
+    const conversationType = raw.conversationType === 'group' ? 'group' : 'direct';
+
+    return {
+      envelopeId: String(raw.envelopeId ?? ''),
+      conversationId: String(raw.conversationId ?? ''),
+      conversationType,
+      routeHint: {
+        targetDomain: String(routeHint.targetDomain ?? ''),
+        mailboxKeyId: String(routeHint.mailboxKeyId ?? ''),
+      },
+      sealedHeader: String(raw.sealedHeader ?? ''),
+      seq,
+      epoch: typeof raw.epoch === 'number' ? raw.epoch : undefined,
+      ciphertext: String(raw.ciphertext ?? ''),
+      contentType,
+      attachmentManifestHash: typeof raw.attachmentManifestHash === 'string' ? raw.attachmentManifestHash : undefined,
+      sentAtMs: typeof raw.sentAtMs === 'number' ? raw.sentAtMs : Date.now(),
+      ttlSec: typeof raw.ttlSec === 'number' ? raw.ttlSec : 3600,
+      provisional: typeof raw.provisional === 'boolean' ? raw.provisional : false,
+    };
+  }
+
   pull() {
     return {
       items: [],
@@ -500,6 +536,26 @@ class FakeFederationService {
         replaySuccessCount: 0,
         replayFailedCount: 0,
       },
+    };
+  }
+
+  getSelfDomain() {
+    return 'node-a.tel';
+  }
+
+  getProtocolVersion() {
+    return 'v1';
+  }
+
+  getAuthToken() {
+    return undefined;
+  }
+
+  authorizeIngress(meta: { sourceDomain: string; protocolVersion?: string }) {
+    this.assertProtocol(meta.protocolVersion);
+    return {
+      sourceDomain: meta.sourceDomain,
+      protocolVersion: meta.protocolVersion ?? 'v1',
     };
   }
 
@@ -768,7 +824,11 @@ class FakeSessionManager {
 
 class FakeNonceManager {}
 
-async function startTestServer() {
+interface StartTestServerOptions {
+  federationDeliveryService?: RuntimeContext['federationDeliveryService'];
+}
+
+async function startTestServer(options: StartTestServerOptions = {}) {
   const identityService = new FakeIdentityService();
   const messageService = new FakeMessageService(identityService);
   const context: RuntimeContext = {
@@ -784,6 +844,7 @@ async function startTestServer() {
     clawnetGateway: new FakeClawNetGatewayService() as unknown as RuntimeContext['clawnetGateway'],
     sessionManager: new FakeSessionManager() as unknown as RuntimeContext['sessionManager'],
     nonceManager: new FakeNonceManager() as unknown as RuntimeContext['nonceManager'],
+    federationDeliveryService: options.federationDeliveryService,
   };
 
   const server = new ApiServer(context);
@@ -833,6 +894,93 @@ test('created response returns data envelope and Location header', async (t) => 
   assert.equal(body.data.envelope.envelopeId, 'env-1');
   assert.equal(body.data.envelope.seq, '1');
   assert.match(body.links.self, /^\/api\/v1\/messages\/pull\?/);
+});
+
+test('message send forwards to remote sequencer when federation delivery is enabled', async (t) => {
+  const { server, baseUrl } = await startTestServer({
+    federationDeliveryService: {
+      enqueue() {
+        return true;
+      },
+    } as unknown as RuntimeContext['federationDeliveryService'],
+  });
+  t.after(async () => {
+    await server.stop();
+  });
+
+  const originalFetch = globalThis.fetch;
+  let sequencerSubmitCount = 0;
+  globalThis.fetch = (async (input, init) => {
+    const requestUrl = typeof input === 'string'
+      ? input
+      : input instanceof URL
+        ? input.toString()
+        : input.url;
+    if (requestUrl === 'https://alpha.tel/api/v1/federation/messages/submit') {
+      sequencerSubmitCount += 1;
+      return new Response(
+        JSON.stringify({
+          data: {
+            envelope: {
+              envelopeId: 'env-remote-1',
+              conversationId: `group:${'0x' + 'b'.repeat(64)}`,
+              conversationType: 'group',
+              routeHint: {
+                targetDomain: 'alpha.tel',
+                mailboxKeyId: 'mailbox-1',
+              },
+              sealedHeader: '0x11',
+              seq: '98',
+              ciphertext: '0x22',
+              contentType: 'text',
+              sentAtMs: Date.now(),
+              ttlSec: 3600,
+              provisional: false,
+            },
+          },
+        }),
+        {
+          status: 201,
+          headers: {
+            'content-type': 'application/json',
+          },
+        },
+      );
+    }
+    return originalFetch(input, init);
+  }) as typeof fetch;
+  t.after(() => {
+    globalThis.fetch = originalFetch;
+  });
+
+  const response = await fetch(`${baseUrl}/api/v1/messages`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({
+      senderDid: 'did:claw:zSelf',
+      conversationId: `group:${'0x' + 'b'.repeat(64)}`,
+      conversationType: 'group',
+      targetDomain: 'alpha.tel',
+      mailboxKeyId: 'mailbox-1',
+      sealedHeader: '0x11',
+      ciphertext: '0x22',
+      contentType: 'text',
+      ttlSec: 3600,
+    }),
+  });
+
+  assert.equal(response.status, 201);
+  assert.equal(sequencerSubmitCount, 1);
+  const body = (await response.json()) as {
+    data: {
+      envelope: {
+        envelopeId: string;
+        seq: string;
+      };
+    };
+  };
+  assert.equal(body.data.envelope.envelopeId, 'env-remote-1');
+  assert.equal(body.data.envelope.seq, '98');
 });
 
 test('list response returns paginated envelope shape', async (t) => {
@@ -1266,6 +1414,26 @@ test('messages, attachments and federation endpoints are accessible', async (t) 
     body: JSON.stringify({ envelopeId: 'fed-1', sourceDomain: 'node-b.tel' }),
   });
   assert.equal(fedEnvelopeRes.status, 201);
+
+  const fedSubmitRes = await fetch(`${baseUrl}/api/v1/federation/messages/submit`, {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/json',
+      'x-telagent-source-domain': 'node-b.tel',
+    },
+    body: JSON.stringify({
+      senderDid: 'did:claw:zSelf',
+      conversationId: 'direct:did:claw:zPeer--did:claw:zSelf',
+      conversationType: 'direct',
+      targetDomain: 'zzz.tel',
+      mailboxKeyId: 'mailbox-1',
+      sealedHeader: '0x11',
+      ciphertext: '0x22',
+      contentType: 'text',
+      ttlSec: 3600,
+    }),
+  });
+  assert.equal(fedSubmitRes.status, 201);
 
   const fedSyncRes = await fetch(`${baseUrl}/api/v1/federation/group-state/sync`, {
     method: 'POST',

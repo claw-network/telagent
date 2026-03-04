@@ -10,6 +10,7 @@ import { GroupIndexer } from './indexer/group-indexer.js';
 import { AttachmentService } from './services/attachment-service.js';
 import { ContractProvider } from './services/contract-provider.js';
 import { DomainProofChallengeService } from './services/domain-proof-challenge-service.js';
+import { FederationDeliveryService } from './services/federation-delivery-service.js';
 import { FederationService } from './services/federation-service.js';
 import { FederationSloService } from './services/federation-slo-service.js';
 import { GasService } from './services/gas-service.js';
@@ -44,6 +45,7 @@ export class TelagentNode {
   private messageService: MessageService | null = null;
   private attachmentService: AttachmentService | null = null;
   private federationService: FederationService | null = null;
+  private federationDeliveryService: FederationDeliveryService | null = null;
   private federationSloService: FederationSloService | null = null;
   private monitoringService: NodeMonitoringService | null = null;
   private indexer: GroupIndexer | null = null;
@@ -205,6 +207,13 @@ export class TelagentNode {
       pinningNextKeysByDomain: this.config.federation.pinningNextKeysByDomain,
       pinningCutoverAtMs: this.config.federation.pinningCutoverAtMs,
     });
+    this.federationDeliveryService = new FederationDeliveryService({
+      selfDomain: this.federationService.getSelfDomain(),
+      authToken: this.federationService.getAuthToken(),
+      protocolVersion: this.federationService.getProtocolVersion(),
+      requestTimeoutMs: this.config.clawnet.timeoutMs,
+      store: this.mailboxStore,
+    });
     this.monitoringService = new NodeMonitoringService({
       thresholds: {
         errorRateWarnRatio: this.config.monitoring.errorRateWarnRatio,
@@ -244,6 +253,7 @@ export class TelagentNode {
       clawnetGateway: this.clawnetGateway,
       sessionManager: this.sessionManager,
       nonceManager: this.nonceManager,
+      federationDeliveryService: this.federationDeliveryService,
     };
 
     this.apiServer = new ApiServer(runtime);
@@ -253,6 +263,7 @@ export class TelagentNode {
     }
     await this.indexer.start();
     await this.apiServer.start();
+    this.federationDeliveryService.start();
     this.monitoringService.recordMailboxMaintenance(await this.messageService.runMaintenance());
     this.federationSloService.runOnce();
     this.startMailboxCleaner();
@@ -272,6 +283,7 @@ export class TelagentNode {
     this.sessionManager?.lockAll();
 
     this.stopMailboxCleaner();
+    this.federationDeliveryService?.stop();
     this.federationSloService?.stop();
     await this.apiServer?.stop();
     await this.indexer?.stop();

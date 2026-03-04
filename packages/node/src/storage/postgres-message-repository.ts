@@ -5,6 +5,8 @@ import type { Envelope } from '@telagent/protocol';
 import type {
   DirectConversationParticipantCheckResult,
   EnvelopeCursorKey,
+  FederationOutboxFailureUpdate,
+  FederationOutboxRecord,
   MailboxStore,
   ProvisionalRetractionRecord,
   StoredEnvelopeRecord,
@@ -45,6 +47,18 @@ interface RetractionRow {
 interface DirectConversationRow {
   participant_a_hash: string;
   participant_b_hash: string | null;
+}
+
+interface FederationOutboxRow {
+  outbox_key: string;
+  envelope_id: string;
+  target_domain: string;
+  envelope_json: string;
+  attempt_count: number;
+  next_retry_at_ms: string;
+  last_error: string | null;
+  created_at_ms: string;
+  updated_at_ms: string;
 }
 
 function assertSchemaName(value: string): string {
@@ -119,6 +133,20 @@ export class PostgresMessageRepository implements MailboxStore {
       )
     `);
 
+    await this.pool.query(`
+      CREATE TABLE IF NOT EXISTS ${this.table('mailbox_federation_outbox')} (
+        outbox_key TEXT PRIMARY KEY,
+        envelope_id TEXT NOT NULL,
+        target_domain TEXT NOT NULL,
+        envelope_json JSONB NOT NULL,
+        attempt_count INTEGER NOT NULL DEFAULT 0,
+        next_retry_at_ms BIGINT NOT NULL,
+        last_error TEXT,
+        created_at_ms BIGINT NOT NULL,
+        updated_at_ms BIGINT NOT NULL
+      )
+    `);
+
     await this.pool.query(
       `CREATE INDEX IF NOT EXISTS idx_mailbox_envelopes_sent ON ${this.table('mailbox_envelopes')}(sent_at_ms, conversation_id)`,
     );
@@ -142,6 +170,9 @@ export class PostgresMessageRepository implements MailboxStore {
     );
     await this.pool.query(
       `CREATE INDEX IF NOT EXISTS idx_mailbox_direct_conversations_b ON ${this.table('mailbox_direct_conversations')}(participant_b_hash)`,
+    );
+    await this.pool.query(
+      `CREATE INDEX IF NOT EXISTS idx_mailbox_federation_outbox_due ON ${this.table('mailbox_federation_outbox')}(next_retry_at_ms, created_at_ms)`,
     );
   }
 
@@ -568,6 +599,104 @@ export class PostgresMessageRepository implements MailboxStore {
     };
   }
 
+  async enqueueFederationOutbox(entry: {
+    key: string;
+    envelope: Envelope;
+    targetDomain: string;
+    nextRetryAtMs: number;
+    createdAtMs: number;
+  }): Promise<boolean> {
+    const result = await this.pool.query(
+      `INSERT INTO ${this.table('mailbox_federation_outbox')} (
+        outbox_key,
+        envelope_id,
+        target_domain,
+        envelope_json,
+        attempt_count,
+        next_retry_at_ms,
+        last_error,
+        created_at_ms,
+        updated_at_ms
+      ) VALUES ($1, $2, $3, $4::jsonb, 0, $5, NULL, $6, $6)
+      ON CONFLICT(outbox_key) DO NOTHING`,
+      [
+        entry.key,
+        entry.envelope.envelopeId,
+        entry.targetDomain,
+        serializeEnvelope(entry.envelope),
+        entry.nextRetryAtMs,
+        entry.createdAtMs,
+      ],
+    );
+    return (result.rowCount ?? 0) > 0;
+  }
+
+  async listDueFederationOutbox(params: { nowMs: number; limit: number }): Promise<FederationOutboxRecord[]> {
+    const result = await this.pool.query<FederationOutboxRow>(
+      `SELECT
+        outbox_key,
+        envelope_id,
+        target_domain,
+        envelope_json::text AS envelope_json,
+        attempt_count,
+        next_retry_at_ms::text AS next_retry_at_ms,
+        last_error,
+        created_at_ms::text AS created_at_ms,
+        updated_at_ms::text AS updated_at_ms
+      FROM ${this.table('mailbox_federation_outbox')}
+      WHERE next_retry_at_ms <= $1
+      ORDER BY next_retry_at_ms ASC, created_at_ms ASC
+      LIMIT $2`,
+      [params.nowMs, Math.max(1, params.limit)],
+    );
+
+    return result.rows.map((row) => ({
+      key: row.outbox_key,
+      envelope: deserializeEnvelope(row.envelope_json),
+      targetDomain: row.target_domain,
+      attemptCount: row.attempt_count,
+      nextRetryAtMs: Number.parseInt(row.next_retry_at_ms, 10),
+      createdAtMs: Number.parseInt(row.created_at_ms, 10),
+      updatedAtMs: Number.parseInt(row.updated_at_ms, 10),
+      lastError: row.last_error ?? undefined,
+    }));
+  }
+
+  async updateFederationOutboxFailure(update: FederationOutboxFailureUpdate): Promise<void> {
+    await this.pool.query(
+      `UPDATE ${this.table('mailbox_federation_outbox')}
+       SET
+         attempt_count = $2,
+         next_retry_at_ms = $3,
+         updated_at_ms = $4,
+         last_error = $5
+       WHERE outbox_key = $1`,
+      [
+        update.key,
+        update.attemptCount,
+        update.nextRetryAtMs,
+        update.updatedAtMs,
+        update.lastError ?? null,
+      ],
+    );
+  }
+
+  async deleteFederationOutbox(key: string): Promise<void> {
+    await this.pool.query(
+      `DELETE FROM ${this.table('mailbox_federation_outbox')}
+       WHERE outbox_key = $1`,
+      [key],
+    );
+  }
+
+  async countFederationOutbox(): Promise<number> {
+    const result = await this.pool.query<{ count: string }>(
+      `SELECT COUNT(1)::text AS count
+       FROM ${this.table('mailbox_federation_outbox')}`,
+    );
+    return Number.parseInt(result.rows[0]?.count ?? '0', 10);
+  }
+
   private toEnvelope(row: MailboxEnvelopeRow): Envelope {
     return {
       envelopeId: row.envelope_id,
@@ -607,4 +736,19 @@ export class PostgresMessageRepository implements MailboxStore {
   private table(name: string): string {
     return `"${this.schema}"."${name}"`;
   }
+}
+
+function serializeEnvelope(envelope: Envelope): string {
+  return JSON.stringify({
+    ...envelope,
+    seq: envelope.seq.toString(),
+  });
+}
+
+function deserializeEnvelope(raw: string): Envelope {
+  const parsed = JSON.parse(raw) as Omit<Envelope, 'seq'> & { seq: string | number };
+  return {
+    ...parsed,
+    seq: BigInt(parsed.seq),
+  };
 }

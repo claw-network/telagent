@@ -1,6 +1,7 @@
 # TelAgent v1 Phase Gate 目录
 
-- 文档版本：v1.1
+- 文档版本：v1.2
+- 最近更新：2026-03-04
 - 目的：统一记录每个 Phase 的 Gate 评审结论，作为下一阶段启动依据
 
 ## 1. 使用规则
@@ -33,6 +34,7 @@
 - `phase-14-gate.md`：Phase 14 评审记录
 - `phase-15-gate.md`：Phase 15 评审记录
 - `phase-16-gate.md`：Phase 16 评审记录
+- `phase-17-gate.md`：Phase 17 评审记录（草案）
 
 ## 3. 推荐流程
 

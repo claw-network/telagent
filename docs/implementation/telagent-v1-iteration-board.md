@@ -1,9 +1,10 @@
 # TelAgent v1 迭代看板（按周排期）
 
 - 文档版本：v1.0
+- 最后更新：2026-03-04
 - 基线计划起始日：2026-03-02（周一）
 - 基线计划结束日：2026-05-17（周日）
-- 适用范围：Phase 0 -> Phase 16（发布后改进 + 联邦灰度兼容 + 自动化回滚 + v1.1/v1.2/v0.2.0 + Console 工业化增强 + Console 实装冲刺）
+- 适用范围：Phase 0 -> Phase 17（发布后改进 + 联邦灰度兼容 + 自动化回滚 + v1.1/v1.2/v0.2.0 + Console 工业化增强 + Console 实装冲刺 + 跨节点自动投递闭环加固）
 
 ## 1. 看板目的
 
@@ -152,9 +153,20 @@
   - Readiness 报告与 Go/No-Go 结论
 - 周末 Gate：MVP 验收签字，版本冻结。
 
+## Week 12（滚动窗口）- Phase 17
+
+- 目标：完成跨节点自动投递闭环加固与云端双节点联调证据固化。
+- 计划任务：`TA-P17-001` `TA-P17-002` `TA-P17-003` `TA-P17-004`
+- 建议 Owner：`BE-2(主)` + `SRE(联调)` + `QA(验收)` + `TL(Gate)`
+- 周交付：
+  - sequencer 归属与远端提交链路稳定
+  - SQLite/Postgres 持久化 outbox + 重试退避
+  - 双节点云端联调报告（A->B / B->A）
+- 周末 Gate：完成 `phase-17-gate.md` 正式结论。
+
 ## 4. 当前可执行看板（即刻启动）
 
-## 4.1 Ready This Week（2026-03-03 更新）
+## 4.1 Ready This Week（2026-03-04 更新）
 
 - 已完成：`TA-P4-001`（Signal/MLS 适配层接口冻结）
 - 已完成：`TA-P4-002`（Envelope 序号生成与单调保障）
@@ -241,11 +253,15 @@
 - 已完成：`TA-P16-005`（TS 基线身份与节点诊断增强，含 DID hash 与节点运行态）
 - 已完成：`TA-P16-006`（Console 契约回归与异常语义测试增强）
 - 已完成：`TA-P16-007`（质量收口与 Phase 16 Gate 评审）
-- 当前结论：Phase 16 已关闭（PASS）。
+- 已完成：`TA-P17-001`（sequencer 归属解析 + `/api/v1/federation/messages/submit` 远端提交链路）
+- 已完成：`TA-P17-002`（SQLite/Postgres 持久化 outbox + 重试退避回放）
+- 进行中：`TA-P17-003`（双节点云端联调脚本与机读报告）
+- 待开始：`TA-P17-004`（Phase 17 Gate 收口）
+- 当前结论：Phase 17 已启动，等待双节点实机证据后 Gate 收口。
 
-## 4.2 Blockers（2026-03-03 更新）
+## 4.2 Blockers（2026-03-04 更新）
 
-- 当前无硬阻塞项。
+- 当前阻塞：`TA-P17-003` 需双云节点联调窗口（缺少统一运行时参数与执行时段）。
 - 已知环境注意：首次运行 Node 索引器测试前需确保 `better-sqlite3` 本地绑定可用（若缺失可执行 `pnpm run build-release` 于 `node_modules/.pnpm/better-sqlite3@12.6.2/node_modules/better-sqlite3`）。
 
 ## 4.3 Definition of Done（每个任务统一标准）
@@ -457,6 +473,15 @@
 - `TA-P16-007`：DONE（质量收口与 Gate，见 `docs/implementation/phase-16/ta-p16-007-phase16-quality-closure-and-gate-2026-03-03.md`、`docs/implementation/phase-16/manifests/2026-03-03-p16-quality-gate-check.json`、`docs/implementation/gates/phase-16-gate.md`）。
 - Phase 16 manifests 汇总：`docs/implementation/phase-16/logs/2026-03-03-p16-gate-manifest-summary.txt`（`failed=0`）。
 - 阶段状态：Phase 16 已关闭（PASS）。
+
+## 4.22 Phase 17 跨节点自动投递闭环加固快照（2026-03-04）
+
+- `TA-P17-001`：DONE（sequencer 归属策略 + 远端 sequencer 提交路径落地，见 `packages/node/src/services/sequencer-domain.ts`, `packages/node/src/api/routes/messages.ts`, `packages/node/src/api/routes/federation.ts`）。
+- `TA-P17-002`：DONE（联邦出站持久化 outbox + 重试退避落地，见 `packages/node/src/services/federation-delivery-service.ts`, `packages/node/src/storage/mailbox-store.ts`, `packages/node/src/storage/message-repository.ts`, `packages/node/src/storage/postgres-message-repository.ts`）。
+- `TA-P17-003`：IN_PROGRESS（双节点联调脚本已就绪，见 `packages/node/scripts/run-cross-node-chat-check.ts`；待实机执行并归档报告 `docs/implementation/phase-17/cross-node-chat-check-report.json`）。
+- `TA-P17-004`：TODO（Gate 草案已建立，见 `docs/implementation/gates/phase-17-gate.md`；待 P17-003 证据入档后完成结论）。
+- 测试状态：`pnpm --filter @telagent/node test` 已通过（`97/97`）。
+- 阶段状态：Phase 17 处于执行中，当前无代码阻塞，唯一阻塞为“云端双节点实机执行窗口”。
 
 ## 5. 周会与 Gate 节奏建议
 

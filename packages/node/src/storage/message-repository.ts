@@ -5,6 +5,8 @@ import type { Envelope } from '@telagent/protocol';
 import type {
   DirectConversationParticipantCheckResult,
   EnvelopeCursorKey,
+  FederationOutboxFailureUpdate,
+  FederationOutboxRecord,
   MailboxStore,
   ProvisionalRetractionRecord,
   StoredEnvelopeRecord,
@@ -51,6 +53,18 @@ CREATE TABLE IF NOT EXISTS mailbox_direct_conversations (
   updated_at_ms INTEGER NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS mailbox_federation_outbox (
+  outbox_key TEXT PRIMARY KEY,
+  envelope_id TEXT NOT NULL,
+  target_domain TEXT NOT NULL,
+  envelope_json TEXT NOT NULL,
+  attempt_count INTEGER NOT NULL DEFAULT 0,
+  next_retry_at_ms INTEGER NOT NULL,
+  last_error TEXT,
+  created_at_ms INTEGER NOT NULL,
+  updated_at_ms INTEGER NOT NULL
+);
+
 CREATE INDEX IF NOT EXISTS idx_mailbox_envelopes_sent ON mailbox_envelopes(sent_at_ms, conversation_id);
 CREATE INDEX IF NOT EXISTS idx_mailbox_envelopes_conversation_seq ON mailbox_envelopes(conversation_id, seq);
 CREATE INDEX IF NOT EXISTS idx_mailbox_envelopes_pull_cursor ON mailbox_envelopes(sent_at_ms, conversation_id, seq, envelope_id);
@@ -59,6 +73,7 @@ CREATE INDEX IF NOT EXISTS idx_mailbox_envelopes_provisional ON mailbox_envelope
 CREATE INDEX IF NOT EXISTS idx_mailbox_retractions_time ON mailbox_retractions(retracted_at_ms DESC);
 CREATE INDEX IF NOT EXISTS idx_mailbox_direct_conversations_a ON mailbox_direct_conversations(participant_a_hash);
 CREATE INDEX IF NOT EXISTS idx_mailbox_direct_conversations_b ON mailbox_direct_conversations(participant_b_hash);
+CREATE INDEX IF NOT EXISTS idx_mailbox_federation_outbox_due ON mailbox_federation_outbox(next_retry_at_ms, created_at_ms);
 `;
 
 interface MailboxEnvelopeRow {
@@ -89,6 +104,18 @@ interface RetractionRow {
 interface DirectConversationRow {
   participantAHash: string;
   participantBHash: string | null;
+}
+
+interface FederationOutboxRow {
+  key: string;
+  envelopeId: string;
+  targetDomain: string;
+  envelopeJson: string;
+  attemptCount: number;
+  nextRetryAtMs: number;
+  lastError: string | null;
+  createdAtMs: number;
+  updatedAtMs: number;
 }
 
 export class MessageRepository implements MailboxStore {
@@ -571,6 +598,105 @@ export class MessageRepository implements MailboxStore {
     };
   }
 
+  async enqueueFederationOutbox(entry: {
+    key: string;
+    envelope: Envelope;
+    targetDomain: string;
+    nextRetryAtMs: number;
+    createdAtMs: number;
+  }): Promise<boolean> {
+    const inserted = this.db
+      .prepare(
+        `INSERT INTO mailbox_federation_outbox (
+          outbox_key,
+          envelope_id,
+          target_domain,
+          envelope_json,
+          attempt_count,
+          next_retry_at_ms,
+          last_error,
+          created_at_ms,
+          updated_at_ms
+        ) VALUES (?, ?, ?, ?, 0, ?, NULL, ?, ?)
+        ON CONFLICT(outbox_key) DO NOTHING`,
+      )
+      .run(
+        entry.key,
+        entry.envelope.envelopeId,
+        entry.targetDomain,
+        serializeEnvelope(entry.envelope),
+        entry.nextRetryAtMs,
+        entry.createdAtMs,
+        entry.createdAtMs,
+      );
+    return inserted.changes > 0;
+  }
+
+  async listDueFederationOutbox(params: { nowMs: number; limit: number }): Promise<FederationOutboxRecord[]> {
+    const rows = this.db
+      .prepare(
+        `SELECT
+          outbox_key AS key,
+          envelope_id AS envelopeId,
+          target_domain AS targetDomain,
+          envelope_json AS envelopeJson,
+          attempt_count AS attemptCount,
+          next_retry_at_ms AS nextRetryAtMs,
+          last_error AS lastError,
+          created_at_ms AS createdAtMs,
+          updated_at_ms AS updatedAtMs
+        FROM mailbox_federation_outbox
+        WHERE next_retry_at_ms <= ?
+        ORDER BY next_retry_at_ms ASC, created_at_ms ASC
+        LIMIT ?`,
+      )
+      .all(params.nowMs, Math.max(1, params.limit)) as FederationOutboxRow[];
+
+    return rows.map((row) => ({
+      key: row.key,
+      envelope: deserializeEnvelope(row.envelopeJson),
+      targetDomain: row.targetDomain,
+      attemptCount: row.attemptCount,
+      nextRetryAtMs: row.nextRetryAtMs,
+      createdAtMs: row.createdAtMs,
+      updatedAtMs: row.updatedAtMs,
+      lastError: row.lastError ?? undefined,
+    }));
+  }
+
+  async updateFederationOutboxFailure(update: FederationOutboxFailureUpdate): Promise<void> {
+    this.db
+      .prepare(
+        `UPDATE mailbox_federation_outbox
+         SET
+           attempt_count = ?,
+           next_retry_at_ms = ?,
+           updated_at_ms = ?,
+           last_error = ?
+         WHERE outbox_key = ?`,
+      )
+      .run(
+        update.attemptCount,
+        update.nextRetryAtMs,
+        update.updatedAtMs,
+        update.lastError ?? null,
+        update.key,
+      );
+  }
+
+  async deleteFederationOutbox(key: string): Promise<void> {
+    this.db
+      .prepare('DELETE FROM mailbox_federation_outbox WHERE outbox_key = ?')
+      .run(key);
+  }
+
+  async countFederationOutbox(): Promise<number> {
+    const row = this.db
+      .prepare('SELECT COUNT(1) AS count FROM mailbox_federation_outbox')
+      .get() as { count: number };
+    return row.count;
+  }
+
   async close(): Promise<void> {
     this.db.close();
   }
@@ -595,4 +721,19 @@ export class MessageRepository implements MailboxStore {
       provisional: row.provisional === 1,
     };
   }
+}
+
+function serializeEnvelope(envelope: Envelope): string {
+  return JSON.stringify({
+    ...envelope,
+    seq: envelope.seq.toString(),
+  });
+}
+
+function deserializeEnvelope(raw: string): Envelope {
+  const parsed = JSON.parse(raw) as Omit<Envelope, 'seq'> & { seq: string | number };
+  return {
+    ...parsed,
+    seq: BigInt(parsed.seq),
+  };
 }

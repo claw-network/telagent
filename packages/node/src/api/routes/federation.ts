@@ -1,14 +1,16 @@
-import { ErrorCodes, TelagentError } from '@telagent/protocol';
+import { ErrorCodes, SendMessageSchema, TelagentError } from '@telagent/protocol';
 
 import { Router } from '../router.js';
 import { created, ok, paginated, parsePagination } from '../response.js';
 import { handleError } from '../route-utils.js';
 import type { RuntimeContext } from '../types.js';
+import { validate } from '../validate.js';
+import { normalizeFederationDomain, resolveSequencerDomain } from '../../services/sequencer-domain.js';
 
 export function federationRoutes(ctx: RuntimeContext): Router {
   const router = new Router();
 
-  router.post('/envelopes', ({ req, res, body, url }) => {
+  router.post('/envelopes', async ({ req, res, body, url }) => {
     let payloadForDlq: Record<string, unknown> = {};
     let metaForDlq: {
       sourceDomain?: string;
@@ -33,9 +35,57 @@ export function federationRoutes(ctx: RuntimeContext): Router {
         sourceKeyId: meta.sourceKeyId,
       };
       const result = ctx.federationService.receiveEnvelope(payload, meta);
+      if (looksLikeEnvelopePayload(payload)) {
+        await ctx.messageService.ingestFederatedEnvelope(payload);
+      }
       created(res, result, { self: '/api/v1/federation/envelopes' });
     } catch (error) {
       captureDlqFailure(ctx, 'envelopes', payloadForDlq, metaForDlq, error);
+      handleError(res, error, url.pathname);
+    }
+  });
+
+  router.post('/messages/submit', async ({ req, res, body, url }) => {
+    const parsed = validate(SendMessageSchema, body);
+    if (!parsed.success) {
+      handleError(res, new TelagentError(ErrorCodes.VALIDATION, parsed.error), url.pathname);
+      return;
+    }
+
+    try {
+      const meta = {
+        sourceDomain: resolveSourceDomain(req, parsed.data as unknown as Record<string, unknown>),
+        authToken: resolveFederationToken(req),
+        protocolVersion: resolveProtocolVersion(req, parsed.data as unknown as Record<string, unknown>),
+        sourceKeyId: resolveSourceKeyId(req, parsed.data as unknown as Record<string, unknown>),
+      };
+      ctx.federationService.authorizeIngress(meta);
+
+      const selfDomain = normalizeFederationDomain(ctx.federationService.getSelfDomain(), 'selfDomain');
+      const sequencerDomain = resolveSequencerDomain(parsed.data, {
+        selfDomain,
+        resolveGroupDomain: (groupId) => ctx.groupService.getGroup(groupId).groupDomain,
+      });
+      if (sequencerDomain !== selfDomain) {
+        throw new TelagentError(
+          ErrorCodes.CONFLICT,
+          `sequencerDomain(${sequencerDomain}) does not match local domain(${selfDomain})`,
+        );
+      }
+
+      const envelope = await ctx.messageService.send(parsed.data);
+      if (ctx.federationDeliveryService) {
+        await ctx.federationDeliveryService.enqueue(envelope);
+      }
+
+      created(
+        res,
+        {
+          envelope,
+        },
+        { self: '/api/v1/federation/messages/submit' },
+      );
+    } catch (error) {
       handleError(res, error, url.pathname);
     }
   });
@@ -176,6 +226,37 @@ export function federationRoutes(ctx: RuntimeContext): Router {
   });
 
   return router;
+}
+
+function looksLikeEnvelopePayload(payload: Record<string, unknown>): boolean {
+  if (!payload || typeof payload !== 'object') {
+    return false;
+  }
+  if (typeof payload.envelopeId !== 'string') {
+    return false;
+  }
+  if (typeof payload.conversationId !== 'string') {
+    return false;
+  }
+  if (payload.conversationType !== 'direct' && payload.conversationType !== 'group') {
+    return false;
+  }
+  if (typeof payload.sealedHeader !== 'string' || typeof payload.ciphertext !== 'string') {
+    return false;
+  }
+  if (typeof payload.sentAtMs !== 'number' || typeof payload.ttlSec !== 'number') {
+    return false;
+  }
+  if (typeof payload.seq !== 'string' && typeof payload.seq !== 'number' && typeof payload.seq !== 'bigint') {
+    return false;
+  }
+  const routeHint = payload.routeHint;
+  if (!routeHint || typeof routeHint !== 'object') {
+    return false;
+  }
+  const routeRecord = routeHint as Record<string, unknown>;
+  return typeof routeRecord.targetDomain === 'string'
+    && typeof routeRecord.mailboxKeyId === 'string';
 }
 
 function captureDlqFailure(

@@ -29,6 +29,9 @@ TelAgent 关注“私密聊天 + 链上确定性”：
 - ClawNet 代理 API（`/api/v1/clawnet/*`）
 - API 前缀严格限制为 `/api/v1/*`
 - 成功响应 envelope 与 RFC7807 错误统一
+- 直聊/群聊的 sequencer 归属规则已确定并实现
+- 联邦出站队列持久化（SQLite/Postgres）+ 重试退避
+- 跨节点提交路径（`/api/v1/federation/messages/submit`）已接入
 
 ## 仓库结构
 
@@ -67,6 +70,7 @@ TelAgent 关注“私密聊天 + 链上确定性”：
   - `POST /api/v1/attachments/init-upload`
   - `POST /api/v1/attachments/complete-upload`
   - `POST /api/v1/federation/envelopes`
+  - `POST /api/v1/federation/messages/submit`
   - `POST /api/v1/federation/group-state/sync`
   - `POST /api/v1/federation/receipts`
   - `GET /api/v1/federation/node-info`
@@ -152,3 +156,27 @@ pnpm --filter @telagent/protocol build
 pnpm --filter @telagent/node build
 pnpm --filter @telagent/node test
 ```
+
+## 双节点云端联调（烟雾测试）
+
+用于验证“跨节点自动投递闭环”是否可用：
+
+1）先配置两台节点的 URL、DID、域名：
+
+```bash
+export TELAGENT_NODE_A_URL=https://node-a.example.com
+export TELAGENT_NODE_A_DID=did:claw:zNodeA
+export TELAGENT_NODE_A_DOMAIN=node-a.example.com
+export TELAGENT_NODE_B_URL=https://node-b.example.com
+export TELAGENT_NODE_B_DID=did:claw:zNodeB
+export TELAGENT_NODE_B_DOMAIN=node-b.example.com
+```
+
+2）执行检查脚本：
+
+```bash
+pnpm --filter @telagent/node exec tsx scripts/run-cross-node-chat-check.ts
+```
+
+脚本会输出并落盘报告到：
+`docs/implementation/phase-17/cross-node-chat-check-report.json`

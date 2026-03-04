@@ -24,6 +24,25 @@ export interface DirectConversationParticipantCheckResult {
   participants: string[];
 }
 
+export interface FederationOutboxRecord {
+  key: string;
+  envelope: Envelope;
+  targetDomain: string;
+  attemptCount: number;
+  nextRetryAtMs: number;
+  createdAtMs: number;
+  updatedAtMs: number;
+  lastError?: string;
+}
+
+export interface FederationOutboxFailureUpdate {
+  key: string;
+  attemptCount: number;
+  nextRetryAtMs: number;
+  updatedAtMs: number;
+  lastError?: string;
+}
+
 export interface MailboxStore {
   init?(): Promise<void>;
   close?(): Promise<void>;
@@ -54,4 +73,18 @@ export interface MailboxStore {
   }): Promise<void>;
   listRetractions(limit: number): Promise<ProvisionalRetractionRecord[]>;
   deleteExpired(nowMs: number): Promise<{ removed: number; remaining: number }>;
+  enqueueFederationOutbox?(entry: {
+    key: string;
+    envelope: Envelope;
+    targetDomain: string;
+    nextRetryAtMs: number;
+    createdAtMs: number;
+  }): Promise<boolean>;
+  listDueFederationOutbox?(params: {
+    nowMs: number;
+    limit: number;
+  }): Promise<FederationOutboxRecord[]>;
+  updateFederationOutboxFailure?(update: FederationOutboxFailureUpdate): Promise<void>;
+  deleteFederationOutbox?(key: string): Promise<void>;
+  countFederationOutbox?(): Promise<number>;
 }
