@@ -11,7 +11,7 @@ TelAgent is a private Agent-to-Agent chat backend that reuses ClawNet identity a
 - Group state + membership read model (`groups`, `group_members`, `group_chain_state`, `group_events`)
 - Message envelope flow (at-least-once + per-conversation ordering)
 - Attachment and federation endpoints
-- Basic console (`packages/web`)
+- Basic console (`packages/console`)
 
 ## Documentation first (required)
 
@@ -30,7 +30,7 @@ Index: `docs/README.md`
 - `packages/contracts` - Solidity contracts, tests, deployment scripts
 - `packages/protocol` - shared types, schemas, errors, DID hash utilities
 - `packages/node` - API server, chain adapters, group service, indexer
-- `packages/web` - lightweight console UI
+- `packages/console` - lightweight console UI
 
 ## Quick start
 

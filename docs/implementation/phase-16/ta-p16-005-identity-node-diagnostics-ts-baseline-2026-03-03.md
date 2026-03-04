@@ -31,19 +31,19 @@
 
 ## 3. 变更文件
 
-- `packages/web/src/core/identity-node-diagnostics.ts`
-- `packages/web/src/core/identity-node-diagnostics.test.ts`
-- `packages/web/src/core/api-client.ts`
-- `packages/web/src/App.tsx`
-- `packages/web/package.json`
-- `packages/web/scripts/run-phase16-identity-node-diagnostics-check.mjs`
+- `packages/console/src/core/identity-node-diagnostics.ts`
+- `packages/console/src/core/identity-node-diagnostics.test.ts`
+- `packages/console/src/core/api-client.ts`
+- `packages/console/src/App.tsx`
+- `packages/console/package.json`
+- `packages/console/scripts/run-phase16-identity-node-diagnostics-check.mjs`
 
 ## 4. 验证
 
 1. `corepack pnpm --filter @telagent/console typecheck`
 2. `corepack pnpm --filter @telagent/console build`
 3. `corepack pnpm --filter @telagent/console test`
-4. `node packages/web/scripts/run-phase16-identity-node-diagnostics-check.mjs`
+4. `node packages/console/scripts/run-phase16-identity-node-diagnostics-check.mjs`
 
 ## 5. 证据
 

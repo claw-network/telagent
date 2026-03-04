@@ -29,15 +29,15 @@
 
 ## 3. 变更文件
 
-- `packages/web/src/core/api-client.ts`
-- `packages/web/src/core/api-client.test.ts`
-- `packages/web/package.json`
-- `packages/web/scripts/run-phase16-console-contract-regression-check.mjs`
+- `packages/console/src/core/api-client.ts`
+- `packages/console/src/core/api-client.test.ts`
+- `packages/console/package.json`
+- `packages/console/scripts/run-phase16-console-contract-regression-check.mjs`
 
 ## 4. 验证
 
 1. `corepack pnpm --filter @telagent/console test`
-2. `node packages/web/scripts/run-phase16-console-contract-regression-check.mjs`
+2. `node packages/console/scripts/run-phase16-console-contract-regression-check.mjs`
 
 ## 5. 证据
 

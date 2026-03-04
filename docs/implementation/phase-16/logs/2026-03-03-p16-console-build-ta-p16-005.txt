@@ -1,5 +1,5 @@
 
-> @telagent/console@0.1.0 build /Users/xiasenhai/Workspace/OpenClaw/telagent/packages/web
+> @telagent/console@0.1.0 build /Users/xiasenhai/Workspace/OpenClaw/telagent/packages/console
 > vite build
 
 vite v7.3.1 building client environment for production...

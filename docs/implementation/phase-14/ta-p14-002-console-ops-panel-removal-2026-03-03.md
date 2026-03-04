@@ -21,8 +21,8 @@
 
 ## 3. 变更文件
 
-- `packages/web/src/index.html`
-- `packages/web/src/main.js`
+- `packages/console/src/index.html`
+- `packages/console/src/main.js`
 
 ## 4. 验证
 

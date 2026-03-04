@@ -1,9 +1,9 @@
 Scope: 4 of 5 workspace projects
-packages/web test$ echo 'no tests for console package'
+packages/console test$ echo 'no tests for console package'
 packages/contracts test$ hardhat test
 packages/protocol pretest$ pnpm build
-packages/web test: no tests for console package
-packages/web test: Done
+packages/console test: no tests for console package
+packages/console test: Done
 packages/contracts test: WARNING: You are currently using Node.js v25.6.1, which is not supported by Hardhat. This can lead to unexpected behavior. See https://v2.hardhat.org/nodejs-versions
 packages/protocol pretest: > @telagent/protocol@0.1.0 build /Users/xiasenhai/workspace/private-repo/Bots/telagent/packages/protocol
 packages/protocol pretest: > tsc -p tsconfig.json

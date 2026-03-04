@@ -36,14 +36,14 @@
 
 ### 2.2 Console 监控面板
 
-- 页面扩展：`packages/web/src/index.html`
+- 页面扩展：`packages/console/src/index.html`
   - 新增 Monitoring Dashboard 区块
   - 新增按钮：`GET /api/v1/node/metrics`、自动刷新开关
-- 交互逻辑：`packages/web/src/main.js`
+- 交互逻辑：`packages/console/src/main.js`
   - 渲染指标卡片（requests、5xx rate、p95 latency、mailbox stale）
   - 渲染告警列表（OK/WARN/CRITICAL）
   - 支持 10 秒自动刷新
-- 样式：`packages/web/src/styles.css`
+- 样式：`packages/console/src/styles.css`
 
 ### 2.3 测试补齐
 

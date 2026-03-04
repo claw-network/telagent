@@ -46,13 +46,13 @@ doc=docs/implementation/phase-15/ta-p15-003-console-design-system-and-component-
 
 [check] console build/test outputs
 
-> @telagent/console@0.1.0 build /Users/xiasenhai/Workspace/OpenClaw/telagent/packages/web
+> @telagent/console@0.1.0 build /Users/xiasenhai/Workspace/OpenClaw/telagent/packages/console
 > node scripts/build.mjs
 
 web assets copied to dist
 ---
 
-> @telagent/console@0.1.0 test /Users/xiasenhai/Workspace/OpenClaw/telagent/packages/web
+> @telagent/console@0.1.0 test /Users/xiasenhai/Workspace/OpenClaw/telagent/packages/console
 > echo 'no tests for console package'
 
 no tests for console package

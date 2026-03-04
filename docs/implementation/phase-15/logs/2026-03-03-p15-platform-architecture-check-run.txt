@@ -39,7 +39,7 @@ doc=docs/implementation/phase-15/ta-p15-004-console-multi-platform-architecture-
 38:6. `platform-adapter`（Web/PWA/Desktop/Mobile 差异封装）
 42:`app-shell -> ui-kit -> domain -> core-sdk -> platform-adapter`
 48:3. 平台特有能力必须通过 `platform-adapter` 接口注入。
-52:1. `packages/web`：Console 壳层与页面编排。
+52:1. `packages/console`：Console 壳层与页面编排。
 53:2. `packages/client-core`：`core-sdk + domain + shared types`。
 64:| `StorageAdapter` | 键值与对象存储读写 | Web=IndexedDB, Desktop=local db, Mobile=secure storage |
 66:| `NotificationAdapter` | 本地通知与权限状态 | Web Notification / Desktop / Mobile Push |
@@ -64,13 +64,13 @@ doc=docs/implementation/phase-15/ta-p15-004-console-multi-platform-architecture-
 
 [check] console build/test outputs
 
-> @telagent/console@0.1.0 build /Users/xiasenhai/Workspace/OpenClaw/telagent/packages/web
+> @telagent/console@0.1.0 build /Users/xiasenhai/Workspace/OpenClaw/telagent/packages/console
 > node scripts/build.mjs
 
 web assets copied to dist
 ---
 
-> @telagent/console@0.1.0 test /Users/xiasenhai/Workspace/OpenClaw/telagent/packages/web
+> @telagent/console@0.1.0 test /Users/xiasenhai/Workspace/OpenClaw/telagent/packages/console
 > echo 'no tests for console package'
 
 no tests for console package

@@ -49,11 +49,11 @@
 
 ## 4.3 推荐包结构（目录冻结建议）
 
-1. `packages/web`：Console 壳层与页面编排。
+1. `packages/console`：Console 壳层与页面编排。
 2. `packages/client-core`：`core-sdk + domain + shared types`。
 3. `packages/client-sync`：离线与同步引擎（在 `TA-P15-005` 落地）。
 4. `packages/client-platform`：`web/pwa/desktop/mobile` 适配实现。
-5. `packages/ui` 或 `packages/web/src/ui-kit`：跨端可复用组件与 token。
+5. `packages/ui` 或 `packages/console/src/ui-kit`：跨端可复用组件与 token。
 
 ## 5. 平台适配边界（Adapter Contract）
 
@@ -107,7 +107,7 @@
 
 ## 9. 从当前 Console 的迁移路径
 
-1. 当前单体 `packages/web` 分离为 `app-shell + client-core 接口`。
+1. 当前单体 `packages/console` 分离为 `app-shell + client-core 接口`。
 2. 将 API 调用与错误处理下沉到 `core-sdk`。
 3. 将会话/消息/群组状态机抽离为 `domain`。
 4. 在不改变现有用户路径前提下引入 `platform-adapter` 抽象。

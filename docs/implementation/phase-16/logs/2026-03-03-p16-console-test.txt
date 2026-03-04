@@ -1,5 +1,5 @@
 
-> @telagent/console@0.1.0 test /Users/xiasenhai/Workspace/OpenClaw/telagent/packages/web
+> @telagent/console@0.1.0 test /Users/xiasenhai/Workspace/OpenClaw/telagent/packages/console
 > node --test test/**/*.test.js
 
 ✔ assertApiV1Path only accepts /api/v1/* (1.27709ms)

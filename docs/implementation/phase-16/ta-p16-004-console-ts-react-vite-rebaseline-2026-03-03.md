@@ -30,33 +30,33 @@
 
 ## 3. 影响与兼容说明
 
-1. `packages/web/src/*.js` 主实现已迁移并替换为 `*.ts`/`*.tsx`；
+1. `packages/console/src/*.js` 主实现已迁移并替换为 `*.ts`/`*.tsx`；
 2. `TA-P16-001` ~ `TA-P16-003` 的 JS 版本实现仅保留文档证据，不再作为当前代码基线；
 3. 后续 `TA-P16-005` 起所有 Web 任务统一在 TS + React 基线上推进。
 
 ## 4. 变更文件
 
-- `packages/web/package.json`
-- `packages/web/index.html`
-- `packages/web/tsconfig.json`
-- `packages/web/vite.config.ts`
-- `packages/web/src/main.tsx`
-- `packages/web/src/App.tsx`
-- `packages/web/src/styles.css`
-- `packages/web/src/core/api-client.ts`
-- `packages/web/src/core/session-domain.ts`
-- `packages/web/src/core/group-domain.ts`
-- `packages/web/src/core/api-client.test.ts`
-- `packages/web/src/core/session-domain.test.ts`
-- `packages/web/src/core/group-domain.test.ts`
-- `packages/web/scripts/run-phase16-ts-framework-check.mjs`
+- `packages/console/package.json`
+- `packages/console/index.html`
+- `packages/console/tsconfig.json`
+- `packages/console/vite.config.ts`
+- `packages/console/src/main.tsx`
+- `packages/console/src/App.tsx`
+- `packages/console/src/styles.css`
+- `packages/console/src/core/api-client.ts`
+- `packages/console/src/core/session-domain.ts`
+- `packages/console/src/core/group-domain.ts`
+- `packages/console/src/core/api-client.test.ts`
+- `packages/console/src/core/session-domain.test.ts`
+- `packages/console/src/core/group-domain.test.ts`
+- `packages/console/scripts/run-phase16-ts-framework-check.mjs`
 
 ## 5. 验证
 
 1. `corepack pnpm --filter @telagent/console typecheck`
 2. `corepack pnpm --filter @telagent/console build`
 3. `corepack pnpm --filter @telagent/console test`
-4. `node packages/web/scripts/run-phase16-ts-framework-check.mjs`
+4. `node packages/console/scripts/run-phase16-ts-framework-check.mjs`
 
 ## 6. 证据
 

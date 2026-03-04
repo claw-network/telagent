@@ -294,7 +294,7 @@ Node API 已形成完整资源域，统一在 `/api/v1/*`：
 - `packages/sdk/src/index.ts`
 - `packages/sdk-python/README.md`
 - `packages/sdk-python/telagent_sdk/client.py`
-- `packages/web/src/main.js`
+- `packages/console/src/main.js`
 
 ## 5. API 能力清单（当前实现）
 
@@ -365,8 +365,8 @@ Node API 已形成完整资源域，统一在 `/api/v1/*`：
 - TypeScript SDK：`packages/sdk/scripts/run-phase11-sdk-quickstart-check.ts`
 - Python SDK：`packages/sdk-python/scripts/run_phase12_python_sdk_quickstart_check.py`
 - Console：
-  - `packages/web/scripts/run-phase11-console-v2-check.mjs`
-  - `packages/web/scripts/run-phase12-console-v21-check.mjs`
+  - `packages/console/scripts/run-phase11-console-v2-check.mjs`
+  - `packages/console/scripts/run-phase12-console-v21-check.mjs`
 
 ## 7. 文档与证据索引（建议入口）
 

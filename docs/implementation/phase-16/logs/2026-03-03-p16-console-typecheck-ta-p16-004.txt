@@ -1,4 +1,4 @@
 
-> @telagent/console@0.1.0 typecheck /Users/xiasenhai/Workspace/OpenClaw/telagent/packages/web
+> @telagent/console@0.1.0 typecheck /Users/xiasenhai/Workspace/OpenClaw/telagent/packages/console
 > tsc --noEmit
 

@@ -191,12 +191,12 @@ async function main() {
     runCheck({
       id: 'RLS-006',
       title: '版本号一致且符合 v0.1.0 发布目标',
-      evidence: ['package.json', 'packages/node/package.json', 'packages/protocol/package.json', 'packages/web/package.json'],
+      evidence: ['package.json', 'packages/node/package.json', 'packages/protocol/package.json', 'packages/console/package.json'],
       run: async () => {
         const rootPkg = await readJson<{ version: string }>(path.resolve(repoRoot, 'package.json'));
         const nodePkg = await readJson<{ version: string }>(path.resolve(repoRoot, 'packages/node/package.json'));
         const protocolPkg = await readJson<{ version: string }>(path.resolve(repoRoot, 'packages/protocol/package.json'));
-        const webPkg = await readJson<{ version: string }>(path.resolve(repoRoot, 'packages/web/package.json'));
+        const webPkg = await readJson<{ version: string }>(path.resolve(repoRoot, 'packages/console/package.json'));
         const versions = [rootPkg.version, nodePkg.version, protocolPkg.version, webPkg.version];
         ensure(versions.every((version) => version === releaseVersion), `package versions must all equal ${releaseVersion}`);
         return {

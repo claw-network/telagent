@@ -291,7 +291,7 @@
 ### 交付物
 
 - Phase 16 任务与证据文档（`docs/implementation/phase-16/`）；
-- Console 端 TS 代码基线（`packages/web/src/*` + `packages/web/scripts/*`）；
+- Console 端 TS 代码基线（`packages/console/src/*` + `packages/console/scripts/*`）；
 - Console 构建/测试日志与专项检查 manifest；
 - Phase 16 WBS 与迭代看板同步条目。
 

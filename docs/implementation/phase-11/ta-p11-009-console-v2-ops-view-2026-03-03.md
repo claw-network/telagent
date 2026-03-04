@@ -28,9 +28,9 @@
 ### 2.2 Console v2 视图升级
 
 - 更新：
-  - `packages/web/src/index.html`
-  - `packages/web/src/styles.css`
-  - `packages/web/src/main.js`
+  - `packages/console/src/index.html`
+  - `packages/console/src/styles.css`
+  - `packages/console/src/main.js`
 - 新增面板：
   - `Group State & Rollback Entry`
   - `Federation Ops View`
@@ -50,7 +50,7 @@
 
 ### 2.4 自动化检查脚本
 
-- 新增：`packages/web/scripts/run-phase11-console-v2-check.mjs`
+- 新增：`packages/console/scripts/run-phase11-console-v2-check.mjs`
 - 校验内容：
   - HTML/JS/CSS 中关键 token 全部存在；
   - 输出机读清单用于 Gate 复核。
@@ -70,10 +70,10 @@ pnpm --filter @telagent/console exec node scripts/run-phase11-console-v2-check.m
   - `packages/node/src/api/routes/messages.ts`
   - `packages/node/src/api-contract.test.ts`
   - `packages/node/src/api-prefix.test.ts`
-  - `packages/web/src/index.html`
-  - `packages/web/src/styles.css`
-  - `packages/web/src/main.js`
-  - `packages/web/scripts/run-phase11-console-v2-check.mjs`
+  - `packages/console/src/index.html`
+  - `packages/console/src/styles.css`
+  - `packages/console/src/main.js`
+  - `packages/console/scripts/run-phase11-console-v2-check.mjs`
 - 日志：
   - `docs/implementation/phase-11/logs/2026-03-03-p11-node-build.txt`
   - `docs/implementation/phase-11/logs/2026-03-03-p11-node-test.txt`

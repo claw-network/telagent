@@ -7,7 +7,7 @@
 
 ## 1. 目标
 
-在 `packages/web` 启动第一批真实实现，替换原占位式页面与测试，形成可演进的 Console 运行时基线：
+在 `packages/console` 启动第一批真实实现，替换原占位式页面与测试，形成可演进的 Console 运行时基线：
 
 1. 路由化界面壳层（sessions/groups/identity/settings）；
 2. 统一 API 客户端，强制 `/api/v1/*` 前缀；
@@ -35,13 +35,13 @@
 
 ## 3. 变更文件
 
-- `packages/web/src/core/api-client.js`
-- `packages/web/src/main.js`
-- `packages/web/src/index.html`
-- `packages/web/src/styles.css`
-- `packages/web/test/api-client.test.js`
-- `packages/web/package.json`
-- `packages/web/scripts/run-phase16-console-runtime-shell-check.mjs`
+- `packages/console/src/core/api-client.js`
+- `packages/console/src/main.js`
+- `packages/console/src/index.html`
+- `packages/console/src/styles.css`
+- `packages/console/test/api-client.test.js`
+- `packages/console/package.json`
+- `packages/console/scripts/run-phase16-console-runtime-shell-check.mjs`
 
 ## 4. 验证
 
@@ -50,7 +50,7 @@
 2. 测试：
    - `corepack pnpm --filter @telagent/console test`
 3. 专项脚本：
-   - `node packages/web/scripts/run-phase16-console-runtime-shell-check.mjs`
+   - `node packages/console/scripts/run-phase16-console-runtime-shell-check.mjs`
 
 ## 5. 证据
 

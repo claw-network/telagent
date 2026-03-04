@@ -27,8 +27,8 @@
 
 ## 3. 变更文件
 
-- `packages/web/scripts/run-phase16-quality-gate-check.mjs`
-- `packages/web/package.json`
+- `packages/console/scripts/run-phase16-quality-gate-check.mjs`
+- `packages/console/package.json`
 - `docs/implementation/gates/phase-16-gate.md`
 
 ## 4. 验证
@@ -36,7 +36,7 @@
 1. `corepack pnpm --filter @telagent/console typecheck`
 2. `corepack pnpm --filter @telagent/console build`
 3. `corepack pnpm --filter @telagent/console test`
-4. `node packages/web/scripts/run-phase16-quality-gate-check.mjs`
+4. `node packages/console/scripts/run-phase16-quality-gate-check.mjs`
 
 ## 5. 证据
 

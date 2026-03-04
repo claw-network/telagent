@@ -19,9 +19,9 @@
 ### 2.1 Console v2.1 面板升级
 
 - 更新：
-  - `packages/web/src/index.html`
-  - `packages/web/src/main.js`
-  - `packages/web/src/styles.css`
+  - `packages/console/src/index.html`
+  - `packages/console/src/main.js`
+  - `packages/console/src/styles.css`
 - 新增能力：
   - `Audit & Emergency Panel v2.1`
   - `GET /api/v1/node/audit-snapshot` 参数化拉取（`sample_size` / `retraction_scan_limit`）
@@ -41,7 +41,7 @@
 
 ### 2.3 专项检查脚本
 
-- 新增：`packages/web/scripts/run-phase12-console-v21-check.mjs`
+- 新增：`packages/console/scripts/run-phase12-console-v21-check.mjs`
 - 校验项：
   1. HTML 存在 v2.1 审计/应急面板及关键控件；
   2. JS 存在审计快照、风险看板、批量重放逻辑；
@@ -60,10 +60,10 @@ corepack pnpm --filter @telagent/console exec node scripts/run-phase12-console-v
 ## 4. 证据
 
 - 代码：
-  - `packages/web/src/index.html`
-  - `packages/web/src/main.js`
-  - `packages/web/src/styles.css`
-  - `packages/web/scripts/run-phase12-console-v21-check.mjs`
+  - `packages/console/src/index.html`
+  - `packages/console/src/main.js`
+  - `packages/console/src/styles.css`
+  - `packages/console/scripts/run-phase12-console-v21-check.mjs`
 - 日志：
   - `docs/implementation/phase-12/logs/2026-03-03-p12-console-build.txt`
   - `docs/implementation/phase-12/logs/2026-03-03-p12-console-test.txt`

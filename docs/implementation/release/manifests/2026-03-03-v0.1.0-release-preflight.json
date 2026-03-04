@@ -88,7 +88,7 @@
         "package.json",
         "packages/node/package.json",
         "packages/protocol/package.json",
-        "packages/web/package.json"
+        "packages/console/package.json"
       ],
       "details": {
         "versions": [

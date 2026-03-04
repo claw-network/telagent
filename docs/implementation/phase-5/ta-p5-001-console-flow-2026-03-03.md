@@ -17,10 +17,10 @@
 
 ## 2. 实现
 
-- 页面结构重构：`packages/web/src/index.html`
+- 页面结构重构：`packages/console/src/index.html`
   - 新增 “Connection & Actors / Group Setup / Chat Composer / Activity / Last Response” 分区。
   - 新增一键执行 `Run Full Happy Path`，串联 create -> invite -> accept -> send -> pull。
-- 行为逻辑重构：`packages/web/src/main.js`
+- 行为逻辑重构：`packages/console/src/main.js`
   - 新增 API 客户端统一封装（状态断言、错误处理、响应展示）。
   - 新增场景生成器（`groupId/inviteId/hash` 随机生成、conversation 自动同步）。
   - 新增闭环按钮能力：
@@ -33,7 +33,7 @@
     - `Pull Messages`
     - `Run Full Happy Path`
   - 消息发送支持 plain text 自动 hex 编码，支持 image/file 场景自动补充 `attachmentManifestHash`。
-- 视觉与响应式优化：`packages/web/src/styles.css`
+- 视觉与响应式优化：`packages/console/src/styles.css`
   - 统一信息层次和面板布局，增加移动端适配。
   - 增加活动流水（Activity）与最新响应（Last Response）双视图，便于演示和回放。
 

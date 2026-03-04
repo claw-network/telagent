@@ -32,11 +32,11 @@
 
 ## 3. 变更文件
 
-- `packages/web/src/core/session-domain.js`
-- `packages/web/src/main.js`
-- `packages/web/src/styles.css`
-- `packages/web/test/session-domain.test.js`
-- `packages/web/scripts/run-phase16-sessions-domain-check.mjs`
+- `packages/console/src/core/session-domain.js`
+- `packages/console/src/main.js`
+- `packages/console/src/styles.css`
+- `packages/console/test/session-domain.test.js`
+- `packages/console/scripts/run-phase16-sessions-domain-check.mjs`
 
 ## 4. 验证
 
@@ -45,7 +45,7 @@
 2. 测试：
    - `corepack pnpm --filter @telagent/console test`
 3. 专项脚本：
-   - `node packages/web/scripts/run-phase16-sessions-domain-check.mjs`
+   - `node packages/console/scripts/run-phase16-sessions-domain-check.mjs`
 
 ## 5. 证据
 

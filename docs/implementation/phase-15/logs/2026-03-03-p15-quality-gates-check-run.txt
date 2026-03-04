@@ -55,13 +55,13 @@ doc=docs/implementation/phase-15/ta-p15-006-console-quality-gates-and-release-re
 [check] execution logs summary
 console build:
 
-> @telagent/console@0.1.0 build /Users/xiasenhai/Workspace/OpenClaw/telagent/packages/web
+> @telagent/console@0.1.0 build /Users/xiasenhai/Workspace/OpenClaw/telagent/packages/console
 > node scripts/build.mjs
 
 web assets copied to dist
 console test:
 
-> @telagent/console@0.1.0 test /Users/xiasenhai/Workspace/OpenClaw/telagent/packages/web
+> @telagent/console@0.1.0 test /Users/xiasenhai/Workspace/OpenClaw/telagent/packages/console
 > echo 'no tests for console package'
 
 no tests for console package
