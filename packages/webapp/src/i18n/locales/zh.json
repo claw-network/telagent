@@ -22,7 +22,8 @@
       "tab": "本地",
       "description": "连接本机运行的 TelAgent 节点（127.0.0.1:8787）。",
       "detecting": "正在检测本地节点...",
-      "notFound": "未检测到本地 TelAgent 节点"
+      "found": "已检测到本地节点",
+      "notFound": "未检测到本地节点"
     },
     "remote": {
       "tab": "远程"

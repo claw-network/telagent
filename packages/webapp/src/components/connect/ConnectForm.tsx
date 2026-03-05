@@ -3,18 +3,25 @@ import { useTranslation } from "react-i18next"
 import { useNavigate } from "react-router-dom"
 
 import { DidAvatar } from "@/components/shared/DidAvatar"
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Separator } from "@/components/ui/separator"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { cn } from "@/lib/utils"
 import { useConnectionStore } from "@/stores/connection"
 import { useIdentityStore } from "@/stores/identity"
 import { usePermissionStore } from "@/stores/permission"
 
 const LOCAL_NODE_URL = "http://127.0.0.1:8787"
+
+/* ------------------------------------------------------------------ */
+/*  Local node auto-detection                                         */
+/* ------------------------------------------------------------------ */
 
 interface LocalNodeInfo {
   did: string
@@ -69,57 +76,90 @@ function useLocalNodeProbe() {
   return { status, info }
 }
 
+/* ------------------------------------------------------------------ */
+/*  Avatar probe display                                              */
+/* ------------------------------------------------------------------ */
+
 function LocalNodeAvatar() {
   const { t } = useTranslation()
   const { status, info } = useLocalNodeProbe()
 
-  if (status === "not-found") {
-    return (
-      <div className="flex flex-col items-center gap-2 py-2">
-        <Avatar className="size-16">
-          <AvatarFallback className="text-lg text-muted-foreground">?</AvatarFallback>
-        </Avatar>
-        <p className="text-sm text-muted-foreground">{t("connect.local.notFound")}</p>
-      </div>
-    )
-  }
+  const isFound = status === "found" && info
 
   return (
-    <div className="flex flex-col items-center gap-3 py-2">
-      <div className="relative flex items-center justify-center">
-        {status === "probing" && (
-          <div className="absolute inset-[-4px] animate-spin rounded-full border-2 border-transparent border-t-primary" />
+    <div className="flex flex-col items-center gap-4 py-6">
+      {/* Avatar ring container */}
+      <div className="relative">
+        {/* Glow effect when found */}
+        {isFound && (
+          <div className="absolute inset-[-8px] rounded-full bg-primary/8 blur-md" />
         )}
-        {status === "found" && info ? (
-          <DidAvatar did={info.did} className="size-16 text-lg" />
+
+        {/* Ring */}
+        <div
+          className={cn(
+            "absolute inset-[-4px] rounded-full transition-all duration-700",
+            status === "probing" && "border-[2.5px] border-transparent border-t-primary border-r-primary/40 animate-spin",
+            isFound && "border-[2.5px] border-primary/25",
+            status === "not-found" && "border-[2px] border-dashed border-muted-foreground/15",
+          )}
+        />
+
+        {/* Avatar */}
+        {isFound ? (
+          <DidAvatar did={info.did} className="relative size-[72px] text-2xl" />
         ) : (
-          <Avatar className="size-16">
-            <AvatarFallback className="text-lg text-muted-foreground">...</AvatarFallback>
+          <Avatar className="relative size-[72px]">
+            <AvatarFallback
+              className={cn(
+                "text-2xl transition-colors duration-500",
+                status === "probing"
+                  ? "bg-muted text-muted-foreground/60"
+                  : "bg-muted/60 text-muted-foreground/30",
+              )}
+            >
+              {status === "probing" ? "..." : "?"}
+            </AvatarFallback>
           </Avatar>
         )}
       </div>
-      {status === "found" && info && (
-        <div className="flex flex-col items-center gap-1">
-          <p className="max-w-xs truncate font-mono text-xs text-foreground">{info.did}</p>
-          <p className="text-xs text-muted-foreground">v{info.version}</p>
-        </div>
-      )}
-      {status === "probing" && (
-        <p className="text-sm text-muted-foreground">{t("connect.local.detecting")}</p>
-      )}
+
+      {/* Status text */}
+      <div className="flex flex-col items-center gap-2">
+        {isFound && (
+          <>
+            <div className="flex items-center gap-2">
+              <span className="size-2 rounded-full bg-emerald-500" />
+              <span className="text-sm font-medium text-foreground">
+                {t("connect.local.found")}
+              </span>
+              <Badge variant="secondary" className="px-2 py-0 text-[10px] font-normal">
+                v{info.version}
+              </Badge>
+            </div>
+            <p className="max-w-[300px] truncate font-mono text-[11px] leading-none text-muted-foreground/70">
+              {info.did}
+            </p>
+          </>
+        )}
+        {status === "probing" && (
+          <span className="text-[13px] text-muted-foreground">
+            {t("connect.local.detecting")}
+          </span>
+        )}
+        {status === "not-found" && (
+          <span className="text-[13px] text-muted-foreground/70">
+            {t("connect.local.notFound")}
+          </span>
+        )}
+      </div>
     </div>
   )
 }
 
-function ErrorAlert({ message }: { message: string }) {
-  const { t } = useTranslation()
-  return (
-    <Alert variant="destructive">
-      <AlertTitle>{t("connect.failed")}</AlertTitle>
-      <AlertDescription>{message}</AlertDescription>
-    </Alert>
-  )
-}
+/* ------------------------------------------------------------------ */
+/*  Connect form                                                      */
+/* ------------------------------------------------------------------ */
 
 export function ConnectForm() {
   const { t } = useTranslation()
@@ -160,71 +200,111 @@ export function ConnectForm() {
   const displayError = localError ?? error
 
   return (
-    <Card className="w-full max-w-xl border-white/20 bg-card/80 backdrop-blur-sm">
-      <CardHeader>
-        <CardTitle>{t("connect.title")}</CardTitle>
-        <CardDescription>{t("connect.subtitle")}</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <Tabs defaultValue="local">
-          <TabsList className="w-full">
-            <TabsTrigger value="local" className="flex-1">{t("connect.local.tab")}</TabsTrigger>
-            <TabsTrigger value="remote" className="flex-1">{t("connect.remote.tab")}</TabsTrigger>
-          </TabsList>
+    <div className="flex w-full max-w-[420px] flex-col items-center gap-8">
+      {/* Title area — sits outside the card for breathing room */}
+      <div className="flex flex-col items-center gap-2 text-center">
+        <h1 className="text-2xl font-semibold tracking-tight">{t("connect.title")}</h1>
+        <p className="text-sm text-muted-foreground">{t("connect.subtitle")}</p>
+      </div>
 
-          <TabsContent value="local">
-            <form className="space-y-4" onSubmit={onLocalSubmit}>
-              <LocalNodeAvatar />
-              <div className="space-y-2">
-                <Label htmlFor="local-token">{t("connect.token")}</Label>
-                <Input
-                  id="local-token"
-                  type="password"
-                  value={localToken}
-                  onChange={(event) => setLocalToken(event.target.value)}
-                  autoComplete="off"
-                  required
-                />
-              </div>
-              {displayError ? <ErrorAlert message={displayError} /> : null}
-              <Button type="submit" className="w-full" disabled={status === "connecting"}>
-                {status === "connecting" ? t("connect.connecting") : t("connect.submit")}
-              </Button>
-            </form>
-          </TabsContent>
+      {/* Card */}
+      <Card className="w-full border-border/60 shadow-lg">
+        <CardContent className="p-0">
+          <Tabs defaultValue="local">
+            <TabsList className="h-auto w-full rounded-none rounded-t-[inherit] border-b bg-transparent p-0">
+              <TabsTrigger
+                value="local"
+                className="flex-1 rounded-none border-b-2 border-transparent py-3 text-[13px] data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none"
+              >
+                {t("connect.local.tab")}
+              </TabsTrigger>
+              <TabsTrigger
+                value="remote"
+                className="flex-1 rounded-none border-b-2 border-transparent py-3 text-[13px] data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none"
+              >
+                {t("connect.remote.tab")}
+              </TabsTrigger>
+            </TabsList>
 
-          <TabsContent value="remote">
-            <form className="space-y-4" onSubmit={onRemoteSubmit}>
-              <div className="space-y-2">
-                <Label htmlFor="remote-url">{t("connect.nodeUrl")}</Label>
-                <Input
-                  id="remote-url"
-                  placeholder="https://agent.example.com"
-                  value={remoteUrl}
-                  onChange={(event) => setRemoteUrl(event.target.value)}
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="remote-token">{t("connect.token")}</Label>
-                <Input
-                  id="remote-token"
-                  type="password"
-                  value={remoteToken}
-                  onChange={(event) => setRemoteToken(event.target.value)}
-                  autoComplete="off"
-                  required
-                />
-              </div>
-              {displayError ? <ErrorAlert message={displayError} /> : null}
-              <Button type="submit" className="w-full" disabled={status === "connecting"}>
-                {status === "connecting" ? t("connect.connecting") : t("connect.submit")}
-              </Button>
-              <p className="text-xs text-muted-foreground">{t("connect.hint")}</p>
-            </form>
-          </TabsContent>
-        </Tabs>
-      </CardContent>
-    </Card>
+            {/* ---- Local tab ---- */}
+            <TabsContent value="local" className="mt-0 px-6 pb-6">
+              <form onSubmit={onLocalSubmit}>
+                <LocalNodeAvatar />
+
+                <Separator className="mb-5" />
+
+                <div>
+                  <Label htmlFor="local-token" className="mb-2 block text-[13px]">
+                    {t("connect.token")}
+                  </Label>
+                  <Input
+                    id="local-token"
+                    type="password"
+                    placeholder="••••••••"
+                    value={localToken}
+                    onChange={(event) => setLocalToken(event.target.value)}
+                    autoComplete="off"
+                    required
+                  />
+                </div>
+
+                {displayError ? (
+                  <Alert variant="destructive" className="mt-4">
+                    <AlertDescription>{displayError}</AlertDescription>
+                  </Alert>
+                ) : null}
+
+                <Button type="submit" className="mt-5 w-full" disabled={status === "connecting"}>
+                  {status === "connecting" ? t("connect.connecting") : t("connect.submit")}
+                </Button>
+              </form>
+            </TabsContent>
+
+            {/* ---- Remote tab ---- */}
+            <TabsContent value="remote" className="mt-0 space-y-5 px-6 pt-6 pb-6">
+              <form className="space-y-4" onSubmit={onRemoteSubmit}>
+                <div>
+                  <Label htmlFor="remote-url" className="mb-2 block text-[13px]">
+                    {t("connect.nodeUrl")}
+                  </Label>
+                  <Input
+                    id="remote-url"
+                    placeholder="https://agent.example.com"
+                    value={remoteUrl}
+                    onChange={(event) => setRemoteUrl(event.target.value)}
+                    required
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="remote-token" className="mb-2 block text-[13px]">
+                    {t("connect.token")}
+                  </Label>
+                  <Input
+                    id="remote-token"
+                    type="password"
+                    placeholder="••••••••"
+                    value={remoteToken}
+                    onChange={(event) => setRemoteToken(event.target.value)}
+                    autoComplete="off"
+                    required
+                  />
+                </div>
+
+                {displayError ? (
+                  <Alert variant="destructive">
+                    <AlertDescription>{displayError}</AlertDescription>
+                  </Alert>
+                ) : null}
+
+                <Button type="submit" className="!mt-5 w-full" disabled={status === "connecting"}>
+                  {status === "connecting" ? t("connect.connecting") : t("connect.submit")}
+                </Button>
+              </form>
+            </TabsContent>
+          </Tabs>
+        </CardContent>
+      </Card>
+    </div>
   )
 }

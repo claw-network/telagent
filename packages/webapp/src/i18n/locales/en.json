@@ -22,7 +22,8 @@
       "tab": "Local",
       "description": "Connect to the TelAgent node running on this machine (127.0.0.1:8787).",
       "detecting": "Detecting local node...",
-      "notFound": "No local TelAgent node detected"
+      "found": "Local node detected",
+      "notFound": "No local node detected"
     },
     "remote": {
       "tab": "Remote"
