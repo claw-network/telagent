@@ -21,37 +21,68 @@ import { useConnectionStore } from "@/stores/connection"
 import { useConversationStore } from "@/stores/conversation"
 import { useIdentityStore } from "@/stores/identity"
 
-export function CreateGroupDialog() {
+interface CreateGroupDialogProps {
+  compact?: boolean
+  open?: boolean
+  onOpenChange?: (open: boolean) => void
+  hideTrigger?: boolean
+}
+
+export function CreateGroupDialog({
+  compact = false,
+  open,
+  onOpenChange,
+  hideTrigger = false,
+}: CreateGroupDialogProps) {
   const { t } = useTranslation()
   const { canExecute } = useGuardedAction("manage_groups")
   const sdk = useConnectionStore((state) => state.sdk)
   const selfDid = useIdentityStore((state) => state.self?.did)
   const upsertConversation = useConversationStore((state) => state.upsertConversation)
 
-  const [open, setOpen] = useState(false)
+  const [internalOpen, setInternalOpen] = useState(false)
   const [pending, setPending] = useState(false)
   const [groupId, setGroupId] = useState(() => randomBytes32Hex())
   const [groupDomain, setGroupDomain] = useState("")
   const [domainProofHash, setDomainProofHash] = useState(() => randomBytes32Hex())
   const [initialMlsStateHash, setInitialMlsStateHash] = useState(() => randomBytes32Hex())
+  const dialogOpen = typeof open === "boolean" ? open : internalOpen
 
   const disabled = !canExecute || !sdk || !selfDid
   const canSubmit = !disabled && groupDomain.trim().length > 0 && !pending
 
   const title = useMemo(() => t("group.create"), [t])
 
-  if (!canExecute) {
-    return null
+  const setDialogOpen = (nextOpen: boolean) => {
+    if (typeof open !== "boolean") {
+      setInternalOpen(nextOpen)
+    }
+    onOpenChange?.(nextOpen)
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button size="sm" className="gap-1.5">
-          <PlusIcon className="size-4" />
-          {title}
-        </Button>
-      </DialogTrigger>
+    <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+      {!hideTrigger ? (
+        <DialogTrigger asChild>
+          {compact ? (
+            <Button
+              type="button"
+              size="icon-xs"
+              variant="ghost"
+              className="text-[#949ba4] hover:bg-[#35373c] hover:text-[#dbdee1]"
+              disabled={!canExecute}
+              aria-label={title}
+            >
+              <PlusIcon className="size-3.5" />
+            </Button>
+          ) : (
+            <Button size="sm" className="gap-1.5" disabled={!canExecute}>
+              <PlusIcon className="size-4" />
+              {title}
+            </Button>
+          )}
+        </DialogTrigger>
+      ) : null}
       <DialogContent>
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
@@ -123,7 +154,7 @@ export function CreateGroupDialog() {
                     avatarUrl: null,
                   })
                   toast.success("Group created")
-                  setOpen(false)
+                  setDialogOpen(false)
                 })
                 .catch((error) => {
                   toast.error(error instanceof Error ? error.message : "Failed to create group")
