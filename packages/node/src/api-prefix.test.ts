@@ -95,6 +95,8 @@ class FakeGasService {
 }
 
 class FakeMessageService {
+  private readonly privateConversations = new Set<string>();
+
   send() {
     throw new Error('not used');
   }
@@ -115,6 +117,42 @@ class FakeMessageService {
       sampleSize: Math.max(1, Math.min(100, options?.sampleSize ?? 20)),
       retractionScanLimit: Math.max(1, Math.min(100_000, options?.retractionScanLimit ?? 2_000)),
     };
+  }
+
+  async listConversations() {
+    const conversationId = 'direct:did:claw:zSelf:did:claw:zPeer';
+    const isPrivate = this.privateConversations.has(conversationId);
+    return [
+      {
+        conversationId,
+        conversationType: 'direct',
+        peerDid: 'did:claw:zPeer',
+        displayName: 'did:claw:zPeer',
+        lastMessagePreview: isPrivate ? null : 'hello',
+        lastMessageAtMs: Date.now(),
+        unreadCount: 0,
+        private: isPrivate,
+        avatarUrl: null,
+      },
+    ];
+  }
+
+  async setConversationPrivacy(conversationId: string, isPrivate: boolean) {
+    if (isPrivate) {
+      this.privateConversations.add(conversationId);
+    } else {
+      this.privateConversations.delete(conversationId);
+    }
+
+    return {
+      conversationId,
+      private: isPrivate,
+      updatedAtMs: Date.now(),
+    };
+  }
+
+  async listPrivateConversationIds() {
+    return [...this.privateConversations];
   }
 }
 
@@ -358,6 +396,34 @@ test('routes only serve /api/v1/* prefix', async (t) => {
   const noPrefixRes = await fetch(`${baseUrl}/v1/node`);
   assert.equal(noPrefixRes.status, 404);
 
+  const conversationsRes = await fetch(`${baseUrl}/api/v1/conversations`);
+  assert.equal(conversationsRes.status, 200);
+  const conversationsBody = (await conversationsRes.json()) as {
+    data: Array<{ conversationId: string }>;
+  };
+  assert.equal(conversationsBody.data.length, 1);
+
+  const privacyRes = await fetch(
+    `${baseUrl}/api/v1/conversations/${encodeURIComponent('direct:did:claw:zSelf:did:claw:zPeer')}/privacy`,
+    {
+      method: 'PUT',
+      headers: {
+        'content-type': 'application/json',
+        authorization: 'Bearer tses_test_token',
+      },
+      body: JSON.stringify({ private: true }),
+    },
+  );
+  assert.equal(privacyRes.status, 200);
+
+  const permissionsRes = await fetch(`${baseUrl}/api/v1/owner/permissions`);
+  assert.equal(permissionsRes.status, 200);
+  const permissionsBody = (await permissionsRes.json()) as {
+    data: { mode: string; privateConversations: string[] };
+  };
+  assert.equal(permissionsBody.data.mode, 'observer');
+  assert.equal(permissionsBody.data.privateConversations.includes('direct:did:claw:zSelf:did:claw:zPeer'), true);
+
   const auditRes = await fetch(`${baseUrl}/api/v1/node/audit-snapshot`);
   assert.equal(auditRes.status, 200);
 
@@ -383,6 +449,19 @@ test('routes only serve /api/v1/* prefix', async (t) => {
     }),
   });
   assert.equal(noPrefixRevokeRes.status, 404);
+
+  const noPrefixPrivacyRes = await fetch(
+    `${baseUrl}/v1/conversations/${encodeURIComponent('direct:did:claw:zSelf:did:claw:zPeer')}/privacy`,
+    {
+      method: 'PUT',
+      headers: {
+        'content-type': 'application/json',
+        authorization: 'Bearer tses_test_token',
+      },
+      body: JSON.stringify({ private: false }),
+    },
+  );
+  assert.equal(noPrefixPrivacyRes.status, 404);
 });
 
 test('identity endpoint responds with data envelope', async (t) => {

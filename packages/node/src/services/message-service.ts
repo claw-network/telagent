@@ -1,6 +1,7 @@
 import { createHash, randomUUID } from 'node:crypto';
 
 import {
+  type ConversationSummary,
   ErrorCodes,
   TelagentError,
   hashDid,
@@ -161,6 +162,7 @@ export class MessageService {
   private readonly isolatedConversationById = new Map<string, MessageSessionIsolationRecord>();
   private readonly isolationEvents: MessageDidIsolationEvent[] = [];
   private readonly revokedDidHashes = new Set<string>();
+  private readonly privateConversationUpdatedAtById = new Map<string, number>();
   private disposeRevocationSubscription?: () => void;
 
   constructor(
@@ -374,8 +376,95 @@ export class MessageService {
           ? params.conversationId
             ? tail.seq.toString()
             : this.encodeGlobalPullCursor(tail)
-          : null,
+      : null,
     };
+  }
+
+  async listConversations(params?: { scanLimit?: number }): Promise<ConversationSummary[]> {
+    const scanLimit = Math.min(10_000, Math.max(100, params?.scanLimit ?? 5_000));
+    const pageSize = 200;
+    const latestByConversation = new Map<string, Envelope>();
+    const privateConversationIds = await this.listPrivateConversationIds(scanLimit);
+    const privateConversationSet = new Set(privateConversationIds);
+    let scanned = 0;
+    let afterKey: GlobalPullCursorKey | undefined;
+
+    while (scanned < scanLimit) {
+      const remaining = scanLimit - scanned;
+      const batch = await this.listEnvelopes({
+        limit: Math.min(pageSize, remaining),
+        afterKey,
+      });
+      if (batch.length === 0) {
+        break;
+      }
+
+      scanned += batch.length;
+      for (const envelope of batch) {
+        const existing = latestByConversation.get(envelope.conversationId);
+        if (!existing || existing.sentAtMs <= envelope.sentAtMs) {
+          latestByConversation.set(envelope.conversationId, envelope);
+        }
+      }
+
+      const tail = batch[batch.length - 1];
+      afterKey = {
+        sentAtMs: tail.sentAtMs,
+        conversationId: tail.conversationId,
+        seq: tail.seq,
+        envelopeId: tail.envelopeId,
+      };
+      if (batch.length < Math.min(pageSize, remaining)) {
+        break;
+      }
+    }
+
+    return [...latestByConversation.values()]
+      .map((envelope) => this.toConversationSummary(envelope, privateConversationSet.has(envelope.conversationId)))
+      .sort((left, right) => (right.lastMessageAtMs ?? 0) - (left.lastMessageAtMs ?? 0));
+  }
+
+  async setConversationPrivacy(
+    conversationId: string,
+    isPrivate: boolean,
+  ): Promise<{ conversationId: string; private: boolean; updatedAtMs: number }> {
+    const normalizedConversationId = conversationId.trim();
+    if (!normalizedConversationId) {
+      throw new TelagentError(ErrorCodes.VALIDATION, 'conversationId is required');
+    }
+
+    const updatedAtMs = this.clock.now();
+    if (this.repository?.setConversationPrivacy) {
+      await this.repository.setConversationPrivacy({
+        conversationId: normalizedConversationId,
+        isPrivate,
+        updatedAtMs,
+      });
+    }
+
+    if (isPrivate) {
+      this.privateConversationUpdatedAtById.set(normalizedConversationId, updatedAtMs);
+    } else {
+      this.privateConversationUpdatedAtById.delete(normalizedConversationId);
+    }
+
+    return {
+      conversationId: normalizedConversationId,
+      private: isPrivate,
+      updatedAtMs,
+    };
+  }
+
+  async listPrivateConversationIds(limit = 5_000): Promise<string[]> {
+    const normalizedLimit = Math.max(1, Math.min(100_000, Math.floor(limit)));
+    if (this.repository?.listPrivateConversationIds) {
+      return this.repository.listPrivateConversationIds(normalizedLimit);
+    }
+
+    return [...this.privateConversationUpdatedAtById.entries()]
+      .sort((left, right) => right[1] - left[1])
+      .slice(0, normalizedLimit)
+      .map(([conversationId]) => conversationId);
   }
 
   async runMaintenance(nowMs = this.clock.now()): Promise<MessageMaintenanceReport> {
@@ -1017,6 +1106,74 @@ export class MessageService {
     });
 
     return sliced.slice(0, params.limit);
+  }
+
+  private toConversationSummary(envelope: Envelope, isPrivate: boolean): ConversationSummary {
+    const conversationId = envelope.conversationId;
+    const conversationType = envelope.conversationType;
+    const groupId = conversationType === 'group'
+      ? conversationId.startsWith('group:')
+        ? conversationId.slice('group:'.length)
+        : conversationId
+      : undefined;
+    const peerDid = conversationType === 'direct'
+      ? this.extractPeerDid(conversationId)
+      : undefined;
+
+    return {
+      conversationId,
+      conversationType,
+      peerDid,
+      groupId,
+      displayName: this.displayNameForConversation(conversationId, conversationType, peerDid),
+      lastMessagePreview: isPrivate ? null : this.previewFromEnvelope(envelope),
+      lastMessageAtMs: envelope.sentAtMs,
+      unreadCount: 0,
+      private: isPrivate,
+      avatarUrl: null,
+    };
+  }
+
+  private previewFromEnvelope(envelope: Envelope): string {
+    if (envelope.contentType === 'text') {
+      const normalized = envelope.ciphertext.replace(/\s+/g, ' ').trim();
+      if (!normalized) {
+        return '[text]';
+      }
+      return normalized.length <= 80 ? normalized : `${normalized.slice(0, 77)}...`;
+    }
+
+    if (envelope.contentType === 'control') {
+      return '[control]';
+    }
+    return `[${envelope.contentType}]`;
+  }
+
+  private displayNameForConversation(
+    conversationId: string,
+    conversationType: 'direct' | 'group',
+    peerDid?: string,
+  ): string {
+    if (conversationType === 'group') {
+      const groupId = conversationId.startsWith('group:')
+        ? conversationId.slice('group:'.length)
+        : conversationId;
+      return `Group ${groupId.slice(0, 12)}`;
+    }
+
+    if (peerDid) {
+      return peerDid;
+    }
+
+    return `Direct ${conversationId.slice(0, 12)}`;
+  }
+
+  private extractPeerDid(conversationId: string): string | undefined {
+    const matches = conversationId.match(/did:claw:[a-zA-Z0-9._:-]+/g);
+    if (!matches || matches.length === 0) {
+      return undefined;
+    }
+    return matches[0];
   }
 
   private parsePullCursor(cursorRaw: string | undefined, conversationId?: string): {

@@ -12,6 +12,8 @@ import { identityRoutes } from './routes/identities.js';
 import { keyRoutes } from './routes/keys.js';
 import { messageRoutes } from './routes/messages.js';
 import { nodeRoutes } from './routes/node.js';
+import { conversationRoutes } from './routes/conversations.js';
+import { ownerRoutes } from './routes/owner.js';
 import { clawnetRoutes } from './routes/clawnet.js';
 import { sessionRoutes } from './routes/session.js';
 import { walletRoutes } from './routes/wallets.js';
@@ -26,6 +28,8 @@ function buildRouter(ctx: RuntimeContext): Router {
   router.mount('/api/v1/keys', keyRoutes(ctx));
   router.mount('/api/v1/wallets', walletRoutes(ctx));
   router.mount('/api/v1/messages', messageRoutes(ctx));
+  router.mount('/api/v1/conversations', conversationRoutes(ctx));
+  router.mount('/api/v1/owner', ownerRoutes(ctx));
   router.mount('/api/v1/attachments', attachmentRoutes(ctx));
   router.mount('/api/v1/federation', federationRoutes(ctx));
   router.mount('/api/v1/session', sessionRoutes(ctx));
@@ -61,7 +65,7 @@ export class ApiServer {
 
       res.setHeader('Access-Control-Allow-Origin', '*');
       res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-      res.setHeader('Access-Control-Allow-Methods', 'GET,POST,DELETE,OPTIONS');
+      res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS');
 
       if (req.method === 'OPTIONS') {
         res.writeHead(204);

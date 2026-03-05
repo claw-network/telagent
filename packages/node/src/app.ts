@@ -19,6 +19,7 @@ import { IdentityAdapterService } from './services/identity-adapter-service.js';
 import { KeyLifecycleService } from './services/key-lifecycle-service.js';
 import { MessageService } from './services/message-service.js';
 import { NodeMonitoringService } from './services/node-monitoring-service.js';
+import { OwnerPermissionService } from './services/owner-permission-service.js';
 import { resolvePassphrase as resolvePassphraseFromSources } from './storage/passphrase-resolver.js';
 import { savePassphrase } from './storage/passphrase-store.js';
 import type { TelagentStoragePaths } from './storage/telagent-paths.js';
@@ -48,6 +49,7 @@ export class TelagentNode {
   private federationDeliveryService: FederationDeliveryService | null = null;
   private federationSloService: FederationSloService | null = null;
   private monitoringService: NodeMonitoringService | null = null;
+  private ownerPermissionService: OwnerPermissionService | null = null;
   private indexer: GroupIndexer | null = null;
   private apiServer: ApiServer | null = null;
 
@@ -188,6 +190,11 @@ export class TelagentNode {
       keyLifecycleService: this.keyLifecycleService,
       identityService: this.identityService,
     });
+    this.ownerPermissionService = new OwnerPermissionService({
+      mode: this.config.owner.mode,
+      interventionScopes: this.config.owner.scopes,
+      privateConversations: this.config.owner.privateConversations,
+    });
     this.attachmentService = new AttachmentService();
     this.federationService = new FederationService({
       selfDomain: this.config.federation.selfDomain,
@@ -253,6 +260,7 @@ export class TelagentNode {
       clawnetGateway: this.clawnetGateway,
       sessionManager: this.sessionManager,
       nonceManager: this.nonceManager,
+      ownerPermissionService: this.ownerPermissionService,
       federationDeliveryService: this.federationDeliveryService,
     };
 

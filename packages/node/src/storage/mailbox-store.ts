@@ -73,6 +73,12 @@ export interface MailboxStore {
   }): Promise<void>;
   listRetractions(limit: number): Promise<ProvisionalRetractionRecord[]>;
   deleteExpired(nowMs: number): Promise<{ removed: number; remaining: number }>;
+  setConversationPrivacy?(params: {
+    conversationId: string;
+    isPrivate: boolean;
+    updatedAtMs: number;
+  }): Promise<void>;
+  listPrivateConversationIds?(limit?: number): Promise<string[]>;
   enqueueFederationOutbox?(entry: {
     key: string;
     envelope: Envelope;

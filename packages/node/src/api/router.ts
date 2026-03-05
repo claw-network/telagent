@@ -1,6 +1,6 @@
 import type { IncomingMessage, ServerResponse } from 'node:http';
 
-export type HttpMethod = 'GET' | 'POST' | 'DELETE';
+export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'DELETE';
 
 export interface RouteContext {
   req: IncomingMessage;
@@ -31,6 +31,10 @@ export class Router {
     this.add('POST', path, handler);
   }
 
+  put(path: string, handler: RouteHandler): void {
+    this.add('PUT', path, handler);
+  }
+
   delete(path: string, handler: RouteHandler): void {
     this.add('DELETE', path, handler);
   }
@@ -45,7 +49,7 @@ export class Router {
 
   async handle(req: IncomingMessage, res: ServerResponse): Promise<boolean> {
     const method = req.method as HttpMethod | undefined;
-    if (!method || !['GET', 'POST', 'DELETE'].includes(method)) {
+    if (!method || !['GET', 'POST', 'PUT', 'DELETE'].includes(method)) {
       return false;
     }
 
