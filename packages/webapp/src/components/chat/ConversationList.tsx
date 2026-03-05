@@ -1,5 +1,4 @@
-import { IconSearch } from "@tabler/icons-react"
-import { HashIcon, HeadphonesIcon, MicIcon, SettingsIcon, UserRoundPlusIcon } from "lucide-react"
+import { HashIcon, HeadphonesIcon, MicIcon, SearchIcon, SettingsIcon, UserRoundPlusIcon } from "lucide-react"
 import { useMemo } from "react"
 import { useTranslation } from "react-i18next"
 import { useNavigate } from "react-router-dom"
@@ -95,7 +94,7 @@ export function ConversationList() {
     <div className="flex h-full flex-col text-[#b5bac1]">
       <div className="border-b border-black/25 px-3 py-3 shadow-[0_1px_0_rgba(0,0,0,0.25)]">
         <div className="relative">
-          <IconSearch className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-[#949ba4]" stroke={1.8} />
+          <SearchIcon className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-[#949ba4]" strokeWidth={1.8} />
           <Input
             value={searchQuery}
             placeholder={t("chat.search")}

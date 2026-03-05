@@ -1,15 +1,12 @@
 import type { ReactNode } from "react"
 import { XIcon } from "lucide-react"
-import { Link } from "react-router-dom"
 
 import { ConversationDetailPanel } from "@/components/chat/ConversationDetailPanel"
 import { ReconnectBanner } from "@/components/layout/ReconnectBanner"
+import { ServerRail } from "@/components/layout/ServerRail"
 import { ConversationList } from "@/components/chat/ConversationList"
 import { StatusBar } from "@/components/layout/StatusBar"
-import { SessionBadge } from "@/components/session/SessionBadge"
 import { UnlockDialog } from "@/components/session/UnlockDialog"
-import { ModeBadge } from "@/components/shared/ModeBadge"
-import { ThemeSwitcher } from "@/components/shared/ThemeSwitcher"
 import { Button } from "@/components/ui/button"
 import { useUIStore } from "@/stores/ui"
 
@@ -22,25 +19,13 @@ export function DesktopLayout({ children }: DesktopLayoutProps) {
   const setDetailPanelOpen = useUIStore((state) => state.setDetailPanelOpen)
 
   return (
-    <div className="flex min-h-svh flex-col">
-      <header className="flex h-14 items-center justify-between border-b px-4 backdrop-blur-sm">
-        <div className="flex items-center gap-3">
-          <h1 className="text-sm font-semibold tracking-wide">TelAgent WebApp</h1>
-          <ModeBadge />
-        </div>
-        <div className="flex items-center gap-2">
-          <SessionBadge />
-          <ThemeSwitcher />
-          <Button variant="ghost" size="sm" asChild>
-            <Link to="/settings">Settings</Link>
-          </Button>
-        </div>
-      </header>
-
+    <div className="flex h-svh flex-col">
       <ReconnectBanner />
 
       <div className="flex min-h-0 flex-1">
-        <aside className="w-[280px] min-w-[240px] max-w-[420px] resize-x overflow-auto border-r bg-sidebar/80">
+        <ServerRail />
+
+        <aside className="flex w-[240px] min-w-[200px] flex-col bg-[#2b2d31]">
           <ConversationList />
         </aside>
 
