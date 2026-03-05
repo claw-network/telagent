@@ -553,3 +553,62 @@ test('TA-P14-005 SDK maps direct ACL FORBIDDEN RFC7807 to TelagentSdkError', asy
     },
   );
 });
+
+test('SDK call path does not rely on method-bound fetch this context', async () => {
+  const observedThisValues: unknown[] = [];
+  const fetchImpl = function (this: unknown, input: RequestInfo | URL): Promise<Response> {
+    observedThisValues.push(this);
+    const url = new URL(String(input));
+    if (url.pathname === '/api/v1/identities/self') {
+      return Promise.resolve(
+        new Response(
+          JSON.stringify({
+            data: {
+              did: 'did:claw:zAlice',
+              didHash: `0x${'1'.repeat(64)}`,
+              controller: `0x${'2'.repeat(40)}`,
+              publicKey: '0x11',
+              isActive: true,
+              resolvedAtMs: 1_000,
+            },
+          }),
+          {
+            status: 200,
+            headers: {
+              'content-type': 'application/json; charset=utf-8',
+            },
+          },
+        ),
+      );
+    }
+
+    return Promise.resolve(
+      new Response(
+        JSON.stringify({
+          type: 'https://telagent.dev/errors/not-found',
+          title: 'Not Found',
+          status: 404,
+          detail: 'not found',
+          instance: url.pathname,
+          code: 'NOT_FOUND',
+        }),
+        {
+          status: 404,
+          headers: {
+            'content-type': 'application/problem+json; charset=utf-8',
+          },
+        },
+      ),
+    );
+  } as typeof fetch;
+
+  const sdk = new TelagentSdk({
+    baseUrl: 'http://127.0.0.1:8787',
+    fetchImpl,
+  });
+
+  const self = await sdk.getSelfIdentity();
+  assert.equal(self.did, 'did:claw:zAlice');
+  assert.equal(observedThisValues.length, 1);
+  assert.equal(observedThisValues[0], undefined);
+});
