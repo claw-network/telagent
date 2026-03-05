@@ -1,4 +1,4 @@
-import { PaperclipIcon, SendHorizonalIcon } from "lucide-react"
+import { GiftIcon, PaperclipIcon, PlusCircleIcon, SendHorizonalIcon, SmileIcon, StickerIcon } from "lucide-react"
 import { useRef, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
@@ -7,7 +7,7 @@ import { useConversationAccess } from "@/hooks/use-conversation-access"
 import { useGuardedAction } from "@/hooks/use-guarded-action"
 import { useMessageSender } from "@/hooks/use-message-sender"
 import { Button } from "@/components/ui/button"
-import { Textarea } from "@/components/ui/textarea"
+import { Input } from "@/components/ui/input"
 import { useConversationStore } from "@/stores/conversation"
 
 export function MessageInput() {
@@ -74,20 +74,31 @@ export function MessageInput() {
   }
 
   return (
-    <div className="border-t bg-card/50 p-3">
-      <div className="flex items-end gap-2">
-        <Textarea
+    <div className="border-t border-black/25 bg-[#313338] px-4 py-4">
+      <div className="flex items-center gap-2 rounded-lg bg-[#383a40] px-3 py-2">
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          className="size-8 text-[#b5bac1] hover:bg-[#4a4d55]"
+          disabled={!canSend || sending}
+          onClick={() => fileRef.current?.click()}
+        >
+          <PlusCircleIcon className="size-5" />
+        </Button>
+
+        <Input
           value={text}
           disabled={!canSend || sending}
-          placeholder={canSend ? t("chat.sendPlaceholder") : t("chat.observerHint")}
+          placeholder={canSend ? `Message #${conversation?.displayName ?? "general"}` : t("chat.observerHint")}
           onChange={(event) => setText(event.target.value)}
           onKeyDown={(event) => {
-            if (event.key === "Enter" && !event.shiftKey) {
+            if (event.key === "Enter") {
               event.preventDefault()
               void onSend()
             }
           }}
-          className="min-h-[72px]"
+          className="h-9 border-none bg-transparent text-[17px] text-[#dcddde] placeholder:text-[#72767d] focus-visible:ring-0"
         />
         <input
           ref={fileRef}
@@ -100,16 +111,27 @@ export function MessageInput() {
         />
         <Button
           type="button"
-          variant="outline"
-          size="icon"
+          variant="ghost"
+          size="icon-sm"
+          className="text-[#b5bac1] hover:bg-[#4a4d55]"
           disabled={!canSend || sending}
           onClick={() => fileRef.current?.click()}
         >
           <PaperclipIcon className="size-4" />
         </Button>
+        <Button type="button" variant="ghost" size="icon-sm" className="text-[#b5bac1] hover:bg-[#4a4d55]">
+          <GiftIcon className="size-4" />
+        </Button>
+        <Button type="button" variant="ghost" size="icon-sm" className="text-[#b5bac1] hover:bg-[#4a4d55]">
+          <StickerIcon className="size-4" />
+        </Button>
+        <Button type="button" variant="ghost" size="icon-sm" className="text-[#b5bac1] hover:bg-[#4a4d55]">
+          <SmileIcon className="size-4" />
+        </Button>
         <Button
           type="button"
           size="icon"
+          className="size-8 rounded-md bg-[#5865f2] text-white hover:bg-[#5b6cf9]"
           disabled={!canSend || sending || !text.trim()}
           onClick={() => void onSend()}
         >

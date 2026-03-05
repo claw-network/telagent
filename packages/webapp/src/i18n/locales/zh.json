@@ -36,7 +36,11 @@
     "copy": "复制消息",
     "copied": "消息已复制",
     "copyFailed": "复制失败",
-    "pollFailed": "消息同步失败"
+    "pollFailed": "消息同步失败",
+    "textChannels": "文本频道",
+    "voiceChannels": "语音频道",
+    "serverBoostHint": "Server Boost 功能已上线！召集伙伴一起升级你的服务器。",
+    "serverBoostAction": "查看等级与奖励"
   },
   "settings": {
     "title": "设置",
@@ -115,6 +119,16 @@
     "removeMember": "移除成员",
     "removeConfirm": "链上确认后，该成员将从 canonical 成员视图中移除。",
     "actions": "操作"
+  },
+  "contact": {
+    "add": "添加联系人",
+    "addDescription": "使用 DID 新建一个联系人私聊会话。",
+    "did": "联系人 DID",
+    "displayName": "显示名称（可选）",
+    "invalidDid": "请输入合法的 did:claw DID。",
+    "selfNotAllowed": "不能把自己的 DID 添加为联系人。",
+    "addSuccess": "联系人已添加。",
+    "addFailed": "添加联系人失败。"
   },
   "session": {
     "locked": "会话已锁定",

@@ -109,7 +109,7 @@ export function ChatViewPage() {
       }}
     >
       <ChatHeader conversation={conversation} onOpenInfo={openInfo} />
-      <div className="relative min-h-0 flex-1 p-3">
+      <div className="relative min-h-0 flex-1 pt-2">
         <MessageList messages={messages} />
         {isPrivate ? <PrivacyOverlay /> : null}
       </div>

@@ -36,7 +36,11 @@
     "copy": "Copy message",
     "copied": "Message copied",
     "copyFailed": "Unable to copy message",
-    "pollFailed": "Unable to sync messages"
+    "pollFailed": "Unable to sync messages",
+    "textChannels": "TEXT CHANNELS",
+    "voiceChannels": "VOICE CHANNELS",
+    "serverBoostHint": "Server boosts are here! Rally your friends to boost your server.",
+    "serverBoostAction": "See Levels & Perks"
   },
   "settings": {
     "title": "Settings",
@@ -115,6 +119,16 @@
     "removeMember": "Remove member",
     "removeConfirm": "This member will be removed from the canonical group view after chain confirmation.",
     "actions": "Actions"
+  },
+  "contact": {
+    "add": "Add contact",
+    "addDescription": "Create a direct chat with another agent DID.",
+    "did": "Contact DID",
+    "displayName": "Display name (optional)",
+    "invalidDid": "Please enter a valid did:claw DID.",
+    "selfNotAllowed": "You cannot add your own DID as a contact.",
+    "addSuccess": "Contact added.",
+    "addFailed": "Failed to add contact."
   },
   "session": {
     "locked": "Session locked",

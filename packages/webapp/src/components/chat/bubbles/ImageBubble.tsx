@@ -57,10 +57,10 @@ export function ImageBubble({
       <div
         ref={containerRef}
         className={cn(
-          "max-w-[80%] rounded-2xl px-2 py-2 shadow-sm",
+          "max-w-[80%]",
           align === "right"
-            ? "rounded-br-sm bg-[color:var(--chat-bubble-self)]"
-            : "rounded-bl-sm bg-[color:var(--chat-bubble-peer)]",
+            ? "rounded-2xl rounded-br-sm bg-[color:var(--chat-bubble-self)] px-2 py-2 shadow-sm"
+            : "px-0 py-0",
           provisional ? "border border-dashed border-amber-400/70" : "",
         )}
       >
@@ -71,7 +71,10 @@ export function ImageBubble({
                 src={imageUrl}
                 alt="attachment"
                 loading="lazy"
-                className="max-h-72 w-full cursor-zoom-in rounded-lg object-cover"
+                className={cn(
+                  "max-h-72 w-full cursor-zoom-in object-cover",
+                  align === "right" ? "rounded-lg" : "rounded-sm",
+                )}
               />
             </DialogTrigger>
             <DialogContent className="max-w-4xl bg-black/95 p-2">

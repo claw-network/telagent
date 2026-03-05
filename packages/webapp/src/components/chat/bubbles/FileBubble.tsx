@@ -25,10 +25,10 @@ export function FileBubble({
     <div className={cn("flex w-full", align === "right" ? "justify-end" : "justify-start")}>
       <div
         className={cn(
-          "max-w-[80%] rounded-2xl px-3 py-2 shadow-sm",
+          "max-w-[80%] px-3 py-2",
           align === "right"
-            ? "rounded-br-sm bg-[color:var(--chat-bubble-self)]"
-            : "rounded-bl-sm bg-[color:var(--chat-bubble-peer)]",
+            ? "rounded-2xl rounded-br-sm bg-[color:var(--chat-bubble-self)] shadow-sm"
+            : "rounded-lg bg-[#2b2d31]/80",
           provisional ? "border border-dashed border-amber-400/70" : "",
         )}
       >

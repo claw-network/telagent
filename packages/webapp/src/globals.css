@@ -120,18 +120,12 @@
 
   body {
     @apply bg-background text-foreground antialiased;
-    font-family: "Sora", "Noto Sans SC", "Segoe UI", sans-serif;
-    background:
-      radial-gradient(circle at 0 0, oklch(0.68 0.08 248 / 0.12) 0, transparent 36%),
-      radial-gradient(circle at 100% 0, oklch(0.78 0.07 198 / 0.12) 0, transparent 32%),
-      linear-gradient(160deg, oklch(0.98 0.004 240) 0%, oklch(0.95 0.01 248) 100%);
+    font-family: "gg sans", "Inter", "Noto Sans SC", "Segoe UI", sans-serif;
+    background: #0f1012;
   }
 
   .dark body {
-    background:
-      radial-gradient(circle at 0 0, oklch(0.34 0.08 248 / 0.2) 0, transparent 35%),
-      radial-gradient(circle at 100% 0, oklch(0.28 0.08 198 / 0.16) 0, transparent 30%),
-      linear-gradient(165deg, oklch(0.19 0.015 250) 0%, oklch(0.15 0.012 248) 100%);
+    background: #0f1012;
   }
 
   code,
