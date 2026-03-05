@@ -9,7 +9,7 @@
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "node --test dist/*.test.js dist/**/*.test.js",
     "pretest": "pnpm build",
-    "start": "tsx src/daemon.ts"
+    "start": "tsx --env-file=../../.env src/daemon.ts"
   },
   "dependencies": {
     "@claw-network/core": "^0.2.2",
