@@ -86,3 +86,31 @@ export interface ProblemDetail {
   instance?: string;
   code?: string;
 }
+
+export type InterventionScope =
+  | 'send_message'
+  | 'manage_contacts'
+  | 'manage_groups'
+  | 'clawnet_transfer'
+  | 'clawnet_escrow'
+  | 'clawnet_market'
+  | 'clawnet_reputation';
+
+export interface OwnerPermissions {
+  mode: 'observer' | 'intervener';
+  interventionScopes: InterventionScope[];
+  privateConversations: string[];
+}
+
+export interface ConversationSummary {
+  conversationId: string;
+  conversationType: ConversationType;
+  peerDid?: AgentDID;
+  groupId?: GroupID;
+  displayName: string;
+  lastMessagePreview?: string | null;
+  lastMessageAtMs?: number;
+  unreadCount: number;
+  private: boolean;
+  avatarUrl?: string | null;
+}

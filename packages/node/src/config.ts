@@ -1,4 +1,9 @@
 import { ChainConfigSchema, type ChainConfig } from './services/chain-config.js';
+import {
+  parseOwnerMode,
+  parseOwnerScopes,
+  parsePrivateConversations,
+} from './services/owner-permission-service.js';
 import { resolveTelagentPaths, type TelagentStoragePaths } from './storage/telagent-paths.js';
 
 export interface FederationConfig {
@@ -71,6 +76,20 @@ export interface ClawNetConfig {
   autoStart: boolean;
 }
 
+export interface OwnerConfig {
+  mode: 'observer' | 'intervener';
+  scopes: Array<
+    | 'send_message'
+    | 'manage_contacts'
+    | 'manage_groups'
+    | 'clawnet_transfer'
+    | 'clawnet_escrow'
+    | 'clawnet_market'
+    | 'clawnet_reputation'
+  >;
+  privateConversations: string[];
+}
+
 export interface AppConfig {
   host: string;
   port: number;
@@ -79,6 +98,7 @@ export interface AppConfig {
   mailboxStore: MailboxStoreConfig;
   chain: ChainConfig;
   clawnet: ClawNetConfig;
+  owner: OwnerConfig;
   federation: FederationConfig;
   monitoring: MonitoringConfig;
   domainProof: DomainProofConfig;
@@ -138,6 +158,12 @@ export function loadConfigFromEnv(): AppConfig {
     timeoutMs: Number(process.env.TELAGENT_CLAWNET_TIMEOUT_MS || 30_000),
     autoDiscover: parseBoolean(process.env.TELAGENT_CLAWNET_AUTO_DISCOVER, true),
     autoStart: parseBoolean(process.env.TELAGENT_CLAWNET_AUTO_START, true),
+  };
+
+  const owner: OwnerConfig = {
+    mode: parseOwnerMode(process.env.TELAGENT_OWNER_MODE),
+    scopes: parseOwnerScopes(process.env.TELAGENT_OWNER_SCOPES),
+    privateConversations: parsePrivateConversations(process.env.TELAGENT_OWNER_PRIVATE_CONVERSATIONS),
   };
 
   const allowedSourceDomains = (process.env.TELAGENT_FEDERATION_ALLOWED_DOMAINS || '')
@@ -210,6 +236,7 @@ export function loadConfigFromEnv(): AppConfig {
     mailboxStore,
     chain,
     clawnet,
+    owner,
     federation: {
       selfDomain: process.env.TELAGENT_FEDERATION_SELF_DOMAIN || host,
       authToken: process.env.TELAGENT_FEDERATION_AUTH_TOKEN || undefined,

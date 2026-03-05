@@ -53,6 +53,12 @@ CREATE TABLE IF NOT EXISTS mailbox_direct_conversations (
   updated_at_ms INTEGER NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS mailbox_conversations (
+  conversation_id TEXT PRIMARY KEY,
+  private INTEGER NOT NULL DEFAULT 0,
+  updated_at_ms INTEGER NOT NULL
+);
+
 CREATE TABLE IF NOT EXISTS mailbox_federation_outbox (
   outbox_key TEXT PRIMARY KEY,
   envelope_id TEXT NOT NULL,
@@ -73,6 +79,7 @@ CREATE INDEX IF NOT EXISTS idx_mailbox_envelopes_provisional ON mailbox_envelope
 CREATE INDEX IF NOT EXISTS idx_mailbox_retractions_time ON mailbox_retractions(retracted_at_ms DESC);
 CREATE INDEX IF NOT EXISTS idx_mailbox_direct_conversations_a ON mailbox_direct_conversations(participant_a_hash);
 CREATE INDEX IF NOT EXISTS idx_mailbox_direct_conversations_b ON mailbox_direct_conversations(participant_b_hash);
+CREATE INDEX IF NOT EXISTS idx_mailbox_conversations_private ON mailbox_conversations(private, updated_at_ms DESC);
 CREATE INDEX IF NOT EXISTS idx_mailbox_federation_outbox_due ON mailbox_federation_outbox(next_retry_at_ms, created_at_ms);
 `;
 
@@ -596,6 +603,42 @@ export class MessageRepository implements MailboxStore {
       removed,
       remaining,
     };
+  }
+
+  async setConversationPrivacy(params: {
+    conversationId: string;
+    isPrivate: boolean;
+    updatedAtMs: number;
+  }): Promise<void> {
+    this.db
+      .prepare(
+        `INSERT INTO mailbox_conversations (
+          conversation_id,
+          private,
+          updated_at_ms
+        ) VALUES (?, ?, ?)
+        ON CONFLICT(conversation_id) DO UPDATE SET
+          private = excluded.private,
+          updated_at_ms = excluded.updated_at_ms`,
+      )
+      .run(
+        params.conversationId,
+        params.isPrivate ? 1 : 0,
+        params.updatedAtMs,
+      );
+  }
+
+  async listPrivateConversationIds(limit = 5_000): Promise<string[]> {
+    const rows = this.db
+      .prepare(
+        `SELECT conversation_id AS conversationId
+         FROM mailbox_conversations
+         WHERE private = 1
+         ORDER BY updated_at_ms DESC
+         LIMIT ?`,
+      )
+      .all(Math.max(1, limit)) as Array<{ conversationId: string }>;
+    return rows.map((row) => row.conversationId);
   }
 
   async enqueueFederationOutbox(entry: {

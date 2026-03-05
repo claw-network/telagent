@@ -76,6 +76,53 @@ test('mailbox store defaults to sqlite backend', async () => {
   );
 });
 
+test('owner config defaults to observer mode', async () => {
+  await withEnv(
+    {
+      TELAGENT_OWNER_MODE: undefined,
+      TELAGENT_OWNER_SCOPES: undefined,
+      TELAGENT_OWNER_PRIVATE_CONVERSATIONS: undefined,
+    },
+    async () => {
+      const config = loadConfigFromEnv();
+      assert.equal(config.owner.mode, 'observer');
+      assert.deepEqual(config.owner.scopes, []);
+      assert.deepEqual(config.owner.privateConversations, []);
+    },
+  );
+});
+
+test('owner config parses intervener scopes and private conversations', async () => {
+  await withEnv(
+    {
+      TELAGENT_OWNER_MODE: 'intervener',
+      TELAGENT_OWNER_SCOPES: 'send_message,manage_groups,clawnet_market',
+      TELAGENT_OWNER_PRIVATE_CONVERSATIONS: 'direct:a,group:b',
+    },
+    async () => {
+      const config = loadConfigFromEnv();
+      assert.equal(config.owner.mode, 'intervener');
+      assert.deepEqual(config.owner.scopes, ['send_message', 'manage_groups', 'clawnet_market']);
+      assert.deepEqual(config.owner.privateConversations, ['direct:a', 'group:b']);
+    },
+  );
+});
+
+test('owner config rejects unsupported scope', async () => {
+  await withEnv(
+    {
+      TELAGENT_OWNER_MODE: 'intervener',
+      TELAGENT_OWNER_SCOPES: 'send_message,unknown_scope',
+    },
+    async () => {
+      assert.throws(
+        () => loadConfigFromEnv(),
+        /unsupported scope/,
+      );
+    },
+  );
+});
+
 test('mailbox store parses postgres backend config', async () => {
   await withEnv(
     {

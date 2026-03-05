@@ -190,6 +190,7 @@ class FakeGasService {
 
 class FakeMessageService {
   private nextSeq = 1n;
+  private readonly privateConversations = new Set<string>();
   private readonly trackedConversationIdsByDidHash = new Map<string, Set<string>>();
   private readonly isolatedConversationById = new Map<string, {
     didHash: string;
@@ -371,6 +372,42 @@ class FakeMessageService {
       sampleSize,
       retractionScanLimit: Math.max(1, Math.min(100_000, options?.retractionScanLimit ?? 2_000)),
     };
+  }
+
+  async listConversations() {
+    const conversationId = 'direct:did:claw:zSelf:did:claw:zPeer';
+    const isPrivate = this.privateConversations.has(conversationId);
+    return [
+      {
+        conversationId,
+        conversationType: 'direct',
+        peerDid: 'did:claw:zPeer',
+        displayName: 'did:claw:zPeer',
+        lastMessagePreview: isPrivate ? null : 'hello',
+        lastMessageAtMs: Date.now(),
+        unreadCount: 0,
+        private: isPrivate,
+        avatarUrl: null,
+      },
+    ];
+  }
+
+  async setConversationPrivacy(conversationId: string, isPrivate: boolean) {
+    if (isPrivate) {
+      this.privateConversations.add(conversationId);
+    } else {
+      this.privateConversations.delete(conversationId);
+    }
+
+    return {
+      conversationId,
+      private: isPrivate,
+      updatedAtMs: Date.now(),
+    };
+  }
+
+  async listPrivateConversationIds() {
+    return [...this.privateConversations];
   }
 }
 
@@ -1286,6 +1323,12 @@ test('identities and groups endpoints are accessible with expected status codes'
   const metricsRes = await fetch(`${baseUrl}/api/v1/node/metrics`);
   assert.equal(metricsRes.status, 200);
 
+  const permissionsRes = await fetch(`${baseUrl}/api/v1/owner/permissions`);
+  assert.equal(permissionsRes.status, 200);
+
+  const conversationsRes = await fetch(`${baseUrl}/api/v1/conversations?page=1&per_page=20`);
+  assert.equal(conversationsRes.status, 200);
+
   const resolveRes = await fetch(`${baseUrl}/api/v1/identities/${encodeURIComponent(did)}`);
   assert.equal(resolveRes.status, 200);
 
@@ -1342,6 +1385,82 @@ test('identities and groups endpoints are accessible with expected status codes'
 
   const chainStateRes = await fetch(`${baseUrl}/api/v1/groups/${groupId}/chain-state`);
   assert.equal(chainStateRes.status, 200);
+});
+
+test('conversation privacy route blocks owner token and syncs private flags across APIs', async (t) => {
+  const { server, baseUrl } = await startTestServer();
+  t.after(async () => {
+    await server.stop();
+  });
+
+  const conversationId = 'direct:did:claw:zSelf:did:claw:zPeer';
+  const encodedConversationId = encodeURIComponent(conversationId);
+
+  const ownerDenied = await fetch(`${baseUrl}/api/v1/conversations/${encodedConversationId}/privacy`, {
+    method: 'PUT',
+    headers: {
+      'content-type': 'application/json',
+      authorization: 'Bearer owner_demo_token',
+    },
+    body: JSON.stringify({ private: true }),
+  });
+  assert.equal(ownerDenied.status, 403);
+  assert.match(ownerDenied.headers.get('content-type') ?? '', /^application\/problem\+json/);
+  const ownerBody = (await ownerDenied.json()) as {
+    title: string;
+    status: number;
+    code: string;
+  };
+  assert.equal(ownerBody.title, 'Forbidden');
+  assert.equal(ownerBody.status, 403);
+  assert.equal(ownerBody.code, 'FORBIDDEN');
+
+  const setPrivate = await fetch(`${baseUrl}/api/v1/conversations/${encodedConversationId}/privacy`, {
+    method: 'PUT',
+    headers: {
+      'content-type': 'application/json',
+      authorization: 'Bearer tses_test_token',
+    },
+    body: JSON.stringify({ private: true }),
+  });
+  assert.equal(setPrivate.status, 200);
+  const setPrivateBody = (await setPrivate.json()) as {
+    data: {
+      conversationId: string;
+      private: boolean;
+      updatedAtMs: number;
+    };
+    links: {
+      self: string;
+    };
+  };
+  assert.equal(setPrivateBody.data.conversationId, conversationId);
+  assert.equal(setPrivateBody.data.private, true);
+  assert.equal(Number.isInteger(setPrivateBody.data.updatedAtMs), true);
+  assert.equal(setPrivateBody.links.self, `/api/v1/conversations/${encodedConversationId}/privacy`);
+
+  const conversationsRes = await fetch(`${baseUrl}/api/v1/conversations?page=1&per_page=20`);
+  assert.equal(conversationsRes.status, 200);
+  const conversationsBody = (await conversationsRes.json()) as {
+    data: Array<{
+      conversationId: string;
+      private: boolean;
+      lastMessagePreview: string | null;
+    }>;
+  };
+  const conversation = conversationsBody.data.find((item) => item.conversationId === conversationId);
+  assert.ok(conversation);
+  assert.equal(conversation.private, true);
+  assert.equal(conversation.lastMessagePreview, null);
+
+  const permissionsRes = await fetch(`${baseUrl}/api/v1/owner/permissions`);
+  assert.equal(permissionsRes.status, 200);
+  const permissionsBody = (await permissionsRes.json()) as {
+    data: {
+      privateConversations: string[];
+    };
+  };
+  assert.equal(permissionsBody.data.privateConversations.includes(conversationId), true);
 });
 
 test('messages, attachments and federation endpoints are accessible', async (t) => {

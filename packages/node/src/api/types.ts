@@ -10,6 +10,7 @@ import type { IdentityAdapterService } from '../services/identity-adapter-servic
 import type { KeyLifecycleService } from '../services/key-lifecycle-service.js';
 import type { MessageService } from '../services/message-service.js';
 import type { NodeMonitoringService } from '../services/node-monitoring-service.js';
+import type { OwnerPermissionService } from '../services/owner-permission-service.js';
 
 export interface ApiServerConfig {
   host: string;
@@ -29,5 +30,6 @@ export interface RuntimeContext {
   clawnetGateway: ClawNetGatewayService;
   sessionManager: SessionManager;
   nonceManager: NonceManager;
+  ownerPermissionService?: OwnerPermissionService;
   federationDeliveryService?: FederationDeliveryService;
 }

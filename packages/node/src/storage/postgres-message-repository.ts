@@ -134,6 +134,14 @@ export class PostgresMessageRepository implements MailboxStore {
     `);
 
     await this.pool.query(`
+      CREATE TABLE IF NOT EXISTS ${this.table('mailbox_conversations')} (
+        conversation_id TEXT PRIMARY KEY,
+        private BOOLEAN NOT NULL DEFAULT FALSE,
+        updated_at_ms BIGINT NOT NULL
+      )
+    `);
+
+    await this.pool.query(`
       CREATE TABLE IF NOT EXISTS ${this.table('mailbox_federation_outbox')} (
         outbox_key TEXT PRIMARY KEY,
         envelope_id TEXT NOT NULL,
@@ -170,6 +178,9 @@ export class PostgresMessageRepository implements MailboxStore {
     );
     await this.pool.query(
       `CREATE INDEX IF NOT EXISTS idx_mailbox_direct_conversations_b ON ${this.table('mailbox_direct_conversations')}(participant_b_hash)`,
+    );
+    await this.pool.query(
+      `CREATE INDEX IF NOT EXISTS idx_mailbox_conversations_private ON ${this.table('mailbox_conversations')}(private, updated_at_ms DESC)`,
     );
     await this.pool.query(
       `CREATE INDEX IF NOT EXISTS idx_mailbox_federation_outbox_due ON ${this.table('mailbox_federation_outbox')}(next_retry_at_ms, created_at_ms)`,
@@ -597,6 +608,40 @@ export class PostgresMessageRepository implements MailboxStore {
       removed: removed.rowCount ?? 0,
       remaining: Number.parseInt(remaining.rows[0]?.count ?? '0', 10),
     };
+  }
+
+  async setConversationPrivacy(params: {
+    conversationId: string;
+    isPrivate: boolean;
+    updatedAtMs: number;
+  }): Promise<void> {
+    await this.pool.query(
+      `INSERT INTO ${this.table('mailbox_conversations')} (
+        conversation_id,
+        private,
+        updated_at_ms
+      ) VALUES ($1, $2, $3)
+      ON CONFLICT(conversation_id) DO UPDATE SET
+        private = EXCLUDED.private,
+        updated_at_ms = EXCLUDED.updated_at_ms`,
+      [
+        params.conversationId,
+        params.isPrivate,
+        params.updatedAtMs,
+      ],
+    );
+  }
+
+  async listPrivateConversationIds(limit = 5_000): Promise<string[]> {
+    const result = await this.pool.query<{ conversation_id: string }>(
+      `SELECT conversation_id
+       FROM ${this.table('mailbox_conversations')}
+       WHERE private = TRUE
+       ORDER BY updated_at_ms DESC
+       LIMIT $1`,
+      [Math.max(1, limit)],
+    );
+    return result.rows.map((row) => row.conversation_id);
   }
 
   async enqueueFederationOutbox(entry: {

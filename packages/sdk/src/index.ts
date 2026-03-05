@@ -1,9 +1,11 @@
 import type {
   AgentDID,
+  ConversationSummary,
   Envelope,
   GroupChainState,
   GroupMemberRecord,
   GroupRecord,
+  OwnerPermissions,
   ProblemDetail,
 } from '@telagent/protocol';
 
@@ -102,6 +104,78 @@ export interface GroupMemberListInput {
   perPage?: number;
 }
 
+export interface ConversationListInput {
+  page?: number;
+  perPage?: number;
+  sort?: 'last_message';
+}
+
+export type SessionOperationScope = 'transfer' | 'escrow' | 'market' | 'contract' | 'reputation' | 'identity';
+
+export interface UnlockSessionInput {
+  passphrase: string;
+  ttlSeconds?: number;
+  scope?: SessionOperationScope[];
+  maxOperations?: number;
+}
+
+export interface SessionInfo {
+  active: boolean;
+  expiresAt: string;
+  scope: SessionOperationScope[];
+  operationsUsed: number;
+  createdAt: string;
+}
+
+export interface SessionUnlockResult {
+  sessionToken: string;
+  expiresAt: string;
+  scope: SessionOperationScope[];
+  did: string;
+}
+
+export interface WalletHistoryInput {
+  did?: AgentDID;
+  limit?: number;
+  offset?: number;
+}
+
+export interface SearchMarketsInput {
+  q?: string;
+  type?: string;
+}
+
+export interface PublishTaskInput {
+  title: string;
+  description: string;
+  budget: number;
+  tags?: string[];
+}
+
+export interface BidTaskInput {
+  amount: number;
+  proposal?: string;
+}
+
+export interface ReviewInput {
+  targetDid: AgentDID;
+  score: number;
+  comment?: string;
+  orderId?: string;
+}
+
+export interface TransferInput {
+  to: AgentDID;
+  amount: number;
+  memo?: string;
+}
+
+export interface CreateEscrowInput {
+  beneficiary: AgentDID;
+  amount: number;
+  releaseRules?: unknown[];
+}
+
 export interface TelagentSdkOptions {
   baseUrl: string;
   accessToken?: string;
@@ -121,6 +195,10 @@ export class TelagentSdkError extends Error {
 }
 
 type QueryValue = string | number | boolean | null | undefined;
+
+interface RequestOptions {
+  authToken?: string;
+}
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
@@ -180,6 +258,36 @@ export class TelagentSdk {
 
   async getIdentity(did: AgentDID): Promise<AgentIdentityView> {
     const envelope = await this.requestData<AgentIdentityView>('GET', `/api/v1/identities/${encodeURIComponent(did)}`);
+    return envelope.data;
+  }
+
+  async getOwnerPermissions(): Promise<OwnerPermissions> {
+    const envelope = await this.requestData<OwnerPermissions>('GET', '/api/v1/owner/permissions');
+    return envelope.data;
+  }
+
+  async listConversations(input: ConversationListInput = {}): Promise<ApiListEnvelope<ConversationSummary>> {
+    const query: Record<string, QueryValue> = {
+      page: input.page,
+      per_page: input.perPage,
+      sort: input.sort ?? 'last_message',
+    };
+    return this.requestList<ConversationSummary>('GET', '/api/v1/conversations', undefined, query);
+  }
+
+  async setConversationPrivacy(
+    conversationId: string,
+    isPrivate: boolean,
+  ): Promise<{ conversationId: string; private: boolean; updatedAtMs: number }> {
+    const normalizedConversationId = conversationId.trim();
+    if (!normalizedConversationId) {
+      throw new Error('conversationId is required');
+    }
+    const envelope = await this.requestData<{ conversationId: string; private: boolean; updatedAtMs: number }>(
+      'PUT',
+      `/api/v1/conversations/${encodeURIComponent(normalizedConversationId)}/privacy`,
+      { private: isPrivate },
+    );
     return envelope.data;
   }
 
@@ -282,13 +390,200 @@ export class TelagentSdk {
     return envelope.data;
   }
 
+  async unlockSession(input: UnlockSessionInput): Promise<SessionUnlockResult> {
+    const envelope = await this.requestData<SessionUnlockResult>('POST', '/api/v1/session/unlock', input);
+    return envelope.data;
+  }
+
+  async lockSession(sessionToken: string): Promise<void> {
+    await this.requestNoContent('POST', '/api/v1/session/lock', undefined, undefined, {
+      authToken: sessionToken,
+    });
+  }
+
+  async getSessionInfo(sessionToken: string): Promise<SessionInfo> {
+    const envelope = await this.requestData<SessionInfo>('GET', '/api/v1/session', undefined, undefined, {
+      authToken: sessionToken,
+    });
+    return envelope.data;
+  }
+
+  async getWalletBalance(did?: AgentDID): Promise<unknown> {
+    const path = did
+      ? `/api/v1/clawnet/wallet/balance/${encodeURIComponent(did)}`
+      : '/api/v1/clawnet/wallet/balance';
+    const envelope = await this.requestData<unknown>('GET', path);
+    return envelope.data;
+  }
+
+  async getWalletNonce(did?: AgentDID): Promise<unknown> {
+    const path = did
+      ? `/api/v1/clawnet/wallet/nonce/${encodeURIComponent(did)}`
+      : '/api/v1/clawnet/wallet/nonce';
+    const envelope = await this.requestData<unknown>('GET', path);
+    return envelope.data;
+  }
+
+  async getWalletHistory(input: WalletHistoryInput = {}): Promise<unknown[]> {
+    const path = input.did
+      ? `/api/v1/clawnet/wallet/history/${encodeURIComponent(input.did)}`
+      : '/api/v1/clawnet/wallet/history';
+    const query: Record<string, QueryValue> = {
+      limit: input.limit,
+      offset: input.offset,
+    };
+    const envelope = await this.requestData<unknown[]>('GET', path, undefined, query);
+    return envelope.data;
+  }
+
+  async getClawnetSelfIdentity(): Promise<unknown> {
+    const envelope = await this.requestData<unknown>('GET', '/api/v1/clawnet/identity/self');
+    return envelope.data;
+  }
+
+  async getClawnetIdentity(did: AgentDID): Promise<unknown> {
+    const envelope = await this.requestData<unknown>('GET', `/api/v1/clawnet/identity/${encodeURIComponent(did)}`);
+    return envelope.data;
+  }
+
+  async getAgentProfile(did: AgentDID): Promise<unknown> {
+    const envelope = await this.requestData<unknown>('GET', `/api/v1/clawnet/profile/${encodeURIComponent(did)}`);
+    return envelope.data;
+  }
+
+  async getReputation(did: AgentDID): Promise<unknown> {
+    const envelope = await this.requestData<unknown>('GET', `/api/v1/clawnet/reputation/${encodeURIComponent(did)}`);
+    return envelope.data;
+  }
+
+  async getClawnetHealth(): Promise<unknown> {
+    const envelope = await this.requestData<unknown>('GET', '/api/v1/clawnet/health');
+    return envelope.data;
+  }
+
+  async getEscrow(escrowId: string): Promise<unknown> {
+    const envelope = await this.requestData<unknown>('GET', `/api/v1/clawnet/escrow/${encodeURIComponent(escrowId)}`);
+    return envelope.data;
+  }
+
+  async listTasks(filters?: Record<string, QueryValue>): Promise<unknown[]> {
+    const envelope = await this.requestData<unknown[]>('GET', '/api/v1/clawnet/market/tasks', undefined, filters);
+    return envelope.data;
+  }
+
+  async searchMarkets(input: SearchMarketsInput = {}): Promise<unknown[]> {
+    const query: Record<string, QueryValue> = {
+      q: input.q,
+      type: input.type,
+    };
+    const envelope = await this.requestData<unknown[]>('GET', '/api/v1/clawnet/markets/search', undefined, query);
+    return envelope.data;
+  }
+
+  async listTaskBids(taskId: string): Promise<unknown[]> {
+    const normalizedTaskId = taskId.trim();
+    if (!normalizedTaskId) {
+      throw new Error('taskId is required');
+    }
+    const envelope = await this.requestData<unknown[]>(
+      'GET',
+      `/api/v1/clawnet/market/tasks/${encodeURIComponent(normalizedTaskId)}/bids`,
+    );
+    return envelope.data;
+  }
+
+  async transfer(sessionToken: string, input: TransferInput): Promise<unknown> {
+    const envelope = await this.requestData<unknown>('POST', '/api/v1/clawnet/wallet/transfer', input, undefined, {
+      authToken: sessionToken,
+    });
+    return envelope.data;
+  }
+
+  async createEscrow(sessionToken: string, input: CreateEscrowInput): Promise<unknown> {
+    const envelope = await this.requestData<unknown>('POST', '/api/v1/clawnet/wallet/escrow', input, undefined, {
+      authToken: sessionToken,
+    });
+    return envelope.data;
+  }
+
+  async releaseEscrow(sessionToken: string, escrowId: string): Promise<unknown> {
+    const normalizedEscrowId = escrowId.trim();
+    if (!normalizedEscrowId) {
+      throw new Error('escrowId is required');
+    }
+    const envelope = await this.requestData<unknown>(
+      'POST',
+      `/api/v1/clawnet/wallet/escrow/${encodeURIComponent(normalizedEscrowId)}/release`,
+      undefined,
+      undefined,
+      { authToken: sessionToken },
+    );
+    return envelope.data;
+  }
+
+  async publishTask(sessionToken: string, input: PublishTaskInput): Promise<unknown> {
+    const envelope = await this.requestData<unknown>('POST', '/api/v1/clawnet/market/tasks', input, undefined, {
+      authToken: sessionToken,
+    });
+    return envelope.data;
+  }
+
+  async bid(sessionToken: string, taskId: string, input: BidTaskInput): Promise<unknown> {
+    const normalizedTaskId = taskId.trim();
+    if (!normalizedTaskId) {
+      throw new Error('taskId is required');
+    }
+    const envelope = await this.requestData<unknown>(
+      'POST',
+      `/api/v1/clawnet/market/tasks/${encodeURIComponent(normalizedTaskId)}/bid`,
+      input,
+      undefined,
+      { authToken: sessionToken },
+    );
+    return envelope.data;
+  }
+
+  async acceptBid(sessionToken: string, taskId: string, bidId: string): Promise<unknown> {
+    const normalizedTaskId = taskId.trim();
+    const normalizedBidId = bidId.trim();
+    if (!normalizedTaskId) {
+      throw new Error('taskId is required');
+    }
+    if (!normalizedBidId) {
+      throw new Error('bidId is required');
+    }
+    const envelope = await this.requestData<unknown>(
+      'POST',
+      `/api/v1/clawnet/market/tasks/${encodeURIComponent(normalizedTaskId)}/accept-bid`,
+      { bidId: normalizedBidId },
+      undefined,
+      { authToken: sessionToken },
+    );
+    return envelope.data;
+  }
+
+  async submitReview(sessionToken: string, input: ReviewInput): Promise<unknown> {
+    const envelope = await this.requestData<unknown>('POST', '/api/v1/clawnet/reputation/review', input, undefined, {
+      authToken: sessionToken,
+    });
+    return envelope.data;
+  }
+
+  async createServiceContract(sessionToken: string, payload: Record<string, unknown>): Promise<unknown> {
+    const envelope = await this.requestData<unknown>('POST', '/api/v1/clawnet/contracts', payload, undefined, {
+      authToken: sessionToken,
+    });
+    return envelope.data;
+  }
+
   private async requestData<T>(
-    method: 'GET' | 'POST' | 'DELETE',
+    method: 'GET' | 'POST' | 'PUT' | 'DELETE',
     path: string,
     body?: unknown,
     query?: Record<string, QueryValue>,
+    options?: RequestOptions,
   ): Promise<ApiDataEnvelope<T>> {
-    const response = await this.send(method, path, body, query);
+    const response = await this.send(method, path, body, query, options);
     const payload = await this.readPayload(response);
     this.ensureOk(response, payload, path);
 
@@ -307,8 +602,9 @@ export class TelagentSdk {
     path: string,
     body?: unknown,
     query?: Record<string, QueryValue>,
+    options?: RequestOptions,
   ): Promise<ApiListEnvelope<T>> {
-    const response = await this.send(method, path, body, query);
+    const response = await this.send(method, path, body, query, options);
     const payload = await this.readPayload(response);
     this.ensureOk(response, payload, path);
 
@@ -324,12 +620,13 @@ export class TelagentSdk {
   }
 
   private async requestNoContent(
-    method: 'DELETE',
+    method: 'DELETE' | 'POST',
     path: string,
     body?: unknown,
     query?: Record<string, QueryValue>,
+    options?: RequestOptions,
   ): Promise<void> {
-    const response = await this.send(method, path, body, query);
+    const response = await this.send(method, path, body, query, options);
     if (response.status === 204) {
       return;
     }
@@ -338,12 +635,13 @@ export class TelagentSdk {
   }
 
   private async send(
-    method: 'GET' | 'POST' | 'DELETE',
+    method: 'GET' | 'POST' | 'PUT' | 'DELETE',
     path: string,
     body?: unknown,
     query?: Record<string, QueryValue>,
+    options?: RequestOptions,
   ): Promise<Response> {
-    const headers = this.buildHeaders();
+    const headers = this.buildHeaders(options?.authToken);
     const init: RequestInit = {
       method,
       headers,
@@ -355,12 +653,13 @@ export class TelagentSdk {
     return this.fetchImpl(this.toUrl(path, query), init);
   }
 
-  private buildHeaders(): Record<string, string> {
+  private buildHeaders(authToken?: string): Record<string, string> {
     const headers: Record<string, string> = {
       ...this.defaultHeaders,
     };
-    if (this.accessToken) {
-      headers.authorization = `Bearer ${this.accessToken}`;
+    const token = authToken ?? this.accessToken;
+    if (token) {
+      headers.authorization = `Bearer ${token}`;
     }
     return headers;
   }
