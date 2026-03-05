@@ -244,7 +244,8 @@ export class TelagentSdk {
   constructor(options: TelagentSdkOptions) {
     this.baseUrl = normalizeBaseUrl(options.baseUrl);
     this.accessToken = options.accessToken;
-    this.fetchImpl = options.fetchImpl ?? fetch;
+    const fetchFn = options.fetchImpl ?? fetch;
+    this.fetchImpl = (input: RequestInfo | URL, init?: RequestInit) => fetchFn(input, init);
     this.defaultHeaders = {
       accept: 'application/json',
       ...(options.defaultHeaders ?? {}),
