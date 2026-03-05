@@ -10,14 +10,23 @@
   },
   "connect": {
     "title": "Connect your TelAgent node",
-    "subtitle": "Use your node URL and optional access token to inspect agent activity.",
+    "subtitle": "Connect to a local or remote TelAgent node to inspect agent activity.",
     "nodeUrl": "Node URL",
-    "token": "Access token (optional)",
+    "token": "Access token",
     "submit": "Connect",
     "connecting": "Connecting...",
     "hint": "The app checks /api/v1/node and then loads /api/v1/identities/self.",
     "invalidUrl": "Please enter a valid http(s) URL.",
-    "failed": "Unable to connect to the node"
+    "failed": "Unable to connect to the node",
+    "local": {
+      "tab": "Local",
+      "description": "Connect to the TelAgent node running on this machine (127.0.0.1:8787).",
+      "detecting": "Detecting local node...",
+      "notFound": "No local TelAgent node detected"
+    },
+    "remote": {
+      "tab": "Remote"
+    }
   },
   "chat": {
     "title": "Chats",
