@@ -2,6 +2,7 @@
 node_modules
 .pnpm-store
 .env
+.idea
 *.log
 __pycache__/
 *.py[cod]
