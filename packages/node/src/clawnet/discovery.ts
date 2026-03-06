@@ -102,7 +102,7 @@ export async function discoverOrStartClawNet(
     await managedNode.initAndStart();
   }
 
-  const did = await managedNode.getDid();
+  const did = managedNode.getDid();
   logger.info('[telagent] Embedded ClawNet Node started — DID: %s', did);
 
   return {

@@ -135,6 +135,8 @@ class FakeKeyLifecycleService {
 }
 
 class FakeClawNetGatewayService {
+  baseUrl = 'http://127.0.0.1:9528';
+
   async getBalance(did?: string) {
     return {
       did: did ?? 'did:claw:zAlice',

@@ -17,7 +17,7 @@ import { useConnectionStore } from "@/stores/connection"
 import { useIdentityStore } from "@/stores/identity"
 import { usePermissionStore } from "@/stores/permission"
 
-const LOCAL_NODE_URL = "http://127.0.0.1:8787"
+const LOCAL_NODE_URL = "http://127.0.0.1:9529"
 
 /* ------------------------------------------------------------------ */
 /*  Local node auto-detection                                         */
@@ -46,14 +46,16 @@ function useLocalNodeProbe() {
           headers: { accept: "application/json" },
         })
         if (!nodeRes.ok) throw new Error("node probe failed")
-        const node = await nodeRes.json()
+        const nodeBody = await nodeRes.json()
+        const node = nodeBody.data ?? nodeBody
 
         const selfRes = await fetch(new URL("/api/v1/identities/self", LOCAL_NODE_URL).toString(), {
           signal: controller.signal,
           headers: { accept: "application/json" },
         })
         if (!selfRes.ok) throw new Error("identity probe failed")
-        const self = await selfRes.json()
+        const selfBody = await selfRes.json()
+        const self = selfBody.data ?? selfBody
 
         setInfo({
           did: self.did ?? "",

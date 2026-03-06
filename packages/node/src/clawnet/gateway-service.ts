@@ -86,6 +86,10 @@ export class ClawNetGatewayService {
     this.unsafeClient = this.client as any;
   }
 
+  get baseUrl(): string {
+    return this.config.baseUrl;
+  }
+
   async getSelfIdentity(): Promise<IdentityInfo> {
     const result = await this.unsafeClient.identity.get();
     return this.normalizeIdentityInfo(result);

@@ -1,8 +1,8 @@
 /**
  * 启动时 Passphrase 验证
  *
- * 对所有场景都做一次验证（包括嵌入式启动）。
- * 验证方式：用 passphrase 尝试一个需要签名的操作。
+ * 通过 ClawNet 0.4.1 新增的 POST /api/v1/auth/verify-passphrase 端点验证。
+ * 纯本地操作，不依赖 chain 配置或 WalletService。
  *
  * 结果：
  * - valid=true, error=undefined → 验证通过
@@ -14,36 +14,25 @@ export async function verifyPassphrase(
   passphrase: string,
 ): Promise<{ valid: boolean; did?: string; error?: string }> {
   try {
-    const { ClawNetClient } = await import('@claw-network/sdk');
-    const client = new ClawNetClient({ baseUrl: nodeUrl });
-    const unsafeClient = client as any;
-
-    // 1. 获取 Node 的 DID（只读，不需要 passphrase）
-    const nodeResp = await fetch(`${nodeUrl}/api/v1/node`, {
+    const resp = await fetch(`${nodeUrl}/api/v1/auth/verify-passphrase`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ passphrase }),
       signal: AbortSignal.timeout(5000),
     });
-    if (!nodeResp.ok) {
-      return { valid: true, error: `ClawNet Node returned ${nodeResp.status}` };
-    }
-    const nodeBody = await nodeResp.json() as { data?: { did?: string } };
-    const did = nodeBody?.data?.did;
-    if (!did) {
-      return { valid: true, error: 'Cannot retrieve DID from ClawNet Node' };
+
+    if (!resp.ok) {
+      return { valid: true, error: `ClawNet Node returned ${resp.status}` };
     }
 
-    // 2. 用 passphrase 尝试获取 nonce（内部会解密 keystore 验证密码）
-    await unsafeClient.wallet.getNonce({ did, passphrase });
-
-    return { valid: true, did };
+    const body = await resp.json() as { data?: { valid?: boolean; did?: string } };
+    if (body?.data?.valid) {
+      return { valid: true, did: body.data.did };
+    }
+    return { valid: false, error: 'Passphrase mismatch' };
   } catch (err: unknown) {
     const msg = (err as Error)?.message ?? String(err);
-
-    // 解密失败 = passphrase 不匹配
-    if (msg.includes('decrypt') || msg.includes('passphrase') || msg.includes('password')) {
-      return { valid: false, error: `Passphrase mismatch: ${msg}` };
-    }
-
-    // 其他错误（网络问题等）不阻塞启动
+    // 网络问题等不阻塞启动
     return { valid: true, error: `Passphrase verification inconclusive: ${msg}` };
   }
 }

@@ -6,7 +6,6 @@ const logger = console;
 const TOPIC_ENVELOPE = 'telagent/envelope';
 const TOPIC_RECEIPT = 'telagent/receipt';
 const TOPIC_GROUP_SYNC = 'telagent/group-sync';
-const TOPIC_FILTER = 'telagent/*';
 const RECONNECT_DELAY_MS = 3_000;
 
 export interface DeliveryReceipt {
@@ -125,13 +124,17 @@ export class ClawNetTransportService {
     if (this.stopping) return;
 
     let wsUrl = this.baseUrl.replace(/^http/, 'ws')
-      + `/api/v1/messaging/subscribe?topic=${encodeURIComponent(TOPIC_FILTER)}`;
+      + '/api/v1/messaging/subscribe';
+    const params = new URLSearchParams();
+    params.set('topic', 'telagent/*');
     if (this.apiKey) {
-      wsUrl += `&apiKey=${encodeURIComponent(this.apiKey)}`;
+      params.set('apiKey', this.apiKey);
     }
     if (this.lastSeq > 0) {
-      wsUrl += `&sinceSeq=${this.lastSeq}`;
+      params.set('sinceSeq', String(this.lastSeq));
     }
+    const qs = params.toString();
+    if (qs) wsUrl += `?${qs}`;
 
     const ws = new WebSocket(wsUrl);
     this.ws = ws;

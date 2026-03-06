@@ -17,10 +17,7 @@
   "pnpm": {
     "onlyBuiltDependencies": [
       "better-sqlite3"
-    ],
-    "overrides": {
-      "@claw-network/protocol": "0.2.2"
-    }
+    ]
   },
   "devDependencies": {
     "typescript": "^5.9.3"

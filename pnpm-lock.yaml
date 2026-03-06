@@ -4,9 +4,6 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
-overrides:
-  '@claw-network/protocol': 0.2.2
-
 importers:
 
   .:
@@ -106,14 +103,14 @@ importers:
   packages/node:
     dependencies:
       '@claw-network/core':
-        specifier: ^0.4.0
-        version: 0.4.0
+        specifier: ^0.4.1
+        version: 0.4.1
       '@claw-network/node':
-        specifier: ^0.4.0
-        version: 0.4.0
+        specifier: ^0.4.1
+        version: 0.4.1
       '@claw-network/sdk':
-        specifier: ^0.4.0
-        version: 0.4.0
+        specifier: ^0.4.1
+        version: 0.4.1
       '@telagent/protocol':
         specifier: workspace:*
         version: link:../protocol
@@ -520,21 +517,18 @@ packages:
   '@chainsafe/netmask@2.0.0':
     resolution: {integrity: sha512-I3Z+6SWUoaljh3TBzCnCxjlUyN8tA+NAk5L6m9IxvCf1BENQTePzPMis97CoN/iMW1St3WN+AWCCRp+TTBRiDg==}
 
-  '@claw-network/core@0.1.2':
-    resolution: {integrity: sha512-qVhFEp39w5Y1l4G7CwzULxDFhnX/Mn1yBsCikrEX9U0bgS80tnSL3uQZhz8GVRs0/Kipw7sjbvfLhbWIkjCM2g==}
+  '@claw-network/core@0.4.1':
+    resolution: {integrity: sha512-TvlnvjdRWJsvGaI0RKxMwdtWLBEU23fZHkwDDsRW6donsprhDm7vdGDUNQPRquNz+JRcoqhD9E6SuUETgETl1w==}
 
-  '@claw-network/core@0.4.0':
-    resolution: {integrity: sha512-9Xe5apt+8uXiYAx9IptBof/Mb6jUC/OpJNADQGFsY1RBR/CpmkkfvRc1q+ICUgdS90/nUZcCgmfEK+3b3BpWOw==}
-
-  '@claw-network/node@0.4.0':
-    resolution: {integrity: sha512-fpO5Tzfxil/rBWQncV1nQsi22YJ5gA8nEcv3Ww7eaTocFoMoYDJuq7u4HgjI1EKLqx5QKqKRncAEKgLT6jeCSQ==}
+  '@claw-network/node@0.4.1':
+    resolution: {integrity: sha512-8ol2g9Sg6a7/Hkl9ZaPV2JoymvJbln9UOf3r8QMWM50zMn0x8r7VfFL3NnUJUaD21yglPBxPd9ucGNyUV3v/BA==}
     hasBin: true
 
-  '@claw-network/protocol@0.2.2':
-    resolution: {integrity: sha512-KbgVrN+olyULetngtj6BbKYqaJvmwD3i0OAa7KkbgxKPfhnqBNn69vJsTfeF3A+f6EOSXANsalZXgfQdOVJVkQ==}
+  '@claw-network/protocol@0.4.1':
+    resolution: {integrity: sha512-B9auShgwBBJoMDkKqfSioTmbR2sUvZwZ1nERaUJgx2OqmznJgqBGbbq7CDwVYsXIgQcQzR2/Or/mcjKOO+DcZg==}
 
-  '@claw-network/sdk@0.4.0':
-    resolution: {integrity: sha512-bg/+7HXILsXzocluaSM60UZQdGxUoaTfQzfcSGqsTyQwEPOpScoNVa1ioswWrTa41PQz4Y/JSU4MWZ+JFvPmZQ==}
+  '@claw-network/sdk@0.4.1':
+    resolution: {integrity: sha512-z/cWPZA9NFNO1VGmy931b6AD/sXQ2tTY8ypd8+oA/GefG3BrGZxsCroW+G5bG4Q8drzRyQJj9X/I3bsW7FkdZA==}
 
   '@colors/colors@1.5.0':
     resolution: {integrity: sha512-ooWCrlZP11i8GImSjTHYHLkvFDP48nS4+204nGb1RiX/WXYHmJA2III9/e2DWVabCESdW7hBAEzHRqUn9OUVvQ==}
@@ -2729,9 +2723,6 @@ packages:
     resolution: {integrity: sha512-lIyg0szRfYbiy67j9KN8IyeD7q7hcmqnJ1ddWmNt19ItGpNN64mnllmxUNFIOdOm6by97jlL6wfpTTJrmnjWAA==}
     engines: {node: '>=6.0.0'}
     hasBin: true
-
-  better-sqlite3@11.10.0:
-    resolution: {integrity: sha512-EwhOpyXiOEL/lKzHz9AW1msWFNzGc/z+LzeB3/jnFJpxu+th2yqvzsSWas1v9jgs9+xiXJcD5A8CJxAG2TaghQ==}
 
   better-sqlite3@12.6.2:
     resolution: {integrity: sha512-8VYKM3MjCa9WcaSAI3hzwhmyHVlH8tiGFwf0RlTsZPWJ1I5MkzjiudCo4KC4DxOaL/53A5B1sI/IbldNFDbsKA==}
@@ -5893,31 +5884,7 @@ snapshots:
     dependencies:
       '@chainsafe/is-ip': 2.1.0
 
-  '@claw-network/core@0.1.2':
-    dependencies:
-      '@chainsafe/libp2p-gossipsub': 14.1.2
-      '@chainsafe/libp2p-noise': 17.0.0
-      '@chainsafe/libp2p-yamux': 8.0.1
-      '@libp2p/autonat': 3.0.12
-      '@libp2p/bootstrap': 12.0.13
-      '@libp2p/dcutr': 3.0.12
-      '@libp2p/identify': 4.0.12
-      '@libp2p/kad-dht': 16.1.5
-      '@libp2p/mdns': 12.0.13
-      '@libp2p/ping': 3.0.12
-      '@libp2p/tcp': 11.0.12
-      '@multiformats/multiaddr': 13.0.1
-      '@noble/curves': 1.9.7
-      '@noble/ed25519': 2.3.0
-      '@noble/hashes': 1.8.0
-      '@scure/base': 1.2.6
-      '@scure/bip39': 1.6.0
-      canonicalize: 2.1.0
-      level: 9.0.0
-      libp2p: 3.1.5
-      yaml: 2.8.2
-
-  '@claw-network/core@0.4.0':
+  '@claw-network/core@0.4.1':
     dependencies:
       '@chainsafe/libp2p-gossipsub': 14.1.2
       '@chainsafe/libp2p-noise': 17.0.0
@@ -5942,13 +5909,13 @@ snapshots:
       libp2p: 3.1.5
       yaml: 2.8.2
 
-  '@claw-network/node@0.4.0':
+  '@claw-network/node@0.4.1':
     dependencies:
-      '@claw-network/core': 0.1.2
-      '@claw-network/protocol': 0.2.2
+      '@claw-network/core': 0.4.1
+      '@claw-network/protocol': 0.4.1
       '@libp2p/crypto': 5.1.13
       '@libp2p/peer-id-factory': 4.2.4
-      better-sqlite3: 11.10.0
+      better-sqlite3: 12.6.2
       ethers: 6.16.0
       ws: 8.19.0
       yaml: 2.8.2
@@ -5957,12 +5924,12 @@ snapshots:
       - bufferutil
       - utf-8-validate
 
-  '@claw-network/protocol@0.2.2':
+  '@claw-network/protocol@0.4.1':
     dependencies:
-      '@claw-network/core': 0.1.2
+      '@claw-network/core': 0.4.1
       flatbuffers: 24.12.23
 
-  '@claw-network/sdk@0.4.0': {}
+  '@claw-network/sdk@0.4.1': {}
 
   '@colors/colors@1.5.0':
     optional: true
@@ -7829,7 +7796,7 @@ snapshots:
 
   '@scure/bip32@1.7.0':
     dependencies:
-      '@noble/curves': 1.9.1
+      '@noble/curves': 1.9.7
       '@noble/hashes': 1.8.0
       '@scure/base': 1.2.6
 
@@ -8362,7 +8329,7 @@ snapshots:
 
   '@types/dns-packet@5.6.5':
     dependencies:
-      '@types/node': 22.19.13
+      '@types/node': 22.19.15
 
   '@types/estree@1.0.8': {}
 
@@ -8380,7 +8347,7 @@ snapshots:
   '@types/multicast-dns@7.2.4':
     dependencies:
       '@types/dns-packet': 5.6.5
-      '@types/node': 22.19.13
+      '@types/node': 22.19.15
 
   '@types/node@22.19.13':
     dependencies:
@@ -8628,11 +8595,6 @@ snapshots:
   base64-js@1.5.1: {}
 
   baseline-browser-mapping@2.10.0: {}
-
-  better-sqlite3@11.10.0:
-    dependencies:
-      bindings: 1.5.0
-      prebuild-install: 7.1.3
 
   better-sqlite3@12.6.2:
     dependencies:

@@ -20,7 +20,7 @@
     "failed": "Unable to connect to the node",
     "local": {
       "tab": "Local",
-      "description": "Connect to the TelAgent node running on this machine (127.0.0.1:8787).",
+      "description": "Connect to the TelAgent node running on this machine (127.0.0.1:9529).",
       "detecting": "Detecting local node...",
       "found": "Local node detected",
       "notFound": "No local node detected",

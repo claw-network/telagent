@@ -55,19 +55,10 @@ export class ManagedClawNetNode {
 
   /**
    * 全新初始化 + 启动（首次运行）
-   * 返回生成的助记词（调用者负责加密存储）
+   * ClawNetNode@0.4.0 的 start() 会自动检测数据目录，若为空则初始化密钥
    */
-  async initAndStart(): Promise<{ mnemonic: string }> {
-    const { ClawNetNode } = await import('@claw-network/node');
-    this.node = new ClawNetNode({
-      dataDir: this.dataDir,
-      passphrase: this.passphrase,
-      api: { host: '127.0.0.1', port: this.apiPort, enabled: true },
-    });
-    // ClawNetNode.init() 执行密钥生成，返回助记词
-    const initResult = await this.node.init();
-    await this.node.start();
-    return { mnemonic: initResult.mnemonic };
+  async initAndStart(): Promise<void> {
+    await this.start();
   }
 
   async stop(): Promise<void> {
@@ -77,7 +68,7 @@ export class ManagedClawNetNode {
     }
   }
 
-  async getDid(): Promise<string> {
+  getDid(): string | null {
     if (!this.node) throw new Error('ClawNet Node not started');
     return this.node.getDid();
   }

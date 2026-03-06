@@ -61,10 +61,17 @@ export function sessionRoutes(ctx: RuntimeContext): Router {
             || item === 'identity')
           : undefined,
         maxOperations: typeof payload.maxOperations === 'number' ? payload.maxOperations : undefined,
-        validatePassphrase: async (_did, _passphrase) => {
+        validatePassphrase: async (_did, passphrase) => {
           try {
-            await ctx.clawnetGateway.getNonce();
-            return true;
+            const resp = await fetch(`${ctx.clawnetGateway.baseUrl}/api/v1/auth/verify-passphrase`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ passphrase }),
+              signal: AbortSignal.timeout(5000),
+            });
+            if (!resp.ok) return false;
+            const body = await resp.json() as { data?: { valid?: boolean } };
+            return body?.data?.valid === true;
           } catch {
             return false;
           }
