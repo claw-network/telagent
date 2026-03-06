@@ -303,6 +303,7 @@ export class MessageService {
       envelope,
       idempotencySignature: signature,
     });
+    await this.upsertConversationSummaryFromEnvelope(envelope);
     this.recordConversationActivity(senderDidHash, input.conversationId);
 
     return envelope;
@@ -352,6 +353,7 @@ export class MessageService {
       envelope,
       idempotencySignature: signature,
     });
+    await this.upsertConversationSummaryFromEnvelope(envelope);
     this.activeConversationIds.add(envelope.conversationId);
 
     return envelope;
@@ -387,6 +389,12 @@ export class MessageService {
   }
 
   async listConversations(params?: { scanLimit?: number }): Promise<ConversationSummary[]> {
+    if (this.repository?.listConversationSummaries) {
+      const limit = Math.min(10_000, Math.max(1, params?.scanLimit ?? 200));
+      return this.repository.listConversationSummaries({ limit });
+    }
+
+    // Fallback: scan envelopes (in-memory mode without persistent repository)
     const scanLimit = Math.min(10_000, Math.max(100, params?.scanLimit ?? 5_000));
     const pageSize = 200;
     const latestByConversation = new Map<string, Envelope>();
@@ -1020,6 +1028,35 @@ export class MessageService {
     this.envelopeById.set(record.envelope.envelopeId, record.envelope);
     this.idempotencySignatureByEnvelopeId.set(record.envelope.envelopeId, record.idempotencySignature);
     this.envelopes.push(record.envelope);
+  }
+
+  private async upsertConversationSummaryFromEnvelope(envelope: Envelope): Promise<void> {
+    if (!this.repository?.upsertConversationSummary) {
+      return;
+    }
+
+    const conversationType = envelope.conversationType;
+    const conversationId = envelope.conversationId;
+    const groupId = conversationType === 'group'
+      ? conversationId.startsWith('group:')
+        ? conversationId.slice('group:'.length)
+        : conversationId
+      : undefined;
+    const peerDid = conversationType === 'direct'
+      ? this.extractPeerDid(conversationId)
+      : undefined;
+    const isPrivate = this.privateConversationUpdatedAtById.has(conversationId);
+
+    await this.repository.upsertConversationSummary({
+      conversationId,
+      conversationType,
+      peerDid,
+      groupId,
+      displayName: this.displayNameForConversation(conversationId, conversationType, peerDid),
+      lastMessagePreview: isPrivate ? null : this.previewFromEnvelope(envelope),
+      lastMessageAtMs: envelope.sentAtMs,
+      updatedAtMs: envelope.sentAtMs,
+    });
   }
 
   private async getEnvelopeById(envelopeId: string): Promise<Envelope | null> {

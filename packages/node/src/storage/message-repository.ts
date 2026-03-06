@@ -1,6 +1,6 @@
 import Database from 'better-sqlite3';
 
-import type { Envelope } from '@telagent/protocol';
+import type { ConversationSummary, Envelope } from '@telagent/protocol';
 
 import type {
   DirectConversationParticipantCheckResult,
@@ -54,7 +54,15 @@ CREATE TABLE IF NOT EXISTS mailbox_direct_conversations (
 
 CREATE TABLE IF NOT EXISTS mailbox_conversations (
   conversation_id TEXT PRIMARY KEY,
+  conversation_type TEXT NOT NULL DEFAULT 'direct',
+  peer_did TEXT,
+  group_id TEXT,
+  display_name TEXT NOT NULL DEFAULT '',
+  last_message_preview TEXT,
+  last_message_at_ms INTEGER,
+  unread_count INTEGER NOT NULL DEFAULT 0,
   private INTEGER NOT NULL DEFAULT 0,
+  avatar_url TEXT,
   updated_at_ms INTEGER NOT NULL
 );
 
@@ -67,6 +75,7 @@ CREATE INDEX IF NOT EXISTS idx_mailbox_retractions_time ON mailbox_retractions(r
 CREATE INDEX IF NOT EXISTS idx_mailbox_direct_conversations_a ON mailbox_direct_conversations(participant_a_hash);
 CREATE INDEX IF NOT EXISTS idx_mailbox_direct_conversations_b ON mailbox_direct_conversations(participant_b_hash);
 CREATE INDEX IF NOT EXISTS idx_mailbox_conversations_private ON mailbox_conversations(private, updated_at_ms DESC);
+CREATE INDEX IF NOT EXISTS idx_mailbox_conversations_last_msg ON mailbox_conversations(last_message_at_ms DESC);
 `;
 
 interface MailboxEnvelopeRow {
@@ -98,6 +107,34 @@ interface RetractionRow {
 interface DirectConversationRow {
   participantAHash: string;
   participantBHash: string | null;
+}
+
+interface ConversationRow {
+  conversation_id: string;
+  conversation_type: string;
+  peer_did: string | null;
+  group_id: string | null;
+  display_name: string;
+  last_message_preview: string | null;
+  last_message_at_ms: number | null;
+  unread_count: number;
+  private: number;
+  avatar_url: string | null;
+}
+
+function toConversationSummaryFromRow(row: ConversationRow): ConversationSummary {
+  return {
+    conversationId: row.conversation_id,
+    conversationType: row.conversation_type as 'direct' | 'group',
+    peerDid: row.peer_did ?? undefined,
+    groupId: row.group_id ?? undefined,
+    displayName: row.display_name,
+    lastMessagePreview: row.last_message_preview,
+    lastMessageAtMs: row.last_message_at_ms ?? undefined,
+    unreadCount: row.unread_count,
+    private: row.private === 1,
+    avatarUrl: row.avatar_url,
+  };
 }
 
 export class MessageRepository implements MailboxStore {
@@ -621,6 +658,71 @@ export class MessageRepository implements MailboxStore {
       )
       .all(Math.max(1, limit)) as Array<{ conversationId: string }>;
     return rows.map((row) => row.conversationId);
+  }
+
+  async upsertConversationSummary(params: {
+    conversationId: string;
+    conversationType: 'direct' | 'group';
+    peerDid?: string;
+    groupId?: string;
+    displayName: string;
+    lastMessagePreview?: string | null;
+    lastMessageAtMs: number;
+    updatedAtMs: number;
+  }): Promise<void> {
+    this.db
+      .prepare(
+        `INSERT INTO mailbox_conversations (
+          conversation_id, conversation_type, peer_did, group_id, display_name,
+          last_message_preview, last_message_at_ms, updated_at_ms
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        ON CONFLICT(conversation_id) DO UPDATE SET
+          last_message_preview = excluded.last_message_preview,
+          last_message_at_ms = excluded.last_message_at_ms,
+          updated_at_ms = excluded.updated_at_ms`,
+      )
+      .run(
+        params.conversationId,
+        params.conversationType,
+        params.peerDid ?? null,
+        params.groupId ?? null,
+        params.displayName,
+        params.lastMessagePreview ?? null,
+        params.lastMessageAtMs,
+        params.updatedAtMs,
+      );
+  }
+
+  async listConversationSummaries(params: {
+    limit: number;
+    afterMs?: number;
+  }): Promise<ConversationSummary[]> {
+    const rows = params.afterMs
+      ? this.db
+        .prepare(
+          `SELECT
+            conversation_id, conversation_type, peer_did, group_id,
+            display_name, last_message_preview, last_message_at_ms,
+            unread_count, private, avatar_url
+          FROM mailbox_conversations
+          WHERE last_message_at_ms < ?
+          ORDER BY last_message_at_ms DESC
+          LIMIT ?`,
+        )
+        .all(params.afterMs, params.limit) as ConversationRow[]
+      : this.db
+        .prepare(
+          `SELECT
+            conversation_id, conversation_type, peer_did, group_id,
+            display_name, last_message_preview, last_message_at_ms,
+            unread_count, private, avatar_url
+          FROM mailbox_conversations
+          ORDER BY last_message_at_ms DESC
+          LIMIT ?`,
+        )
+        .all(params.limit) as ConversationRow[];
+
+    return rows.map(toConversationSummaryFromRow);
   }
 
   async close(): Promise<void> {

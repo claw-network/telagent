@@ -1,4 +1,4 @@
-import type { Envelope } from '@telagent/protocol';
+import type { ConversationSummary, Envelope } from '@telagent/protocol';
 
 export interface ProvisionalRetractionRecord {
   envelopeId: string;
@@ -60,4 +60,18 @@ export interface MailboxStore {
     updatedAtMs: number;
   }): Promise<void>;
   listPrivateConversationIds?(limit?: number): Promise<string[]>;
+  upsertConversationSummary?(params: {
+    conversationId: string;
+    conversationType: 'direct' | 'group';
+    peerDid?: string;
+    groupId?: string;
+    displayName: string;
+    lastMessagePreview?: string | null;
+    lastMessageAtMs: number;
+    updatedAtMs: number;
+  }): Promise<void>;
+  listConversationSummaries?(params: {
+    limit: number;
+    afterMs?: number;
+  }): Promise<ConversationSummary[]>;
 }

@@ -1,6 +1,6 @@
 import { Pool, type PoolClient } from 'pg';
 
-import type { Envelope } from '@telagent/protocol';
+import type { ConversationSummary, Envelope } from '@telagent/protocol';
 
 import type {
   DirectConversationParticipantCheckResult,
@@ -124,7 +124,15 @@ export class PostgresMessageRepository implements MailboxStore {
     await this.pool.query(`
       CREATE TABLE IF NOT EXISTS ${this.table('mailbox_conversations')} (
         conversation_id TEXT PRIMARY KEY,
+        conversation_type TEXT NOT NULL DEFAULT 'direct',
+        peer_did TEXT,
+        group_id TEXT,
+        display_name TEXT NOT NULL DEFAULT '',
+        last_message_preview TEXT,
+        last_message_at_ms BIGINT,
+        unread_count INTEGER NOT NULL DEFAULT 0,
         private BOOLEAN NOT NULL DEFAULT FALSE,
+        avatar_url TEXT,
         updated_at_ms BIGINT NOT NULL
       )
     `);
@@ -156,6 +164,9 @@ export class PostgresMessageRepository implements MailboxStore {
     );
     await this.pool.query(
       `CREATE INDEX IF NOT EXISTS idx_mailbox_conversations_private ON ${this.table('mailbox_conversations')}(private, updated_at_ms DESC)`,
+    );
+    await this.pool.query(
+      `CREATE INDEX IF NOT EXISTS idx_mailbox_conversations_last_msg ON ${this.table('mailbox_conversations')}(last_message_at_ms DESC)`,
     );
   }
 
@@ -621,6 +632,90 @@ export class PostgresMessageRepository implements MailboxStore {
       [Math.max(1, limit)],
     );
     return result.rows.map((row) => row.conversation_id);
+  }
+
+  async upsertConversationSummary(params: {
+    conversationId: string;
+    conversationType: 'direct' | 'group';
+    peerDid?: string;
+    groupId?: string;
+    displayName: string;
+    lastMessagePreview?: string | null;
+    lastMessageAtMs: number;
+    updatedAtMs: number;
+  }): Promise<void> {
+    await this.pool.query(
+      `INSERT INTO ${this.table('mailbox_conversations')} (
+        conversation_id, conversation_type, peer_did, group_id, display_name,
+        last_message_preview, last_message_at_ms, updated_at_ms
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+      ON CONFLICT(conversation_id) DO UPDATE SET
+        last_message_preview = EXCLUDED.last_message_preview,
+        last_message_at_ms = EXCLUDED.last_message_at_ms,
+        updated_at_ms = EXCLUDED.updated_at_ms`,
+      [
+        params.conversationId,
+        params.conversationType,
+        params.peerDid ?? null,
+        params.groupId ?? null,
+        params.displayName,
+        params.lastMessagePreview ?? null,
+        params.lastMessageAtMs,
+        params.updatedAtMs,
+      ],
+    );
+  }
+
+  async listConversationSummaries(params: {
+    limit: number;
+    afterMs?: number;
+  }): Promise<ConversationSummary[]> {
+    interface PgConversationRow {
+      conversation_id: string;
+      conversation_type: string;
+      peer_did: string | null;
+      group_id: string | null;
+      display_name: string;
+      last_message_preview: string | null;
+      last_message_at_ms: string | null;
+      unread_count: number;
+      private: boolean;
+      avatar_url: string | null;
+    }
+
+    const result = params.afterMs
+      ? await this.pool.query<PgConversationRow>(
+        `SELECT conversation_id, conversation_type, peer_did, group_id,
+                display_name, last_message_preview, last_message_at_ms,
+                unread_count, private, avatar_url
+         FROM ${this.table('mailbox_conversations')}
+         WHERE last_message_at_ms < $1
+         ORDER BY last_message_at_ms DESC
+         LIMIT $2`,
+        [params.afterMs, params.limit],
+      )
+      : await this.pool.query<PgConversationRow>(
+        `SELECT conversation_id, conversation_type, peer_did, group_id,
+                display_name, last_message_preview, last_message_at_ms,
+                unread_count, private, avatar_url
+         FROM ${this.table('mailbox_conversations')}
+         ORDER BY last_message_at_ms DESC
+         LIMIT $1`,
+        [params.limit],
+      );
+
+    return result.rows.map((row) => ({
+      conversationId: row.conversation_id,
+      conversationType: row.conversation_type as 'direct' | 'group',
+      peerDid: row.peer_did ?? undefined,
+      groupId: row.group_id ?? undefined,
+      displayName: row.display_name,
+      lastMessagePreview: row.last_message_preview,
+      lastMessageAtMs: row.last_message_at_ms ? Number.parseInt(row.last_message_at_ms, 10) : undefined,
+      unreadCount: row.unread_count,
+      private: row.private,
+      avatarUrl: row.avatar_url,
+    }));
   }
 
   private toEnvelope(row: MailboxEnvelopeRow): Envelope {
