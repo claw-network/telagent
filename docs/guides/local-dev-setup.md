@@ -1,7 +1,7 @@
 # TelAgent 本地开发环境搭建指南
 
 > **适用版本**: v0.2.0  
-> **最后更新**: 2026-03-05
+> **最后更新**: 2026-03-06
 
 ---
 
@@ -18,9 +18,7 @@
    - [4.5 ClawNet 集成](#45-clawnet-集成)
    - [4.6 Owner 权限](#46-owner-权限)
    - [4.7 邮箱存储](#47-邮箱存储)
-   - [4.8 Federation 联邦](#48-federation-联邦)
-   - [4.9 Domain Proof](#49-domain-proof)
-   - [4.10 监控阈值](#410-监控阈值)
+   - [4.8 监控阈值](#48-监控阈值)
 5. [最小化本地 `.env` 示例](#5-最小化本地-env-示例)
 6. [启动节点](#6-启动节点)
 7. [启动 WebApp](#7-启动-webapp)
@@ -301,77 +299,7 @@ TELAGENT_MAILBOX_PG_SSL=false
 TELAGENT_MAILBOX_PG_MAX_CONN=10
 ```
 
-### 4.8 Federation 联邦
-
-节点间通信的联邦协议配置。
-
-| 变量 | 默认值 | 说明 |
-|------|--------|------|
-| `TELAGENT_FEDERATION_SELF_DOMAIN` | 与 `host` 相同 | 本节点的联邦域名/标识 |
-| `TELAGENT_FEDERATION_AUTH_TOKEN` | _(无)_ | 入站联邦调用的认证令牌 |
-| `TELAGENT_FEDERATION_ALLOWED_DOMAINS` | _(空=全部允许)_ | 允许的来源域名，逗号分隔 |
-| `TELAGENT_FEDERATION_PROTOCOL_VERSION` | `v1` | 联邦协议版本 |
-| `TELAGENT_FEDERATION_SUPPORTED_PROTOCOLS` | 与 `PROTOCOL_VERSION` 相同 | 支持的协议版本列表 |
-
-**速率限制**（一般保持默认）：
-
-| 变量 | 默认值 |
-|------|--------|
-| `TELAGENT_FEDERATION_ENVELOPE_RATE_LIMIT_PER_MIN` | `600` |
-| `TELAGENT_FEDERATION_SYNC_RATE_LIMIT_PER_MIN` | `300` |
-| `TELAGENT_FEDERATION_RECEIPT_RATE_LIMIT_PER_MIN` | `600` |
-
-**重放保护**（一般保持默认）：
-
-| 变量 | 默认值 |
-|------|--------|
-| `TELAGENT_FEDERATION_REPLAY_BACKOFF_BASE_MS` | `1000` |
-| `TELAGENT_FEDERATION_REPLAY_BACKOFF_MAX_MS` | `60000` |
-| `TELAGENT_FEDERATION_REPLAY_CIRCUIT_BREAKER_FAIL_THRESHOLD` | `3` |
-| `TELAGENT_FEDERATION_REPLAY_CIRCUIT_BREAKER_COOLDOWN_SEC` | `30` |
-
-**DLQ 重放调度器**（一般保持默认）：
-
-| 变量 | 默认值 |
-|------|--------|
-| `TELAGENT_FEDERATION_DLQ_REPLAY_INTERVAL_SEC` | `60` |
-| `TELAGENT_FEDERATION_DLQ_REPLAY_BATCH_SIZE` | `100` |
-| `TELAGENT_FEDERATION_DLQ_REPLAY_STOP_ON_ERROR` | `false` |
-
-**Key Pinning**（默认禁用，高级配置）：
-
-```env
-# 默认值，不需要改
-TELAGENT_FEDERATION_PINNING_MODE=disabled
-```
-
-如果启用 pinning，必须提供 `TELAGENT_FEDERATION_PINNING_CURRENT_KEYS` 或 `TELAGENT_FEDERATION_PINNING_NEXT_KEYS`。
-
-**本地开发推荐**：
-
-```env
-TELAGENT_FEDERATION_SELF_DOMAIN=localhost
-```
-
-如果只跑单节点，Federation 配置保持默认即可。
-
-### 4.9 Domain Proof
-
-| 变量 | 默认值 | 说明 |
-|------|--------|------|
-| `TELAGENT_DOMAIN_PROOF_MODE` | `enforced` | `enforced` 或 `report-only` |
-| `TELAGENT_DOMAIN_PROOF_CHALLENGE_TTL_SEC` | `86400` | Challenge 有效期（秒） |
-| `TELAGENT_DOMAIN_PROOF_ROTATE_BEFORE_EXPIRY_SEC` | `900` | 过期前多久轮换 |
-| `TELAGENT_DOMAIN_PROOF_HTTP_TIMEOUT_MS` | `5000` | HTTP 请求超时 |
-
-**本地开发推荐**：
-
-```env
-# 本地开发时可以改为 report-only，避免域名验证失败阻断功能
-TELAGENT_DOMAIN_PROOF_MODE=report-only
-```
-
-### 4.10 监控阈值
+### 4.8 监控阈值
 
 这些配置控制 `/api/v1/node/metrics` 端点的告警阈值，本地开发保持默认即可。
 
@@ -383,9 +311,6 @@ TELAGENT_DOMAIN_PROOF_MODE=report-only
 | `TELAGENT_MONITOR_REQ_P95_CRITICAL_MS` | `500` | P95 延迟严重阈值 |
 | `TELAGENT_MONITOR_MAINT_STALE_WARN_SEC` | `180` | 维护过期警告阈值 |
 | `TELAGENT_MONITOR_MAINT_STALE_CRITICAL_SEC` | `300` | 维护过期严重阈值 |
-| `TELAGENT_MONITOR_FED_DLQ_ERROR_BUDGET_RATIO` | `0.01` | DLQ 错误预算比率 |
-| `TELAGENT_MONITOR_FED_DLQ_BURN_RATE_WARN` | `2` | DLQ 消耗率警告 |
-| `TELAGENT_MONITOR_FED_DLQ_BURN_RATE_CRITICAL` | `5` | DLQ 消耗率严重 |
 
 ---
 
@@ -420,12 +345,6 @@ TELAGENT_OWNER_MODE=observer
 # ── 邮箱 ─────────────────────────────────────────────
 TELAGENT_MAILBOX_STORE_BACKEND=sqlite
 TELAGENT_MAILBOX_CLEANUP_INTERVAL_SEC=60
-
-# ── Federation ───────────────────────────────────────
-TELAGENT_FEDERATION_SELF_DOMAIN=localhost
-
-# ── Domain Proof（本地开发用 report-only）──────────────
-TELAGENT_DOMAIN_PROOF_MODE=report-only
 ```
 
 ---
@@ -458,6 +377,8 @@ pnpm --filter @telagent/webapp dev
 
 WebApp 会在 Vite 默认端口（通常 `5173`）启动。
 
+打开浏览器后，在 Local 标签页中会自动检测本地节点。检测到后直接点击 Connect 即可——本地连接不需要令牌。执行特权操作（转账、托管、市场等）时，WebApp 会弹出会话解锁对话框，输入 ClawNet passphrase 即可。
+
 ---
 
 ## 8. 常见问题
@@ -470,6 +391,8 @@ WebApp 会在 Vite 默认端口（通常 `5173`）启动。
 - `TELAGENT_SELF_DID` — DID 现在从 ClawNet 节点自动获取
 - `TELAGENT_IDENTITY_CONTRACT` — Identity 通过 ClawNet SDK 解析
 - `TELAGENT_TOKEN_CONTRACT` — Token 余额通过 ClawNet SDK 查询
+- `TELAGENT_FEDERATION_*` — HTTP Federation 已被 ClawNet P2P 传输替代
+- `TELAGENT_DOMAIN_PROOF_*` — Domain Proof 已随 Federation 一起移除
 
 ### Q: 如何查看自己的 DID？
 
@@ -495,10 +418,6 @@ rm -rf ~/.telagent
 
 重启节点会自动重新创建目录结构。
 
-### Q: Federation 连接失败
+### Q: 节点间消息发不通
 
-如果只在本地开发，设置 `TELAGENT_FEDERATION_SELF_DOMAIN=localhost` 并确保 `TELAGENT_DOMAIN_PROOF_MODE=report-only`。
-
-### Q: `TELAGENT_FEDERATION_PINNING_MODE` 启用后报错
-
-Pinning 模式为 `enforced` 或 `report-only` 时，必须同时配置 `TELAGENT_FEDERATION_PINNING_CURRENT_KEYS` 或 `TELAGENT_FEDERATION_PINNING_NEXT_KEYS`。本地开发默认 `disabled` 即可。
+节点间通信完全通过 ClawNet P2P 进行。确保 `TELAGENT_CLAWNET_AUTO_DISCOVER=true`（或手动设置 `TELAGENT_CLAWNET_NODE_URL`），并且 ClawNet 节点正在运行。

@@ -117,45 +117,70 @@ After each node is deployed successfully, update the corresponding localdev doc 
 | alex | `localdev/node-a-alex.md` |
 | bess | `localdev/node-b-bess.md` |
 
-Collect the following info from the server and write to the doc's **部署信息** section:
+#### Data to collect from the server
 
 ```bash
-# Get deployed commit
-ssh -i "$SSH_KEY" root@<IP> "git -C /opt/telagent log --oneline -1"
+# OS info
+ssh -i "$SSH_KEY" root@<IP> "lsb_release -ds && uname -rm"
 
-# Get service status
-ssh -i "$SSH_KEY" root@<IP> "systemctl is-active telagent-node"
+# Runtime versions
+ssh -i "$SSH_KEY" root@<IP> "node -v && pnpm -v"
 
-# Get DID from logs
+# DID from startup logs
 ssh -i "$SSH_KEY" root@<IP> "journalctl -u telagent-node --no-pager -n 15 | grep Identity"
 
-# Get node info
+# Current .env.cloud (contains TELAGENT_PRIVATE_KEY and all env vars)
+ssh -i "$SSH_KEY" root@<IP> "cat /opt/telagent/.env.cloud"
+
+# Service status
+ssh -i "$SSH_KEY" root@<IP> "systemctl is-active telagent-node clawnetd caddy"
+
+# Deployed commit
+ssh -i "$SSH_KEY" root@<IP> "git -C /opt/telagent log --oneline -1"
+
+# Node API info
 ssh -i "$SSH_KEY" root@<IP> "curl -s http://127.0.0.1:9529/api/v1/node/"
 ```
 
-Each localdev doc should contain a **部署信息** table with:
+#### Localdev doc structure
+
+Each localdev doc must contain the following sections (in order):
 
 ```markdown
+# Node X — <domain>
+
+## 访问信息
+<!-- Table: 域名, IP, HTTPS URL, SSH 命令, OS, Node.js 版本, pnpm 版本 -->
+
+## DID
+<!-- DID string + DID Hash -->
+
+## .env.cloud
+<!-- 完整 .env.cloud 内容（从服务器 cat 获取），包含 TELAGENT_PRIVATE_KEY -->
+
+## 服务端口
+<!-- Table: TelAgent API, ClawNet Node, Geth, Caddy 端口 -->
+
+## Systemd 服务
+<!-- Table: telagent-node / clawnetd / caddy 状态 -->
+
+## 文件路径
+<!-- 服务器关键路径列表 -->
+
 ## 部署信息
-
-| 项目 | 值 |
-|------|-----|
-| 部署方式 | `git clone --depth 1` |
-| Git Remote | `https://github.com/claw-network/telagent.git` |
-| 最新部署 commit | `<commit-hash>` (main) |
-| 部署时间 | <timestamp> |
+<!-- Table: 部署方式, Git Remote, commit, 时间 -->
+### 部署步骤
+<!-- 部署命令记录 -->
+### 注意事项
+<!-- env-file patch, workspace build, DB schema migration -->
 ```
-
-And a **部署步骤** code block recording the exact commands used, plus a **注意事项** section with caveats (env-file patch, workspace build, DB schema migration).
 
 ## Key Configuration Constraints
 
 1. `TELAGENT_CLAWNET_NODE_URL` → `http://127.0.0.1:9528` (local ClawNet)
-2. `TELAGENT_FEDERATION_SELF_DOMAIN` → must match the node's domain
-3. `TELAGENT_FEDERATION_ALLOWED_DOMAINS` → must list the peer domain
-4. `TELAGENT_API_HOST` → `127.0.0.1` (Caddy handles external traffic)
-5. Caddy reverse proxies `https://<domain>` → `127.0.0.1:9529`
-6. ClawNet listens on port `9528`, TelAgent on port `9529`
+2. `TELAGENT_API_HOST` → `127.0.0.1` (Caddy handles external traffic)
+3. Caddy reverse proxies `https://<domain>` → `127.0.0.1:9529`
+4. ClawNet listens on port `9528`, TelAgent on port `9529`
 
 ## Systemd Service Files
 

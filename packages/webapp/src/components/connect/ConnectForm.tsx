@@ -80,9 +80,8 @@ function useLocalNodeProbe() {
 /*  Avatar probe display                                              */
 /* ------------------------------------------------------------------ */
 
-function LocalNodeAvatar() {
+function LocalNodeAvatar({ status, info }: { status: ProbeStatus; info: LocalNodeInfo | null }) {
   const { t } = useTranslation()
-  const { status, info } = useLocalNodeProbe()
 
   const isFound = status === "found" && info
 
@@ -170,7 +169,7 @@ export function ConnectForm() {
   const loadSelf = useIdentityStore((state) => state.loadSelf)
   const refreshPermissions = usePermissionStore((state) => state.refresh)
 
-  const [localToken, setLocalToken] = useState("")
+  const { status: probeStatus, info: probeInfo } = useLocalNodeProbe()
   const [remoteUrl, setRemoteUrl] = useState("")
   const [remoteToken, setRemoteToken] = useState("")
   const [localError, setLocalError] = useState<string | null>(null)
@@ -189,7 +188,7 @@ export function ConnectForm() {
 
   const onLocalSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    doConnect(LOCAL_NODE_URL, localToken)
+    doConnect(LOCAL_NODE_URL, "")
   }
 
   const onRemoteSubmit = (event: FormEvent<HTMLFormElement>) => {
@@ -230,24 +229,13 @@ export function ConnectForm() {
             <div className="grid [&>*]:col-start-1 [&>*]:row-start-1">
             <TabsContent forceMount value="local" className="mt-0 px-6 pb-6 data-[state=inactive]:invisible">
               <form onSubmit={onLocalSubmit}>
-                <LocalNodeAvatar />
+                <LocalNodeAvatar status={probeStatus} info={probeInfo} />
 
                 <Separator className="mb-5" />
 
-                <div>
-                  <Label htmlFor="local-token" className="mb-2 block text-[13px]">
-                    {t("connect.token")}
-                  </Label>
-                  <Input
-                    id="local-token"
-                    type="password"
-                    placeholder="••••••••"
-                    value={localToken}
-                    onChange={(event) => setLocalToken(event.target.value)}
-                    autoComplete="off"
-                    required
-                  />
-                </div>
+                <p className="text-[13px] text-muted-foreground">
+                  {t("connect.local.connectHint")}
+                </p>
 
                 {displayError ? (
                   <Alert variant="destructive" className="mt-4">
@@ -255,7 +243,11 @@ export function ConnectForm() {
                   </Alert>
                 ) : null}
 
-                <Button type="submit" className="mt-5 w-full" disabled={status === "connecting"}>
+                <Button
+                  type="submit"
+                  className="mt-5 w-full"
+                  disabled={status === "connecting" || probeStatus !== "found"}
+                >
                   {status === "connecting" ? t("connect.connecting") : t("connect.submit")}
                 </Button>
               </form>
@@ -279,7 +271,7 @@ export function ConnectForm() {
 
                 <div>
                   <Label htmlFor="remote-token" className="mb-2 block text-[13px]">
-                    {t("connect.token")}
+                    {t("connect.ownerToken")}
                   </Label>
                   <Input
                     id="remote-token"
