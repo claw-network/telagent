@@ -1,5 +1,6 @@
-import { ErrorCodes, SendMessageSchema, TelagentError } from '@telagent/protocol';
+import { ErrorCodes, SendMessageSchema, TelagentError, type Envelope, type RedactedEnvelope } from '@telagent/protocol';
 
+import { extractBearerToken, classifyToken, requireWriteAccess } from '../auth.js';
 import { Router } from '../router.js';
 import { created, ok } from '../response.js';
 import { handleError } from '../route-utils.js';
@@ -9,7 +10,14 @@ import { validate } from '../validate.js';
 export function messageRoutes(ctx: RuntimeContext): Router {
   const router = new Router();
 
-  router.post('/', async ({ res, body, url }) => {
+  router.post('/', async ({ req, res, body, url }) => {
+    try {
+      requireWriteAccess(req.headers, ctx, 'send_message');
+    } catch (error) {
+      handleError(res, error, url.pathname);
+      return;
+    }
+
     const parsed = validate(SendMessageSchema, body);
     if (!parsed.success) {
       handleError(res, new TelagentError(ErrorCodes.VALIDATION, parsed.error), url.pathname);
@@ -88,7 +96,37 @@ export function messageRoutes(ctx: RuntimeContext): Router {
     }
   });
 
+  /** Owner-facing message view — returns envelope metadata with ciphertext redacted. */
+  router.get('/view', async ({ req, res, query, url }) => {
+    try {
+      const token = extractBearerToken(req.headers);
+      const kind = classifyToken(token);
+
+      const result = await ctx.messageService.pull({
+        cursor: query.get('cursor') ?? undefined,
+        limit: query.get('limit') ? Number.parseInt(query.get('limit') ?? '', 10) : undefined,
+        conversationId: query.get('conversation_id') ?? undefined,
+      });
+
+      // Owner tokens get redacted envelopes; agent / no-token get full envelopes
+      const items: (Envelope | RedactedEnvelope)[] =
+        kind === 'owner' ? result.items.map(redactEnvelope) : result.items;
+
+      ok(
+        res,
+        { items, cursor: result.nextCursor },
+        { self: '/api/v1/messages/view' },
+      );
+    } catch (error) {
+      handleError(res, error, url.pathname);
+    }
+  });
+
   return router;
+}
+
+function redactEnvelope(env: Envelope): RedactedEnvelope {
+  return { ...env, ciphertext: '[redacted]', sealedHeader: '[redacted]' };
 }
 
 function parsePositiveInt(raw: string | null, field: string): number | undefined {

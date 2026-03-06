@@ -7,6 +7,7 @@ import type {
   GroupRecord,
   OwnerPermissions,
   ProblemDetail,
+  RedactedEnvelope,
 } from '@telagent/protocol';
 
 export interface ApiLinks {
@@ -354,6 +355,26 @@ export class TelagentSdk {
     const envelope = await this.requestData<{ items: Envelope[]; cursor: string | null }>('GET', '/api/v1/messages/pull', undefined, query);
     return {
       items: envelope.data.items.map((item) => hydrateEnvelope(item)),
+      cursor: envelope.data.cursor,
+    };
+  }
+
+  /**
+   * Fetch messages via the Owner view endpoint.
+   * Owner tokens receive redacted envelopes (ciphertext/sealedHeader replaced).
+   * Agent tokens receive full envelopes.
+   */
+  async viewMessages(input: PullMessageInput = {}): Promise<{ items: (Envelope | RedactedEnvelope)[]; cursor: string | null }> {
+    const query: Record<string, QueryValue> = {
+      cursor: input.cursor,
+      limit: input.limit,
+      conversation_id: input.conversationId,
+    };
+    const envelope = await this.requestData<{ items: (Envelope | RedactedEnvelope)[]; cursor: string | null }>('GET', '/api/v1/messages/view', undefined, query);
+    return {
+      items: envelope.data.items.map((item) =>
+        item.ciphertext === '[redacted]' ? item : hydrateEnvelope(item as Envelope),
+      ),
       cursor: envelope.data.cursor,
     };
   }

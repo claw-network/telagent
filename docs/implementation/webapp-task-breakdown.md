@@ -55,16 +55,16 @@
 
 ### WN-001 — 会话列表 API `GET /api/v1/conversations`
 
-- [ ] **WN-001-A** 设计 `conversations` 存储表结构（SQLite / Postgres）（0.5 PD）
-  - 输出：DDL 与迁移脚本
+- [x] **WN-001-A**（2026-03-06） 设计 `conversations` 存储表结构（SQLite / Postgres）（0.5 PD）
+  - 输出：`mailbox_conversations` 表扩展为 12 列（SQLite + Postgres）
   - 验收：表可创建，字段覆盖 `ConversationSummary` 全部属性
-- [ ] **WN-001-B** 实现 `ConversationRepository`（1 PD）
+- [x] **WN-001-B**（2026-03-06） 实现 `ConversationRepository`（1 PD）
   - 依赖：WN-001-A
-  - 输出：CRUD + 按 `lastMessageAtMs` 排序的分页查询
+  - 输出：`upsertConversationSummary()` + `listConversationSummaries()` 实现于 SQLite 和 Postgres 两套仓储
   - 验收：单元测试全绿
-- [ ] **WN-001-C** 在 `MessageService` 中维护会话摘要（1 PD）
+- [x] **WN-001-C**（2026-03-06） 在 `MessageService` 中维护会话摘要（1 PD）
   - 依赖：WN-001-B
-  - 输出：发送/接收消息时自动 upsert 会话记录
+  - 输出：`send()` 和 `ingestFederatedEnvelope()` 后自动 upsert；`listConversations()` 改用 summary 表
   - 验收：发消息后会话列表可查，`lastMessagePreview` 与 `unreadCount` 正确
 - [x] **WN-001-D**（2026-03-05） 实现 `GET /api/v1/conversations` 路由（0.5 PD）
   - 依赖：WN-001-C
@@ -84,9 +84,9 @@
   - 依赖：WN-002-B
   - 输出：路由处理器
   - 验收：契约测试通过，响应符合 `ApiDataEnvelope<OwnerPermissions>`
-- [ ] **WN-002-D** 在写操作路由中接入权限守卫中间件（1 PD）
+- [x] **WN-002-D**（2026-03-06） 在写操作路由中接入权限守卫中间件（1 PD）
   - 依赖：WN-002-B
-  - 输出：消息发送、群组管理、ClawNet 写操作均校验 Owner 权限
+  - 输出：`requireWriteAccess()` 守卫应用于 messages POST、groups 4 个写路由、clawnet 8 个 POST 路由
   - 验收：Observer token 调用写 API 返回 403 + RFC7807
 
 ### WN-003 — 会话私密标记 API
@@ -110,13 +110,14 @@
 
 ### WN-004 — 消息解密视图（开放问题，需决策）
 
-- [ ] **WN-004-A** 明确 Owner 消息访问方案（0.5 PD）
-  - 方案一：Owner 持有独立解密密钥，Agent 双密封
-  - 方案二：Node 提供 `GET /api/v1/messages/view` 已解密视图 API
-  - 方案三：Owner 仅可查看元数据（sender、time、type），无法看内容
-  - 输出：决策记录（ADR）
+- [x] **WN-004-A**（2026-03-06） 明确 Owner 消息访问方案（0.5 PD）
+  - **决策：方案三 — Owner 仅可查看元数据**
+  - Node 不持有解密密钥，双密封不切实际（方案一排除）
+  - Node 侧无法提供明文（方案二排除）
+  - `GET /api/v1/messages/view`：Owner token → ciphertext/sealedHeader 替换为 `[redacted]`；Agent token → 原样返回
+  - 新增 `RedactedEnvelope` 类型于 `@telagent/protocol`
   - 验收：方案确定，WebApp 端可据此实现
-- [ ] **WN-004-B** 按决策实现对应 API 或密钥分发机制（2 PD）
+- [x] **WN-004-B**（2026-03-06） 按决策实现对应 API 或密钥分发机制（2 PD）
   - 依赖：WN-004-A
   - 输出：Owner 可访问的消息内容（或元数据 only）API
   - 验收：WebApp 可获取并渲染消息

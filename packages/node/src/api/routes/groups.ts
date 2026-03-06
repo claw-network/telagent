@@ -8,6 +8,7 @@ import {
   type MembershipState,
 } from '@telagent/protocol';
 
+import { requireWriteAccess } from '../auth.js';
 import { Router } from '../router.js';
 import { created, noContent, ok, paginated, parsePagination } from '../response.js';
 import { handleError } from '../route-utils.js';
@@ -17,7 +18,14 @@ import { validate } from '../validate.js';
 export function groupRoutes(ctx: RuntimeContext): Router {
   const router = new Router();
 
-  router.post('/', async ({ res, body, url }) => {
+  router.post('/', async ({ req, res, body, url }) => {
+    try {
+      requireWriteAccess(req.headers, ctx, 'manage_groups');
+    } catch (error) {
+      handleError(res, error, url.pathname);
+      return;
+    }
+
     const parsed = validate(CreateGroupSchema, body);
     if (!parsed.success) {
       handleError(res, new TelagentError(ErrorCodes.VALIDATION, parsed.error), url.pathname);
@@ -72,7 +80,14 @@ export function groupRoutes(ctx: RuntimeContext): Router {
     }
   });
 
-  router.post('/:groupId/invites', async ({ res, body, params, url }) => {
+  router.post('/:groupId/invites', async ({ req, res, body, params, url }) => {
+    try {
+      requireWriteAccess(req.headers, ctx, 'manage_groups');
+    } catch (error) {
+      handleError(res, error, url.pathname);
+      return;
+    }
+
     const parsed = validate(InviteMemberSchema, body);
     if (!parsed.success) {
       handleError(res, new TelagentError(ErrorCodes.VALIDATION, parsed.error), url.pathname);
@@ -98,7 +113,14 @@ export function groupRoutes(ctx: RuntimeContext): Router {
     }
   });
 
-  router.post('/:groupId/invites/:inviteId/accept', async ({ res, body, params, url }) => {
+  router.post('/:groupId/invites/:inviteId/accept', async ({ req, res, body, params, url }) => {
+    try {
+      requireWriteAccess(req.headers, ctx, 'manage_groups');
+    } catch (error) {
+      handleError(res, error, url.pathname);
+      return;
+    }
+
     const parsed = validate(AcceptInviteSchema, body);
     if (!parsed.success) {
       handleError(res, new TelagentError(ErrorCodes.VALIDATION, parsed.error), url.pathname);
@@ -125,7 +147,14 @@ export function groupRoutes(ctx: RuntimeContext): Router {
     }
   });
 
-  router.delete('/:groupId/members/:memberDid', async ({ res, body, params, url }) => {
+  router.delete('/:groupId/members/:memberDid', async ({ req, res, body, params, url }) => {
+    try {
+      requireWriteAccess(req.headers, ctx, 'manage_groups');
+    } catch (error) {
+      handleError(res, error, url.pathname);
+      return;
+    }
+
     const parsed = validate(RemoveMemberSchema, {
       ...(typeof body === 'object' && body ? body : {}),
       memberDid: params.memberDid,

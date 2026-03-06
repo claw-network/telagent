@@ -47,6 +47,12 @@ export interface Envelope {
   provisional?: boolean;
 }
 
+/** Envelope with sensitive fields replaced by '[redacted]'. Used by Owner view API. */
+export type RedactedEnvelope = Omit<Envelope, 'ciphertext' | 'sealedHeader'> & {
+  ciphertext: '[redacted]';
+  sealedHeader: '[redacted]';
+};
+
 export interface GroupRecord {
   groupId: GroupID;
   creatorDid: AgentDID;

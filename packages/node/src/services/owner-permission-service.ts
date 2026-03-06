@@ -52,6 +52,10 @@ export class OwnerPermissionService {
   listPrivateConversations(): string[] {
     return [...this.privateConversationSet];
   }
+
+  canIntervene(scope: InterventionScope): boolean {
+    return this.mode === 'intervener' && this.interventionScopes.includes(scope);
+  }
 }
 
 export function parseOwnerMode(raw: string | undefined): 'observer' | 'intervener' {
