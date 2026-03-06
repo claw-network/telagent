@@ -229,12 +229,10 @@ export class TelagentNode {
     }
     await this.indexer.start();
     await this.apiServer.start();
-    if (this.config.transportMode !== 'http-only') {
-      this.clawnetTransportService.startListening({
-        onEnvelope: (raw, sourceDid) => this.messageService!.ingestFederatedEnvelope(raw, sourceDid),
-      });
-      logger.info('[telagent] P2P transport listener started (mode=%s)', this.config.transportMode);
-    }
+    this.clawnetTransportService.startListening({
+      onEnvelope: (raw, sourceDid) => this.messageService!.ingestFederatedEnvelope(raw, sourceDid),
+    });
+    logger.info('[telagent] P2P transport listener started (mode=%s)', this.config.transportMode);
     this.monitoringService.recordMailboxMaintenance(await this.messageService.runMaintenance());
     this.startMailboxCleaner();
 

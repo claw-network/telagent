@@ -6,7 +6,7 @@ import {
 } from './services/owner-permission-service.js';
 import { resolveTelagentPaths, type TelagentStoragePaths } from './storage/telagent-paths.js';
 
-export type TransportMode = 'p2p-first' | 'http-only' | 'p2p-only';
+export type TransportMode = 'p2p-first' | 'p2p-only';
 
 export interface MonitoringConfig {
   errorRateWarnRatio: number;
@@ -203,8 +203,8 @@ function parsePositiveInteger(raw: string | undefined, fallback: number, fieldNa
 
 function parseTransportMode(raw: string | undefined): TransportMode {
   const normalized = (raw || 'p2p-first').trim().toLowerCase();
-  if (normalized === 'p2p-first' || normalized === 'http-only' || normalized === 'p2p-only') {
+  if (normalized === 'p2p-first' || normalized === 'p2p-only') {
     return normalized;
   }
-  throw new Error('TELAGENT_TRANSPORT_MODE must be p2p-first, http-only, or p2p-only');
+  throw new Error('TELAGENT_TRANSPORT_MODE must be p2p-first or p2p-only');
 }

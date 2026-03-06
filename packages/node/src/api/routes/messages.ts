@@ -20,7 +20,7 @@ export function messageRoutes(ctx: RuntimeContext): Router {
       const envelope = await ctx.messageService.send(parsed.data);
 
       let p2pDelivered: boolean | undefined;
-      if (ctx.clawnetTransportService && ctx.config.transportMode !== 'http-only') {
+      if (ctx.clawnetTransportService) {
         try {
           const result = await ctx.clawnetTransportService.sendEnvelope(parsed.data.targetDid, envelope);
           p2pDelivered = result.delivered;
