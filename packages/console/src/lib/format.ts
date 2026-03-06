@@ -6,7 +6,6 @@ export interface HealthSignalInput {
   warnAlerts: number;
   errorRateRatio: number;
   p95LatencyMs: number;
-  dlqPending: number;
   mailboxStaleSec: number;
 }
 
@@ -24,7 +23,6 @@ export function assessHealth(input: HealthSignalInput): HealthAssessment {
   const warnAlerts = Math.max(0, Math.floor(finiteOrZero(input.warnAlerts)));
   const errorRateRatio = Math.max(0, finiteOrZero(input.errorRateRatio));
   const p95LatencyMs = Math.max(0, finiteOrZero(input.p95LatencyMs));
-  const dlqPending = Math.max(0, Math.floor(finiteOrZero(input.dlqPending)));
   const mailboxStaleSec = Math.max(0, finiteOrZero(input.mailboxStaleSec));
 
   const reasons: string[] = [];
@@ -61,11 +59,6 @@ export function assessHealth(input: HealthSignalInput): HealthAssessment {
     reasons.push(`P95 延迟偏高 (${formatMs(p95LatencyMs)})`);
   }
 
-  if (dlqPending > 0) {
-    penalty += Math.min(24, 5 + dlqPending);
-    reasons.push(`DLQ 待回放 ${dlqPending}`);
-  }
-
   if (mailboxStaleSec >= 300) {
     penalty += 16;
     reasons.push(`Mailbox 维护滞后 ${Math.floor(mailboxStaleSec)} 秒`);
@@ -92,7 +85,6 @@ export function assessHealth(input: HealthSignalInput): HealthAssessment {
     endpointFailures > 0
     || criticalAlerts > 0
     || warnAlerts > 0
-    || dlqPending > 0
     || errorRateRatio >= 0.02
     || p95LatencyMs >= 250
     || mailboxStaleSec >= 180

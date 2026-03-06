@@ -5,9 +5,6 @@ export interface MonitoringThresholds {
   requestP95CriticalMs: number;
   maintenanceStaleWarnSec: number;
   maintenanceStaleCriticalSec: number;
-  federationDlqErrorBudgetRatio: number;
-  federationDlqBurnRateWarn: number;
-  federationDlqBurnRateCritical: number;
 }
 
 export interface HttpRequestMetricInput {
@@ -28,15 +25,6 @@ export interface MailboxMaintenanceMetricInput {
     retracted: number;
     checkedAtMs: number;
   };
-}
-
-export interface FederationDlqReplayMetricInput {
-  processed: number;
-  replayed: number;
-  failed: number;
-  pendingBefore: number;
-  pendingAfter: number;
-  atMs?: number;
 }
 
 export interface MonitoringAlert {
@@ -80,21 +68,6 @@ export interface NodeMetricsSnapshot {
     lastRetracted: number;
     staleSec: number;
   };
-  federationDlqReplay: {
-    runs: number;
-    totalProcessed: number;
-    totalReplayed: number;
-    totalFailed: number;
-    errorBudgetRatio: number;
-    burnRate: number;
-    lastRunAt?: string;
-    lastProcessed: number;
-    lastReplayed: number;
-    lastFailed: number;
-    lastPendingBefore: number;
-    lastPendingAfter: number;
-    lastBurnRate: number;
-  };
   alerts: MonitoringAlert[];
 }
 
@@ -123,9 +96,6 @@ const DEFAULT_THRESHOLDS: MonitoringThresholds = {
   requestP95CriticalMs: 500,
   maintenanceStaleWarnSec: 180,
   maintenanceStaleCriticalSec: 300,
-  federationDlqErrorBudgetRatio: 0.01,
-  federationDlqBurnRateWarn: 2,
-  federationDlqBurnRateCritical: 5,
 };
 
 const MAX_GLOBAL_LATENCY_SAMPLES = 5_000;
@@ -150,18 +120,6 @@ export class NodeMonitoringService {
   private lastCleanupRemoved = 0;
   private lastRemaining = 0;
   private lastRetracted = 0;
-
-  private federationDlqReplayRuns = 0;
-  private federationDlqTotalProcessed = 0;
-  private federationDlqTotalReplayed = 0;
-  private federationDlqTotalFailed = 0;
-  private federationDlqLastRunAtMs = 0;
-  private federationDlqLastProcessed = 0;
-  private federationDlqLastReplayed = 0;
-  private federationDlqLastFailed = 0;
-  private federationDlqLastPendingBefore = 0;
-  private federationDlqLastPendingAfter = 0;
-  private federationDlqLastBurnRate = 0;
 
   private readonly thresholds: MonitoringThresholds;
   private readonly clock: NodeMonitoringClock;
@@ -230,39 +188,12 @@ export class NodeMonitoringService {
     this.lastRetracted = Math.max(0, input.retraction.retracted);
   }
 
-  recordFederationDlqReplay(input: FederationDlqReplayMetricInput): void {
-    const nowMs = input.atMs ?? this.clock.nowMs();
-    const processed = Math.max(0, Math.floor(input.processed));
-    const replayed = Math.max(0, Math.floor(input.replayed));
-    const failed = Math.max(0, Math.floor(input.failed));
-    const pendingBefore = Math.max(0, Math.floor(input.pendingBefore));
-    const pendingAfter = Math.max(0, Math.floor(input.pendingAfter));
-
-    this.federationDlqReplayRuns++;
-    this.federationDlqTotalProcessed += processed;
-    this.federationDlqTotalReplayed += replayed;
-    this.federationDlqTotalFailed += failed;
-    this.federationDlqLastRunAtMs = nowMs;
-    this.federationDlqLastProcessed = processed;
-    this.federationDlqLastReplayed = replayed;
-    this.federationDlqLastFailed = failed;
-    this.federationDlqLastPendingBefore = pendingBefore;
-    this.federationDlqLastPendingAfter = pendingAfter;
-
-    const lastFailureRatio = processed > 0 ? failed / processed : 0;
-    this.federationDlqLastBurnRate = this.computeBurnRate(lastFailureRatio);
-  }
-
   snapshot(options?: { nowMs?: number }): NodeMetricsSnapshot {
     const nowMs = options?.nowMs ?? this.clock.nowMs();
     const uptimeSec = Math.max(0, Math.floor((nowMs - this.startedAtMs) / 1000));
     const errorRateRatio = this.totalRequests > 0 ? this.status5xx / this.totalRequests : 0;
     const avgLatencyMs = this.totalRequests > 0 ? this.totalLatencyMs / this.totalRequests : 0;
     const p95LatencyMs = this.percentile(this.totalLatencySamples, 0.95);
-    const federationDlqFailureRatio = this.federationDlqTotalProcessed > 0
-      ? this.federationDlqTotalFailed / this.federationDlqTotalProcessed
-      : 0;
-    const federationDlqBurnRate = this.computeBurnRate(federationDlqFailureRatio);
 
     const routes = Array.from(this.routeStats.entries())
       .map(([path, stat]) => {
@@ -286,7 +217,6 @@ export class NodeMonitoringService {
       errorRateRatio,
       p95LatencyMs,
       staleSec,
-      federationDlqBurnRate: Math.max(federationDlqBurnRate, this.federationDlqLastBurnRate),
     });
 
     return {
@@ -313,21 +243,6 @@ export class NodeMonitoringService {
         lastRetracted: this.lastRetracted,
         staleSec,
       },
-      federationDlqReplay: {
-        runs: this.federationDlqReplayRuns,
-        totalProcessed: this.federationDlqTotalProcessed,
-        totalReplayed: this.federationDlqTotalReplayed,
-        totalFailed: this.federationDlqTotalFailed,
-        errorBudgetRatio: this.thresholds.federationDlqErrorBudgetRatio,
-        burnRate: federationDlqBurnRate,
-        lastRunAt: this.federationDlqLastRunAtMs > 0 ? new Date(this.federationDlqLastRunAtMs).toISOString() : undefined,
-        lastProcessed: this.federationDlqLastProcessed,
-        lastReplayed: this.federationDlqLastReplayed,
-        lastFailed: this.federationDlqLastFailed,
-        lastPendingBefore: this.federationDlqLastPendingBefore,
-        lastPendingAfter: this.federationDlqLastPendingAfter,
-        lastBurnRate: this.federationDlqLastBurnRate,
-      },
       alerts,
     };
   }
@@ -336,7 +251,6 @@ export class NodeMonitoringService {
     errorRateRatio: number;
     p95LatencyMs: number;
     staleSec: number;
-    federationDlqBurnRate: number;
   }): MonitoringAlert[] {
     return [
       this.makeAlert(
@@ -359,13 +273,6 @@ export class NodeMonitoringService {
         input.staleSec,
         this.thresholds.maintenanceStaleWarnSec,
         this.thresholds.maintenanceStaleCriticalSec,
-      ),
-      this.makeAlert(
-        'FEDERATION_DLQ_BURN_RATE',
-        'Federation DLQ burn rate',
-        input.federationDlqBurnRate,
-        this.thresholds.federationDlqBurnRateWarn,
-        this.thresholds.federationDlqBurnRateCritical,
       ),
     ];
   }
@@ -392,11 +299,6 @@ export class NodeMonitoringService {
       threshold: level === 'CRITICAL' ? critical : warn,
       message: `${title}=${value.toFixed(4)} (warn=${warn}, critical=${critical})`,
     };
-  }
-
-  private computeBurnRate(errorRatio: number): number {
-    const safeErrorBudget = Math.max(0.000001, this.thresholds.federationDlqErrorBudgetRatio);
-    return errorRatio / safeErrorBudget;
   }
 
   private normalizePath(path: string): string {

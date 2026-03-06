@@ -5,11 +5,6 @@ import { created, ok } from '../response.js';
 import { handleError } from '../route-utils.js';
 import type { RuntimeContext } from '../types.js';
 import { validate } from '../validate.js';
-import {
-  domainBaseUrl,
-  normalizeFederationDomain,
-  resolveSequencerDomain,
-} from '../../services/sequencer-domain.js';
 
 export function messageRoutes(ctx: RuntimeContext): Router {
   const router = new Router();
@@ -22,35 +17,18 @@ export function messageRoutes(ctx: RuntimeContext): Router {
     }
 
     try {
-      const federationRuntime = resolveFederationRuntime(ctx);
-      const selfDomain = federationRuntime.selfDomain;
-      const sequencerDomain = resolveSequencerDomain(parsed.data, {
-        selfDomain,
-        resolveGroupDomain: (groupId) => ctx.groupService.getGroup(groupId).groupDomain,
-      });
+      const envelope = await ctx.messageService.send(parsed.data);
 
-      const allowRemoteSequencerSubmit = Boolean(ctx.federationDeliveryService);
-
-      let envelope;
-      if (sequencerDomain === selfDomain || !allowRemoteSequencerSubmit) {
-        envelope = await ctx.messageService.send(parsed.data);
-        if (ctx.federationDeliveryService) {
-          await ctx.federationDeliveryService.enqueue(envelope);
+      if (ctx.clawnetTransportService && ctx.config.transportMode !== 'http-only') {
+        const { targetDid } = parsed.data;
+        if (targetDid) {
+          await ctx.clawnetTransportService.sendEnvelope(targetDid, envelope);
         }
-      } else {
-        const submitted = await submitToSequencer(parsed.data, {
-          sequencerDomain,
-          sourceDomain: selfDomain,
-          protocolVersion: federationRuntime.protocolVersion,
-          authToken: federationRuntime.authToken,
-        });
-        envelope = await ctx.messageService.ingestFederatedEnvelope(submitted);
       }
+
       created(
         res,
-        {
-          envelope,
-        },
+        { envelope },
         { self: `/api/v1/messages/pull?conversation_id=${encodeURIComponent(envelope.conversationId)}` },
       );
     } catch (error) {
@@ -107,76 +85,6 @@ export function messageRoutes(ctx: RuntimeContext): Router {
   });
 
   return router;
-}
-
-interface FederationRuntime {
-  selfDomain: string;
-  protocolVersion: string;
-  authToken?: string;
-}
-
-function resolveFederationRuntime(ctx: RuntimeContext): FederationRuntime {
-  const gateway = ctx.federationService as unknown as {
-    getSelfDomain?: () => string;
-    getProtocolVersion?: () => string;
-    getAuthToken?: () => string | undefined;
-    nodeInfo?: () => { domain: string; protocolVersion?: string };
-  };
-
-  const nodeInfo = gateway.nodeInfo?.();
-  const selfDomain = normalizeFederationDomain(
-    gateway.getSelfDomain?.() ?? nodeInfo?.domain ?? 'localhost',
-    'selfDomain',
-  );
-  const protocolVersion = gateway.getProtocolVersion?.() ?? nodeInfo?.protocolVersion ?? 'v1';
-  const authToken = gateway.getAuthToken?.();
-
-  return { selfDomain, protocolVersion, authToken };
-}
-
-async function submitToSequencer(
-  payload: Record<string, unknown>,
-  opts: {
-    sequencerDomain: string;
-    sourceDomain: string;
-    protocolVersion: string;
-    authToken?: string;
-  },
-): Promise<Record<string, unknown>> {
-  const endpoint = `${domainBaseUrl(opts.sequencerDomain)}/api/v1/federation/messages/submit`;
-  const response = await fetch(endpoint, {
-    method: 'POST',
-    headers: {
-      'content-type': 'application/json',
-      'x-telagent-source-domain': opts.sourceDomain,
-      'x-telagent-protocol-version': opts.protocolVersion,
-      ...(opts.authToken ? { 'x-telagent-federation-token': opts.authToken } : {}),
-    },
-    body: JSON.stringify(payload),
-    signal: AbortSignal.timeout(10_000),
-  });
-
-  const body = await parseJsonSafely(response);
-  if (!response.ok) {
-    const detail = typeof body?.detail === 'string' ? body.detail : `Sequencer ${opts.sequencerDomain} rejected request`;
-    throw new TelagentError(ErrorCodes.CONFLICT, detail);
-  }
-
-  const envelope = body?.data && typeof body.data === 'object'
-    ? (body.data as Record<string, unknown>).envelope
-    : undefined;
-  if (!envelope || typeof envelope !== 'object') {
-    throw new TelagentError(ErrorCodes.CONFLICT, 'Sequencer response missing data.envelope');
-  }
-  return envelope as Record<string, unknown>;
-}
-
-async function parseJsonSafely(response: Response): Promise<Record<string, unknown> | undefined> {
-  try {
-    return (await response.json()) as Record<string, unknown>;
-  } catch {
-    return undefined;
-  }
 }
 
 function parsePositiveInt(raw: string | null, field: string): number | undefined {

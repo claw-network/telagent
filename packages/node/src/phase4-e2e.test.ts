@@ -88,46 +88,6 @@ class FakeGasService {
   }
 }
 
-class FakeFederationService {
-  receiveEnvelope(_payload: Record<string, unknown>, _meta: { sourceDomain: string; authToken?: string }) {
-    return { accepted: true, id: 'fed-e2e-1', deduplicated: false, retryable: true };
-  }
-
-  syncGroupState(
-    _payload: { groupId: string; state: string; groupDomain?: string },
-    _meta: { sourceDomain: string; authToken?: string },
-  ) {
-    return { synced: true, updatedAtMs: Date.now(), deduplicated: false };
-  }
-
-  recordReceipt(
-    _payload: { envelopeId: string; status: 'delivered' | 'read' },
-    _meta: { sourceDomain: string; authToken?: string },
-  ) {
-    return { accepted: true, deduplicated: false, retryable: true };
-  }
-
-  nodeInfo() {
-    return {
-      protocolVersion: 'v1',
-      domain: 'node-e2e.tel',
-      capabilities: ['identity', 'groups', 'messages', 'attachments', 'federation'],
-      envelopeCount: 0,
-      receiptCount: 0,
-      groupStateSyncCount: 0,
-      security: {
-        authMode: 'none',
-        allowedSourceDomains: [],
-        rateLimitPerMinute: {
-          envelopes: 600,
-          'group-state-sync': 300,
-          receipts: 600,
-        },
-      },
-    };
-  }
-}
-
 class FakeKeyLifecycleService {
   assertCanUseKey() {
     return {
@@ -419,13 +379,13 @@ async function startE2EServer(startMs?: number): Promise<{
     config: {
       host: '127.0.0.1',
       port: 0,
+      transportMode: 'p2p-first' as const,
     },
     identityService: new FakeIdentityService() as unknown as RuntimeContext['identityService'],
     groupService: groupService as unknown as RuntimeContext['groupService'],
     gasService: new FakeGasService() as unknown as RuntimeContext['gasService'],
     messageService,
     attachmentService,
-    federationService: new FakeFederationService() as unknown as RuntimeContext['federationService'],
     monitoringService,
     keyLifecycleService: new FakeKeyLifecycleService() as unknown as RuntimeContext['keyLifecycleService'],
     clawnetGateway: new FakeClawNetGatewayService() as unknown as RuntimeContext['clawnetGateway'],
@@ -745,42 +705,6 @@ test('TA-P4-010 E2E offline 24h pull keeps dedupe and per-conversation order', a
     ['env-p4-010-1', 'env-p4-010-2', 'env-p4-010-3'],
   );
   assert.ok(clock.now() - allItems[0].sentAtMs >= 86_400_000);
-});
-
-test('TA-P4-011 federation envelope ingest writes into mailbox pull view', async (t) => {
-  const { server, baseUrl, clock } = await startE2EServer();
-  t.after(async () => {
-    await server.stop();
-  });
-
-  const conversationId = 'direct:did:claw:zAlice--did:claw:zBob';
-  const sentAtMs = clock.now();
-  const envelopeId = 'fed-ingest-1';
-
-  const ingestRes = await postJson(baseUrl, '/api/v1/federation/envelopes', {
-    envelopeId,
-    conversationId,
-    conversationType: 'direct',
-    routeHint: {
-      targetDomain: 'node-e2e.tel',
-      mailboxKeyId: 'mailbox-fed',
-    },
-    sealedHeader: '0x11',
-    seq: '1',
-    ciphertext: '0x22',
-    contentType: 'text',
-    sentAtMs,
-    ttlSec: 3600,
-    sourceDomain: 'node-remote.tel',
-  });
-  assert.equal(ingestRes.status, 201);
-
-  const pullRes = await getJson(baseUrl, `/api/v1/messages/pull?conversation_id=${encodeURIComponent(conversationId)}&limit=10`);
-  assert.equal(pullRes.status, 200);
-  const pullBody = (await pullRes.json()) as DataEnvelope<{ items: JsonEnvelope[] }>;
-  assert.equal(pullBody.data.items.length, 1);
-  assert.equal(pullBody.data.items[0].envelopeId, envelopeId);
-  assert.equal(pullBody.data.items[0].seq, '1');
 });
 
 test('TA-P14-003 E2E pull cursor stays stable when cleanup happens between pages', async (t) => {

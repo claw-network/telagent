@@ -8,11 +8,8 @@ import { SessionManager } from './clawnet/session-manager.js';
 import { verifyPassphrase } from './clawnet/verify-passphrase.js';
 import { GroupIndexer } from './indexer/group-indexer.js';
 import { AttachmentService } from './services/attachment-service.js';
+import { ClawNetTransportService } from './services/clawnet-transport-service.js';
 import { ContractProvider } from './services/contract-provider.js';
-import { DomainProofChallengeService } from './services/domain-proof-challenge-service.js';
-import { FederationDeliveryService } from './services/federation-delivery-service.js';
-import { FederationService } from './services/federation-service.js';
-import { FederationSloService } from './services/federation-slo-service.js';
 import { GasService } from './services/gas-service.js';
 import { GroupService } from './services/group-service.js';
 import { IdentityAdapterService } from './services/identity-adapter-service.js';
@@ -40,14 +37,11 @@ export class TelagentNode {
   private mailboxStore: MailboxStore | null = null;
   private identityService!: IdentityAdapterService;
   private gasService: GasService | null = null;
-  private domainProofChallengeService: DomainProofChallengeService | null = null;
   private keyLifecycleService: KeyLifecycleService | null = null;
   private groupService: GroupService | null = null;
   private messageService: MessageService | null = null;
   private attachmentService: AttachmentService | null = null;
-  private federationService: FederationService | null = null;
-  private federationDeliveryService: FederationDeliveryService | null = null;
-  private federationSloService: FederationSloService | null = null;
+  private clawnetTransportService: ClawNetTransportService | null = null;
   private monitoringService: NodeMonitoringService | null = null;
   private ownerPermissionService: OwnerPermissionService | null = null;
   private indexer: GroupIndexer | null = null;
@@ -171,18 +165,11 @@ export class TelagentNode {
     this.mailboxStore = this.createMailboxStore(this.config);
 
     this.gasService = new GasService(this.contracts);
-    this.domainProofChallengeService = new DomainProofChallengeService({
-      enforcementMode: this.config.domainProof.mode,
-      challengeTtlSec: this.config.domainProof.challengeTtlSec,
-      rotateBeforeExpirySec: this.config.domainProof.rotateBeforeExpirySec,
-      requestTimeoutMs: this.config.domainProof.requestTimeoutMs,
-    });
     this.groupService = new GroupService(
       this.contracts,
       this.identityService,
       this.gasService,
       this.repo,
-      this.domainProofChallengeService,
     );
     this.keyLifecycleService = new KeyLifecycleService();
     this.messageService = new MessageService(this.groupService, {
@@ -196,31 +183,10 @@ export class TelagentNode {
       privateConversations: this.config.owner.privateConversations,
     });
     this.attachmentService = new AttachmentService();
-    this.federationService = new FederationService({
-      selfDomain: this.config.federation.selfDomain,
-      authToken: this.config.federation.authToken,
-      allowedSourceDomains: this.config.federation.allowedSourceDomains,
-      protocolVersion: this.config.federation.protocolVersion,
-      supportedProtocolVersions: this.config.federation.supportedProtocolVersions,
-      envelopeRateLimitPerMinute: this.config.federation.envelopeRateLimitPerMinute,
-      groupStateSyncRateLimitPerMinute: this.config.federation.groupStateSyncRateLimitPerMinute,
-      receiptRateLimitPerMinute: this.config.federation.receiptRateLimitPerMinute,
-      replayBackoffBaseMs: this.config.federation.replayBackoffBaseMs,
-      replayBackoffMaxMs: this.config.federation.replayBackoffMaxMs,
-      replayCircuitBreakerFailureThreshold: this.config.federation.replayCircuitBreakerFailureThreshold,
-      replayCircuitBreakerCooldownMs: this.config.federation.replayCircuitBreakerCooldownSec * 1000,
-      pinningMode: this.config.federation.pinningMode,
-      pinningCurrentKeysByDomain: this.config.federation.pinningCurrentKeysByDomain,
-      pinningNextKeysByDomain: this.config.federation.pinningNextKeysByDomain,
-      pinningCutoverAtMs: this.config.federation.pinningCutoverAtMs,
-    });
-    this.federationDeliveryService = new FederationDeliveryService({
-      selfDomain: this.federationService.getSelfDomain(),
-      authToken: this.federationService.getAuthToken(),
-      protocolVersion: this.federationService.getProtocolVersion(),
-      requestTimeoutMs: this.config.clawnet.timeoutMs,
-      store: this.mailboxStore,
-    });
+    this.clawnetTransportService = new ClawNetTransportService(
+      this.clawnetGateway,
+      { baseUrl: discovery.nodeUrl, apiKey: this.config.clawnet.apiKey },
+    );
     this.monitoringService = new NodeMonitoringService({
       thresholds: {
         errorRateWarnRatio: this.config.monitoring.errorRateWarnRatio,
@@ -229,16 +195,8 @@ export class TelagentNode {
         requestP95CriticalMs: this.config.monitoring.requestP95CriticalMs,
         maintenanceStaleWarnSec: this.config.monitoring.maintenanceStaleWarnSec,
         maintenanceStaleCriticalSec: this.config.monitoring.maintenanceStaleCriticalSec,
-        federationDlqErrorBudgetRatio: this.config.monitoring.federationDlqErrorBudgetRatio,
-        federationDlqBurnRateWarn: this.config.monitoring.federationDlqBurnRateWarn,
-        federationDlqBurnRateCritical: this.config.monitoring.federationDlqBurnRateCritical,
       },
     });
-    this.federationSloService = new FederationSloService(
-      this.federationService,
-      this.monitoringService,
-      this.config.federationSlo,
-    );
 
     this.indexer = new GroupIndexer(this.contracts, this.repo, {
       finalityDepth: this.config.chain.finalityDepth,
@@ -248,20 +206,20 @@ export class TelagentNode {
       config: {
         host: this.config.host,
         port: this.config.port,
+        transportMode: this.config.transportMode,
       },
       identityService: this.identityService,
       groupService: this.groupService,
       gasService: this.gasService,
       messageService: this.messageService,
       attachmentService: this.attachmentService,
-      federationService: this.federationService,
       monitoringService: this.monitoringService,
       keyLifecycleService: this.keyLifecycleService,
       clawnetGateway: this.clawnetGateway,
+      clawnetTransportService: this.clawnetTransportService,
       sessionManager: this.sessionManager,
       nonceManager: this.nonceManager,
       ownerPermissionService: this.ownerPermissionService,
-      federationDeliveryService: this.federationDeliveryService,
     };
 
     this.apiServer = new ApiServer(runtime);
@@ -271,11 +229,14 @@ export class TelagentNode {
     }
     await this.indexer.start();
     await this.apiServer.start();
-    this.federationDeliveryService.start();
+    if (this.config.transportMode !== 'http-only') {
+      this.clawnetTransportService.startListening(
+        (raw) => this.messageService!.ingestFederatedEnvelope(raw),
+      );
+      logger.info('[telagent] P2P transport listener started (mode=%s)', this.config.transportMode);
+    }
     this.monitoringService.recordMailboxMaintenance(await this.messageService.runMaintenance());
-    this.federationSloService.runOnce();
     this.startMailboxCleaner();
-    this.federationSloService.start();
 
     logger.info('[telagent] Node started on :%d', this.config.port);
   }
@@ -291,8 +252,7 @@ export class TelagentNode {
     this.sessionManager?.lockAll();
 
     this.stopMailboxCleaner();
-    this.federationDeliveryService?.stop();
-    this.federationSloService?.stop();
+    this.clawnetTransportService?.stopListening();
     await this.apiServer?.stop();
     await this.indexer?.stop();
     this.messageService?.dispose();

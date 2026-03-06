@@ -1,7 +1,6 @@
 import { assessHealth } from './format';
 import type {
   EndpointKey,
-  FederationNodeInfo,
   IdentitySelf,
   MonitoringAlert,
   NodeAuditSnapshot,
@@ -220,14 +219,11 @@ export async function loadOwnerNodeSnapshot(
       serviceVersion: null,
       identityDid: null,
       identityDidHash: null,
-      federationDomain: null,
-      capabilities: [],
       criticalAlerts: 0,
       warnAlerts: 0,
       errorRateRatio: 0,
       p95LatencyMs: 0,
       mailboxStaleSec: 0,
-      dlqPending: 0,
       routeHotspots: [],
       alerts: [],
       errors: ['invalid base URL'],
@@ -243,7 +239,7 @@ export async function loadOwnerNodeSnapshot(
   );
   const fetchImpl = options.fetchImpl ?? fetch;
 
-  const [nodeResult, metricsResult, auditResult, identityResult, federationResult] = await Promise.all([
+  const [nodeResult, metricsResult, auditResult, identityResult] = await Promise.all([
     readEndpoint<NodeOverview>('node', baseUrl, '/api/v1/node', timeoutMs, fetchImpl),
     readEndpoint<NodeMetricsSnapshot>('metrics', baseUrl, '/api/v1/node/metrics', timeoutMs, fetchImpl),
     readEndpoint<NodeAuditSnapshot>(
@@ -254,10 +250,9 @@ export async function loadOwnerNodeSnapshot(
       fetchImpl,
     ),
     readEndpoint<IdentitySelf>('identity', baseUrl, '/api/v1/identities/self', timeoutMs, fetchImpl),
-    readEndpoint<FederationNodeInfo>('federation', baseUrl, '/api/v1/federation/node-info', timeoutMs, fetchImpl),
   ]);
 
-  const endpointResults = [nodeResult, metricsResult, auditResult, identityResult, federationResult];
+  const endpointResults = [nodeResult, metricsResult, auditResult, identityResult];
   const errors = endpointResults
     .filter((result) => Boolean(result.error))
     .map((result) => `${result.key}: ${result.error}`);
@@ -275,7 +270,6 @@ export async function loadOwnerNodeSnapshot(
   const metrics = metricsResult.data;
   const audit = auditResult.data;
   const identity = identityResult.data;
-  const federation = federationResult.data;
 
   const alerts = normalizeAlerts(metrics?.alerts ?? audit?.monitoring?.alerts);
   const criticalAlerts = alerts.filter((alert) => alert.level === 'CRITICAL').length;
@@ -295,14 +289,10 @@ export async function loadOwnerNodeSnapshot(
 
   const totals = readObject(metrics?.totals ?? audit?.monitoring?.totals);
   const mailbox = readObject(metrics?.mailboxMaintenance ?? audit?.monitoring?.mailboxMaintenance);
-  const federationDlq = readObject(
-    federation?.dlq ?? readObject(readObject(audit?.federation).dlq),
-  );
 
   const errorRateRatio = Math.max(0, readNumber(totals.errorRateRatio));
   const p95LatencyMs = Math.max(0, readNumber(totals.p95LatencyMs));
   const mailboxStaleSec = Math.max(0, readNumber(mailbox.staleSec));
-  const dlqPending = Math.max(0, Math.floor(readNumber(federationDlq.pendingCount)));
 
   const health = assessHealth({
     endpointFailures: errors.length,
@@ -310,13 +300,8 @@ export async function loadOwnerNodeSnapshot(
     warnAlerts,
     errorRateRatio,
     p95LatencyMs,
-    dlqPending,
     mailboxStaleSec,
   });
-
-  const capabilities = Array.isArray(federation?.capabilities)
-    ? federation.capabilities.filter((item): item is string => typeof item === 'string' && item.trim().length > 0)
-    : [];
 
   return {
     target,
@@ -327,14 +312,11 @@ export async function loadOwnerNodeSnapshot(
     serviceVersion: readString(node?.version) || null,
     identityDid: readString(identity?.did) || null,
     identityDidHash: readString(identity?.didHash) || null,
-    federationDomain: readString(federation?.domain) || null,
-    capabilities,
     criticalAlerts,
     warnAlerts,
     errorRateRatio,
     p95LatencyMs,
     mailboxStaleSec,
-    dlqPending,
     routeHotspots,
     alerts,
     errors,
@@ -343,7 +325,6 @@ export async function loadOwnerNodeSnapshot(
       metrics,
       audit,
       identity,
-      federation,
     },
   };
 }

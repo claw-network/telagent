@@ -430,179 +430,6 @@ class FakeAttachmentService {
   }
 }
 
-class FakeFederationService {
-  private readonly dlqEntries: Array<{
-    dlqId: string;
-    sequence: number;
-    scope: 'envelopes' | 'group-state-sync' | 'receipts';
-    status: 'PENDING' | 'REPLAYED';
-  }> = [];
-
-  receiveEnvelope(
-    payload: Record<string, unknown>,
-    meta: { sourceDomain: string; authToken?: string; protocolVersion?: string; sourceKeyId?: string },
-  ) {
-    if (payload.envelopeId === 'fed-pin-required' && !meta.sourceKeyId) {
-      throw new TelagentError(ErrorCodes.UNAUTHORIZED, 'sourceKeyId is required');
-    }
-    this.assertProtocol(meta.protocolVersion);
-    if (payload.envelopeId === 'fed-force-error') {
-      throw new TelagentError(ErrorCodes.CONFLICT, 'forced federation conflict');
-    }
-    return { accepted: true, id: 'fed-1', deduplicated: false, retryable: true };
-  }
-
-  syncGroupState(
-    _payload: { groupId: string; state: string; groupDomain?: string; stateVersion?: number },
-    meta: { sourceDomain: string; authToken?: string; protocolVersion?: string },
-  ) {
-    this.assertProtocol(meta.protocolVersion);
-    return { synced: true, updatedAtMs: Date.now(), deduplicated: false, stateVersion: 1 };
-  }
-
-  recordReceipt(
-    _payload: { envelopeId: string; status: 'delivered' | 'read' },
-    meta: { sourceDomain: string; authToken?: string; protocolVersion?: string },
-  ) {
-    this.assertProtocol(meta.protocolVersion);
-    return { accepted: true, deduplicated: false, retryable: true };
-  }
-
-  recordDlqFailure(
-    scope: 'envelopes' | 'group-state-sync' | 'receipts',
-    _payload: Record<string, unknown>,
-    _meta: { sourceDomain?: string; protocolVersion?: string; sourceKeyId?: string } | undefined,
-    _error: unknown,
-  ) {
-    const sequence = this.dlqEntries.length + 1;
-    const entry = {
-      dlqId: `dlq-test-${sequence}`,
-      sequence,
-      scope,
-      status: 'PENDING' as const,
-    };
-    this.dlqEntries.push(entry);
-    return entry;
-  }
-
-  listDlqEntries(options?: { status?: 'PENDING' | 'REPLAYED' | 'ALL' }) {
-    const status = options?.status ?? 'PENDING';
-    if (status === 'ALL') {
-      return [...this.dlqEntries];
-    }
-    return this.dlqEntries.filter((entry) => entry.status === status);
-  }
-
-  replayDlq(options?: { ids?: string[]; maxItems?: number; stopOnError?: boolean }) {
-    const candidates = this.listDlqEntries({ status: 'PENDING' });
-    const filtered = Array.isArray(options?.ids) && options.ids.length > 0
-      ? candidates.filter((entry) => options.ids!.includes(entry.dlqId))
-      : candidates;
-    const replayTargets = typeof options?.maxItems === 'number'
-      ? filtered.slice(0, options.maxItems)
-      : filtered;
-
-    const results = replayTargets.map((entry) => ({
-      dlqId: entry.dlqId,
-      sequence: entry.sequence,
-      scope: entry.scope,
-      status: 'REPLAYED' as const,
-      replayedAtMs: Date.now(),
-    }));
-    for (const entry of replayTargets) {
-      entry.status = 'REPLAYED';
-    }
-
-    return {
-      processed: replayTargets.length,
-      replayed: replayTargets.length,
-      failed: 0,
-      results,
-    };
-  }
-
-  nodeInfo() {
-    return {
-      protocolVersion: 'v1',
-      domain: 'node-a.tel',
-      capabilities: ['identity', 'groups', 'messages', 'attachments', 'federation'],
-      envelopeCount: 0,
-      receiptCount: 0,
-      groupStateSyncCount: 0,
-      compatibility: {
-        protocolVersion: 'v1',
-        supportedProtocolVersions: ['v1'],
-        stats: {
-          acceptedWithoutProtocolHint: 0,
-          acceptedWithProtocolHint: 0,
-          unsupportedProtocolRejected: 0,
-          usageByVersion: {
-            v1: 0,
-          },
-        },
-      },
-      security: {
-        authMode: 'none',
-        allowedSourceDomains: [],
-        rateLimitPerMinute: {
-          envelopes: 600,
-          'group-state-sync': 300,
-          receipts: 600,
-        },
-        pinning: {
-          mode: 'disabled',
-          cutoverAt: null,
-          cutoverReached: false,
-          configuredDomains: ['node-a.tel'],
-          stats: {
-            acceptedWithCurrent: 0,
-            acceptedWithNext: 0,
-            rejected: 0,
-            reportOnlyWarnings: 0,
-          },
-        },
-      },
-      resilience: {
-        staleGroupStateSyncRejected: 0,
-        splitBrainGroupStateSyncDetected: 0,
-        totalGroupStateSyncConflicts: 0,
-      },
-      dlq: {
-        pendingCount: 0,
-        replayedCount: 0,
-        replaySuccessCount: 0,
-        replayFailedCount: 0,
-      },
-    };
-  }
-
-  getSelfDomain() {
-    return 'node-a.tel';
-  }
-
-  getProtocolVersion() {
-    return 'v1';
-  }
-
-  getAuthToken() {
-    return undefined;
-  }
-
-  authorizeIngress(meta: { sourceDomain: string; protocolVersion?: string }) {
-    this.assertProtocol(meta.protocolVersion);
-    return {
-      sourceDomain: meta.sourceDomain,
-      protocolVersion: meta.protocolVersion ?? 'v1',
-    };
-  }
-
-  private assertProtocol(protocolVersion?: string): void {
-    if (protocolVersion === 'v99') {
-      throw new TelagentError(ErrorCodes.UNPROCESSABLE, 'protocolVersion(v99) is not compatible');
-    }
-  }
-}
-
 class FakeMonitoringService {
   recordHttpRequest() {}
 
@@ -643,21 +470,6 @@ class FakeMonitoringService {
         lastRetracted: 0,
         staleSec: 2,
       },
-      federationDlqReplay: {
-        runs: 1,
-        totalProcessed: 2,
-        totalReplayed: 2,
-        totalFailed: 0,
-        errorBudgetRatio: 0.01,
-        burnRate: 0,
-        lastRunAt: new Date().toISOString(),
-        lastProcessed: 2,
-        lastReplayed: 2,
-        lastFailed: 0,
-        lastPendingBefore: 2,
-        lastPendingAfter: 0,
-        lastBurnRate: 0,
-      },
       alerts: [
         {
           code: 'HTTP_5XX_RATE',
@@ -666,14 +478,6 @@ class FakeMonitoringService {
           value: 0,
           threshold: 0.02,
           message: 'ok',
-        },
-        {
-          code: 'FEDERATION_DLQ_BURN_RATE',
-          level: 'WARN',
-          title: 'Federation DLQ burn rate',
-          value: 2.5,
-          threshold: 2,
-          message: 'warn',
         },
       ],
     };
@@ -826,7 +630,7 @@ class FakeClawNetGatewayService {
       controller: '0x' + '2'.repeat(40),
       activeKey: '0x22',
       document: {
-        capabilities: ['chat', 'federation'],
+        capabilities: ['chat'],
         keyHistory: [],
       },
     };
@@ -861,27 +665,21 @@ class FakeSessionManager {
 
 class FakeNonceManager {}
 
-interface StartTestServerOptions {
-  federationDeliveryService?: RuntimeContext['federationDeliveryService'];
-}
-
-async function startTestServer(options: StartTestServerOptions = {}) {
+async function startTestServer() {
   const identityService = new FakeIdentityService();
   const messageService = new FakeMessageService(identityService);
   const context: RuntimeContext = {
-    config: { host: '127.0.0.1', port: 0 },
+    config: { host: '127.0.0.1', port: 0, transportMode: 'p2p-first' },
     identityService: identityService as unknown as RuntimeContext['identityService'],
     groupService: new FakeGroupService() as unknown as RuntimeContext['groupService'],
     gasService: new FakeGasService() as unknown as RuntimeContext['gasService'],
     messageService: messageService as unknown as RuntimeContext['messageService'],
     attachmentService: new FakeAttachmentService() as unknown as RuntimeContext['attachmentService'],
-    federationService: new FakeFederationService() as unknown as RuntimeContext['federationService'],
     monitoringService: new FakeMonitoringService() as unknown as RuntimeContext['monitoringService'],
     keyLifecycleService: new FakeKeyLifecycleService() as unknown as RuntimeContext['keyLifecycleService'],
     clawnetGateway: new FakeClawNetGatewayService() as unknown as RuntimeContext['clawnetGateway'],
     sessionManager: new FakeSessionManager() as unknown as RuntimeContext['sessionManager'],
     nonceManager: new FakeNonceManager() as unknown as RuntimeContext['nonceManager'],
-    federationDeliveryService: options.federationDeliveryService,
   };
 
   const server = new ApiServer(context);
@@ -931,93 +729,6 @@ test('created response returns data envelope and Location header', async (t) => 
   assert.equal(body.data.envelope.envelopeId, 'env-1');
   assert.equal(body.data.envelope.seq, '1');
   assert.match(body.links.self, /^\/api\/v1\/messages\/pull\?/);
-});
-
-test('message send forwards to remote sequencer when federation delivery is enabled', async (t) => {
-  const { server, baseUrl } = await startTestServer({
-    federationDeliveryService: {
-      enqueue() {
-        return true;
-      },
-    } as unknown as RuntimeContext['federationDeliveryService'],
-  });
-  t.after(async () => {
-    await server.stop();
-  });
-
-  const originalFetch = globalThis.fetch;
-  let sequencerSubmitCount = 0;
-  globalThis.fetch = (async (input, init) => {
-    const requestUrl = typeof input === 'string'
-      ? input
-      : input instanceof URL
-        ? input.toString()
-        : input.url;
-    if (requestUrl === 'https://alpha.tel/api/v1/federation/messages/submit') {
-      sequencerSubmitCount += 1;
-      return new Response(
-        JSON.stringify({
-          data: {
-            envelope: {
-              envelopeId: 'env-remote-1',
-              conversationId: `group:${'0x' + 'b'.repeat(64)}`,
-              conversationType: 'group',
-              routeHint: {
-                targetDomain: 'alpha.tel',
-                mailboxKeyId: 'mailbox-1',
-              },
-              sealedHeader: '0x11',
-              seq: '98',
-              ciphertext: '0x22',
-              contentType: 'text',
-              sentAtMs: Date.now(),
-              ttlSec: 3600,
-              provisional: false,
-            },
-          },
-        }),
-        {
-          status: 201,
-          headers: {
-            'content-type': 'application/json',
-          },
-        },
-      );
-    }
-    return originalFetch(input, init);
-  }) as typeof fetch;
-  t.after(() => {
-    globalThis.fetch = originalFetch;
-  });
-
-  const response = await fetch(`${baseUrl}/api/v1/messages`, {
-    method: 'POST',
-    headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({
-      senderDid: 'did:claw:zSelf',
-      conversationId: `group:${'0x' + 'b'.repeat(64)}`,
-      conversationType: 'group',
-      targetDomain: 'alpha.tel',
-      mailboxKeyId: 'mailbox-1',
-      sealedHeader: '0x11',
-      ciphertext: '0x22',
-      contentType: 'text',
-      ttlSec: 3600,
-    }),
-  });
-
-  assert.equal(response.status, 201);
-  assert.equal(sequencerSubmitCount, 1);
-  const body = (await response.json()) as {
-    data: {
-      envelope: {
-        envelopeId: string;
-        seq: string;
-      };
-    };
-  };
-  assert.equal(body.data.envelope.envelopeId, 'env-remote-1');
-  assert.equal(body.data.envelope.seq, '98');
 });
 
 test('list response returns paginated envelope shape', async (t) => {
@@ -1099,16 +810,6 @@ test('node audit snapshot exports de-sensitized envelope and links.self', async 
         retractedCount: number;
         sampledRetractions: Array<{ envelopeIdHash: string; conversationIdHash: string }>;
       };
-      federation: {
-        domainHash: string;
-        security: {
-          allowedSourceDomainHashes: string[];
-          pinning: {
-            configuredDomainCount: number;
-            configuredDomainHashes: string[];
-          };
-        };
-      };
     };
     links: { self: string };
   };
@@ -1120,9 +821,6 @@ test('node audit snapshot exports de-sensitized envelope and links.self', async 
   assert.equal(body.data.messages.retractedCount, 1);
   assert.equal(body.data.messages.sampledRetractions.length, 1);
   assert.equal(body.data.messages.sampledRetractions[0].envelopeIdHash.length, 64);
-  assert.equal(body.data.federation.domainHash.length, 64);
-  assert.equal(body.data.federation.security.pinning.configuredDomainCount, 1);
-  assert.equal(body.data.federation.security.pinning.configuredDomainHashes[0].length, 64);
   assert.match(body.links.self, /^\/api\/v1\/node\/audit-snapshot\?/);
 
   const serialized = JSON.stringify(body.data);
@@ -1248,34 +946,6 @@ test('TA-P12-003 revoked DID event isolates session and rejects message send wit
   assert.equal(auditBody.data.messages.revokedDidCount, 1);
   assert.equal(auditBody.data.messages.isolatedConversationCount, 1);
   assert.equal(auditBody.data.messages.isolationEventCount, 1);
-});
-
-test('TA-P12-004 node metrics exposes federation DLQ replay burn-rate section', async (t) => {
-  const { server, baseUrl } = await startTestServer();
-  t.after(async () => {
-    await server.stop();
-  });
-
-  const response = await fetch(`${baseUrl}/api/v1/node/metrics`);
-  assert.equal(response.status, 200);
-
-  const body = (await response.json()) as {
-    data: {
-      federationDlqReplay: {
-        runs: number;
-        totalProcessed: number;
-        burnRate: number;
-        errorBudgetRatio: number;
-      };
-      alerts: Array<{ code: string }>;
-    };
-  };
-
-  assert.equal(body.data.federationDlqReplay.runs, 1);
-  assert.equal(body.data.federationDlqReplay.totalProcessed, 2);
-  assert.equal(body.data.federationDlqReplay.errorBudgetRatio, 0.01);
-  assert.equal(body.data.federationDlqReplay.burnRate, 0);
-  assert.equal(body.data.alerts.some((alert) => alert.code === 'FEDERATION_DLQ_BURN_RATE'), true);
 });
 
 test('not found uses RFC7807 shape', async (t) => {
@@ -1463,7 +1133,7 @@ test('conversation privacy route blocks owner token and syncs private flags acro
   assert.equal(permissionsBody.data.privateConversations.includes(conversationId), true);
 });
 
-test('messages, attachments and federation endpoints are accessible', async (t) => {
+test('messages, attachments and key endpoints are accessible', async (t) => {
   const { server, baseUrl } = await startTestServer();
   t.after(async () => {
     await server.stop();
@@ -1526,119 +1196,4 @@ test('messages, attachments and federation endpoints are accessible', async (t) 
 
   const keyListRes = await fetch(`${baseUrl}/api/v1/keys/${encodeURIComponent('did:claw:zSelf')}?suite=signal`);
   assert.equal(keyListRes.status, 200);
-
-  const fedEnvelopeRes = await fetch(`${baseUrl}/api/v1/federation/envelopes`, {
-    method: 'POST',
-    headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ envelopeId: 'fed-1', sourceDomain: 'node-b.tel' }),
-  });
-  assert.equal(fedEnvelopeRes.status, 201);
-
-  const fedSubmitRes = await fetch(`${baseUrl}/api/v1/federation/messages/submit`, {
-    method: 'POST',
-    headers: {
-      'content-type': 'application/json',
-      'x-telagent-source-domain': 'node-b.tel',
-    },
-    body: JSON.stringify({
-      senderDid: 'did:claw:zSelf',
-      conversationId: 'direct:did:claw:zPeer--did:claw:zSelf',
-      conversationType: 'direct',
-      targetDomain: 'zzz.tel',
-      mailboxKeyId: 'mailbox-1',
-      sealedHeader: '0x11',
-      ciphertext: '0x22',
-      contentType: 'text',
-      ttlSec: 3600,
-    }),
-  });
-  assert.equal(fedSubmitRes.status, 201);
-
-  const fedSyncRes = await fetch(`${baseUrl}/api/v1/federation/group-state/sync`, {
-    method: 'POST',
-    headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ groupId: `0x${'b'.repeat(64)}`, state: 'ACTIVE', sourceDomain: 'node-b.tel' }),
-  });
-  assert.equal(fedSyncRes.status, 201);
-
-  const fedSyncInvalidVersionRes = await fetch(`${baseUrl}/api/v1/federation/group-state/sync`, {
-    method: 'POST',
-    headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({
-      groupId: `0x${'b'.repeat(64)}`,
-      state: 'ACTIVE',
-      sourceDomain: 'node-b.tel',
-      stateVersion: '11',
-    }),
-  });
-  assert.equal(fedSyncInvalidVersionRes.status, 400);
-
-  const fedReceiptRes = await fetch(`${baseUrl}/api/v1/federation/receipts`, {
-    method: 'POST',
-    headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ envelopeId: 'fed-1', status: 'delivered', sourceDomain: 'node-b.tel' }),
-  });
-  assert.equal(fedReceiptRes.status, 201);
-
-  const fedConflictRes = await fetch(`${baseUrl}/api/v1/federation/envelopes`, {
-    method: 'POST',
-    headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ envelopeId: 'fed-force-error', sourceDomain: 'node-b.tel' }),
-  });
-  assert.equal(fedConflictRes.status, 409);
-
-  const dlqListRes = await fetch(`${baseUrl}/api/v1/federation/dlq?status=pending`);
-  assert.equal(dlqListRes.status, 200);
-  const dlqListBody = (await dlqListRes.json()) as {
-    data: Array<{ dlqId: string; scope: string }>;
-    meta: { pagination: { total: number } };
-  };
-  assert.ok(dlqListBody.meta.pagination.total >= 1);
-  assert.ok(dlqListBody.data.some((entry) => entry.scope === 'envelopes'));
-
-  const dlqReplayRes = await fetch(`${baseUrl}/api/v1/federation/dlq/replay`, {
-    method: 'POST',
-    headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ maxItems: 1, stopOnError: true }),
-  });
-  assert.equal(dlqReplayRes.status, 200);
-  const dlqReplayBody = (await dlqReplayRes.json()) as {
-    data: { processed: number; replayed: number; failed: number };
-  };
-  assert.equal(dlqReplayBody.data.processed, 1);
-  assert.equal(dlqReplayBody.data.replayed, 1);
-  assert.equal(dlqReplayBody.data.failed, 0);
-
-  const incompatibleProtocolRes = await fetch(`${baseUrl}/api/v1/federation/envelopes`, {
-    method: 'POST',
-    headers: {
-      'content-type': 'application/json',
-      'x-telagent-protocol-version': 'v99',
-    },
-    body: JSON.stringify({ envelopeId: 'fed-2', sourceDomain: 'node-b.tel' }),
-  });
-  assert.equal(incompatibleProtocolRes.status, 422);
-  assert.match(incompatibleProtocolRes.headers.get('content-type') ?? '', /^application\/problem\+json/);
-
-  const pinRequiredNoHeaderRes = await fetch(`${baseUrl}/api/v1/federation/envelopes`, {
-    method: 'POST',
-    headers: {
-      'content-type': 'application/json',
-    },
-    body: JSON.stringify({ envelopeId: 'fed-pin-required', sourceDomain: 'node-b.tel' }),
-  });
-  assert.equal(pinRequiredNoHeaderRes.status, 401);
-
-  const pinRequiredWithHeaderRes = await fetch(`${baseUrl}/api/v1/federation/envelopes`, {
-    method: 'POST',
-    headers: {
-      'content-type': 'application/json',
-      'x-telagent-source-key-id': 'node-b-key-v1',
-    },
-    body: JSON.stringify({ envelopeId: 'fed-pin-required', sourceDomain: 'node-b.tel' }),
-  });
-  assert.equal(pinRequiredWithHeaderRes.status, 201);
-
-  const nodeInfoRes = await fetch(`${baseUrl}/api/v1/federation/node-info`);
-  assert.equal(nodeInfoRes.status, 200);
 });

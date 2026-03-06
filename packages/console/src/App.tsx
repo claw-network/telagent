@@ -589,7 +589,7 @@ export function App() {
                                     <div className="grid gap-0.5">
                                       <span className="font-medium">{target.label}</span>
                                       <span className="font-mono text-xs text-muted-foreground">
-                                        {snapshot?.federationDomain || target.baseUrl || "-"}
+                                        {target.baseUrl || "-"}
                                       </span>
                                     </div>
                                   </td>

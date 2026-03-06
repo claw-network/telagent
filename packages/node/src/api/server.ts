@@ -6,7 +6,6 @@ import { ErrorCodes, TelagentError } from '@telagent/protocol';
 import { Router } from './router.js';
 import { problem } from './response.js';
 import { attachmentRoutes } from './routes/attachments.js';
-import { federationRoutes } from './routes/federation.js';
 import { groupRoutes } from './routes/groups.js';
 import { identityRoutes } from './routes/identities.js';
 import { keyRoutes } from './routes/keys.js';
@@ -31,7 +30,6 @@ function buildRouter(ctx: RuntimeContext): Router {
   router.mount('/api/v1/conversations', conversationRoutes(ctx));
   router.mount('/api/v1/owner', ownerRoutes(ctx));
   router.mount('/api/v1/attachments', attachmentRoutes(ctx));
-  router.mount('/api/v1/federation', federationRoutes(ctx));
   router.mount('/api/v1/session', sessionRoutes(ctx));
   router.mount('/api/v1/clawnet', clawnetRoutes(ctx));
 

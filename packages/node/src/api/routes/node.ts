@@ -87,9 +87,7 @@ export function nodeRoutes(ctx: RuntimeContext): Router {
         }
       }
 
-      const federationInfo = ctx.federationService.nodeInfo();
       const monitoring = ctx.monitoringService.snapshot();
-      const pinning = federationInfo.security.pinning;
       const selfLink = `/api/v1/node/audit-snapshot?sample_size=${sampleSize}&retraction_scan_limit=${retractionScanLimit}`;
 
       ok(
@@ -115,39 +113,12 @@ export function nodeRoutes(ctx: RuntimeContext): Router {
             memberStateCounts,
           },
           messages: messageAudit,
-          federation: {
-            protocolVersion: federationInfo.protocolVersion,
-            domainHash: digestForAudit(federationInfo.domain),
-            capabilities: federationInfo.capabilities,
-            compatibility: federationInfo.compatibility,
-            security: {
-              authMode: federationInfo.security.authMode,
-              allowedSourceDomainCount: federationInfo.security.allowedSourceDomains.length,
-              allowedSourceDomainHashes: federationInfo.security.allowedSourceDomains
-                .slice(0, sampleSize)
-                .map((domain) => digestForAudit(domain)),
-              rateLimitPerMinute: federationInfo.security.rateLimitPerMinute,
-              pinning: {
-                mode: pinning.mode,
-                cutoverAt: pinning.cutoverAt,
-                cutoverReached: pinning.cutoverReached,
-                configuredDomainCount: pinning.configuredDomains.length,
-                configuredDomainHashes: pinning.configuredDomains
-                  .slice(0, sampleSize)
-                  .map((domain) => digestForAudit(domain)),
-                stats: pinning.stats,
-              },
-            },
-            resilience: federationInfo.resilience,
-            dlq: federationInfo.dlq,
-          },
           monitoring: {
             generatedAt: monitoring.generatedAt,
             uptimeSec: monitoring.uptimeSec,
             totals: monitoring.totals,
             alerts: monitoring.alerts,
             mailboxMaintenance: monitoring.mailboxMaintenance,
-            federationDlqReplay: monitoring.federationDlqReplay,
           },
         },
         { self: selfLink },

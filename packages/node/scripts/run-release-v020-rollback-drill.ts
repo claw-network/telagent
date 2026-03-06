@@ -63,18 +63,14 @@ async function fetchJson(url: string): Promise<unknown> {
 }
 
 async function readNodeHealth(baseUrl: string): Promise<NodeHealthSnapshot> {
-  const [identityPayload, nodeInfoPayload] = await Promise.all([
-    fetchJson(`${baseUrl}/api/v1/identities/self`),
-    fetchJson(`${baseUrl}/api/v1/federation/node-info`),
-  ]);
+  const identityPayload = await fetchJson(`${baseUrl}/api/v1/identities/self`);
 
   const identity = identityPayload as { data?: { did?: string } };
-  const nodeInfo = nodeInfoPayload as { data?: { domain?: string } };
 
   return {
     url: baseUrl,
     did: identity.data?.did ?? '',
-    domain: nodeInfo.data?.domain ?? '',
+    domain: '',
   };
 }
 

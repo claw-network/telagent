@@ -56,6 +56,7 @@ export const SendMessageSchema = z.object({
   conversationId: z.string().min(1),
   conversationType: z.enum(['direct', 'group']),
   targetDomain: z.string().min(1),
+  targetDid: z.string().min(1).optional(),
   mailboxKeyId: z.string().min(1),
   sealedHeader: HexString,
   ciphertext: HexString,

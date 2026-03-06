@@ -174,70 +174,6 @@ class FakeAttachmentService {
   }
 }
 
-class FakeFederationService {
-  receiveEnvelope() {
-    return { accepted: true, id: 'f1' };
-  }
-  syncGroupState() {
-    return { synced: true, updatedAtMs: Date.now() };
-  }
-  recordReceipt() {
-    return { accepted: true };
-  }
-  nodeInfo() {
-    return {
-      protocolVersion: 'v1',
-      domain: 'node-a.tel',
-      capabilities: ['identity'],
-      envelopeCount: 0,
-      receiptCount: 0,
-      groupStateSyncCount: 0,
-      compatibility: {
-        protocolVersion: 'v1',
-        supportedProtocolVersions: ['v1'],
-        stats: {
-          acceptedWithoutProtocolHint: 0,
-          acceptedWithProtocolHint: 0,
-          unsupportedProtocolRejected: 0,
-          usageByVersion: { v1: 0 },
-        },
-      },
-      security: {
-        authMode: 'none',
-        allowedSourceDomains: [],
-        rateLimitPerMinute: {
-          envelopes: 600,
-          'group-state-sync': 300,
-          receipts: 600,
-        },
-        pinning: {
-          mode: 'disabled',
-          cutoverAt: null,
-          cutoverReached: false,
-          configuredDomains: [],
-          stats: {
-            acceptedWithCurrent: 0,
-            acceptedWithNext: 0,
-            rejected: 0,
-            reportOnlyWarnings: 0,
-          },
-        },
-      },
-      resilience: {
-        staleGroupStateSyncRejected: 0,
-        splitBrainGroupStateSyncDetected: 0,
-        totalGroupStateSyncConflicts: 0,
-      },
-      dlq: {
-        pendingCount: 0,
-        replayedCount: 0,
-        replaySuccessCount: 0,
-        replayFailedCount: 0,
-      },
-    };
-  }
-}
-
 class FakeKeyLifecycleService {
   registerKey() {
     return {
@@ -354,13 +290,12 @@ class FakeNonceManager {}
 
 async function startTestServer() {
   const context: RuntimeContext = {
-    config: { host: '127.0.0.1', port: 0 },
+    config: { host: '127.0.0.1', port: 0, transportMode: 'p2p-first' as const },
     identityService: new FakeIdentityService() as unknown as RuntimeContext['identityService'],
     groupService: new FakeGroupService() as unknown as RuntimeContext['groupService'],
     gasService: new FakeGasService() as unknown as RuntimeContext['gasService'],
     messageService: new FakeMessageService() as unknown as RuntimeContext['messageService'],
     attachmentService: new FakeAttachmentService() as unknown as RuntimeContext['attachmentService'],
-    federationService: new FakeFederationService() as unknown as RuntimeContext['federationService'],
     monitoringService: new NodeMonitoringService(),
     keyLifecycleService: new FakeKeyLifecycleService() as unknown as RuntimeContext['keyLifecycleService'],
     clawnetGateway: new FakeClawNetGatewayService() as unknown as RuntimeContext['clawnetGateway'],

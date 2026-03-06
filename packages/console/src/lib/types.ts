@@ -53,15 +53,6 @@ export interface NodeMetricsSnapshot {
     lastRunAt?: string;
     staleSec: number;
   };
-  federationDlqReplay: {
-    runs: number;
-    totalProcessed: number;
-    totalReplayed: number;
-    totalFailed: number;
-    errorBudgetRatio: number;
-    burnRate: number;
-    lastRunAt?: string;
-  };
   alerts: MonitoringAlert[];
   [key: string]: unknown;
 }
@@ -83,25 +74,6 @@ export interface IdentitySelf {
   [key: string]: unknown;
 }
 
-export interface FederationNodeInfo {
-  protocolVersion: string;
-  domain: string;
-  capabilities: string[];
-  security?: {
-    authMode?: string;
-    allowedSourceDomains?: string[];
-    pinning?: {
-      mode?: string;
-      cutoverReached?: boolean;
-    };
-  };
-  dlq?: {
-    pendingCount?: number;
-    replayedCount?: number;
-  };
-  [key: string]: unknown;
-}
-
 export interface NodeAuditSnapshot {
   generatedAt: string;
   monitoring?: {
@@ -112,11 +84,6 @@ export interface NodeAuditSnapshot {
     };
     mailboxMaintenance?: {
       staleSec?: number;
-    };
-  };
-  federation?: {
-    dlq?: {
-      pendingCount?: number;
     };
   };
   messages?: {
@@ -133,7 +100,7 @@ export interface HealthAssessment {
   reasons: string[];
 }
 
-export type EndpointKey = 'node' | 'metrics' | 'audit' | 'identity' | 'federation';
+export type EndpointKey = 'node' | 'metrics' | 'audit' | 'identity';
 
 export interface OwnerNodeSnapshot {
   target: NodeTarget;
@@ -144,14 +111,11 @@ export interface OwnerNodeSnapshot {
   serviceVersion: string | null;
   identityDid: string | null;
   identityDidHash: string | null;
-  federationDomain: string | null;
-  capabilities: string[];
   criticalAlerts: number;
   warnAlerts: number;
   errorRateRatio: number;
   p95LatencyMs: number;
   mailboxStaleSec: number;
-  dlqPending: number;
   routeHotspots: RouteMetric[];
   alerts: MonitoringAlert[];
   errors: string[];
@@ -160,6 +124,5 @@ export interface OwnerNodeSnapshot {
     metrics?: NodeMetricsSnapshot;
     audit?: NodeAuditSnapshot;
     identity?: IdentitySelf;
-    federation?: FederationNodeInfo;
   };
 }

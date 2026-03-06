@@ -12,7 +12,6 @@ import {
 } from '@telagent/protocol';
 
 import type { ContractProvider } from './contract-provider.js';
-import type { DomainProofChallengeService } from './domain-proof-challenge-service.js';
 import type { GasService } from './gas-service.js';
 import type { IdentityAdapterService } from './identity-adapter-service.js';
 import type { GroupRepository } from '../storage/group-repository.js';
@@ -53,7 +52,6 @@ export class GroupService {
     private readonly identityAdapter: IdentityAdapterService,
     private readonly gasService: GasService,
     private readonly repo: GroupRepository,
-    private readonly domainProofChallengeService?: DomainProofChallengeService,
   ) {}
 
   async createGroup(input: CreateGroupInput): Promise<{ txHash: string; group: GroupRecord }> {
@@ -62,14 +60,6 @@ export class GroupService {
     this.assertBytes32(input.initialMlsStateHash, 'initialMlsStateHash');
 
     const identity = await this.identityAdapter.assertControllerBySigner(input.creatorDid);
-    if (this.domainProofChallengeService) {
-      await this.domainProofChallengeService.validateForCreateGroup({
-        groupId: input.groupId,
-        groupDomain: input.groupDomain,
-        creatorDid: input.creatorDid,
-        domainProofHash: input.domainProofHash,
-      });
-    }
 
     const txData = this.contracts.telagentGroupRegistry.interface.encodeFunctionData('createGroup', [
       input.groupId,
