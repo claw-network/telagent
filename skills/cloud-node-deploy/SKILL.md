@@ -1,6 +1,6 @@
 ---
 name: cloud-node-deploy
-description: "Deploy or redeploy TelAgent nodes to cloud servers. Handles Node.js upgrade, code sync via rsync, native module rebuild, systemd service management, ClawNet daemon, and Caddy reverse proxy. USE FOR: fresh deploy, redeploy after code changes, node upgrade, service restart, health check. SSH key: ~/.ssh/id_ed25519_clawnet"
+description: "Deploy or redeploy TelAgent nodes to cloud servers. Handles Node.js upgrade, code sync via git clone, workspace package build, systemd service management, ClawNet daemon, and Caddy reverse proxy. USE FOR: fresh deploy, redeploy after code changes, node upgrade, service restart, health check. SSH key: ~/.ssh/id_ed25519_clawnet"
 ---
 
 # Cloud Node Deploy
@@ -50,32 +50,34 @@ ssh -i "$SSH_KEY" -o ConnectTimeout=10 root@<IP> "hostname && node -v"
 ssh -t -i "$SSH_KEY" root@<IP> "curl -fsSL https://deb.nodesource.com/setup_22.x | bash - && apt-get install -y nodejs && node -v && corepack enable && corepack prepare pnpm@10.30.3 --activate"
 ```
 
-### 3. Sync code via rsync
-
-From the local repo root:
+### 3. Deploy code via git clone
 
 ```bash
-rsync -avz --delete \
-  --exclude='.git' \
-  --exclude='node_modules' \
-  --exclude='.env.cloud' \
-  --exclude='.env.local' \
-  --exclude='.pnpm-store' \
-  --exclude='.tmp' \
-  --exclude='dist' \
-  --exclude='cache' \
-  --exclude='artifacts' \
-  -e "ssh -i $SSH_KEY" \
-  ./ root@<IP>:/opt/telagent/
+# Backup env, remove old code, clone fresh
+ssh -i "$SSH_KEY" root@<IP> "
+  cp /opt/telagent/.env.cloud /tmp/.env.cloud.bak
+  rm -rf /opt/telagent
+  git clone --depth 1 https://github.com/claw-network/telagent.git /opt/telagent
+  cp /tmp/.env.cloud.bak /opt/telagent/.env.cloud
+"
 ```
 
-### 4. Install dependencies and rebuild native modules
+### 4. Install dependencies, patch start script, build workspace packages
 
 ```bash
-ssh -t -i "$SSH_KEY" root@<IP> "cd /opt/telagent && rm -rf node_modules/.pnpm/better-sqlite3* && pnpm install --frozen-lockfile"
+ssh -i "$SSH_KEY" root@<IP> "cd /opt/telagent && pnpm install --frozen-lockfile"
+
+# Remove --env-file flag (only for local dev; server uses systemd EnvironmentFile)
+ssh -i "$SSH_KEY" root@<IP> "sed -i 's|tsx --env-file=../../.env src/daemon.ts|tsx src/daemon.ts|' /opt/telagent/packages/node/package.json"
+
+# Build workspace dependency packages (dist/ is gitignored)
+ssh -i "$SSH_KEY" root@<IP> "cd /opt/telagent && pnpm --filter @telagent/protocol build && pnpm --filter @telagent/sdk build"
 ```
 
-**Important**: `package.json` must include `pnpm.onlyBuiltDependencies: ["better-sqlite3"]` to allow native module build scripts.
+**Important**:
+- `package.json` must include `pnpm.onlyBuiltDependencies: ["better-sqlite3"]` to allow native module build scripts.
+- The `--env-file=../../.env` in `packages/node/package.json` start script is for local dev only. On the server, systemd provides env vars via `EnvironmentFile=/opt/telagent/.env.cloud`, so the flag must be removed.
+- `@telagent/protocol` and `@telagent/sdk` must be built before starting, as their `dist/` directories are not committed to git.
 
 ### 5. Rebuild ClawNet native modules (if Node.js was upgraded)
 
@@ -96,9 +98,55 @@ ssh -t -i "$SSH_KEY" root@<IP> "systemctl restart telagent-node && sleep 5 && sy
 ### 7. Health check
 
 ```bash
-curl -fsS https://<domain>/api/v1/identities/self | jq -r '.data.did'
-curl -fsS https://<domain>/api/v1/federation/node-info | jq -r '.data.domain'
+# Node info (from server locally)
+ssh -i "$SSH_KEY" root@<IP> "curl -s http://127.0.0.1:9529/api/v1/node/"
+
+# Or via HTTPS (through Caddy)
+curl -fsS https://<domain>/api/v1/node/ | jq '.data'
+
+# Check DID in startup logs
+ssh -i "$SSH_KEY" root@<IP> "journalctl -u telagent-node --no-pager -n 15 | grep Identity"
 ```
+
+### 8. Update localdev deployment docs
+
+After each node is deployed successfully, update the corresponding localdev doc with the latest deployment info:
+
+| Node | File |
+|------|------|
+| alex | `localdev/node-a-alex.md` |
+| bess | `localdev/node-b-bess.md` |
+
+Collect the following info from the server and write to the doc's **部署信息** section:
+
+```bash
+# Get deployed commit
+ssh -i "$SSH_KEY" root@<IP> "git -C /opt/telagent log --oneline -1"
+
+# Get service status
+ssh -i "$SSH_KEY" root@<IP> "systemctl is-active telagent-node"
+
+# Get DID from logs
+ssh -i "$SSH_KEY" root@<IP> "journalctl -u telagent-node --no-pager -n 15 | grep Identity"
+
+# Get node info
+ssh -i "$SSH_KEY" root@<IP> "curl -s http://127.0.0.1:9529/api/v1/node/"
+```
+
+Each localdev doc should contain a **部署信息** table with:
+
+```markdown
+## 部署信息
+
+| 项目 | 值 |
+|------|-----|
+| 部署方式 | `git clone --depth 1` |
+| Git Remote | `https://github.com/claw-network/telagent.git` |
+| 最新部署 commit | `<commit-hash>` (main) |
+| 部署时间 | <timestamp> |
+```
+
+And a **部署步骤** code block recording the exact commands used, plus a **注意事项** section with caveats (env-file patch, workspace build, DB schema migration).
 
 ## Key Configuration Constraints
 
@@ -194,6 +242,26 @@ ClawNet requires `CLAW_PASSPHRASE` in `/opt/clawnet/node.env`.
 
 ### Corepack interactive prompt blocks SSH
 Set `COREPACK_ENABLE_DOWNLOAD_PROMPT=0` before the command.
+
+### `SqliteError: no such column: last_message_at_ms` (or similar schema error)
+New code adds columns to SQLite tables, but `CREATE TABLE IF NOT EXISTS` skips existing tables. Fix: backup and remove old DB to let new code recreate it.
+```bash
+mv /var/lib/telagent/data/mailbox.sqlite /var/lib/telagent/data/mailbox.sqlite.bak
+rm -f /var/lib/telagent/data/mailbox.sqlite-shm /var/lib/telagent/data/mailbox.sqlite-wal
+systemctl restart telagent-node
+```
+
+### `ERR_MODULE_NOT_FOUND` for `@telagent/protocol` or `@telagent/sdk`
+Workspace packages need to be compiled. Their `dist/` is gitignored.
+```bash
+cd /opt/telagent && pnpm --filter @telagent/protocol build && pnpm --filter @telagent/sdk build
+```
+
+### `node: ../../.env: not found` (exit code 9)
+The start script has `--env-file=../../.env` for local dev. Remove it on the server:
+```bash
+sed -i 's|tsx --env-file=../../.env src/daemon.ts|tsx src/daemon.ts|' /opt/telagent/packages/node/package.json
+```
 
 ## Log Viewing
 
