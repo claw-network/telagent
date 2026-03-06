@@ -379,7 +379,6 @@ async function startE2EServer(startMs?: number): Promise<{
     config: {
       host: '127.0.0.1',
       port: 0,
-      transportMode: 'p2p-first' as const,
     },
     identityService: new FakeIdentityService() as unknown as RuntimeContext['identityService'],
     groupService: groupService as unknown as RuntimeContext['groupService'],

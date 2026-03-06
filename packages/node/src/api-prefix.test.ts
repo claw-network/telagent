@@ -290,7 +290,7 @@ class FakeNonceManager {}
 
 async function startTestServer() {
   const context: RuntimeContext = {
-    config: { host: '127.0.0.1', port: 0, transportMode: 'p2p-first' as const },
+    config: { host: '127.0.0.1', port: 0 },
     identityService: new FakeIdentityService() as unknown as RuntimeContext['identityService'],
     groupService: new FakeGroupService() as unknown as RuntimeContext['groupService'],
     gasService: new FakeGasService() as unknown as RuntimeContext['gasService'],

@@ -206,7 +206,6 @@ export class TelagentNode {
       config: {
         host: this.config.host,
         port: this.config.port,
-        transportMode: this.config.transportMode,
       },
       identityService: this.identityService,
       groupService: this.groupService,
@@ -232,7 +231,7 @@ export class TelagentNode {
     this.clawnetTransportService.startListening({
       onEnvelope: (raw, sourceDid) => this.messageService!.ingestFederatedEnvelope(raw, sourceDid),
     });
-    logger.info('[telagent] P2P transport listener started (mode=%s)', this.config.transportMode);
+    logger.info('[telagent] P2P transport listener started');
     this.monitoringService.recordMailboxMaintenance(await this.messageService.runMaintenance());
     this.startMailboxCleaner();
 

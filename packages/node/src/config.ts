@@ -6,8 +6,6 @@ import {
 } from './services/owner-permission-service.js';
 import { resolveTelagentPaths, type TelagentStoragePaths } from './storage/telagent-paths.js';
 
-export type TransportMode = 'p2p-first' | 'p2p-only';
-
 export interface MonitoringConfig {
   errorRateWarnRatio: number;
   errorRateCriticalRatio: number;
@@ -62,7 +60,6 @@ export interface AppConfig {
   chain: ChainConfig;
   clawnet: ClawNetConfig;
   owner: OwnerConfig;
-  transportMode: TransportMode;
   monitoring: MonitoringConfig;
 }
 
@@ -153,8 +150,6 @@ export function loadConfigFromEnv(): AppConfig {
     };
   }
 
-  const transportMode = parseTransportMode(process.env.TELAGENT_TRANSPORT_MODE);
-
   return {
     host,
     port,
@@ -164,7 +159,6 @@ export function loadConfigFromEnv(): AppConfig {
     chain,
     clawnet,
     owner,
-    transportMode,
     monitoring: {
       errorRateWarnRatio: Number(process.env.TELAGENT_MONITOR_ERROR_RATE_WARN_RATIO || 0.02),
       errorRateCriticalRatio: Number(process.env.TELAGENT_MONITOR_ERROR_RATE_CRITICAL_RATIO || 0.05),
@@ -201,10 +195,4 @@ function parsePositiveInteger(raw: string | undefined, fallback: number, fieldNa
   return value;
 }
 
-function parseTransportMode(raw: string | undefined): TransportMode {
-  const normalized = (raw || 'p2p-first').trim().toLowerCase();
-  if (normalized === 'p2p-first' || normalized === 'p2p-only') {
-    return normalized;
-  }
-  throw new Error('TELAGENT_TRANSPORT_MODE must be p2p-first or p2p-only');
-}
+

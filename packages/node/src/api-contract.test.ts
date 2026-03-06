@@ -672,7 +672,7 @@ async function startTestServer() {
   const identityService = new FakeIdentityService();
   const messageService = new FakeMessageService(identityService);
   const context: RuntimeContext = {
-    config: { host: '127.0.0.1', port: 0, transportMode: 'p2p-first' },
+    config: { host: '127.0.0.1', port: 0 },
     identityService: identityService as unknown as RuntimeContext['identityService'],
     groupService: new FakeGroupService() as unknown as RuntimeContext['groupService'],
     gasService: new FakeGasService() as unknown as RuntimeContext['gasService'],

@@ -320,7 +320,6 @@ async function runApiSnapshotCheck(serviceSnapshot: Awaited<ReturnType<typeof ru
     config: {
       host: '127.0.0.1',
       port: 0,
-      transportMode: 'p2p-first' as const,
     },
     identityService: new FakeIdentityService() as unknown as RuntimeContext['identityService'],
     groupService: new FakeGroupService() as unknown as RuntimeContext['groupService'],
