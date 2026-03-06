@@ -6,7 +6,7 @@ export type ConnectionStatus = "disconnected" | "connecting" | "connected" | "er
 
 interface ConnectInput {
   nodeUrl: string
-  accessToken?: string
+  accessToken: string
 }
 
 interface ConnectionStore {
@@ -60,7 +60,7 @@ export const useConnectionStore = create<ConnectionStore>()(
       sdk: null,
       connect: async (input) => {
         const nodeUrl = normalizeNodeUrl(input.nodeUrl)
-        const accessToken = input.accessToken?.trim() ?? ""
+        const accessToken = input.accessToken.trim()
 
         set({ status: "connecting", error: undefined })
         try {

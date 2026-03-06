@@ -1,30 +1,50 @@
 import type { ReactNode } from "react"
+import { XIcon } from "lucide-react"
 
-import { ConversationList } from "@/components/chat/ConversationList"
-import { MemberPresencePanel } from "@/components/layout/MemberPresencePanel"
-import { UnlockDialog } from "@/components/session/UnlockDialog"
+import { ConversationDetailPanel } from "@/components/chat/ConversationDetailPanel"
 import { ReconnectBanner } from "@/components/layout/ReconnectBanner"
 import { ServerRail } from "@/components/layout/ServerRail"
+import { ConversationList } from "@/components/chat/ConversationList"
+import { StatusBar } from "@/components/layout/StatusBar"
+import { UnlockDialog } from "@/components/session/UnlockDialog"
+import { Button } from "@/components/ui/button"
+import { useUIStore } from "@/stores/ui"
 
 interface DesktopLayoutProps {
   children: ReactNode
 }
 
 export function DesktopLayout({ children }: DesktopLayoutProps) {
-  return (
-    <div className="min-h-svh bg-[#0f1012] p-5 text-[#dbdee1]">
-      <div className="mx-auto flex h-[calc(100svh-2.5rem)] max-w-[1500px] overflow-hidden rounded-2xl border border-white/8 shadow-[0_32px_80px_rgba(0,0,0,0.55)]">
-        <ServerRail />
-        <div className="flex w-[280px] flex-col border-r border-black/30 bg-[#2b2d31]">
-          <ConversationList />
-        </div>
+  const detailPanelOpen = useUIStore((state) => state.detailPanelOpen)
+  const setDetailPanelOpen = useUIStore((state) => state.setDetailPanelOpen)
 
-        <div className="flex min-w-0 flex-1 flex-col bg-[#313338]">
-          <ReconnectBanner />
-          <main className="min-h-0 flex-1">{children}</main>
-        </div>
-        <MemberPresencePanel />
+  return (
+    <div className="flex h-svh flex-col">
+      <ReconnectBanner />
+
+      <div className="flex min-h-0 flex-1">
+        <ServerRail />
+
+        <aside className="flex w-[240px] min-w-[200px] flex-col bg-[#2b2d31]">
+          <ConversationList />
+        </aside>
+
+        <main className="min-w-0 flex-1">{children}</main>
+
+        {detailPanelOpen ? (
+          <aside className="hidden w-[320px] min-w-[280px] max-w-[460px] resize-x overflow-auto border-l bg-card/35 p-4 lg:block">
+            <div className="mb-3 flex items-center justify-between">
+              <h2 className="text-sm font-semibold">Details</h2>
+              <Button variant="ghost" size="icon-sm" onClick={() => setDetailPanelOpen(false)}>
+                <XIcon className="size-4" />
+              </Button>
+            </div>
+            <ConversationDetailPanel />
+          </aside>
+        ) : null}
       </div>
+
+      <StatusBar />
       <UnlockDialog />
     </div>
   )

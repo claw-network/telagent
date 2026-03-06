@@ -9,12 +9,12 @@
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "node --test dist/*.test.js dist/**/*.test.js",
     "pretest": "pnpm build",
-    "start": "tsx src/daemon.ts"
+    "start": "tsx --env-file=../../.env src/daemon.ts"
   },
   "dependencies": {
     "@claw-network/core": "^0.2.2",
     "@claw-network/node": "^0.2.2",
-    "@claw-network/sdk": "^0.2.2",
+    "@claw-network/sdk": "^0.3.0",
     "@telagent/protocol": "workspace:*",
     "better-sqlite3": "^12.2.0",
     "ethers": "^6.15.0",

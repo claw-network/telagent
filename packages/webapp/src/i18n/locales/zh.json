@@ -10,14 +10,24 @@
   },
   "connect": {
     "title": "连接你的 TelAgent 节点",
-    "subtitle": "输入节点地址和可选访问令牌，即可观察 Agent 的聊天活动。",
+    "subtitle": "连接本地或远程 TelAgent 节点，观察 Agent 的聊天活动。",
     "nodeUrl": "节点地址",
-    "token": "访问令牌（可选）",
+    "token": "访问令牌",
     "submit": "连接",
     "connecting": "连接中...",
     "hint": "应用会先检查 /api/v1/node，再加载 /api/v1/identities/self。",
     "invalidUrl": "请输入合法的 http(s) URL。",
-    "failed": "无法连接到该节点"
+    "failed": "无法连接到该节点",
+    "local": {
+      "tab": "本地",
+      "description": "连接本机运行的 TelAgent 节点（127.0.0.1:8787）。",
+      "detecting": "正在检测本地节点...",
+      "found": "已检测到本地节点",
+      "notFound": "未检测到本地节点"
+    },
+    "remote": {
+      "tab": "远程"
+    }
   },
   "chat": {
     "title": "会话",
