@@ -3,9 +3,17 @@
 ## 任务背景
 
 TelAgent 当前通过 HTTP Federation 在节点间传递消息。现在要迁移到 ClawNet P2P 层。
-ClawNet 团队已实现完整的 messaging API（Phase 1-3，307 tests passing），SDK `@claw-network/sdk@0.3.0` 已发布并安装到 `packages/node`。
+ClawNet 团队已实现完整的 messaging API（Phase 1-5，217 node tests + 101 protocol tests passing），SDK `@claw-network/sdk@0.3.0` 已发布并安装到 `packages/node`。
 
-**核心设计文档**: `docs/design/p2p-messaging-rfc.md`（v0.5），包含完整的 API 规范、SDK 接口、适配代码模板（§4 + §C.6）。
+**核心设计文档**: `docs/design/p2p-messaging-rfc.md`（v0.7），包含完整的 API 规范、SDK 接口、适配代码模板（§4 + §C.6）。
+
+### ClawNet 已实现的能力概览
+
+- **Phase 1**: 基础 send/inbox/ack、DID→PeerId announce、离线 outbox、TTL 清理
+- **Phase 2**: WebSocket 订阅、Circuit Relay NAT 穿透、多播（100 DID）、速率限制 600/min/DID、投递回执
+- **Phase 3**: 幂等键去重、传输层 E2E 加密(X25519+AES-256-GCM)、gzip 压缩、4 级优先级、WS 断线重连补发(sinceSeq)
+- **Phase 4**: DID resolve 介绍协议（首次消息无需等 announce）、DID 映射 TTL 30min 刷新、SQLite 持久化映射/速率限制、并行 outbox flush
+- **Phase 5**: FlatBuffers 二进制编码（P2P 层内部优化，**对 SDK/REST API 透明，不影响 TelAgent 适配**）
 
 ---
 
@@ -64,7 +72,7 @@ client.messaging.peers(): Promise<DidPeerMapResponse>
 
 // 关键类型：
 interface SendMessageParams {
-  targetDid: string; topic: string; payload: string;
+  targetDid: string; topic: string; payload: string;  // payload 是 UTF-8 字符串（非 base64）
   ttlSec?: number; priority?: number; compress?: boolean;
   encryptForKeyHex?: string; idempotencyKey?: string;
 }
@@ -73,6 +81,14 @@ interface InboxMessage { messageId: string; sourceDid: string; topic: string; pa
 ```
 
 WebSocket 端点: `WS /api/v1/messaging/subscribe?topic=telagent/envelope&sinceSeq=N`
+
+WS 帧格式:
+```jsonc
+{ "type": "connected", "topicFilter": "telagent/envelope", "seq": 42 }
+{ "type": "message", "data": { "messageId": "...", "sourceDid": "...", "topic": "...", "payload": "...", "receivedAtMs": ..., "priority": 1, "seq": 43 } }
+{ "type": "receipt", "data": { "type": "delivered", "messageId": "...", "recipientDid": "...", "deliveredAtMs": ... } }
+{ "type": "replay_done", "lastSeq": 45 }
+```
 
 ---
 
@@ -90,13 +106,14 @@ WebSocket 端点: `WS /api/v1/messaging/subscribe?topic=telagent/envelope&sinceS
 
 ### Task 3: 实现 ClawNetTransportService
 - 新建: `packages/node/src/services/clawnet-transport-service.ts`
-- 参考 RFC §C.6 的完整代码模板
+- **务必参考 RFC §C.6 的完整代码模板**，其中包含完整的 WS 订阅、断线重连、sinceSeq、replay_done 处理逻辑
 - 核心功能:
-  - `sendEnvelope(targetDid, envelope)` — 调用 `client.messaging.send()`，用 `envelopeId` 作 `idempotencyKey`
+  - `sendEnvelope(targetDid, envelope)` — 调用 `client.messaging.send()`，用 `envelopeId` 作 `idempotencyKey`，payload 为 `JSON.stringify(envelope)`（UTF-8 字符串，非 base64）
   - `sendEnvelopeMulticast(targetDids, envelope)` — 调用 `client.messaging.sendBatch()`
   - `startListening(onEnvelope)` — WS 订阅 `telagent/envelope`，带 `sinceSeq` 断线重连
   - `stopListening()` — 关闭 WS
 - 构造依赖: ClawNetGatewayService（取 `.client`）、ClawNet baseUrl/apiKey
+- 注意: ClawNet P2P 层具有 DID resolve 能力（Phase 4），首次向未知节点发消息时会自动查询 DID→PeerId，TelAgent 无需额外处理
 
 ### Task 4: 服务注册 & 生命周期
 - 文件: `packages/node/src/app.ts`
@@ -133,3 +150,5 @@ WebSocket 端点: `WS /api/v1/messaging/subscribe?topic=telagent/envelope&sinceS
 4. **WS 重连** — 参考 RFC §C.6 代码模板的 `ws.on('close', () => setTimeout(...))` 模式
 5. **日志** — 用现有的 `logger`（`import { logger } from '../logger.js'`）
 6. **测试** — `federation-delivery-service.test.ts` 已有完整测试模式可参考
+7. **payload 格式** — SDK payload 是 UTF-8 字符串（`JSON.stringify(envelope)`），**不是 base64**。RFC §C.6 代码模板中的 base64 编码是旧版本写法，v0.7 已改为直接使用 UTF-8 字符串
+8. **FlatBuffers 对 TelAgent 透明** — Phase 5 的二进制编码仅影响 ClawNet 节点间 P2P stream，SDK/REST API 层面 payload 仍然是 UTF-8 字符串，TelAgent 无需关心
