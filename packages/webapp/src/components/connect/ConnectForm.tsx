@@ -208,7 +208,7 @@ export function ConnectForm() {
       </div>
 
       {/* Card */}
-      <Card className="w-full border-border/60 shadow-lg">
+      <Card className="w-full border-border/60 py-0 gap-0 shadow-lg">
         <CardContent className="p-0">
           <Tabs defaultValue="local">
             <TabsList className="h-auto w-full rounded-none rounded-t-[inherit] border-b bg-transparent p-0">
@@ -227,7 +227,8 @@ export function ConnectForm() {
             </TabsList>
 
             {/* ---- Local tab ---- */}
-            <TabsContent value="local" className="mt-0 px-6 pb-6">
+            <div className="grid [&>*]:col-start-1 [&>*]:row-start-1">
+            <TabsContent forceMount value="local" className="mt-0 px-6 pb-6 data-[state=inactive]:invisible">
               <form onSubmit={onLocalSubmit}>
                 <LocalNodeAvatar />
 
@@ -261,7 +262,7 @@ export function ConnectForm() {
             </TabsContent>
 
             {/* ---- Remote tab ---- */}
-            <TabsContent value="remote" className="mt-0 space-y-5 px-6 pt-6 pb-6">
+            <TabsContent forceMount value="remote" className="mt-0 space-y-5 px-6 pt-6 pb-6 data-[state=inactive]:invisible">
               <form className="space-y-4" onSubmit={onRemoteSubmit}>
                 <div>
                   <Label htmlFor="remote-url" className="mb-2 block text-[13px]">
@@ -302,6 +303,7 @@ export function ConnectForm() {
                 </Button>
               </form>
             </TabsContent>
+            </div>
           </Tabs>
         </CardContent>
       </Card>
