@@ -197,6 +197,14 @@ class FakeSessionManager {
 
 class FakeNonceManager {}
 
+class FakeClawNetTransportService {
+  async sendEnvelope() {
+    return { messageId: 'fake-msg-id', delivered: true };
+  }
+  startListening() {}
+  stopListening() {}
+}
+
 class FakeGroupService {
   private readonly groups = new Map<string, GroupRecord>();
   private readonly members = new Map<string, GroupMemberRecord[]>();
@@ -388,6 +396,7 @@ async function startE2EServer(startMs?: number): Promise<{
     monitoringService,
     keyLifecycleService: new FakeKeyLifecycleService() as unknown as RuntimeContext['keyLifecycleService'],
     clawnetGateway: new FakeClawNetGatewayService() as unknown as RuntimeContext['clawnetGateway'],
+    clawnetTransportService: new FakeClawNetTransportService() as unknown as RuntimeContext['clawnetTransportService'],
     sessionManager: new FakeSessionManager() as unknown as RuntimeContext['sessionManager'],
     nonceManager: new FakeNonceManager() as unknown as RuntimeContext['nonceManager'],
   };

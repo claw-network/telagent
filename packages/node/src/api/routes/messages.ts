@@ -27,15 +27,13 @@ export function messageRoutes(ctx: RuntimeContext): Router {
     try {
       const envelope = await ctx.messageService.send(parsed.data);
 
-      let p2pDelivered: boolean | undefined;
-      if (ctx.clawnetTransportService) {
-        try {
-          const result = await ctx.clawnetTransportService.sendEnvelope(parsed.data.targetDid, envelope);
-          p2pDelivered = result.delivered;
-        } catch (p2pError) {
-          console.warn('[messages] P2P delivery failed for %s: %s', envelope.envelopeId, (p2pError as Error).message);
-          p2pDelivered = false;
-        }
+      let p2pDelivered: boolean;
+      try {
+        const result = await ctx.clawnetTransportService.sendEnvelope(parsed.data.targetDid, envelope);
+        p2pDelivered = result.delivered;
+      } catch (p2pError) {
+        console.warn('[messages] P2P delivery failed for %s: %s', envelope.envelopeId, (p2pError as Error).message);
+        p2pDelivered = false;
       }
 
       created(

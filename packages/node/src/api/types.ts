@@ -26,7 +26,7 @@ export interface RuntimeContext {
   monitoringService: NodeMonitoringService;
   keyLifecycleService: KeyLifecycleService;
   clawnetGateway: ClawNetGatewayService;
-  clawnetTransportService?: ClawNetTransportService;
+  clawnetTransportService: ClawNetTransportService;
   sessionManager: SessionManager;
   nonceManager: NonceManager;
   ownerPermissionService?: OwnerPermissionService;

@@ -668,6 +668,14 @@ class FakeSessionManager {
 
 class FakeNonceManager {}
 
+class FakeClawNetTransportService {
+  async sendEnvelope() {
+    return { messageId: 'fake-msg-id', delivered: true };
+  }
+  startListening() {}
+  stopListening() {}
+}
+
 async function startTestServer() {
   const identityService = new FakeIdentityService();
   const messageService = new FakeMessageService(identityService);
@@ -681,6 +689,7 @@ async function startTestServer() {
     monitoringService: new FakeMonitoringService() as unknown as RuntimeContext['monitoringService'],
     keyLifecycleService: new FakeKeyLifecycleService() as unknown as RuntimeContext['keyLifecycleService'],
     clawnetGateway: new FakeClawNetGatewayService() as unknown as RuntimeContext['clawnetGateway'],
+    clawnetTransportService: new FakeClawNetTransportService() as unknown as RuntimeContext['clawnetTransportService'],
     sessionManager: new FakeSessionManager() as unknown as RuntimeContext['sessionManager'],
     nonceManager: new FakeNonceManager() as unknown as RuntimeContext['nonceManager'],
   };
