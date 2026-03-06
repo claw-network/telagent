@@ -69,7 +69,8 @@ export interface SendMessageInput {
   senderDid: AgentDID;
   conversationId: string;
   conversationType: 'direct' | 'group';
-  targetDomain: string;
+  targetDomain?: string;
+  targetDid: AgentDID;
   mailboxKeyId: string;
   sealedHeader: string;
   ciphertext: string;

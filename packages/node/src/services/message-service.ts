@@ -23,7 +23,8 @@ export interface SendMessageInput {
   senderDid: string;
   conversationId: string;
   conversationType: 'direct' | 'group';
-  targetDomain: string;
+  targetDomain?: string;
+  targetDid: string;
   mailboxKeyId: string;
   sealedHeader: string;
   ciphertext: string;
@@ -38,7 +39,8 @@ export interface IngestEnvelopeInput {
   conversationId: string;
   conversationType: 'direct' | 'group';
   routeHint: {
-    targetDomain: string;
+    targetDomain?: string;
+    targetDid: string;
     mailboxKeyId: string;
   };
   sealedHeader: string;
@@ -283,6 +285,7 @@ export class MessageService {
       conversationType: input.conversationType,
       routeHint: {
         targetDomain: input.targetDomain,
+        targetDid: input.targetDid,
         mailboxKeyId: input.mailboxKeyId,
       },
       sealedHeader: input.sealedHeader,
@@ -305,11 +308,14 @@ export class MessageService {
     return envelope;
   }
 
-  async ingestFederatedEnvelope(raw: Record<string, unknown>): Promise<Envelope> {
+  async ingestFederatedEnvelope(raw: Record<string, unknown>, sourceDid?: string): Promise<Envelope> {
     const nowMs = this.clock.now();
     await this.runMaintenance(nowMs);
 
     const envelope = this.normalizeEnvelopeForIngestion(raw);
+    if (sourceDid) {
+      console.info('[message-service] Ingesting envelope %s from P2P sourceDid=%s', envelope.envelopeId, sourceDid);
+    }
     const signature = this.buildEnvelopeIdempotencySignature(envelope);
 
     const existing = await this.getEnvelopeById(envelope.envelopeId);
@@ -712,7 +718,8 @@ export class MessageService {
       senderDid: input.senderDid,
       conversationId: input.conversationId,
       conversationType: input.conversationType,
-      targetDomain: input.targetDomain,
+      targetDomain: input.targetDomain ?? null,
+      targetDid: input.targetDid,
       mailboxKeyId: input.mailboxKeyId,
       sealedHeader: input.sealedHeader,
       ciphertext: input.ciphertext,
@@ -729,7 +736,8 @@ export class MessageService {
       conversationId: envelope.conversationId,
       conversationType: envelope.conversationType,
       routeHint: {
-        targetDomain: envelope.routeHint.targetDomain,
+        targetDomain: envelope.routeHint.targetDomain ?? null,
+        targetDid: envelope.routeHint.targetDid,
         mailboxKeyId: envelope.routeHint.mailboxKeyId,
       },
       sealedHeader: envelope.sealedHeader,
@@ -749,7 +757,8 @@ export class MessageService {
     const conversationId = this.requiredString(raw.conversationId, 'conversationId');
     const conversationType = this.requiredConversationType(raw.conversationType);
     const routeHint = this.requiredRecord(raw.routeHint, 'routeHint');
-    const targetDomain = this.requiredString(routeHint.targetDomain, 'routeHint.targetDomain');
+    const targetDomain = this.optionalString(routeHint.targetDomain);
+    const targetDid = this.requiredString(routeHint.targetDid, 'routeHint.targetDid');
     const mailboxKeyId = this.requiredString(routeHint.mailboxKeyId, 'routeHint.mailboxKeyId');
     const sealedHeader = this.requiredString(raw.sealedHeader, 'sealedHeader');
     const seq = this.requiredBigInt(raw.seq, 'seq');
@@ -767,6 +776,7 @@ export class MessageService {
       conversationType,
       routeHint: {
         targetDomain,
+        targetDid,
         mailboxKeyId,
       },
       sealedHeader,

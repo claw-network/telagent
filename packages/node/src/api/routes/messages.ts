@@ -19,16 +19,20 @@ export function messageRoutes(ctx: RuntimeContext): Router {
     try {
       const envelope = await ctx.messageService.send(parsed.data);
 
+      let p2pDelivered: boolean | undefined;
       if (ctx.clawnetTransportService && ctx.config.transportMode !== 'http-only') {
-        const { targetDid } = parsed.data;
-        if (targetDid) {
-          await ctx.clawnetTransportService.sendEnvelope(targetDid, envelope);
+        try {
+          const result = await ctx.clawnetTransportService.sendEnvelope(parsed.data.targetDid, envelope);
+          p2pDelivered = result.delivered;
+        } catch (p2pError) {
+          console.warn('[messages] P2P delivery failed for %s: %s', envelope.envelopeId, (p2pError as Error).message);
+          p2pDelivered = false;
         }
       }
 
       created(
         res,
-        { envelope },
+        { envelope, p2pDelivered },
         { self: `/api/v1/messages/pull?conversation_id=${encodeURIComponent(envelope.conversationId)}` },
       );
     } catch (error) {

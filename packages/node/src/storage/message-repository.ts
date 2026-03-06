@@ -15,7 +15,8 @@ CREATE TABLE IF NOT EXISTS mailbox_envelopes (
   envelope_id TEXT PRIMARY KEY,
   conversation_id TEXT NOT NULL,
   conversation_type TEXT NOT NULL,
-  target_domain TEXT NOT NULL,
+  target_domain TEXT,
+  target_did TEXT NOT NULL,
   mailbox_key_id TEXT NOT NULL,
   sealed_header TEXT NOT NULL,
   seq TEXT NOT NULL,
@@ -72,7 +73,8 @@ interface MailboxEnvelopeRow {
   envelopeId: string;
   conversationId: string;
   conversationType: 'direct' | 'group';
-  targetDomain: string;
+  targetDomain: string | null;
+  targetDid: string;
   mailboxKeyId: string;
   sealedHeader: string;
   seq: string;
@@ -137,16 +139,17 @@ export class MessageRepository implements MailboxStore {
     this.db
       .prepare(
         `INSERT INTO mailbox_envelopes (
-          envelope_id, conversation_id, conversation_type, target_domain, mailbox_key_id,
+          envelope_id, conversation_id, conversation_type, target_domain, target_did, mailbox_key_id,
           sealed_header, seq, epoch, ciphertext, content_type, attachment_manifest_hash,
           sent_at_ms, ttl_sec, provisional, idempotency_signature, expires_at_ms
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       )
       .run(
         envelope.envelopeId,
         envelope.conversationId,
         envelope.conversationType,
-        envelope.routeHint.targetDomain,
+        envelope.routeHint.targetDomain ?? null,
+        envelope.routeHint.targetDid,
         envelope.routeHint.mailboxKeyId,
         envelope.sealedHeader,
         envelope.seq.toString(),
@@ -170,6 +173,7 @@ export class MessageRepository implements MailboxStore {
           conversation_id AS conversationId,
           conversation_type AS conversationType,
           target_domain AS targetDomain,
+          target_did AS targetDid,
           mailbox_key_id AS mailboxKeyId,
           sealed_header AS sealedHeader,
           seq,
@@ -279,6 +283,7 @@ export class MessageRepository implements MailboxStore {
                 conversation_id AS conversationId,
                 conversation_type AS conversationType,
                 target_domain AS targetDomain,
+          target_did AS targetDid,
                 mailbox_key_id AS mailboxKeyId,
                 sealed_header AS sealedHeader,
                 seq,
@@ -306,6 +311,7 @@ export class MessageRepository implements MailboxStore {
               conversation_id AS conversationId,
               conversation_type AS conversationType,
               target_domain AS targetDomain,
+          target_did AS targetDid,
               mailbox_key_id AS mailboxKeyId,
               sealed_header AS sealedHeader,
               seq,
@@ -334,6 +340,7 @@ export class MessageRepository implements MailboxStore {
                 conversation_id AS conversationId,
                 conversation_type AS conversationType,
                 target_domain AS targetDomain,
+          target_did AS targetDid,
                 mailbox_key_id AS mailboxKeyId,
                 sealed_header AS sealedHeader,
                 seq,
@@ -388,6 +395,7 @@ export class MessageRepository implements MailboxStore {
               conversation_id AS conversationId,
               conversation_type AS conversationType,
               target_domain AS targetDomain,
+          target_did AS targetDid,
               mailbox_key_id AS mailboxKeyId,
               sealed_header AS sealedHeader,
               seq,
@@ -487,6 +495,7 @@ export class MessageRepository implements MailboxStore {
           conversation_id AS conversationId,
           conversation_type AS conversationType,
           target_domain AS targetDomain,
+          target_did AS targetDid,
           mailbox_key_id AS mailboxKeyId,
           sealed_header AS sealedHeader,
           seq,
@@ -624,7 +633,8 @@ export class MessageRepository implements MailboxStore {
       conversationId: row.conversationId,
       conversationType: row.conversationType,
       routeHint: {
-        targetDomain: row.targetDomain,
+        targetDomain: row.targetDomain ?? undefined,
+        targetDid: row.targetDid,
         mailboxKeyId: row.mailboxKeyId,
       },
       sealedHeader: row.sealedHeader,

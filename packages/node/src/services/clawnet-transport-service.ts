@@ -3,8 +3,30 @@ import type { ClawNetGatewayService } from '../clawnet/gateway-service.js';
 
 const logger = console;
 
-const TOPIC = 'telagent/envelope';
+const TOPIC_ENVELOPE = 'telagent/envelope';
+const TOPIC_RECEIPT = 'telagent/receipt';
+const TOPIC_GROUP_SYNC = 'telagent/group-sync';
+const TOPIC_FILTER = 'telagent/*';
 const RECONNECT_DELAY_MS = 3_000;
+
+export interface DeliveryReceipt {
+  envelopeId: string;
+  status: 'delivered' | 'read';
+  timestampMs: number;
+}
+
+export interface GroupSyncPayload {
+  groupId: string;
+  epoch: number;
+  commitHash: string;
+  memberDids: string[];
+}
+
+export type TopicCallbacks = {
+  onEnvelope?: (raw: Record<string, unknown>, sourceDid: string) => Promise<unknown>;
+  onReceipt?: (receipt: DeliveryReceipt, sourceDid: string) => Promise<unknown>;
+  onGroupSync?: (payload: GroupSyncPayload, sourceDid: string) => Promise<unknown>;
+};
 
 export class ClawNetTransportService {
   private readonly baseUrl: string;
@@ -12,7 +34,7 @@ export class ClawNetTransportService {
   private ws?: WebSocket;
   private lastSeq = 0;
   private stopping = false;
-  private onEnvelopeCallback?: (raw: Record<string, unknown>) => Promise<unknown>;
+  private callbacks: TopicCallbacks = {};
 
   constructor(
     private readonly gateway: ClawNetGatewayService,
@@ -27,7 +49,7 @@ export class ClawNetTransportService {
   async sendEnvelope(targetDid: string, envelope: Envelope): Promise<{ messageId: string; delivered: boolean }> {
     const result = await this.gateway.client.messaging.send({
       targetDid,
-      topic: TOPIC,
+      topic: TOPIC_ENVELOPE,
       payload: JSON.stringify(envelope),
       ttlSec: envelope.ttlSec,
       priority: envelope.contentType.startsWith('control/') ? 3 : 1,
@@ -46,7 +68,7 @@ export class ClawNetTransportService {
   ): Promise<void> {
     await this.gateway.client.messaging.sendBatch({
       targetDids,
-      topic: TOPIC,
+      topic: TOPIC_ENVELOPE,
       payload: JSON.stringify(envelope),
       ttlSec: envelope.ttlSec,
       priority: envelope.contentType.startsWith('control/') ? 3 : 1,
@@ -57,12 +79,36 @@ export class ClawNetTransportService {
 
   // ── inbound (WebSocket subscribe) ─────────────────────────
 
-  startListening(
-    onEnvelope: (raw: Record<string, unknown>) => Promise<unknown>,
-  ): void {
+  startListening(callbacks: TopicCallbacks): void {
     this.stopping = false;
-    this.onEnvelopeCallback = onEnvelope;
+    this.callbacks = callbacks;
     this.connect();
+  }
+
+  // ── additional outbound topics ────────────────────────────
+
+  async sendReceipt(targetDid: string, receipt: DeliveryReceipt): Promise<void> {
+    await this.gateway.client.messaging.send({
+      targetDid,
+      topic: TOPIC_RECEIPT,
+      payload: JSON.stringify(receipt),
+      ttlSec: 86_400,
+      priority: 1,
+      compress: false,
+      idempotencyKey: `receipt:${receipt.envelopeId}:${receipt.status}`,
+    });
+  }
+
+  async sendGroupSync(targetDids: string[], payload: GroupSyncPayload): Promise<void> {
+    await this.gateway.client.messaging.sendBatch({
+      targetDids,
+      topic: TOPIC_GROUP_SYNC,
+      payload: JSON.stringify(payload),
+      ttlSec: 86_400,
+      priority: 2,
+      compress: true,
+      idempotencyKey: `group-sync:${payload.groupId}:${payload.epoch}`,
+    });
   }
 
   stopListening(): void {
@@ -79,7 +125,7 @@ export class ClawNetTransportService {
     if (this.stopping) return;
 
     let wsUrl = this.baseUrl.replace(/^http/, 'ws')
-      + `/api/v1/messaging/subscribe?topic=${encodeURIComponent(TOPIC)}`;
+      + `/api/v1/messaging/subscribe?topic=${encodeURIComponent(TOPIC_FILTER)}`;
     if (this.apiKey) {
       wsUrl += `&apiKey=${encodeURIComponent(this.apiKey)}`;
     }
@@ -119,6 +165,7 @@ export class ClawNetTransportService {
         topicFilter?: string;
         data?: {
           sourceDid: string;
+          topic: string;
           payload: string;
           messageId: string;
           seq: number;
@@ -135,8 +182,7 @@ export class ClawNetTransportService {
 
         case 'message':
           if (frame.data) {
-            const envelope = JSON.parse(frame.data.payload) as Record<string, unknown>;
-            await this.onEnvelopeCallback?.(envelope);
+            await this.routeMessage(frame.data);
             if (frame.data.seq > this.lastSeq) {
               this.lastSeq = frame.data.seq;
             }
@@ -157,6 +203,23 @@ export class ClawNetTransportService {
       }
     } catch (err) {
       logger.error('[p2p-transport] Failed to process WS frame: %s', (err as Error).message);
+    }
+  }
+
+  private async routeMessage(data: { sourceDid: string; topic: string; payload: string }): Promise<void> {
+    const parsed = JSON.parse(data.payload) as Record<string, unknown>;
+    switch (data.topic) {
+      case TOPIC_ENVELOPE:
+        await this.callbacks.onEnvelope?.(parsed, data.sourceDid);
+        break;
+      case TOPIC_RECEIPT:
+        await this.callbacks.onReceipt?.(parsed as unknown as DeliveryReceipt, data.sourceDid);
+        break;
+      case TOPIC_GROUP_SYNC:
+        await this.callbacks.onGroupSync?.(parsed as unknown as GroupSyncPayload, data.sourceDid);
+        break;
+      default:
+        logger.warn('[p2p-transport] Unknown topic: %s', data.topic);
     }
   }
 }

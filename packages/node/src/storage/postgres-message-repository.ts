@@ -21,7 +21,8 @@ interface MailboxEnvelopeRow {
   envelope_id: string;
   conversation_id: string;
   conversation_type: 'direct' | 'group';
-  target_domain: string;
+  target_domain: string | null;
+  target_did: string;
   mailbox_key_id: string;
   sealed_header: string;
   seq: string;
@@ -76,7 +77,8 @@ export class PostgresMessageRepository implements MailboxStore {
         envelope_id TEXT PRIMARY KEY,
         conversation_id TEXT NOT NULL,
         conversation_type TEXT NOT NULL,
-        target_domain TEXT NOT NULL,
+        target_domain TEXT,
+        target_did TEXT NOT NULL,
         mailbox_key_id TEXT NOT NULL,
         sealed_header TEXT NOT NULL,
         seq BIGINT NOT NULL,
@@ -183,15 +185,16 @@ export class PostgresMessageRepository implements MailboxStore {
 
     await this.pool.query(
       `INSERT INTO ${this.table('mailbox_envelopes')} (
-        envelope_id, conversation_id, conversation_type, target_domain, mailbox_key_id,
+        envelope_id, conversation_id, conversation_type, target_domain, target_did, mailbox_key_id,
         sealed_header, seq, epoch, ciphertext, content_type, attachment_manifest_hash,
         sent_at_ms, ttl_sec, provisional, idempotency_signature, expires_at_ms
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)`,
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)`,
       [
         envelope.envelopeId,
         envelope.conversationId,
         envelope.conversationType,
-        envelope.routeHint.targetDomain,
+        envelope.routeHint.targetDomain ?? null,
+        envelope.routeHint.targetDid,
         envelope.routeHint.mailboxKeyId,
         envelope.sealedHeader,
         envelope.seq.toString(),
@@ -215,6 +218,7 @@ export class PostgresMessageRepository implements MailboxStore {
          conversation_id,
          conversation_type,
          target_domain,
+         target_did,
          mailbox_key_id,
          sealed_header,
          seq::text AS seq,
@@ -319,6 +323,7 @@ export class PostgresMessageRepository implements MailboxStore {
              conversation_id,
              conversation_type,
              target_domain,
+         target_did,
              mailbox_key_id,
              sealed_header,
              seq::text AS seq,
@@ -342,6 +347,7 @@ export class PostgresMessageRepository implements MailboxStore {
              conversation_id,
              conversation_type,
              target_domain,
+         target_did,
              mailbox_key_id,
              sealed_header,
              seq::text AS seq,
@@ -366,6 +372,7 @@ export class PostgresMessageRepository implements MailboxStore {
              conversation_id,
              conversation_type,
              target_domain,
+         target_did,
              mailbox_key_id,
              sealed_header,
              seq::text AS seq,
@@ -395,6 +402,7 @@ export class PostgresMessageRepository implements MailboxStore {
              conversation_id,
              conversation_type,
              target_domain,
+         target_did,
              mailbox_key_id,
              sealed_header,
              seq::text AS seq,
@@ -487,6 +495,7 @@ export class PostgresMessageRepository implements MailboxStore {
          conversation_id,
          conversation_type,
          target_domain,
+         target_did,
          mailbox_key_id,
          sealed_header,
          seq::text AS seq,
@@ -620,7 +629,8 @@ export class PostgresMessageRepository implements MailboxStore {
       conversationId: row.conversation_id,
       conversationType: row.conversation_type,
       routeHint: {
-        targetDomain: row.target_domain,
+        targetDomain: row.target_domain ?? undefined,
+        targetDid: row.target_did,
         mailboxKeyId: row.mailbox_key_id,
       },
       sealedHeader: row.sealed_header,

@@ -232,7 +232,8 @@ class FakeMessageService {
     senderDid: string;
     conversationId: string;
     conversationType: 'direct' | 'group';
-    targetDomain: string;
+    targetDomain?: string;
+    targetDid: string;
     mailboxKeyId: string;
     sealedHeader: string;
     ciphertext: string;
@@ -267,6 +268,7 @@ class FakeMessageService {
       conversationType: input.conversationType,
       routeHint: {
         targetDomain: input.targetDomain,
+        targetDid: input.targetDid,
         mailboxKeyId: input.mailboxKeyId,
       },
       sealedHeader: input.sealedHeader,
@@ -300,7 +302,8 @@ class FakeMessageService {
       conversationId: String(raw.conversationId ?? ''),
       conversationType,
       routeHint: {
-        targetDomain: String(routeHint.targetDomain ?? ''),
+        targetDomain: routeHint.targetDomain ? String(routeHint.targetDomain) : undefined,
+        targetDid: String(routeHint.targetDid ?? ''),
         mailboxKeyId: String(routeHint.mailboxKeyId ?? ''),
       },
       sealedHeader: String(raw.sealedHeader ?? ''),
@@ -710,6 +713,7 @@ test('created response returns data envelope and Location header', async (t) => 
       conversationId: 'group:0x' + 'b'.repeat(64),
       conversationType: 'group',
       targetDomain: 'alpha.tel',
+      targetDid: 'did:claw:zBob',
       mailboxKeyId: 'mailbox-1',
       sealedHeader: '0x11',
       ciphertext: '0x22',
@@ -870,6 +874,7 @@ test('TA-P12-003 revoked DID event isolates session and rejects message send wit
       conversationId: 'direct:revoked-contract',
       conversationType: 'direct',
       targetDomain: 'alpha.tel',
+      targetDid: 'did:claw:zBob',
       mailboxKeyId: 'mailbox-1',
       sealedHeader: '0x11',
       ciphertext: '0x22',
@@ -909,6 +914,7 @@ test('TA-P12-003 revoked DID event isolates session and rejects message send wit
       conversationId: 'direct:revoked-contract',
       conversationType: 'direct',
       targetDomain: 'alpha.tel',
+      targetDid: 'did:claw:zBob',
       mailboxKeyId: 'mailbox-1',
       sealedHeader: '0x11',
       ciphertext: '0x33',

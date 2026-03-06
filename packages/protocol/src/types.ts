@@ -26,8 +26,8 @@ export type TelagentContentType =
 export type ContentType = BaseContentType | TelagentContentType;
 
 export interface RouteHint {
-  targetDomain: string;
-  targetDid?: string;
+  targetDomain?: string;
+  targetDid: string;
   mailboxKeyId: string;
 }
 

@@ -99,6 +99,7 @@ def main() -> None:
                                 "conversationType": "direct",
                                 "routeHint": {
                                     "targetDomain": "alpha.tel",
+                                    "targetDid": "did:claw:zTarget",
                                     "mailboxKeyId": "mailbox-1",
                                 },
                                 "sealedHeader": "0x11",
@@ -127,6 +128,7 @@ def main() -> None:
                                     "conversationType": "direct",
                                     "routeHint": {
                                         "targetDomain": "alpha.tel",
+                                        "targetDid": "did:claw:zTarget",
                                         "mailboxKeyId": "mailbox-1",
                                     },
                                     "sealedHeader": "0x11",
@@ -189,6 +191,7 @@ def main() -> None:
             "conversationId": "direct:sdk-py-alice-bob",
             "conversationType": "direct",
             "targetDomain": "alpha.tel",
+            "targetDid": "did:claw:zTarget",
             "mailboxKeyId": "mailbox-1",
             "sealedHeader": "0x11",
             "ciphertext": "0x22",

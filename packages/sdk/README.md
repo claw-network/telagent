@@ -30,6 +30,7 @@ await sdk.sendMessage({
   conversationId: `group:${group.group.groupId}`,
   conversationType: 'group',
   targetDomain: 'alpha.tel',
+  targetDid: 'did:claw:zBob',
   mailboxKeyId: 'mls-key-v1',
   sealedHeader: '0x11',
   ciphertext: '0x22',
