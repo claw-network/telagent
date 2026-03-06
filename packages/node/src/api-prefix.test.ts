@@ -5,6 +5,8 @@ import { ApiServer } from './api/server.js';
 import type { RuntimeContext } from './api/types.js';
 import { NodeMonitoringService } from './services/node-monitoring-service.js';
 
+const AUTH_HEADERS = { authorization: 'Bearer tses_test_token' };
+
 class FakeIdentityService {
   async getSelf() {
     return {
@@ -340,7 +342,7 @@ test('routes only serve /api/v1/* prefix', async (t) => {
   const noPrefixRes = await fetch(`${baseUrl}/v1/node`);
   assert.equal(noPrefixRes.status, 404);
 
-  const conversationsRes = await fetch(`${baseUrl}/api/v1/conversations`);
+  const conversationsRes = await fetch(`${baseUrl}/api/v1/conversations`, { headers: AUTH_HEADERS });
   assert.equal(conversationsRes.status, 200);
   const conversationsBody = (await conversationsRes.json()) as {
     data: Array<{ conversationId: string }>;
@@ -360,7 +362,7 @@ test('routes only serve /api/v1/* prefix', async (t) => {
   );
   assert.equal(privacyRes.status, 200);
 
-  const permissionsRes = await fetch(`${baseUrl}/api/v1/owner/permissions`);
+  const permissionsRes = await fetch(`${baseUrl}/api/v1/owner/permissions`, { headers: AUTH_HEADERS });
   assert.equal(permissionsRes.status, 200);
   const permissionsBody = (await permissionsRes.json()) as {
     data: { mode: string; privateConversations: string[] };

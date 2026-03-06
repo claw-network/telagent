@@ -171,13 +171,14 @@ export function ConnectForm() {
 
   const { status: probeStatus, info: probeInfo } = useLocalNodeProbe()
   const [remoteUrl, setRemoteUrl] = useState("")
-  const [remoteToken, setRemoteToken] = useState("")
+  const [localPassphrase, setLocalPassphrase] = useState("")
+  const [remotePassphrase, setRemotePassphrase] = useState("")
   const [localError, setLocalError] = useState<string | null>(null)
 
-  const doConnect = async (nodeUrl: string, accessToken: string) => {
+  const doConnect = async (nodeUrl: string, passphrase: string) => {
     setLocalError(null)
     try {
-      await connect({ nodeUrl, accessToken })
+      await connect({ nodeUrl, passphrase })
       await loadSelf()
       await refreshPermissions()
       navigate("/chat")
@@ -188,12 +189,12 @@ export function ConnectForm() {
 
   const onLocalSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    doConnect(LOCAL_NODE_URL, "")
+    doConnect(LOCAL_NODE_URL, localPassphrase)
   }
 
   const onRemoteSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    doConnect(remoteUrl, remoteToken)
+    doConnect(remoteUrl, remotePassphrase)
   }
 
   const displayError = localError ?? error
@@ -233,9 +234,23 @@ export function ConnectForm() {
 
                 <Separator className="mb-5" />
 
-                <p className="text-[13px] text-muted-foreground">
-                  {t("connect.local.connectHint")}
-                </p>
+                <div className="space-y-4">
+                  <div>
+                    <Label htmlFor="local-passphrase" className="mb-2 block text-[13px]">
+                      {t("connect.passphrase")}
+                    </Label>
+                    <Input
+                      id="local-passphrase"
+                      type="password"
+                      placeholder="••••••••"
+                      value={localPassphrase}
+                      onChange={(event) => setLocalPassphrase(event.target.value)}
+                      autoComplete="off"
+                      required
+                      disabled={probeStatus !== "found"}
+                    />
+                  </div>
+                </div>
 
                 {displayError ? (
                   <Alert variant="destructive" className="mt-4">
@@ -246,7 +261,7 @@ export function ConnectForm() {
                 <Button
                   type="submit"
                   className="mt-5 w-full"
-                  disabled={status === "connecting" || probeStatus !== "found"}
+                  disabled={status === "connecting" || probeStatus !== "found" || !localPassphrase}
                 >
                   {status === "connecting" ? t("connect.connecting") : t("connect.submit")}
                 </Button>
@@ -270,15 +285,15 @@ export function ConnectForm() {
                 </div>
 
                 <div>
-                  <Label htmlFor="remote-token" className="mb-2 block text-[13px]">
-                    {t("connect.ownerToken")}
+                  <Label htmlFor="remote-passphrase" className="mb-2 block text-[13px]">
+                    {t("connect.passphrase")}
                   </Label>
                   <Input
-                    id="remote-token"
+                    id="remote-passphrase"
                     type="password"
                     placeholder="••••••••"
-                    value={remoteToken}
-                    onChange={(event) => setRemoteToken(event.target.value)}
+                    value={remotePassphrase}
+                    onChange={(event) => setRemotePassphrase(event.target.value)}
                     autoComplete="off"
                     required
                   />

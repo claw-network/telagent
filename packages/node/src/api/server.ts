@@ -1,8 +1,9 @@
-import { createServer, type Server } from 'node:http';
+import { createServer, type IncomingMessage, type Server } from 'node:http';
 import { performance } from 'node:perf_hooks';
 
 import { ErrorCodes, TelagentError } from '@telagent/protocol';
 
+import { extractBearerToken } from './auth.js';
 import { Router } from './router.js';
 import { problem } from './response.js';
 import { attachmentRoutes } from './routes/attachments.js';
@@ -34,6 +35,44 @@ function buildRouter(ctx: RuntimeContext): Router {
   router.mount('/api/v1/clawnet', clawnetRoutes(ctx));
 
   return router;
+}
+
+/**
+ * Global auth gate — runs before route dispatch.
+ * Whitelisted paths are allowed without a session token.
+ * Everything else requires a valid tses_* session.
+ */
+const AUTH_WHITELIST: Array<{ method?: string; path: string }> = [
+  { method: 'POST', path: '/api/v1/session/unlock' },
+  { path: '/api/v1/node' },
+  { path: '/api/v1/identities/self' },
+];
+
+function isAuthExempt(method: string, pathname: string): boolean {
+  for (const rule of AUTH_WHITELIST) {
+    if (rule.method && rule.method !== method) continue;
+    if (pathname === rule.path || pathname.startsWith(rule.path + '/')) return true;
+  }
+  return false;
+}
+
+function requireGlobalAuth(req: IncomingMessage, pathname: string, ctx: RuntimeContext): void {
+  const method = req.method || 'GET';
+  if (method === 'OPTIONS') return;
+  if (!pathname.startsWith('/api/v1/')) return; // only enforce on API routes
+  if (isAuthExempt(method, pathname)) return;
+
+  const token = extractBearerToken(req.headers as Record<string, string | string[] | undefined>);
+  if (!token) {
+    throw new TelagentError(ErrorCodes.UNAUTHORIZED, 'Authentication required');
+  }
+  if (!token.startsWith('tses_')) {
+    throw new TelagentError(ErrorCodes.UNAUTHORIZED, 'Invalid token format. Expected session token (tses_*).');
+  }
+  const info = ctx.sessionManager.getSessionInfo(token);
+  if (!info || !info.active) {
+    throw new TelagentError(ErrorCodes.UNAUTHORIZED, 'Session expired or invalid');
+  }
 }
 
 export class ApiServer {
@@ -68,6 +107,14 @@ export class ApiServer {
       if (req.method === 'OPTIONS') {
         res.writeHead(204);
         res.end();
+        return;
+      }
+
+      try {
+        requireGlobalAuth(req, parsedUrl.pathname, this.ctx);
+      } catch (error) {
+        const authErr = error instanceof TelagentError ? error : new TelagentError(ErrorCodes.UNAUTHORIZED, 'Authentication required');
+        problem(res, authErr.toProblem(req.url));
         return;
       }
 

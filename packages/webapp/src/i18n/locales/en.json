@@ -12,8 +12,7 @@
     "title": "Connect your TelAgent node",
     "subtitle": "Connect to a local or remote TelAgent node to inspect agent activity.",
     "nodeUrl": "Node URL",
-    "token": "Access token",
-    "ownerToken": "Owner token",
+    "passphrase": "Passphrase",
     "submit": "Connect",
     "connecting": "Connecting...",
     "hint": "The app checks /api/v1/node and then loads /api/v1/identities/self.",
@@ -25,7 +24,7 @@
       "detecting": "Detecting local node...",
       "found": "Local node detected",
       "notFound": "No local node detected",
-      "connectHint": "Click Connect to access your local node. Session unlock will be required for privileged operations."
+      "connectHint": "Enter the passphrase to unlock a session on your local node."
     },
     "remote": {
       "tab": "Remote"

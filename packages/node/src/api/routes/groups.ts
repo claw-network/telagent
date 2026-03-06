@@ -8,7 +8,7 @@ import {
   type MembershipState,
 } from '@telagent/protocol';
 
-import { requireWriteAccess } from '../auth.js';
+import { requireScope } from '../auth.js';
 import { Router } from '../router.js';
 import { created, noContent, ok, paginated, parsePagination } from '../response.js';
 import { handleError } from '../route-utils.js';
@@ -20,7 +20,7 @@ export function groupRoutes(ctx: RuntimeContext): Router {
 
   router.post('/', async ({ req, res, body, url }) => {
     try {
-      requireWriteAccess(req.headers, ctx, 'manage_groups');
+      requireScope(req.headers, ctx, 'manage_groups');
     } catch (error) {
       handleError(res, error, url.pathname);
       return;
@@ -82,7 +82,7 @@ export function groupRoutes(ctx: RuntimeContext): Router {
 
   router.post('/:groupId/invites', async ({ req, res, body, params, url }) => {
     try {
-      requireWriteAccess(req.headers, ctx, 'manage_groups');
+      requireScope(req.headers, ctx, 'manage_groups');
     } catch (error) {
       handleError(res, error, url.pathname);
       return;
@@ -115,7 +115,7 @@ export function groupRoutes(ctx: RuntimeContext): Router {
 
   router.post('/:groupId/invites/:inviteId/accept', async ({ req, res, body, params, url }) => {
     try {
-      requireWriteAccess(req.headers, ctx, 'manage_groups');
+      requireScope(req.headers, ctx, 'manage_groups');
     } catch (error) {
       handleError(res, error, url.pathname);
       return;
@@ -149,7 +149,7 @@ export function groupRoutes(ctx: RuntimeContext): Router {
 
   router.delete('/:groupId/members/:memberDid', async ({ req, res, body, params, url }) => {
     try {
-      requireWriteAccess(req.headers, ctx, 'manage_groups');
+      requireScope(req.headers, ctx, 'manage_groups');
     } catch (error) {
       handleError(res, error, url.pathname);
       return;

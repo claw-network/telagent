@@ -3,12 +3,37 @@ import { ErrorCodes, TelagentError } from '@telagent/protocol';
 import { Router } from '../router.js';
 import { noContent, ok } from '../response.js';
 import { handleError } from '../route-utils.js';
+import { UnlockRateLimiter } from '../unlock-rate-limiter.js';
 import type { RuntimeContext } from '../types.js';
+
+const rateLimiter = new UnlockRateLimiter();
+
+function getClientIp(req: import('node:http').IncomingMessage): string {
+  const forwarded = req.headers['x-forwarded-for'];
+  if (typeof forwarded === 'string') {
+    return forwarded.split(',')[0].trim();
+  }
+  return req.socket.remoteAddress ?? '0.0.0.0';
+}
 
 export function sessionRoutes(ctx: RuntimeContext): Router {
   const router = new Router();
 
-  router.post('/unlock', async ({ res, body, url }) => {
+  router.post('/unlock', async ({ req, res, body, url }) => {
+    const ip = getClientIp(req);
+
+    // Rate limit check
+    const check = rateLimiter.check(ip);
+    if (!check.allowed) {
+      res.setHeader('Retry-After', String(check.retryAfterSec));
+      handleError(
+        res,
+        new TelagentError(ErrorCodes.TOO_MANY_REQUESTS, `Too many failed attempts. Retry after ${check.retryAfterSec}s.`),
+        url.pathname,
+      );
+      return;
+    }
+
     try {
       const payload = (body ?? {}) as {
         passphrase?: unknown;
@@ -46,6 +71,14 @@ export function sessionRoutes(ctx: RuntimeContext): Router {
         },
       });
 
+      rateLimiter.recordSuccess(ip);
+
+      const permissions = ctx.ownerPermissionService?.getPermissions() ?? {
+        mode: 'observer' as const,
+        interventionScopes: [],
+        privateConversations: [],
+      };
+
       ok(
         res,
         {
@@ -53,10 +86,18 @@ export function sessionRoutes(ctx: RuntimeContext): Router {
           expiresAt: result.expiresAt.toISOString(),
           scope: result.scope,
           did: selfDid,
+          permissions: {
+            mode: permissions.mode,
+            interventionScopes: permissions.interventionScopes,
+          },
         },
         { self: '/api/v1/session' },
       );
     } catch (error) {
+      // Record failure for brute-force protection (only for auth errors, not validation)
+      if (error instanceof Error && error.message === 'Invalid passphrase') {
+        rateLimiter.recordFailure(ip);
+      }
       handleError(res, error, url.pathname);
     }
   });

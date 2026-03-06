@@ -36,7 +36,7 @@ export function conversationRoutes(ctx: RuntimeContext): Router {
 
   router.put('/:conversationId/privacy', async ({ req, res, params, body, url }) => {
     try {
-      assertAgentCaller(req.headers, ctx);
+      // Auth handled by global middleware; any valid session may adjust privacy.
       if (!body || typeof body !== 'object' || Array.isArray(body)) {
         throw new TelagentError(ErrorCodes.VALIDATION, 'body must be an object');
       }
@@ -63,53 +63,4 @@ export function conversationRoutes(ctx: RuntimeContext): Router {
   });
 
   return router;
-}
-
-function assertAgentCaller(
-  headers: Record<string, string | string[] | undefined>,
-  ctx: RuntimeContext,
-): void {
-  const token = extractBearerToken(headers);
-  if (!token) {
-    throw new TelagentError(
-      ErrorCodes.UNAUTHORIZED,
-      'Missing Authorization header. Use: Bearer tses_xxx',
-    );
-  }
-
-  if (token.startsWith('owner_') || token.startsWith('owner:')) {
-    throw new TelagentError(
-      ErrorCodes.FORBIDDEN,
-      'Owner token is not allowed to mutate conversation privacy',
-    );
-  }
-
-  if (!token.startsWith('tses_')) {
-    throw new TelagentError(
-      ErrorCodes.UNAUTHORIZED,
-      'Invalid agent token format. Use: Bearer tses_xxx',
-    );
-  }
-
-  const session = ctx.sessionManager.getSessionInfo(token);
-  if (!session?.active) {
-    throw new TelagentError(
-      ErrorCodes.UNAUTHORIZED,
-      'Session token is expired or invalid. Unlock a new session first.',
-    );
-  }
-}
-
-function extractBearerToken(headers: Record<string, string | string[] | undefined>): string | null {
-  const authHeader = headers.authorization;
-  const auth = Array.isArray(authHeader) ? authHeader[0] : authHeader;
-  if (!auth || typeof auth !== 'string') {
-    return null;
-  }
-  const normalized = auth.trim();
-  if (!normalized.toLowerCase().startsWith('bearer ')) {
-    return null;
-  }
-  const token = normalized.slice(7).trim();
-  return token || null;
 }

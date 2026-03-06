@@ -134,6 +134,10 @@ export interface SessionUnlockResult {
   expiresAt: string;
   scope: SessionOperationScope[];
   did: string;
+  permissions: {
+    mode: 'observer' | 'intervener';
+    interventionScopes: string[];
+  };
 }
 
 export interface WalletHistoryInput {

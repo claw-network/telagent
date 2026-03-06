@@ -15,7 +15,7 @@ export function usePollMessages() {
   const { t } = useTranslation()
   const sdk = useConnectionStore((state) => state.sdk)
   const nodeUrl = useConnectionStore((state) => state.nodeUrl)
-  const accessToken = useConnectionStore((state) => state.accessToken)
+  const sessionToken = useConnectionStore((state) => state.sessionToken)
   const status = useConnectionStore((state) => state.status)
   const markUnreachable = useConnectionStore((state) => state.markUnreachable)
   const selectedConversationId = useConversationStore((state) => state.selectedConversationId)
@@ -116,7 +116,7 @@ export function usePollMessages() {
           method: "GET",
           headers: {
             accept: "application/json",
-            ...(accessToken ? { authorization: `Bearer ${accessToken}` } : {}),
+            ...(sessionToken ? { authorization: `Bearer ${sessionToken}` } : {}),
           },
           signal: AbortSignal.timeout(5_000),
         })
@@ -178,7 +178,7 @@ export function usePollMessages() {
       window.clearInterval(globalTimer)
     }
   }, [
-    accessToken,
+    sessionToken,
     cursorsByConversation,
     globalCursor,
     markRead,

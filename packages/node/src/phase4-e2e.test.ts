@@ -419,13 +419,13 @@ async function startE2EServer(startMs?: number): Promise<{
 async function postJson(baseUrl: string, path: string, payload: unknown): Promise<Response> {
   return fetch(`${baseUrl}${path}`, {
     method: 'POST',
-    headers: { 'content-type': 'application/json' },
+    headers: { 'content-type': 'application/json', authorization: 'Bearer tses_test_token' },
     body: JSON.stringify(payload),
   });
 }
 
 async function getJson(baseUrl: string, path: string): Promise<Response> {
-  return fetch(`${baseUrl}${path}`);
+  return fetch(`${baseUrl}${path}`, { headers: { authorization: 'Bearer tses_test_token' } });
 }
 
 test('TA-P4-009 E2E main path: create -> invite -> accept -> group chat (text/image/file)', async (t) => {

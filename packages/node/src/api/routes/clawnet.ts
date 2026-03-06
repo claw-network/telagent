@@ -1,6 +1,6 @@
 import { ErrorCodes, TelagentError } from '@telagent/protocol';
 
-import { requireWriteAccess } from '../auth.js';
+import { requireScope } from '../auth.js';
 import { Router } from '../router.js';
 import { ok } from '../response.js';
 import { handleError } from '../route-utils.js';
@@ -157,7 +157,7 @@ export function clawnetRoutes(ctx: RuntimeContext): Router {
 
   router.post('/wallet/transfer', async ({ req, res, body, url }) => {
     try {
-      requireWriteAccess(req.headers, ctx, 'clawnet_transfer');
+      requireScope(req.headers, ctx, 'clawnet_transfer');
       const token = requireSessionToken(req.headers);
       const payload = (body ?? {}) as { to?: string; amount?: number; memo?: string };
       if (!payload.to || typeof payload.amount !== 'number') {
@@ -176,7 +176,7 @@ export function clawnetRoutes(ctx: RuntimeContext): Router {
 
   router.post('/wallet/escrow', async ({ req, res, body, url }) => {
     try {
-      requireWriteAccess(req.headers, ctx, 'clawnet_escrow');
+      requireScope(req.headers, ctx, 'clawnet_escrow');
       const token = requireSessionToken(req.headers);
       const payload = (body ?? {}) as { beneficiary?: string; amount?: number; releaseRules?: unknown[] };
       if (!payload.beneficiary || typeof payload.amount !== 'number') {
@@ -195,7 +195,7 @@ export function clawnetRoutes(ctx: RuntimeContext): Router {
 
   router.post('/wallet/escrow/:id/release', async ({ req, res, params, url }) => {
     try {
-      requireWriteAccess(req.headers, ctx, 'clawnet_escrow');
+      requireScope(req.headers, ctx, 'clawnet_escrow');
       const token = requireSessionToken(req.headers);
       const result = await ctx.clawnetGateway.releaseEscrow(token, { escrowId: params.id });
       ok(res, result, { self: `/api/v1/clawnet/wallet/escrow/${encodeURIComponent(params.id)}/release` });
@@ -206,7 +206,7 @@ export function clawnetRoutes(ctx: RuntimeContext): Router {
 
   router.post('/market/tasks', async ({ req, res, body, url }) => {
     try {
-      requireWriteAccess(req.headers, ctx, 'clawnet_market');
+      requireScope(req.headers, ctx, 'clawnet_market');
       const token = requireSessionToken(req.headers);
       const payload = (body ?? {}) as { title?: string; description?: string; budget?: number; tags?: string[] };
       if (!payload.title || !payload.description || typeof payload.budget !== 'number') {
@@ -226,7 +226,7 @@ export function clawnetRoutes(ctx: RuntimeContext): Router {
 
   router.post('/market/tasks/:taskId/bid', async ({ req, res, params, body, url }) => {
     try {
-      requireWriteAccess(req.headers, ctx, 'clawnet_market');
+      requireScope(req.headers, ctx, 'clawnet_market');
       const token = requireSessionToken(req.headers);
       const payload = (body ?? {}) as { amount?: number; proposal?: string };
       if (typeof payload.amount !== 'number') {
@@ -245,7 +245,7 @@ export function clawnetRoutes(ctx: RuntimeContext): Router {
 
   router.post('/market/tasks/:taskId/accept-bid', async ({ req, res, params, body, url }) => {
     try {
-      requireWriteAccess(req.headers, ctx, 'clawnet_market');
+      requireScope(req.headers, ctx, 'clawnet_market');
       const token = requireSessionToken(req.headers);
       const payload = (body ?? {}) as { bidId?: string };
       if (!payload.bidId) {
@@ -263,7 +263,7 @@ export function clawnetRoutes(ctx: RuntimeContext): Router {
 
   router.post('/reputation/review', async ({ req, res, body, url }) => {
     try {
-      requireWriteAccess(req.headers, ctx, 'clawnet_reputation');
+      requireScope(req.headers, ctx, 'clawnet_reputation');
       const token = requireSessionToken(req.headers);
       const payload = (body ?? {}) as { targetDid?: string; score?: number; comment?: string; orderId?: string };
       if (!payload.targetDid || typeof payload.score !== 'number') {
@@ -283,7 +283,7 @@ export function clawnetRoutes(ctx: RuntimeContext): Router {
 
   router.post('/contracts', async ({ req, res, body, url }) => {
     try {
-      requireWriteAccess(req.headers, ctx, 'clawnet_transfer');
+      requireScope(req.headers, ctx, 'clawnet_transfer');
       const token = requireSessionToken(req.headers);
       const payload = (body ?? {}) as Record<string, unknown>;
       const result = await ctx.clawnetGateway.createServiceContract(token, payload);

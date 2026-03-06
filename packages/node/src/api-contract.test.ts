@@ -7,6 +7,8 @@ import { ErrorCodes, TelagentError, hashDid } from '@telagent/protocol';
 import { ApiServer } from './api/server.js';
 import type { RuntimeContext } from './api/types.js';
 
+const AUTH_HEADERS = { authorization: 'Bearer tses_test_token' };
+
 function digest(value: string): string {
   return createHash('sha256').update(value).digest('hex');
 }
@@ -716,7 +718,7 @@ test('created response returns data envelope and Location header', async (t) => 
 
   const response = await fetch(`${baseUrl}/api/v1/messages`, {
     method: 'POST',
-    headers: { 'content-type': 'application/json' },
+    headers: { 'content-type': 'application/json', ...AUTH_HEADERS },
     body: JSON.stringify({
       senderDid: 'did:claw:zSelf',
       conversationId: 'group:0x' + 'b'.repeat(64),
@@ -751,7 +753,7 @@ test('list response returns paginated envelope shape', async (t) => {
   });
 
   const groupId = `0x${'b'.repeat(64)}`;
-  const response = await fetch(`${baseUrl}/api/v1/groups/${groupId}/members?view=all&page=1&per_page=1`);
+  const response = await fetch(`${baseUrl}/api/v1/groups/${groupId}/members?view=all&page=1&per_page=1`, { headers: AUTH_HEADERS });
   assert.equal(response.status, 200);
 
   const body = (await response.json()) as {
@@ -776,7 +778,7 @@ test('validation errors use RFC7807 shape and problem+json content type', async 
 
   const response = await fetch(`${baseUrl}/api/v1/groups`, {
     method: 'POST',
-    headers: { 'content-type': 'application/json' },
+    headers: { 'content-type': 'application/json', ...AUTH_HEADERS },
     body: JSON.stringify({}),
   });
 
@@ -877,7 +879,7 @@ test('TA-P12-003 revoked DID event isolates session and rejects message send wit
 
   const initialSend = await fetch(`${baseUrl}/api/v1/messages`, {
     method: 'POST',
-    headers: { 'content-type': 'application/json' },
+    headers: { 'content-type': 'application/json', ...AUTH_HEADERS },
     body: JSON.stringify({
       senderDid: 'did:claw:zSelf',
       conversationId: 'direct:revoked-contract',
@@ -917,7 +919,7 @@ test('TA-P12-003 revoked DID event isolates session and rejects message send wit
 
   const blockedSend = await fetch(`${baseUrl}/api/v1/messages`, {
     method: 'POST',
-    headers: { 'content-type': 'application/json' },
+    headers: { 'content-type': 'application/json', ...AUTH_HEADERS },
     body: JSON.stringify({
       senderDid: 'did:claw:zSelf',
       conversationId: 'direct:revoked-contract',
@@ -969,7 +971,7 @@ test('not found uses RFC7807 shape', async (t) => {
     await server.stop();
   });
 
-  const response = await fetch(`${baseUrl}/api/v1/not-exist`);
+  const response = await fetch(`${baseUrl}/api/v1/not-exist`, { headers: AUTH_HEADERS });
   assert.equal(response.status, 404);
   assert.match(response.headers.get('content-type') ?? '', /^application\/problem\+json/);
 
@@ -1008,18 +1010,18 @@ test('identities and groups endpoints are accessible with expected status codes'
   const metricsRes = await fetch(`${baseUrl}/api/v1/node/metrics`);
   assert.equal(metricsRes.status, 200);
 
-  const permissionsRes = await fetch(`${baseUrl}/api/v1/owner/permissions`);
+  const permissionsRes = await fetch(`${baseUrl}/api/v1/owner/permissions`, { headers: AUTH_HEADERS });
   assert.equal(permissionsRes.status, 200);
 
-  const conversationsRes = await fetch(`${baseUrl}/api/v1/conversations?page=1&per_page=20`);
+  const conversationsRes = await fetch(`${baseUrl}/api/v1/conversations?page=1&per_page=20`, { headers: AUTH_HEADERS });
   assert.equal(conversationsRes.status, 200);
 
-  const resolveRes = await fetch(`${baseUrl}/api/v1/identities/${encodeURIComponent(did)}`);
+  const resolveRes = await fetch(`${baseUrl}/api/v1/identities/${encodeURIComponent(did)}`, { headers: AUTH_HEADERS });
   assert.equal(resolveRes.status, 200);
 
   const createGroupRes = await fetch(`${baseUrl}/api/v1/groups`, {
     method: 'POST',
-    headers: { 'content-type': 'application/json' },
+    headers: { 'content-type': 'application/json', ...AUTH_HEADERS },
     body: JSON.stringify({
       creatorDid: 'did:claw:zSelf',
       groupId,
@@ -1030,15 +1032,15 @@ test('identities and groups endpoints are accessible with expected status codes'
   });
   assert.equal(createGroupRes.status, 201);
 
-  const getGroupRes = await fetch(`${baseUrl}/api/v1/groups/${groupId}`);
+  const getGroupRes = await fetch(`${baseUrl}/api/v1/groups/${groupId}`, { headers: AUTH_HEADERS });
   assert.equal(getGroupRes.status, 200);
 
-  const membersRes = await fetch(`${baseUrl}/api/v1/groups/${groupId}/members?view=all&page=1&per_page=20`);
+  const membersRes = await fetch(`${baseUrl}/api/v1/groups/${groupId}/members?view=all&page=1&per_page=20`, { headers: AUTH_HEADERS });
   assert.equal(membersRes.status, 200);
 
   const inviteRes = await fetch(`${baseUrl}/api/v1/groups/${groupId}/invites`, {
     method: 'POST',
-    headers: { 'content-type': 'application/json' },
+    headers: { 'content-type': 'application/json', ...AUTH_HEADERS },
     body: JSON.stringify({
       inviterDid: 'did:claw:zSelf',
       inviteeDid: did,
@@ -1050,7 +1052,7 @@ test('identities and groups endpoints are accessible with expected status codes'
 
   const acceptRes = await fetch(`${baseUrl}/api/v1/groups/${groupId}/invites/${inviteId}/accept`, {
     method: 'POST',
-    headers: { 'content-type': 'application/json' },
+    headers: { 'content-type': 'application/json', ...AUTH_HEADERS },
     body: JSON.stringify({
       inviteeDid: did,
       mlsWelcomeHash: `0x${'6'.repeat(64)}`,
@@ -1060,7 +1062,7 @@ test('identities and groups endpoints are accessible with expected status codes'
 
   const removeRes = await fetch(`${baseUrl}/api/v1/groups/${groupId}/members/${encodeURIComponent(did)}`, {
     method: 'DELETE',
-    headers: { 'content-type': 'application/json' },
+    headers: { 'content-type': 'application/json', ...AUTH_HEADERS },
     body: JSON.stringify({
       operatorDid: 'did:claw:zSelf',
       mlsCommitHash: `0x${'7'.repeat(64)}`,
@@ -1068,11 +1070,11 @@ test('identities and groups endpoints are accessible with expected status codes'
   });
   assert.equal(removeRes.status, 204);
 
-  const chainStateRes = await fetch(`${baseUrl}/api/v1/groups/${groupId}/chain-state`);
+  const chainStateRes = await fetch(`${baseUrl}/api/v1/groups/${groupId}/chain-state`, { headers: AUTH_HEADERS });
   assert.equal(chainStateRes.status, 200);
 });
 
-test('conversation privacy route blocks owner token and syncs private flags across APIs', async (t) => {
+test('conversation privacy rejects unauthenticated callers and syncs private flags across APIs', async (t) => {
   const { server, baseUrl } = await startTestServer();
   t.after(async () => {
     await server.stop();
@@ -1081,24 +1083,23 @@ test('conversation privacy route blocks owner token and syncs private flags acro
   const conversationId = 'direct:did:claw:zSelf:did:claw:zPeer';
   const encodedConversationId = encodeURIComponent(conversationId);
 
-  const ownerDenied = await fetch(`${baseUrl}/api/v1/conversations/${encodedConversationId}/privacy`, {
+  const noAuthDenied = await fetch(`${baseUrl}/api/v1/conversations/${encodedConversationId}/privacy`, {
     method: 'PUT',
     headers: {
       'content-type': 'application/json',
-      authorization: 'Bearer owner_demo_token',
     },
     body: JSON.stringify({ private: true }),
   });
-  assert.equal(ownerDenied.status, 403);
-  assert.match(ownerDenied.headers.get('content-type') ?? '', /^application\/problem\+json/);
-  const ownerBody = (await ownerDenied.json()) as {
+  assert.equal(noAuthDenied.status, 401);
+  assert.match(noAuthDenied.headers.get('content-type') ?? '', /^application\/problem\+json/);
+  const noAuthBody = (await noAuthDenied.json()) as {
     title: string;
     status: number;
     code: string;
   };
-  assert.equal(ownerBody.title, 'Forbidden');
-  assert.equal(ownerBody.status, 403);
-  assert.equal(ownerBody.code, 'FORBIDDEN');
+  assert.equal(noAuthBody.title, 'Unauthorized');
+  assert.equal(noAuthBody.status, 401);
+  assert.equal(noAuthBody.code, 'UNAUTHORIZED');
 
   const setPrivate = await fetch(`${baseUrl}/api/v1/conversations/${encodedConversationId}/privacy`, {
     method: 'PUT',
@@ -1124,7 +1125,7 @@ test('conversation privacy route blocks owner token and syncs private flags acro
   assert.equal(Number.isInteger(setPrivateBody.data.updatedAtMs), true);
   assert.equal(setPrivateBody.links.self, `/api/v1/conversations/${encodedConversationId}/privacy`);
 
-  const conversationsRes = await fetch(`${baseUrl}/api/v1/conversations?page=1&per_page=20`);
+  const conversationsRes = await fetch(`${baseUrl}/api/v1/conversations?page=1&per_page=20`, { headers: AUTH_HEADERS });
   assert.equal(conversationsRes.status, 200);
   const conversationsBody = (await conversationsRes.json()) as {
     data: Array<{
@@ -1138,7 +1139,7 @@ test('conversation privacy route blocks owner token and syncs private flags acro
   assert.equal(conversation.private, true);
   assert.equal(conversation.lastMessagePreview, null);
 
-  const permissionsRes = await fetch(`${baseUrl}/api/v1/owner/permissions`);
+  const permissionsRes = await fetch(`${baseUrl}/api/v1/owner/permissions`, { headers: AUTH_HEADERS });
   assert.equal(permissionsRes.status, 200);
   const permissionsBody = (await permissionsRes.json()) as {
     data: {
@@ -1154,15 +1155,15 @@ test('messages, attachments and key endpoints are accessible', async (t) => {
     await server.stop();
   });
 
-  const pullRes = await fetch(`${baseUrl}/api/v1/messages/pull?limit=20`);
+  const pullRes = await fetch(`${baseUrl}/api/v1/messages/pull?limit=20`, { headers: AUTH_HEADERS });
   assert.equal(pullRes.status, 200);
 
-  const retractedRes = await fetch(`${baseUrl}/api/v1/messages/retracted?limit=20`);
+  const retractedRes = await fetch(`${baseUrl}/api/v1/messages/retracted?limit=20`, { headers: AUTH_HEADERS });
   assert.equal(retractedRes.status, 200);
 
   const initUploadRes = await fetch(`${baseUrl}/api/v1/attachments/init-upload`, {
     method: 'POST',
-    headers: { 'content-type': 'application/json' },
+    headers: { 'content-type': 'application/json', ...AUTH_HEADERS },
     body: JSON.stringify({
       filename: 'a.png',
       contentType: 'image/png',
@@ -1174,7 +1175,7 @@ test('messages, attachments and key endpoints are accessible', async (t) => {
 
   const completeUploadRes = await fetch(`${baseUrl}/api/v1/attachments/complete-upload`, {
     method: 'POST',
-    headers: { 'content-type': 'application/json' },
+    headers: { 'content-type': 'application/json', ...AUTH_HEADERS },
     body: JSON.stringify({
       objectKey: 'attachments/o1',
       manifestHash: `0x${'8'.repeat(64)}`,
@@ -1185,7 +1186,7 @@ test('messages, attachments and key endpoints are accessible', async (t) => {
 
   const keyRegisterRes = await fetch(`${baseUrl}/api/v1/keys/register`, {
     method: 'POST',
-    headers: { 'content-type': 'application/json' },
+    headers: { 'content-type': 'application/json', ...AUTH_HEADERS },
     body: JSON.stringify({
       did: 'did:claw:zSelf',
       suite: 'signal',
@@ -1197,7 +1198,7 @@ test('messages, attachments and key endpoints are accessible', async (t) => {
 
   const keyRotateRes = await fetch(`${baseUrl}/api/v1/keys/rotate`, {
     method: 'POST',
-    headers: { 'content-type': 'application/json' },
+    headers: { 'content-type': 'application/json', ...AUTH_HEADERS },
     body: JSON.stringify({
       did: 'did:claw:zSelf',
       suite: 'signal',
@@ -1209,6 +1210,6 @@ test('messages, attachments and key endpoints are accessible', async (t) => {
   });
   assert.equal(keyRotateRes.status, 200);
 
-  const keyListRes = await fetch(`${baseUrl}/api/v1/keys/${encodeURIComponent('did:claw:zSelf')}?suite=signal`);
+  const keyListRes = await fetch(`${baseUrl}/api/v1/keys/${encodeURIComponent('did:claw:zSelf')}?suite=signal`, { headers: AUTH_HEADERS });
   assert.equal(keyListRes.status, 200);
 });

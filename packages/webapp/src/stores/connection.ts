@@ -6,12 +6,12 @@ export type ConnectionStatus = "disconnected" | "connecting" | "connected" | "er
 
 interface ConnectInput {
   nodeUrl: string
-  accessToken: string
+  passphrase: string
 }
 
 interface ConnectionStore {
   nodeUrl: string
-  accessToken: string
+  sessionToken: string
   status: ConnectionStatus
   error?: string
   reconnectHintVisible: boolean
@@ -24,14 +24,11 @@ interface ConnectionStore {
   setReconnectHintVisible: (visible: boolean) => void
 }
 
-async function probeNode(nodeUrl: string, accessToken?: string): Promise<void> {
+async function probeNode(nodeUrl: string): Promise<void> {
   const target = new URL("/api/v1/node", nodeUrl).toString()
   const response = await fetch(target, {
     method: "GET",
-    headers: {
-      accept: "application/json",
-      ...(accessToken ? { authorization: `Bearer ${accessToken}` } : {}),
-    },
+    headers: { accept: "application/json" },
     signal: AbortSignal.timeout(5_000),
   })
 
@@ -53,25 +50,32 @@ export const useConnectionStore = create<ConnectionStore>()(
   persist(
     (set, get) => ({
       nodeUrl: "",
-      accessToken: "",
+      sessionToken: "",
       status: "disconnected",
       error: undefined,
       reconnectHintVisible: false,
       sdk: null,
       connect: async (input) => {
         const nodeUrl = normalizeNodeUrl(input.nodeUrl)
-        const accessToken = input.accessToken.trim()
+        const passphrase = input.passphrase
 
         set({ status: "connecting", error: undefined })
         try {
-          await probeNode(nodeUrl, accessToken || undefined)
+          // 1. Probe (no auth required)
+          await probeNode(nodeUrl)
+
+          // 2. Create temp SDK for unlock (no accessToken needed; endpoint is whitelisted)
+          const tempSdk = new TelagentSdk({ baseUrl: nodeUrl })
+          const result = await tempSdk.unlockSession({ passphrase })
+
+          // 3. Create authenticated SDK with session token
           const sdk = new TelagentSdk({
             baseUrl: nodeUrl,
-            accessToken: accessToken || undefined,
+            accessToken: result.sessionToken,
           })
           set({
             nodeUrl,
-            accessToken,
+            sessionToken: result.sessionToken,
             sdk,
             status: "connected",
             error: undefined,
@@ -83,18 +87,36 @@ export const useConnectionStore = create<ConnectionStore>()(
         }
       },
       reconnectFromStorage: async () => {
-        const { nodeUrl, accessToken } = get()
-        if (!nodeUrl) {
+        const { nodeUrl, sessionToken } = get()
+        if (!nodeUrl || !sessionToken) {
           return
         }
 
         set({ status: "connecting", error: undefined })
         try {
-          await probeNode(nodeUrl, accessToken || undefined)
+          // Probe with session token to validate it's still active
+          const target = new URL("/api/v1/node", nodeUrl).toString()
+          const response = await fetch(target, {
+            method: "GET",
+            headers: {
+              accept: "application/json",
+              authorization: `Bearer ${sessionToken}`,
+            },
+            signal: AbortSignal.timeout(5_000),
+          })
+
+          if (!response.ok) {
+            throw new Error(
+              response.status === 401
+                ? "Session expired. Please reconnect."
+                : `Node probe failed with status ${response.status}`,
+            )
+          }
+
           set({
             sdk: new TelagentSdk({
               baseUrl: nodeUrl,
-              accessToken: accessToken || undefined,
+              accessToken: sessionToken,
             }),
             status: "connected",
             error: undefined,
@@ -112,7 +134,7 @@ export const useConnectionStore = create<ConnectionStore>()(
       disconnect: () => {
         set({
           nodeUrl: "",
-          accessToken: "",
+          sessionToken: "",
           sdk: null,
           status: "disconnected",
           error: undefined,
@@ -142,7 +164,7 @@ export const useConnectionStore = create<ConnectionStore>()(
       storage: createJSONStorage(() => window.localStorage),
       partialize: (state) => ({
         nodeUrl: state.nodeUrl,
-        accessToken: state.accessToken,
+        sessionToken: state.sessionToken,
       }),
     },
   ),

@@ -85,7 +85,7 @@ export function ContactDetail({ did }: ContactDetailProps) {
   const loading = useContactStore((state) => state.loadingByDid[did] ?? false)
   const contactError = useContactStore((state) => state.errorByDid[did])
   const nodeUrl = useConnectionStore((state) => state.nodeUrl)
-  const accessToken = useConnectionStore((state) => state.accessToken)
+  const sessionToken = useConnectionStore((state) => state.sessionToken)
 
   const [profile, setProfile] = useState<ContactProfileData | null>(null)
   const [profileLoading, setProfileLoading] = useState(false)
@@ -104,7 +104,7 @@ export function ContactDetail({ did }: ContactDetailProps) {
     let cancelled = false
 
     setProfileLoading(true)
-    void fetchContactProfile(nodeUrl, did, accessToken || undefined)
+    void fetchContactProfile(nodeUrl, did, sessionToken || undefined)
       .then((result) => {
         if (cancelled) {
           return
@@ -120,7 +120,7 @@ export function ContactDetail({ did }: ContactDetailProps) {
     return () => {
       cancelled = true
     }
-  }, [accessToken, did, nodeUrl])
+  }, [sessionToken, did, nodeUrl])
 
   const extendedIdentity = identity as ExtendedIdentity | undefined
   const capabilities = asCapabilities(extendedIdentity)

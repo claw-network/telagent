@@ -1,6 +1,6 @@
 import { ErrorCodes, SendMessageSchema, TelagentError, type Envelope, type RedactedEnvelope } from '@telagent/protocol';
 
-import { extractBearerToken, classifyToken, requireWriteAccess } from '../auth.js';
+import { requireScope } from '../auth.js';
 import { Router } from '../router.js';
 import { created, ok } from '../response.js';
 import { handleError } from '../route-utils.js';
@@ -12,7 +12,7 @@ export function messageRoutes(ctx: RuntimeContext): Router {
 
   router.post('/', async ({ req, res, body, url }) => {
     try {
-      requireWriteAccess(req.headers, ctx, 'send_message');
+      requireScope(req.headers, ctx, 'send_message');
     } catch (error) {
       handleError(res, error, url.pathname);
       return;
@@ -97,18 +97,14 @@ export function messageRoutes(ctx: RuntimeContext): Router {
   /** Owner-facing message view — returns envelope metadata with ciphertext redacted. */
   router.get('/view', async ({ req, res, query, url }) => {
     try {
-      const token = extractBearerToken(req.headers);
-      const kind = classifyToken(token);
-
       const result = await ctx.messageService.pull({
         cursor: query.get('cursor') ?? undefined,
         limit: query.get('limit') ? Number.parseInt(query.get('limit') ?? '', 10) : undefined,
         conversationId: query.get('conversation_id') ?? undefined,
       });
 
-      // Owner tokens get redacted envelopes; agent / no-token get full envelopes
-      const items: (Envelope | RedactedEnvelope)[] =
-        kind === 'owner' ? result.items.map(redactEnvelope) : result.items;
+      // All session-authenticated callers see redacted envelopes
+      const items: RedactedEnvelope[] = result.items.map(redactEnvelope);
 
       ok(
         res,
