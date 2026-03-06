@@ -235,10 +235,12 @@ TELAGENT_FINALITY_DEPTH=12
 |------|--------|------|
 | `TELAGENT_CLAWNET_NODE_URL` | _(自动发现)_ | ClawNet 节点 URL |
 | `TELAGENT_CLAWNET_API_KEY` | _(无)_ | 连接远端 ClawNet 节点的 API Key |
-| `TELAGENT_CLAWNET_PASSPHRASE` | _(无)_ | 解锁 ClawNet 写操作的口令 |
+| `TELAGENT_CLAWNET_PASSPHRASE` | _(无)_ | ClawNet 口令，同时也是 WebApp 统一认证凭据 |
 | `TELAGENT_CLAWNET_AUTO_DISCOVER` | `true` | 是否自动发现本地 ClawNet 节点 |
 | `TELAGENT_CLAWNET_AUTO_START` | `true` | 是否自动启动 ClawNet 节点 |
 | `TELAGENT_CLAWNET_TIMEOUT_MS` | `30000` | 请求超时时间 |
+
+> **认证模型**：WebApp 连接时（无论本地或远程），用户在连接页面输入 ClawNet passphrase → 服务器验证后返回 `tses_*` 会话令牌 → 后续所有 API 请求使用该令牌。未认证的请求（除 `/node/*`、`/identities/self`、`POST /session/unlock` 外）会被全局中间件拦截返回 401。
 
 **本地开发场景**：
 
@@ -248,7 +250,7 @@ TELAGENT_FINALITY_DEPTH=12
 
 ### 4.6 Owner 权限
 
-控制 WebApp 对节点的操作权限。
+控制已认证用户通过 WebApp 对节点的操作权限。用户通过 passphrase 认证后，Owner 模式决定了该会话能执行哪些操作。切换 `TELAGENT_OWNER_MODE` 不需要用户重新认证——模式是服务端配置，会话令牌始终有效。
 
 | 变量 | 默认值 | 说明 |
 |------|--------|------|
@@ -316,7 +318,7 @@ TELAGENT_MAILBOX_PG_MAX_CONN=10
 
 ## 5. 最小化本地 `.env` 示例
 
-以下是一个本地开发所需的最小配置。**只需要修改 `TELAGENT_PRIVATE_KEY` 的值**，其余保持默认：
+以下是一个本地开发所需的最小配置。**需要修改 `TELAGENT_PRIVATE_KEY` 和 `TELAGENT_CLAWNET_PASSPHRASE` 两项**，其余保持默认：
 
 ```env
 # ── API ──────────────────────────────────────────────
@@ -335,6 +337,7 @@ TELAGENT_SIGNER_ENV=TELAGENT_PRIVATE_KEY
 TELAGENT_PRIVATE_KEY=0x你用上面的命令生成的私钥
 
 # ── ClawNet ──────────────────────────────────────────
+TELAGENT_CLAWNET_PASSPHRASE=替换为你的安全口令
 TELAGENT_CLAWNET_AUTO_DISCOVER=true
 TELAGENT_CLAWNET_AUTO_START=true
 TELAGENT_CLAWNET_TIMEOUT_MS=30000
@@ -377,7 +380,14 @@ pnpm --filter @telagent/webapp dev
 
 WebApp 会在 Vite 默认端口（通常 `5173`）启动。
 
-打开浏览器后，在 Local 标签页中会自动检测本地节点。检测到后直接点击 Connect 即可——本地连接不需要令牌。执行特权操作（转账、托管、市场等）时，WebApp 会弹出会话解锁对话框，输入 ClawNet passphrase 即可。
+打开浏览器后：
+
+- **Local 标签**：自动检测本地节点，检测到后输入 ClawNet passphrase 并点击 Connect
+- **Remote 标签**：输入远程节点 URL 和 ClawNet passphrase，点击 Connect
+
+连接成功后，WebApp 持有服务器返回的会话令牌（`tses_*`），所有后续 API 请求自动携带该令牌。会话默认 30 分钟过期，最长 24 小时；过期后需重新输入 passphrase。
+
+> **速率限制**：连续 5 次输入错误 passphrase 会触发 5 分钟锁定（指数退避：1s → 2s → 4s → 8s → 16s），按客户端 IP 隔离。
 
 ---
 
@@ -421,3 +431,13 @@ rm -rf ~/.telagent
 ### Q: 节点间消息发不通
 
 节点间通信完全通过 ClawNet P2P 进行。确保 `TELAGENT_CLAWNET_AUTO_DISCOVER=true`（或手动设置 `TELAGENT_CLAWNET_NODE_URL`），并且 ClawNet 节点正在运行。
+
+### Q: WebApp 连接被拒绝 / 返回 401
+
+所有 API 请求（除少量白名单端点外）必须携带有效的 `tses_*` 会话令牌。如果会话过期或令牌无效，需要重新在连接页面输入 passphrase。如果连续输入错误 passphrase 触发了速率限制（429 Too Many Requests），请等待锁定时间结束（最多 5 分钟）后重试。
+
+### Q: 如何查看当前会话信息？
+
+```bash
+curl -H 'Authorization: Bearer tses_你的会话令牌' http://127.0.0.1:9529/api/v1/session
+```

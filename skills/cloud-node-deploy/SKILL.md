@@ -25,7 +25,7 @@ ssh -i "$SSH_KEY" root@<IP>
 
 ```
 /opt/telagent/              # TelAgent monorepo
-  .env.cloud                # TelAgent environment (DO NOT overwrite blindly)
+  .env.cloud                # TelAgent environment (contains TELAGENT_CLAWNET_PASSPHRASE, DO NOT overwrite blindly)
   packages/node/            # @telagent/node package
 /opt/clawnet/               # ClawNet monorepo
   node.env                  # ClawNet environment (contains CLAW_PASSPHRASE)
@@ -95,10 +95,21 @@ ssh -t -i "$SSH_KEY" root@<IP> "systemctl restart clawnetd && sleep 5 && systemc
 ssh -t -i "$SSH_KEY" root@<IP> "systemctl restart telagent-node && sleep 5 && systemctl is-active telagent-node"
 ```
 
-### 7. Health check
+### 7. Verify passphrase in `.env.cloud`
+
+Ensure `TELAGENT_CLAWNET_PASSPHRASE` is set in `.env.cloud`. This is the unified auth credential — WebApp users must enter this passphrase to unlock a session. Without it, all authenticated API requests will fail with 401.
 
 ```bash
-# Node info (from server locally)
+ssh -i "$SSH_KEY" root@<IP> "grep TELAGENT_CLAWNET_PASSPHRASE /opt/telagent/.env.cloud"
+# Should output: TELAGENT_CLAWNET_PASSPHRASE=<your_passphrase>
+# If missing, add it:
+ssh -i "$SSH_KEY" root@<IP> "echo 'TELAGENT_CLAWNET_PASSPHRASE=your_secure_passphrase' >> /opt/telagent/.env.cloud"
+```
+
+### 8. Health check
+
+```bash
+# Node info — whitelisted, no auth required
 ssh -i "$SSH_KEY" root@<IP> "curl -s http://127.0.0.1:9529/api/v1/node/"
 
 # Or via HTTPS (through Caddy)
@@ -106,9 +117,16 @@ curl -fsS https://<domain>/api/v1/node/ | jq '.data'
 
 # Check DID in startup logs
 ssh -i "$SSH_KEY" root@<IP> "journalctl -u telagent-node --no-pager -n 15 | grep Identity"
+
+# Verify auth works — unlock a session and test an authenticated endpoint
+curl -s -X POST https://<domain>/api/v1/session/unlock \
+  -H 'Content-Type: application/json' \
+  -d '{"passphrase":"your_passphrase"}' | jq '.data.token'
 ```
 
-### 8. Update localdev deployment docs
+> **Auth model**: All API endpoints except `/node/*`, `/identities/self`, and `POST /session/unlock` require a valid `tses_*` session token via `Authorization: Bearer <token>`. WebApp handles this automatically after the user enters the passphrase on the connect page.
+
+### 9. Update localdev deployment docs
 
 After each node is deployed successfully, update the corresponding localdev doc with the latest deployment info:
 
@@ -156,7 +174,7 @@ Each localdev doc must contain the following sections (in order):
 <!-- DID string + DID Hash -->
 
 ## .env.cloud
-<!-- 完整 .env.cloud 内容（从服务器 cat 获取），包含 TELAGENT_PRIVATE_KEY -->
+<!-- 完整 .env.cloud 内容（从服务器 cat 获取），包含 TELAGENT_PRIVATE_KEY 和 TELAGENT_CLAWNET_PASSPHRASE -->
 
 ## 服务端口
 <!-- Table: TelAgent API, ClawNet Node, Geth, Caddy 端口 -->
@@ -178,9 +196,10 @@ Each localdev doc must contain the following sections (in order):
 ## Key Configuration Constraints
 
 1. `TELAGENT_CLAWNET_NODE_URL` → `http://127.0.0.1:9528` (local ClawNet)
-2. `TELAGENT_API_HOST` → `127.0.0.1` (Caddy handles external traffic)
-3. Caddy reverse proxies `https://<domain>` → `127.0.0.1:9529`
-4. ClawNet listens on port `9528`, TelAgent on port `9529`
+2. `TELAGENT_CLAWNET_PASSPHRASE` → **required** — the unified auth credential for WebApp session unlock; must match the passphrase users enter on the connect page
+3. `TELAGENT_API_HOST` → `127.0.0.1` (Caddy handles external traffic)
+4. Caddy reverse proxies `https://<domain>` → `127.0.0.1:9529`
+5. ClawNet listens on port `9528`, TelAgent on port `9529`
 
 ## Systemd Service Files
 
@@ -264,6 +283,19 @@ systemctl restart clawnetd && journalctl -u clawnetd -n 20
 
 ### `FATAL: No passphrase configured`
 ClawNet requires `CLAW_PASSPHRASE` in `/opt/clawnet/node.env`.
+
+### WebApp returns 401 on all requests
+`TELAGENT_CLAWNET_PASSPHRASE` is missing or empty in `.env.cloud`. Add it and restart:
+```bash
+echo 'TELAGENT_CLAWNET_PASSPHRASE=your_secure_passphrase' >> /opt/telagent/.env.cloud
+systemctl restart telagent-node
+```
+
+### WebApp connect returns 429 Too Many Requests
+Too many failed passphrase attempts triggered rate limiting (exponential backoff, 5 failures = 5min lockout per IP). Wait for the lockout to expire, or restart the node to clear in-memory rate limit state:
+```bash
+systemctl restart telagent-node
+```
 
 ### Corepack interactive prompt blocks SSH
 Set `COREPACK_ENABLE_DOWNLOAD_PROMPT=0` before the command.
