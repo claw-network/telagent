@@ -25,7 +25,7 @@ const config: HardhatUserConfig = {
       url: process.env.CLAWNET_RPC_URL || 'https://rpc.clawnetd.com',
       chainId: 7625,
       accounts: [DEPLOYER_PRIVATE_KEY],
-      gasPrice: 0,
+      gasPrice: 7,
       timeout: 120_000,
     },
     clawnetMainnet: {

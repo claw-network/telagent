@@ -27,8 +27,8 @@ export class ContractProvider {
       name: 'clawnet',
     });
 
-    // ClawNet is a zero-gas chain — override fee data to avoid querying the node
-    this.provider.getFeeData = async () => new FeeData(0n, 0n, 0n);
+    // ClawNet chain has a minimal baseFee (~7 wei); override to avoid high estimates
+    this.provider.getFeeData = async () => new FeeData(7n, 7n, 0n);
 
     const signer = this.resolveSigner();
     this.signer = new NonceManager(signer);
