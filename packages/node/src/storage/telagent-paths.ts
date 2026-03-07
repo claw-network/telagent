@@ -6,20 +6,23 @@ import { getGlobalLogger } from '../logger.js';
 const DIR_MODE_OWNER_ONLY = 0o700;   // rwx------
 
 export interface TelagentStoragePaths {
-  root: string;           // ~/.telagent
-  config: string;         // ~/.telagent/config.yaml
-  secrets: string;        // ~/.telagent/secrets/
-  keys: string;           // ~/.telagent/keys/
-  data: string;           // ~/.telagent/data/
-  logs: string;           // ~/.telagent/logs/
-  cache: string;          // ~/.telagent/cache/
+  root: string;              // ~/.telagent
+  config: string;            // ~/.telagent/config.yaml
+  secrets: string;           // ~/.telagent/secrets/
+  keys: string;              // ~/.telagent/keys/
+  data: string;              // ~/.telagent/data/
+  logs: string;              // ~/.telagent/logs/
+  cache: string;             // ~/.telagent/cache/
   // 具体文件
-  mnemonicFile: string;   // ~/.telagent/secrets/mnemonic.enc
-  passphraseFile: string; // ~/.telagent/secrets/passphrase.enc
-  signerKeyFile: string;  // ~/.telagent/secrets/signer-key.enc
-  mailboxDb: string;      // ~/.telagent/data/mailbox.sqlite
-  groupIndexerDb: string; // ~/.telagent/data/group-indexer.sqlite
-  contactsDb: string;     // ~/.telagent/data/contacts.sqlite
+  mnemonicFile: string;      // ~/.telagent/secrets/mnemonic.enc
+  passphraseFile: string;    // ~/.telagent/secrets/passphrase.enc
+  signerKeyFile: string;     // ~/.telagent/secrets/signer-key.enc
+  mailboxDb: string;         // ~/.telagent/data/mailbox.sqlite
+  groupIndexerDb: string;    // ~/.telagent/data/group-indexer.sqlite
+  contactsDb: string;        // ~/.telagent/data/contacts.sqlite
+  profileFile: string;       // ~/.telagent/data/profile.json
+  peerProfilesDb: string;    // ~/.telagent/data/peer-profiles.sqlite
+  avatarFile: string;        // ~/.telagent/data/profile-avatar.bin
 }
 
 export function defaultTelagentHome(): string {
@@ -43,6 +46,9 @@ export function resolveTelagentPaths(root?: string): TelagentStoragePaths {
     mailboxDb: resolve(r, 'data', 'mailbox.sqlite'),
     groupIndexerDb: resolve(r, 'data', 'group-indexer.sqlite'),
     contactsDb: resolve(r, 'data', 'contacts.sqlite'),
+    profileFile: resolve(r, 'data', 'profile.json'),
+    peerProfilesDb: resolve(r, 'data', 'peer-profiles.sqlite'),
+    avatarFile: resolve(r, 'data', 'profile-avatar.bin'),
   };
 }
 

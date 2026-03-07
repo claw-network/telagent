@@ -62,7 +62,16 @@
     "language": "语言",
     "disconnect": "断开节点",
     "mode": "Owner 模式",
-    "node": "当前节点"
+    "node": "当前节点",
+    "profile": {
+      "title": "我的资料",
+      "nickname": "网名",
+      "avatar": "头像",
+      "avatarUrl": "头像 URL",
+      "uploadAvatar": "上传图片",
+      "save": "保存",
+      "saved": "已保存！"
+    }
   },
   "theme": {
     "dark": "深色",

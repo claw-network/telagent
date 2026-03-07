@@ -62,7 +62,16 @@
     "language": "Language",
     "disconnect": "Disconnect node",
     "mode": "Owner mode",
-    "node": "Connected node"
+    "node": "Connected node",
+    "profile": {
+      "title": "My profile",
+      "nickname": "Nickname",
+      "avatar": "Avatar",
+      "avatarUrl": "Avatar URL",
+      "uploadAvatar": "Upload image",
+      "save": "Save",
+      "saved": "Saved!"
+    }
   },
   "theme": {
     "dark": "Dark",

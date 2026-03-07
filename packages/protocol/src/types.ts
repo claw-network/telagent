@@ -151,3 +151,38 @@ export interface CreateConversationInput {
   groupId?: GroupID;
   displayName: string;
 }
+
+// ── Profile & Identity Card ───────────────────────────────────────────────────
+
+/**
+ * This node's own displayable profile: nickname and optional avatar.
+ * Stored locally and exposed via GET /api/v1/profile (public, no auth).
+ */
+export interface SelfProfile {
+  nickname?: string;
+  avatarUrl?: string;
+  nodeUrl?: string;
+}
+
+/**
+ * A remote peer's profile as cached by the local node.
+ * Populated when the peer sends a telagent/profile-card P2P message.
+ */
+export interface PeerProfile {
+  did: AgentDID;
+  nickname?: string;
+  avatarUrl?: string;
+  nodeUrl?: string;
+  receivedAtMs: number;
+}
+
+/**
+ * Payload carried in a telagent/profile-card P2P message.
+ * Sent by the node when a new direct conversation is created.
+ */
+export interface ProfileCardPayload {
+  did: AgentDID;
+  nickname?: string;
+  avatarUrl?: string;
+  nodeUrl?: string;
+}

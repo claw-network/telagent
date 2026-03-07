@@ -9,8 +9,10 @@ import type {
   GroupMemberRecord,
   GroupRecord,
   OwnerPermissions,
+  PeerProfile,
   ProblemDetail,
   RedactedEnvelope,
+  SelfProfile,
   UpdateContactInput,
 } from '@telagent/protocol';
 
@@ -328,6 +330,35 @@ export class TelagentSdk {
 
   async removeContact(did: AgentDID): Promise<void> {
     await this.requestNoContent('DELETE', `/api/v1/contacts/${encodeURIComponent(did)}`);
+  }
+
+  // ── Self profile ────────────────────────────────────────────────────────────
+
+  async getSelfProfile(): Promise<SelfProfile> {
+    const envelope = await this.requestData<SelfProfile>('GET', '/api/v1/profile');
+    return envelope.data;
+  }
+
+  async updateSelfProfile(input: Partial<Pick<SelfProfile, 'nickname' | 'avatarUrl' | 'nodeUrl'>>): Promise<SelfProfile> {
+    const envelope = await this.requestData<SelfProfile>('PUT', '/api/v1/profile', input);
+    return envelope.data;
+  }
+
+  async uploadSelfAvatar(data: string, mimeType: string): Promise<{ avatarUrl: string }> {
+    const envelope = await this.requestData<{ avatarUrl: string }>('POST', '/api/v1/profile/avatar', { data, mimeType });
+    return envelope.data;
+  }
+
+  async getPeerProfile(did: AgentDID): Promise<PeerProfile | null> {
+    try {
+      const envelope = await this.requestData<PeerProfile>('GET', `/api/v1/profile/${encodeURIComponent(did)}`);
+      return envelope.data;
+    } catch (err) {
+      if (err instanceof TelagentSdkError && err.status === 404) {
+        return null;
+      }
+      throw err;
+    }
   }
 
   async createGroup(input: CreateGroupInput): Promise<{ txHash?: string; group: GroupRecord }> {

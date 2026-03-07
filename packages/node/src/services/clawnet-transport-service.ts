@@ -1,4 +1,5 @@
 import type { Envelope } from '@telagent/protocol';
+import type { ProfileCardPayload } from '@telagent/protocol';
 import type { ClawNetGatewayService } from '../clawnet/gateway-service.js';
 
 const logger = console;
@@ -6,6 +7,7 @@ const logger = console;
 const TOPIC_ENVELOPE = 'telagent/envelope';
 const TOPIC_RECEIPT = 'telagent/receipt';
 const TOPIC_GROUP_SYNC = 'telagent/group-sync';
+const TOPIC_PROFILE_CARD = 'telagent/profile-card';
 const RECONNECT_DELAY_MS = 3_000;
 
 export interface DeliveryReceipt {
@@ -25,6 +27,7 @@ export type TopicCallbacks = {
   onEnvelope?: (raw: Record<string, unknown>, sourceDid: string) => Promise<unknown>;
   onReceipt?: (receipt: DeliveryReceipt, sourceDid: string) => Promise<unknown>;
   onGroupSync?: (payload: GroupSyncPayload, sourceDid: string) => Promise<unknown>;
+  onProfileCard?: (payload: ProfileCardPayload, sourceDid: string) => Promise<unknown>;
 };
 
 export class ClawNetTransportService {
@@ -107,6 +110,18 @@ export class ClawNetTransportService {
       priority: 2,
       compress: true,
       idempotencyKey: `group-sync:${payload.groupId}:${payload.epoch}`,
+    });
+  }
+
+  async sendProfileCard(targetDid: string, payload: ProfileCardPayload): Promise<void> {
+    await this.gateway.client.messaging.send({
+      targetDid,
+      topic: TOPIC_PROFILE_CARD,
+      payload: JSON.stringify(payload),
+      ttlSec: 7 * 24 * 3600, // 7 days
+      priority: 1,
+      compress: false,
+      idempotencyKey: `profile-card:${payload.did}:${Date.now()}`,
     });
   }
 
@@ -220,6 +235,9 @@ export class ClawNetTransportService {
         break;
       case TOPIC_GROUP_SYNC:
         await this.callbacks.onGroupSync?.(parsed as unknown as GroupSyncPayload, data.sourceDid);
+        break;
+      case TOPIC_PROFILE_CARD:
+        await this.callbacks.onProfileCard?.(parsed as unknown as ProfileCardPayload, data.sourceDid);
         break;
       default:
         logger.warn('[p2p-transport] Unknown topic: %s', data.topic);

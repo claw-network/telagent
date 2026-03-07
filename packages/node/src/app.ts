@@ -20,6 +20,8 @@ import { OwnerPermissionService } from './services/owner-permission-service.js';
 import { ContactService } from './services/contact-service.js';
 import { resolvePassphrase as resolvePassphraseFromSources } from './storage/passphrase-resolver.js';
 import { savePassphrase } from './storage/passphrase-store.js';
+import { SelfProfileStore } from './storage/profile-store.js';
+import { PeerProfileRepository } from './storage/peer-profile-repository.js';
 import type { TelagentStoragePaths } from './storage/telagent-paths.js';
 import { ensureTelagentDirs, resolveTelagentPaths, verifySecretsPermissions } from './storage/telagent-paths.js';
 import { GroupRepository } from './storage/group-repository.js';
@@ -49,6 +51,8 @@ export class TelagentNode {
   private ownerPermissionService: OwnerPermissionService | null = null;
   private indexer: GroupIndexer | null = null;
   private apiServer: ApiServer | null = null;
+  private selfProfileStore: SelfProfileStore | null = null;
+  private peerProfileRepository: PeerProfileRepository | null = null;
 
   private paths!: TelagentStoragePaths;
   private managedClawNet?: any;
@@ -206,6 +210,8 @@ export class TelagentNode {
     this.attachmentService = new AttachmentService();
     const contactRepository = new ContactRepository(this.paths.contactsDb);
     const contactService = new ContactService(contactRepository);
+    this.selfProfileStore = new SelfProfileStore(this.paths);
+    this.peerProfileRepository = new PeerProfileRepository(this.paths.peerProfilesDb);
     this.clawnetTransportService = new ClawNetTransportService(
       this.clawnetGateway,
       { baseUrl: discovery.nodeUrl, apiKey: this.config.clawnet.apiKey },
@@ -229,6 +235,7 @@ export class TelagentNode {
       config: {
         host: this.config.host,
         port: this.config.port,
+        publicUrl: this.config.publicUrl,
       },
       identityService: this.identityService,
       groupService: this.groupService,
@@ -242,6 +249,8 @@ export class TelagentNode {
       nonceManager: this.nonceManager,
       ownerPermissionService: this.ownerPermissionService,
       contactService,
+      selfProfileStore: this.selfProfileStore,
+      peerProfileRepository: this.peerProfileRepository,
       configuredPassphrase: passphrase ?? undefined,
     };
 
@@ -257,6 +266,19 @@ export class TelagentNode {
     await this.apiServer.start();
     this.clawnetTransportService.startListening({
       onEnvelope: (raw, sourceDid) => this.messageService!.ingestFederatedEnvelope(raw, sourceDid),
+      onProfileCard: async (payload, sourceDid) => {
+        try {
+          this.peerProfileRepository!.upsert({
+            did: sourceDid,
+            nickname: typeof payload.nickname === 'string' ? payload.nickname : undefined,
+            avatarUrl: typeof payload.avatarUrl === 'string' ? payload.avatarUrl : undefined,
+            nodeUrl: typeof payload.nodeUrl === 'string' ? payload.nodeUrl : undefined,
+            receivedAtMs: Date.now(),
+          });
+        } catch (err) {
+          logger.warn('[telagent] Failed to cache peer profile from %s: %s', sourceDid, (err as Error).message);
+        }
+      },
     });
     logger.info('[telagent] P2P transport listener started');
     this.monitoringService.recordMailboxMaintenance(await this.messageService.runMaintenance());

@@ -16,6 +16,7 @@ import { contactRoutes } from './routes/contacts.js';
 import { conversationRoutes } from './routes/conversations.js';
 import { ownerRoutes } from './routes/owner.js';
 import { clawnetRoutes } from './routes/clawnet.js';
+import { profileRoutes } from './routes/profile.js';
 import { sessionRoutes } from './routes/session.js';
 import { walletRoutes } from './routes/wallets.js';
 import type { RuntimeContext } from './types.js';
@@ -35,6 +36,7 @@ function buildRouter(ctx: RuntimeContext): Router {
   router.mount('/api/v1/attachments', attachmentRoutes(ctx));
   router.mount('/api/v1/session', sessionRoutes(ctx));
   router.mount('/api/v1/clawnet', clawnetRoutes(ctx));
+  router.mount('/api/v1/profile', profileRoutes(ctx));
 
   return router;
 }
@@ -48,6 +50,10 @@ const AUTH_WHITELIST: Array<{ method?: string; path: string }> = [
   { method: 'POST', path: '/api/v1/session/unlock' },
   { path: '/api/v1/node' },
   { path: '/api/v1/identities/self' },
+  { method: 'GET', path: '/api/v1/profile' },
+  { method: 'GET', path: '/api/v1/profile/avatar' },
+  // GET /api/v1/profile/:did — cached peer profiles are public
+  // (matched via startsWith in isAuthExempt since :did varies)
 ];
 
 function isAuthExempt(method: string, pathname: string): boolean {

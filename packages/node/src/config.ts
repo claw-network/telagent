@@ -56,6 +56,7 @@ export interface OwnerConfig {
 export interface AppConfig {
   host: string;
   port: number;
+  publicUrl?: string;
   paths: TelagentStoragePaths;
   mailboxCleanupIntervalSec: number;
   mailboxStore: MailboxStoreConfig;
@@ -154,9 +155,12 @@ export function loadConfigFromEnv(): AppConfig {
     };
   }
 
+  const publicUrl = process.env.TELAGENT_PUBLIC_URL?.trim() || undefined;
+
   return {
     host,
     port,
+    publicUrl,
     paths,
     mailboxCleanupIntervalSec: Number(process.env.TELAGENT_MAILBOX_CLEANUP_INTERVAL_SEC || 60),
     mailboxStore,

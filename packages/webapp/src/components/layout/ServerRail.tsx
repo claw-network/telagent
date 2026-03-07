@@ -1,5 +1,5 @@
 import { CompassIcon, PlusIcon, Settings2Icon, UserRoundPlusIcon, UsersIcon } from "lucide-react"
-import { useMemo, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { Link } from "react-router-dom"
 
@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { useGuardedAction } from "@/hooks/use-guarded-action"
 import { useConversationStore } from "@/stores/conversation"
+import { useIdentityStore } from "@/stores/identity"
 
 export function ServerRail() {
   const { t } = useTranslation()
@@ -25,6 +26,14 @@ export function ServerRail() {
   const setSelectedConversationId = useConversationStore((state) => state.setSelectedConversationId)
   const [addContactOpen, setAddContactOpen] = useState(false)
   const [createGroupOpen, setCreateGroupOpen] = useState(false)
+
+  const selfDid = useIdentityStore((state) => state.self?.did ?? "")
+  const selfProfile = useIdentityStore((state) => state.selfProfile)
+  const loadSelfProfile = useIdentityStore((state) => state.loadSelfProfile)
+
+  useEffect(() => {
+    void loadSelfProfile()
+  }, [loadSelfProfile])
 
   const servers = useMemo(() => conversations.slice(0, 9), [conversations])
 
@@ -58,6 +67,7 @@ export function ServerRail() {
               />
               <DidAvatar
                 did={conversation.peerDid ?? conversation.groupId ?? conversation.conversationId}
+                avatarUrl={conversation.avatarUrl ?? undefined}
                 className={`size-12 border ${active ? "border-[#5865f2]" : "border-transparent"}`}
               />
             </button>
@@ -98,6 +108,14 @@ export function ServerRail() {
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
+
+        {/* Self identity button — shows own avatar, links to settings */}
+        <Button asChild size="icon" variant="secondary" className="size-12 rounded-2xl bg-[#2b2d31] hover:rounded-xl p-0 overflow-hidden">
+          <Link to="/settings" title={selfProfile?.nickname || selfDid || t("settings.profile.title")}>
+            <DidAvatar did={selfDid} avatarUrl={selfProfile?.avatarUrl} className="size-12 rounded-none" />
+          </Link>
+        </Button>
+
         <Button asChild size="icon" variant="secondary" className="size-12 rounded-2xl bg-[#2b2d31] text-[#b5bac1] hover:rounded-xl">
           <Link to="/settings">
             <Settings2Icon className="size-5" />
@@ -109,3 +127,4 @@ export function ServerRail() {
     </aside>
   )
 }
+

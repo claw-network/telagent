@@ -10,10 +10,13 @@ import type { KeyLifecycleService } from '../services/key-lifecycle-service.js';
 import type { MessageService } from '../services/message-service.js';
 import type { NodeMonitoringService } from '../services/node-monitoring-service.js';
 import type { OwnerPermissionService } from '../services/owner-permission-service.js';
+import type { SelfProfileStore } from '../storage/profile-store.js';
+import type { PeerProfileRepository } from '../storage/peer-profile-repository.js';
 
 export interface ApiServerConfig {
   host: string;
   port: number;
+  publicUrl?: string;
 }
 
 export interface RuntimeContext {
@@ -30,5 +33,7 @@ export interface RuntimeContext {
   nonceManager: NonceManager;
   ownerPermissionService?: OwnerPermissionService;
   contactService: ContactService;
+  selfProfileStore: SelfProfileStore;
+  peerProfileRepository: PeerProfileRepository;
   configuredPassphrase?: string;
 }

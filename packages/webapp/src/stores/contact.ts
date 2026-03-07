@@ -1,5 +1,5 @@
 import type { AgentIdentityView } from "@telagent/sdk"
-import type { Contact } from "@telagent/protocol"
+import type { Contact, PeerProfile } from "@telagent/protocol"
 import { create } from "zustand"
 
 import { useConnectionStore } from "@/stores/connection"
@@ -9,10 +9,14 @@ interface ContactStore {
   identitiesByDid: Record<string, AgentIdentityView>
   loadingByDid: Record<string, boolean>
   errorByDid: Record<string, string | undefined>
+  peerProfiles: Record<string, PeerProfile>
   loadContacts: () => Promise<void>
   addContact: (did: string, displayName: string) => Promise<Contact | null>
   removeContact: (did: string) => Promise<void>
   resolve: (did: string, force?: boolean) => Promise<AgentIdentityView | null>
+  fetchPeerProfile: (did: string) => Promise<PeerProfile | null>
+  getEffectiveDisplayName: (did: string) => string
+  getEffectiveAvatarUrl: (did: string) => string | undefined
   clear: () => void
 }
 
@@ -25,6 +29,7 @@ export const useContactStore = create<ContactStore>((set, get) => ({
   identitiesByDid: {},
   loadingByDid: {},
   errorByDid: {},
+  peerProfiles: {},
   loadContacts: async () => {
     const sdk = useConnectionStore.getState().sdk
     if (!sdk) return
@@ -51,6 +56,47 @@ export const useContactStore = create<ContactStore>((set, get) => ({
     set((state) => ({
       contacts: state.contacts.filter((c) => c.did !== did),
     }))
+  },
+  fetchPeerProfile: async (did) => {
+    const normalizedDid = normalizeDid(did)
+    if (!normalizedDid) return null
+
+    // Return cached if available
+    const cached = get().peerProfiles[normalizedDid]
+    if (cached) return cached
+
+    const sdk = useConnectionStore.getState().sdk
+    if (!sdk) return null
+
+    try {
+      const profile = await sdk.getPeerProfile(normalizedDid)
+      if (profile) {
+        set((state) => ({
+          peerProfiles: { ...state.peerProfiles, [normalizedDid]: profile },
+        }))
+      }
+      return profile
+    } catch {
+      return null
+    }
+  },
+  getEffectiveDisplayName: (did) => {
+    const normalizedDid = normalizeDid(did)
+    const contact = get().contacts.find((c) => c.did === normalizedDid)
+    if (contact?.displayName) return contact.displayName
+    const peer = get().peerProfiles[normalizedDid]
+    if (peer?.nickname) return peer.nickname
+    // Fallback: last segment of DID, truncated
+    const tail = normalizedDid.split(":").at(-1) ?? normalizedDid
+    return tail.slice(0, 12)
+  },
+  getEffectiveAvatarUrl: (did) => {
+    const normalizedDid = normalizeDid(did)
+    const contact = get().contacts.find((c) => c.did === normalizedDid)
+    if (contact?.avatarUrl) return contact.avatarUrl
+    const peer = get().peerProfiles[normalizedDid]
+    if (peer?.avatarUrl) return peer.avatarUrl
+    return undefined
   },
   resolve: async (did, force = false) => {
     const normalizedDid = normalizeDid(did)
@@ -118,6 +164,7 @@ export const useContactStore = create<ContactStore>((set, get) => ({
       identitiesByDid: {},
       loadingByDid: {},
       errorByDid: {},
+      peerProfiles: {},
     })
   },
 }))

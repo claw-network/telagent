@@ -1,4 +1,6 @@
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { useState } from "react"
+
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { cn } from "@/lib/utils"
 
 function hashString(value: string): number {
@@ -25,15 +27,27 @@ function initialsFromDid(did: string): string {
 
 interface DidAvatarProps {
   did: string
+  avatarUrl?: string
   className?: string
 }
 
-export function DidAvatar({ did, className }: DidAvatarProps) {
+export function DidAvatar({ did, avatarUrl, className }: DidAvatarProps) {
+  const [imgError, setImgError] = useState(false)
+  const showImage = Boolean(avatarUrl) && !imgError
+
   return (
     <Avatar className={cn("size-9", className)}>
+      {showImage && (
+        <AvatarImage
+          src={avatarUrl}
+          alt={did}
+          onError={() => setImgError(true)}
+        />
+      )}
       <AvatarFallback style={{ backgroundColor: colorForDid(did), color: "white" }}>
         {initialsFromDid(did)}
       </AvatarFallback>
     </Avatar>
   )
 }
+

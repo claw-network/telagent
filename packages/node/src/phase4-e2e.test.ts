@@ -395,6 +395,8 @@ async function startE2EServer(startMs?: number): Promise<{
     sessionManager: new FakeSessionManager() as unknown as RuntimeContext['sessionManager'],
     nonceManager: new FakeNonceManager() as unknown as RuntimeContext['nonceManager'],
     contactService: {} as unknown as RuntimeContext['contactService'],
+    selfProfileStore: {} as unknown as RuntimeContext['selfProfileStore'],
+    peerProfileRepository: {} as unknown as RuntimeContext['peerProfileRepository'],
   };
 
   const server = new ApiServer(context);
