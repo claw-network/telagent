@@ -27,13 +27,13 @@ export function identityRoutes(ctx: RuntimeContext): Router {
   router.get('/:did', async ({ res, params, url }) => {
     try {
       const identity = await ctx.identityService.resolve(params.did);
-      const fullIdentity = await ctx.clawnetGateway.resolveIdentity(params.did);
+      const fullIdentity = await ctx.clawnetGateway.resolveIdentity(params.did).catch(() => null);
       ok(
         res,
         {
           ...identity,
-          capabilities: (fullIdentity.document?.capabilities as unknown[]) ?? [],
-          keyHistory: (fullIdentity.document?.keyHistory as unknown[]) ?? [],
+          capabilities: (fullIdentity?.document?.capabilities as unknown[]) ?? [],
+          keyHistory: (fullIdentity?.document?.keyHistory as unknown[]) ?? [],
         },
         { self: `/api/v1/identities/${encodeURIComponent(params.did)}` },
       );

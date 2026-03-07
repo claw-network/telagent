@@ -9,7 +9,8 @@
 //   5. 只读操作直接透传，不需要 session
 // ============================================================
 
-import { ClawNetClient } from '@claw-network/sdk';
+import { ClawNetClient, ClawNetError } from '@claw-network/sdk';
+import { ErrorCodes, TelagentError } from '@telagent/protocol';
 import type { SessionManager, OperationScope } from './session-manager.js';
 import type { NonceManager } from './nonce-manager.js';
 
@@ -96,8 +97,12 @@ export class ClawNetGatewayService {
   }
 
   async resolveIdentity(did: string): Promise<IdentityInfo> {
-    const result = await this.unsafeClient.identity.resolve(did);
-    return this.normalizeIdentityInfo(result);
+    try {
+      const result = await this.unsafeClient.identity.resolve(did);
+      return this.normalizeIdentityInfo(result);
+    } catch (error) {
+      throw this.wrapClawNetError(error, did);
+    }
   }
 
   async getBalance(did?: string): Promise<BalanceInfo> {
@@ -147,12 +152,18 @@ export class ClawNetGatewayService {
     }
   }
 
-  async getAgentProfile(did: string): Promise<{ identity: IdentityInfo; reputation: ReputationInfo | null }> {
-    const [identity, reputation] = await Promise.all([
+  async getAgentProfile(did: string): Promise<{ identity: IdentityInfo | null; reputation: ReputationInfo | null }> {
+    const [identity, reputation] = await Promise.allSettled([
       this.resolveIdentity(did),
       this.getReputation(did).catch(() => null),
     ]);
-    return { identity, reputation };
+    if (identity.status === 'rejected') {
+      throw identity.reason;
+    }
+    return {
+      identity: identity.value,
+      reputation: reputation.status === 'fulfilled' ? reputation.value : null,
+    };
   }
 
   async getWalletHistory(did?: string, params?: { limit?: number; offset?: number }): Promise<unknown[]> {
@@ -163,6 +174,25 @@ export class ClawNetGatewayService {
   async searchMarkets(params?: { q?: string; type?: string }): Promise<unknown[]> {
     const result = await this.unsafeClient.markets.search(params as any);
     return result as unknown[];
+  }
+
+  private wrapClawNetError(error: unknown, context?: string): TelagentError {
+    if (error instanceof TelagentError) {
+      return error;
+    }
+    if (error instanceof ClawNetError) {
+      if (error.status === 404) {
+        return new TelagentError(ErrorCodes.NOT_FOUND, `DID not found${context ? `: ${context}` : ''}`);
+      }
+      if (error.status === 401 || error.status === 403) {
+        return new TelagentError(ErrorCodes.FORBIDDEN, error.message);
+      }
+      if (error.status >= 500) {
+        return new TelagentError(ErrorCodes.INTERNAL, `ClawNet node error: ${error.message}`);
+      }
+    }
+    const msg = error instanceof Error ? error.message : String(error);
+    return new TelagentError(ErrorCodes.INTERNAL, msg);
   }
 
   private normalizeIdentityInfo(raw: unknown): IdentityInfo {
