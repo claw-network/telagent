@@ -693,6 +693,12 @@ export class MessageRepository implements MailboxStore {
       );
   }
 
+  async deleteConversation(conversationId: string): Promise<void> {
+    this.db
+      .prepare('DELETE FROM mailbox_conversations WHERE conversation_id = ?')
+      .run(conversationId);
+  }
+
   async listConversationSummaries(params: {
     limit: number;
     afterMs?: number;

@@ -469,6 +469,46 @@ export class MessageService {
     };
   }
 
+  async createConversation(params: {
+    conversationId: string;
+    conversationType: 'direct' | 'group';
+    peerDid?: string;
+    groupId?: string;
+    displayName: string;
+  }): Promise<ConversationSummary> {
+    const nowMs = this.clock.now();
+    if (this.repository?.upsertConversationSummary) {
+      await this.repository.upsertConversationSummary({
+        conversationId: params.conversationId,
+        conversationType: params.conversationType,
+        peerDid: params.peerDid,
+        groupId: params.groupId,
+        displayName: params.displayName,
+        lastMessagePreview: null,
+        lastMessageAtMs: nowMs,
+        updatedAtMs: nowMs,
+      });
+    }
+    return {
+      conversationId: params.conversationId,
+      conversationType: params.conversationType,
+      peerDid: params.peerDid,
+      groupId: params.groupId,
+      displayName: params.displayName,
+      lastMessagePreview: null,
+      lastMessageAtMs: nowMs,
+      unreadCount: 0,
+      private: false,
+    };
+  }
+
+  async deleteConversation(conversationId: string): Promise<void> {
+    if (this.repository?.deleteConversation) {
+      await this.repository.deleteConversation(conversationId);
+    }
+    this.privateConversationUpdatedAtById.delete(conversationId);
+  }
+
   async listPrivateConversationIds(limit = 5_000): Promise<string[]> {
     const normalizedLimit = Math.max(1, Math.min(100_000, Math.floor(limit)));
     if (this.repository?.listPrivateConversationIds) {

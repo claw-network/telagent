@@ -18,6 +18,7 @@ export interface TelagentStoragePaths {
   signerKeyFile: string;  // ~/.telagent/secrets/signer-key.enc
   mailboxDb: string;      // ~/.telagent/data/mailbox.sqlite
   groupIndexerDb: string; // ~/.telagent/data/group-indexer.sqlite
+  contactsDb: string;     // ~/.telagent/data/contacts.sqlite
 }
 
 export function defaultTelagentHome(): string {
@@ -40,6 +41,7 @@ export function resolveTelagentPaths(root?: string): TelagentStoragePaths {
     signerKeyFile: resolve(secrets, 'signer-key.enc'),
     mailboxDb: resolve(r, 'data', 'mailbox.sqlite'),
     groupIndexerDb: resolve(r, 'data', 'group-indexer.sqlite'),
+    contactsDb: resolve(r, 'data', 'contacts.sqlite'),
   };
 }
 

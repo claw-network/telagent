@@ -59,7 +59,8 @@ function previewForEnvelope(envelope: Envelope, isPrivate: boolean): string | nu
   return `[${envelope.contentType}]`
 }
 
-export const useConversationStore = create<ConversationStore>((set, get) => ({
+export const useConversationStore = create<ConversationStore>()(
+    (set, get) => ({
   conversations: [],
   selectedConversationId: null,
   searchQuery: "",
@@ -75,9 +76,23 @@ export const useConversationStore = create<ConversationStore>((set, get) => ({
         perPage: 100,
         sort: "last_message",
       })
-      get().setConversations(envelope.data as ConversationSummary[])
+      const apiItems = envelope.data as ConversationSummary[]
+      const privateSet = new Set(usePermissionStore.getState().privateConversations)
+
+      const normalized = apiItems.map((item) => {
+        const isPrivate = item.private || privateSet.has(item.conversationId)
+        return {
+          ...item,
+          private: isPrivate,
+          lastMessagePreview: isPrivate ? null : item.lastMessagePreview,
+        }
+      })
+      normalized.sort(
+        (left, right) => (right.lastMessageAtMs ?? 0) - (left.lastMessageAtMs ?? 0),
+      )
+      set({ conversations: normalized })
     } catch {
-      // fallback stays merge-from-envelope in polling loop
+      // keep existing conversations on error
     }
   },
   setSelectedConversationId: (selectedConversationId) => {
@@ -173,4 +188,5 @@ export const useConversationStore = create<ConversationStore>((set, get) => ({
     )
     set({ conversations: next })
   },
-}))
+    }),
+)

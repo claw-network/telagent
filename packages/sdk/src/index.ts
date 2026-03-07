@@ -1,6 +1,9 @@
 import type {
   AgentDID,
+  Contact,
   ConversationSummary,
+  CreateContactInput,
+  CreateConversationInput,
   Envelope,
   GroupChainState,
   GroupMemberRecord,
@@ -8,6 +11,7 @@ import type {
   OwnerPermissions,
   ProblemDetail,
   RedactedEnvelope,
+  UpdateContactInput,
 } from '@telagent/protocol';
 
 export interface ApiLinks {
@@ -296,6 +300,34 @@ export class TelagentSdk {
       { private: isPrivate },
     );
     return envelope.data;
+  }
+
+  async createConversation(input: CreateConversationInput): Promise<ConversationSummary> {
+    const envelope = await this.requestData<ConversationSummary>('POST', '/api/v1/conversations', input);
+    return envelope.data;
+  }
+
+  async deleteConversation(conversationId: string): Promise<void> {
+    await this.requestNoContent('DELETE', `/api/v1/conversations/${encodeURIComponent(conversationId)}`);
+  }
+
+  async listContacts(): Promise<Contact[]> {
+    const envelope = await this.requestData<Contact[]>('GET', '/api/v1/contacts');
+    return envelope.data;
+  }
+
+  async addContact(input: CreateContactInput): Promise<Contact> {
+    const envelope = await this.requestData<Contact>('POST', '/api/v1/contacts', input);
+    return envelope.data;
+  }
+
+  async updateContact(did: AgentDID, input: UpdateContactInput): Promise<Contact> {
+    const envelope = await this.requestData<Contact>('PUT', `/api/v1/contacts/${encodeURIComponent(did)}`, input);
+    return envelope.data;
+  }
+
+  async removeContact(did: AgentDID): Promise<void> {
+    await this.requestNoContent('DELETE', `/api/v1/contacts/${encodeURIComponent(did)}`);
   }
 
   async createGroup(input: CreateGroupInput): Promise<{ txHash?: string; group: GroupRecord }> {

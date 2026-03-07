@@ -74,4 +74,5 @@ export interface MailboxStore {
     limit: number;
     afterMs?: number;
   }): Promise<ConversationSummary[]>;
+  deleteConversation?(conversationId: string): Promise<void>;
 }

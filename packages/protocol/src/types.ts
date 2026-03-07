@@ -121,3 +121,33 @@ export interface ConversationSummary {
   private: boolean;
   avatarUrl?: string | null;
 }
+
+export interface Contact {
+  did: AgentDID;
+  displayName: string;
+  avatarUrl?: string;
+  notes?: string;
+  createdAtMs: number;
+  updatedAtMs: number;
+}
+
+export interface CreateContactInput {
+  did: AgentDID;
+  displayName: string;
+  avatarUrl?: string;
+  notes?: string;
+}
+
+export interface UpdateContactInput {
+  displayName?: string;
+  avatarUrl?: string;
+  notes?: string;
+}
+
+export interface CreateConversationInput {
+  conversationId: string;
+  conversationType: ConversationType;
+  peerDid?: AgentDID;
+  groupId?: GroupID;
+  displayName: string;
+}

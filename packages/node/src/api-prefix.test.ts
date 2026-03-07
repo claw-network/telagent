@@ -304,6 +304,7 @@ async function startTestServer() {
     clawnetTransportService: new FakeClawNetTransportService() as unknown as RuntimeContext['clawnetTransportService'],
     sessionManager: new FakeSessionManager() as unknown as RuntimeContext['sessionManager'],
     nonceManager: new FakeNonceManager() as unknown as RuntimeContext['nonceManager'],
+    contactService: {} as unknown as RuntimeContext['contactService'],
   };
 
   const server = new ApiServer(context);

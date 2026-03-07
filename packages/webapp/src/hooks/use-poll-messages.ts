@@ -27,8 +27,6 @@ export function usePollMessages() {
 
   const upsertMessages = useMessageStore((state) => state.upsertMessages)
   const mergeGlobalMessages = useMessageStore((state) => state.mergeGlobalMessages)
-  const cursorsByConversation = useMessageStore((state) => state.cursorsByConversation)
-  const globalCursor = useMessageStore((state) => state.globalCursor)
 
   const activeInFlight = useRef(false)
   const globalInFlight = useRef(false)
@@ -66,7 +64,7 @@ export function usePollMessages() {
       activeInFlight.current = true
       setPollingState("active")
       try {
-        const cursor = cursorsByConversation[selectedConversationId]
+        const cursor = useMessageStore.getState().cursorsByConversation[selectedConversationId]
         const result = await sdk.pullMessages({
           conversationId: selectedConversationId,
           cursor: cursor ?? undefined,
@@ -92,8 +90,9 @@ export function usePollMessages() {
       }
       try {
         await refreshConversations()
+        const currentGlobalCursor = useMessageStore.getState().globalCursor
         const result = await sdk.pullMessages({
-          cursor: globalCursor ?? undefined,
+          cursor: currentGlobalCursor ?? undefined,
           limit: 200,
         })
         mergeGlobalMessages(result.items, result.cursor)
@@ -179,8 +178,6 @@ export function usePollMessages() {
     }
   }, [
     sessionToken,
-    cursorsByConversation,
-    globalCursor,
     markRead,
     refreshConversations,
     mergeConversations,

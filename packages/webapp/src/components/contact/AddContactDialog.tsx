@@ -18,6 +18,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useContactStore } from "@/stores/contact"
 import { useConversationStore } from "@/stores/conversation"
+import { useConnectionStore } from "@/stores/connection"
 import { useIdentityStore } from "@/stores/identity"
 
 interface AddContactDialogProps {
@@ -49,8 +50,10 @@ export function AddContactDialog({
   const { t } = useTranslation()
   const { canExecute } = useGuardedAction("manage_contacts")
   const selfDid = useIdentityStore((state) => state.self?.did)
+  const addContact = useContactStore((state) => state.addContact)
   const resolveContact = useContactStore((state) => state.resolve)
-  const upsertConversation = useConversationStore((state) => state.upsertConversation)
+  const sdk = useConnectionStore((state) => state.sdk)
+  const refreshConversations = useConversationStore((state) => state.refreshFromApi)
   const setSelectedConversationId = useConversationStore((state) => state.setSelectedConversationId)
 
   const [internalOpen, setInternalOpen] = useState(false)
@@ -92,19 +95,20 @@ export function AddContactDialog({
     try {
       const resolvedIdentity = await resolveContact(normalizedDid)
       const conversationId = directConversationIdForDid(normalizedDid)
-      const nameCandidate = displayName.trim() || resolvedIdentity?.did
+      const nameCandidate = displayName.trim() || resolvedIdentity?.did || compactDid(normalizedDid)
 
-      upsertConversation({
-        conversationId,
-        conversationType: "direct",
-        peerDid: normalizedDid,
-        displayName: nameCandidate || compactDid(normalizedDid),
-        lastMessagePreview: null,
-        lastMessageAtMs: Date.now(),
-        unreadCount: 0,
-        private: false,
-        avatarUrl: null,
-      })
+      await addContact(normalizedDid, nameCandidate)
+
+      if (sdk) {
+        await sdk.createConversation({
+          conversationId,
+          conversationType: "direct",
+          peerDid: normalizedDid,
+          displayName: nameCandidate,
+        })
+      }
+
+      await refreshConversations()
       setSelectedConversationId(conversationId)
       toast.success(t("contact.addSuccess"))
       setDialogOpen(false)

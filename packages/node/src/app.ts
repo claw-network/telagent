@@ -17,6 +17,7 @@ import { KeyLifecycleService } from './services/key-lifecycle-service.js';
 import { MessageService } from './services/message-service.js';
 import { NodeMonitoringService } from './services/node-monitoring-service.js';
 import { OwnerPermissionService } from './services/owner-permission-service.js';
+import { ContactService } from './services/contact-service.js';
 import { resolvePassphrase as resolvePassphraseFromSources } from './storage/passphrase-resolver.js';
 import { savePassphrase } from './storage/passphrase-store.js';
 import type { TelagentStoragePaths } from './storage/telagent-paths.js';
@@ -24,6 +25,7 @@ import { ensureTelagentDirs, resolveTelagentPaths, verifySecretsPermissions } fr
 import { GroupRepository } from './storage/group-repository.js';
 import type { MailboxStore } from './storage/mailbox-store.js';
 import { MessageRepository } from './storage/message-repository.js';
+import { ContactRepository } from './storage/contact-repository.js';
 import { PostgresMessageRepository } from './storage/postgres-message-repository.js';
 
 const logger = console;
@@ -197,6 +199,8 @@ export class TelagentNode {
       privateConversations: this.config.owner.privateConversations,
     });
     this.attachmentService = new AttachmentService();
+    const contactRepository = new ContactRepository(this.paths.contactsDb);
+    const contactService = new ContactService(contactRepository);
     this.clawnetTransportService = new ClawNetTransportService(
       this.clawnetGateway,
       { baseUrl: discovery.nodeUrl, apiKey: this.config.clawnet.apiKey },
@@ -232,6 +236,7 @@ export class TelagentNode {
       sessionManager: this.sessionManager,
       nonceManager: this.nonceManager,
       ownerPermissionService: this.ownerPermissionService,
+      contactService,
       configuredPassphrase: passphrase ?? undefined,
     };
 

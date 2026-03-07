@@ -1,12 +1,17 @@
 import type { AgentIdentityView } from "@telagent/sdk"
+import type { Contact } from "@telagent/protocol"
 import { create } from "zustand"
 
 import { useConnectionStore } from "@/stores/connection"
 
 interface ContactStore {
+  contacts: Contact[]
   identitiesByDid: Record<string, AgentIdentityView>
   loadingByDid: Record<string, boolean>
   errorByDid: Record<string, string | undefined>
+  loadContacts: () => Promise<void>
+  addContact: (did: string, displayName: string) => Promise<Contact | null>
+  removeContact: (did: string) => Promise<void>
   resolve: (did: string, force?: boolean) => Promise<AgentIdentityView | null>
   clear: () => void
 }
@@ -16,9 +21,37 @@ function normalizeDid(raw: string): string {
 }
 
 export const useContactStore = create<ContactStore>((set, get) => ({
+  contacts: [],
   identitiesByDid: {},
   loadingByDid: {},
   errorByDid: {},
+  loadContacts: async () => {
+    const sdk = useConnectionStore.getState().sdk
+    if (!sdk) return
+    try {
+      const list = await sdk.listContacts()
+      set({ contacts: list })
+    } catch {
+      // keep existing contacts on error
+    }
+  },
+  addContact: async (did, displayName) => {
+    const sdk = useConnectionStore.getState().sdk
+    if (!sdk) return null
+    const contact = await sdk.addContact({ did, displayName })
+    set((state) => ({
+      contacts: [contact, ...state.contacts.filter((c) => c.did !== did)],
+    }))
+    return contact
+  },
+  removeContact: async (did) => {
+    const sdk = useConnectionStore.getState().sdk
+    if (!sdk) return
+    await sdk.removeContact(did)
+    set((state) => ({
+      contacts: state.contacts.filter((c) => c.did !== did),
+    }))
+  },
   resolve: async (did, force = false) => {
     const normalizedDid = normalizeDid(did)
     if (!normalizedDid) {
@@ -81,6 +114,7 @@ export const useContactStore = create<ContactStore>((set, get) => ({
   },
   clear: () => {
     set({
+      contacts: [],
       identitiesByDid: {},
       loadingByDid: {},
       errorByDid: {},

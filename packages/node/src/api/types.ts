@@ -3,6 +3,7 @@ import type { ClawNetGatewayService } from '../clawnet/gateway-service.js';
 import type { ClawNetTransportService } from '../services/clawnet-transport-service.js';
 import type { NonceManager } from '../clawnet/nonce-manager.js';
 import type { SessionManager } from '../clawnet/session-manager.js';
+import type { ContactService } from '../services/contact-service.js';
 import type { GroupService } from '../services/group-service.js';
 import type { IdentityAdapterService } from '../services/identity-adapter-service.js';
 import type { KeyLifecycleService } from '../services/key-lifecycle-service.js';
@@ -28,5 +29,6 @@ export interface RuntimeContext {
   sessionManager: SessionManager;
   nonceManager: NonceManager;
   ownerPermissionService?: OwnerPermissionService;
+  contactService: ContactService;
   configuredPassphrase?: string;
 }
