@@ -11,7 +11,6 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { cn } from "@/lib/utils"
 import { useConnectionStore } from "@/stores/connection"
 import { useIdentityStore } from "@/stores/identity"
@@ -172,15 +171,21 @@ export function ConnectForm() {
   const refreshPermissions = usePermissionStore((state) => state.refresh)
 
   const { status: probeStatus, info: probeInfo } = useLocalNodeProbe()
-  const [remoteUrl, setRemoteUrl] = useState("")
-  const [localPassphrase, setLocalPassphrase] = useState("")
-  const [remotePassphrase, setRemotePassphrase] = useState("")
+  const [nodeUrl, setNodeUrl] = useState("")
+  const [passphrase, setPassphrase] = useState("")
   const [localError, setLocalError] = useState<string | null>(null)
 
-  const doConnect = async (nodeUrl: string, passphrase: string) => {
+  useEffect(() => {
+    if (probeStatus === "found" && !nodeUrl) {
+      setNodeUrl(LOCAL_NODE_URL)
+    }
+  }, [probeStatus])
+
+  const onSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
     setLocalError(null)
     try {
-      await connect({ nodeUrl, passphrase })
+      await connect({ nodeUrl: nodeUrl.trim(), passphrase })
       await loadSelf()
       await refreshPermissions()
       navigate("/chat")
@@ -189,21 +194,11 @@ export function ConnectForm() {
     }
   }
 
-  const onLocalSubmit = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
-    doConnect(LOCAL_NODE_URL, localPassphrase)
-  }
-
-  const onRemoteSubmit = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
-    doConnect(remoteUrl, remotePassphrase)
-  }
-
   const displayError = localError ?? error
 
   return (
     <div className="flex w-full max-w-[420px] flex-col items-center gap-8">
-      {/* Title area — sits outside the card for breathing room */}
+      {/* Title area */}
       <div className="flex flex-col items-center gap-2 text-center">
         <h1 className="text-2xl font-semibold tracking-tight">{t("connect.title")}</h1>
         <p className="text-sm text-muted-foreground">{t("connect.subtitle")}</p>
@@ -211,109 +206,58 @@ export function ConnectForm() {
 
       {/* Card */}
       <Card className="w-full border-border/60 py-0 gap-0 shadow-lg">
-        <CardContent className="p-0">
-          <Tabs defaultValue="local">
-            <TabsList className="h-auto w-full rounded-none rounded-t-[inherit] border-b bg-transparent p-0">
-              <TabsTrigger
-                value="local"
-                className="flex-1 rounded-none border-b-2 border-transparent py-3 text-[13px] data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none"
-              >
-                {t("connect.local.tab")}
-              </TabsTrigger>
-              <TabsTrigger
-                value="remote"
-                className="flex-1 rounded-none border-b-2 border-transparent py-3 text-[13px] data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none"
-              >
-                {t("connect.remote.tab")}
-              </TabsTrigger>
-            </TabsList>
-
-            {/* ---- Local tab ---- */}
-            <div className="grid [&>*]:col-start-1 [&>*]:row-start-1">
-            <TabsContent forceMount value="local" className="mt-0 px-6 pb-6 data-[state=inactive]:invisible">
-              <form onSubmit={onLocalSubmit}>
+        <CardContent className="px-6 pt-0 pb-6">
+          <form onSubmit={onSubmit}>
+            {probeStatus !== "not-found" && (
+              <>
                 <LocalNodeAvatar status={probeStatus} info={probeInfo} />
-
                 <Separator className="mb-5" />
+              </>
+            )}
 
-                <div className="space-y-4">
-                  <div>
-                    <Label htmlFor="local-passphrase" className="mb-2 block text-[13px]">
-                      {t("connect.passphrase")}
-                    </Label>
-                    <Input
-                      id="local-passphrase"
-                      type="password"
-                      placeholder="••••••••"
-                      value={localPassphrase}
-                      onChange={(event) => setLocalPassphrase(event.target.value)}
-                      autoComplete="off"
-                      required
-                      disabled={probeStatus !== "found"}
-                    />
-                  </div>
-                </div>
+            <div className={cn("space-y-4", probeStatus === "not-found" && "pt-6")}>
+              <div>
+                <Label htmlFor="node-url" className="mb-2 block text-[13px]">
+                  {t("connect.nodeUrl")}
+                </Label>
+                <Input
+                  id="node-url"
+                  placeholder={probeStatus === "found" ? LOCAL_NODE_URL : "https://agent.example.com"}
+                  value={nodeUrl}
+                  onChange={(event) => setNodeUrl(event.target.value)}
+                />
+              </div>
 
-                {displayError ? (
-                  <Alert variant="destructive" className="mt-4">
-                    <AlertDescription>{displayError}</AlertDescription>
-                  </Alert>
-                ) : null}
-
-                <Button
-                  type="submit"
-                  className="mt-5 w-full"
-                  disabled={status === "connecting" || probeStatus !== "found" || !localPassphrase}
-                >
-                  {status === "connecting" ? t("connect.connecting") : t("connect.submit")}
-                </Button>
-              </form>
-            </TabsContent>
-
-            {/* ---- Remote tab ---- */}
-            <TabsContent forceMount value="remote" className="mt-0 space-y-5 px-6 pt-6 pb-6 data-[state=inactive]:invisible">
-              <form className="space-y-4" onSubmit={onRemoteSubmit}>
-                <div>
-                  <Label htmlFor="remote-url" className="mb-2 block text-[13px]">
-                    {t("connect.nodeUrl")}
-                  </Label>
-                  <Input
-                    id="remote-url"
-                    placeholder="https://agent.example.com"
-                    value={remoteUrl}
-                    onChange={(event) => setRemoteUrl(event.target.value)}
-                    required
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="remote-passphrase" className="mb-2 block text-[13px]">
-                    {t("connect.passphrase")}
-                  </Label>
-                  <Input
-                    id="remote-passphrase"
-                    type="password"
-                    placeholder="••••••••"
-                    value={remotePassphrase}
-                    onChange={(event) => setRemotePassphrase(event.target.value)}
-                    autoComplete="off"
-                    required
-                  />
-                </div>
-
-                {displayError ? (
-                  <Alert variant="destructive">
-                    <AlertDescription>{displayError}</AlertDescription>
-                  </Alert>
-                ) : null}
-
-                <Button type="submit" className="!mt-5 w-full" disabled={status === "connecting"}>
-                  {status === "connecting" ? t("connect.connecting") : t("connect.submit")}
-                </Button>
-              </form>
-            </TabsContent>
+              <div>
+                <Label htmlFor="passphrase" className="mb-2 block text-[13px]">
+                  {t("connect.passphrase")}
+                </Label>
+                <Input
+                  id="passphrase"
+                  type="password"
+                  placeholder="••••••••"
+                  value={passphrase}
+                  onChange={(event) => setPassphrase(event.target.value)}
+                  autoComplete="off"
+                  required
+                />
+              </div>
             </div>
-          </Tabs>
+
+            {displayError ? (
+              <Alert variant="destructive" className="mt-4">
+                <AlertDescription>{displayError}</AlertDescription>
+              </Alert>
+            ) : null}
+
+            <Button
+              type="submit"
+              className="mt-5 w-full"
+              disabled={status === "connecting" || !nodeUrl.trim() || !passphrase}
+            >
+              {status === "connecting" ? t("connect.connecting") : t("connect.submit")}
+            </Button>
+          </form>
         </CardContent>
       </Card>
     </div>
