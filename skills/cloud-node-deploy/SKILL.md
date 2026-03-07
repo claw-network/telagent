@@ -95,7 +95,9 @@ ssh -t -i "$SSH_KEY" root@<IP> "systemctl restart clawnetd && sleep 5 && systemc
 ssh -t -i "$SSH_KEY" root@<IP> "systemctl restart telagent-node && sleep 5 && systemctl is-active telagent-node"
 ```
 
-### 7. Verify passphrase in `.env.cloud`
+### 7. Verify `.env.cloud` configuration
+
+#### 7a. Passphrase
 
 Ensure `TELAGENT_CLAWNET_PASSPHRASE` is set in `.env.cloud`. This is the unified auth credential — WebApp users must enter this passphrase to unlock a session. Without it, all authenticated API requests will fail with 401.
 
@@ -110,6 +112,45 @@ ssh -i "$SSH_KEY" root@<IP> "echo 'TELAGENT_CLAWNET_PASSPHRASE=<value_from_above
 ssh -i "$SSH_KEY" root@<IP> "systemctl restart telagent-node"
 ```
 
+#### 7b. Chain config (on-chain DID auto-registration)
+
+The node's DID must be registered on-chain so other nodes can resolve it. At startup, the embedded ClawNet node calls `batchRegisterDID` automatically — but only if the `CLAW_CHAIN_*` env vars are configured.
+
+Verify the required vars are present:
+
+```bash
+ssh -i "$SSH_KEY" root@<IP> "grep -E 'CLAW_CHAIN_RPC_URL|CLAW_CHAIN_IDENTITY_CONTRACT|CLAW_CHAIN_ARTIFACTS_DIR|CLAW_SIGNER' /opt/telagent/.env.cloud"
+```
+
+If any are missing, add the full chain config block to `.env.cloud`:
+
+```bash
+ssh -i "$SSH_KEY" root@<IP> "cat >> /opt/telagent/.env.cloud" << 'EOF'
+
+# ClawNet embedded node chain config (on-chain DID auto-registration)
+CLAW_CHAIN_RPC_URL=https://rpc.clawnetd.com
+CLAW_CHAIN_ID=7625
+CLAW_CHAIN_IDENTITY_CONTRACT=0xee9B2D7eb0CD51e1d0a14278bCA32b02548D1149
+CLAW_CHAIN_TOKEN_CONTRACT=0xE1cf20376ef0372E26CEE715F84A15348bdbB5c6
+CLAW_CHAIN_ESCROW_CONTRACT=0x0e60c5EAf869fBDEbcE5cde4E52ddd195c1F1feD
+CLAW_CHAIN_REPUTATION_CONTRACT=0x9b28722bE8d488b31CF4cAd073De6ad52434b78c
+CLAW_CHAIN_CONTRACTS_CONTRACT=0x7C558284776372A44C906E6f2c38cB83f23966A3
+CLAW_CHAIN_DAO_CONTRACT=0x98f5280ceBEe1eD067A3Cb6729eaAF5ceb3f7Bd9
+CLAW_CHAIN_STAKING_CONTRACT=0x6269D9358a8C4502fC8b629E8998Eb9C98961995
+CLAW_CHAIN_PARAM_REGISTRY_CONTRACT=0x08116e0598Cba600faa7D1f44ef493589B43d3bC
+CLAW_SIGNER_TYPE=env
+CLAW_SIGNER_ENV=TELAGENT_PRIVATE_KEY
+CLAW_CHAIN_ARTIFACTS_DIR=../../packages/contracts/artifacts
+EOF
+ssh -i "$SSH_KEY" root@<IP> "systemctl restart telagent-node"
+```
+
+**Important**:
+- `CLAW_CHAIN_ARTIFACTS_DIR=../../packages/contracts/artifacts` is relative to `packages/node/` (i.e. resolves to `/opt/telagent/packages/contracts/artifacts`). This is correct for the standard server layout.
+- `CLAW_SIGNER_ENV=TELAGENT_PRIVATE_KEY` reuses the existing private key — no extra key needed.
+- The registration is **idempotent**: if the DID is already on-chain, the node skips re-registration.
+- On success, the startup log shows: `[info] Identity on-chain registration verified`
+
 ### 8. Health check
 
 ```bash
@@ -121,6 +162,11 @@ curl -fsS https://<domain>/api/v1/node/ | jq '.data'
 
 # Check DID in startup logs
 ssh -i "$SSH_KEY" root@<IP> "journalctl -u telagent-node --no-pager -n 15 | grep Identity"
+
+# Verify on-chain DID registration
+ssh -i "$SSH_KEY" root@<IP> "journalctl -u telagent-node --no-pager -n 30 | grep -E 'on-chain|ensureRegistered|chain config'"
+# Expected: "Identity on-chain registration verified"
+# If you see: "identityService unavailable" — CLAW_CHAIN_* env vars are missing (see step 7b)
 
 # Verify auth works — unlock a session (passphrase = CLAW_PASSPHRASE from /opt/clawnet/node.env)
 curl -s -X POST https://<domain>/api/v1/session/unlock \
@@ -204,6 +250,8 @@ Each localdev doc must contain the following sections (in order):
 3. `TELAGENT_API_HOST` → `127.0.0.1` (Caddy handles external traffic)
 4. Caddy reverse proxies `https://<domain>` → `127.0.0.1:9529`
 5. ClawNet listens on port `9528`, TelAgent on port `9529`
+6. `CLAW_CHAIN_RPC_URL` + `CLAW_CHAIN_IDENTITY_CONTRACT` + `CLAW_CHAIN_ARTIFACTS_DIR` → **required for on-chain DID registration**. Without these, the node's DID is only local and cannot be resolved by other nodes.
+7. `CLAW_SIGNER_ENV=TELAGENT_PRIVATE_KEY` → reuses the TelAgent private key as the chain signer (no extra key needed)
 
 ## Systemd Service Files
 
@@ -294,6 +342,15 @@ ClawNet requires `CLAW_PASSPHRASE` in `/opt/clawnet/node.env`.
 grep CLAW_PASSPHRASE /opt/clawnet/node.env
 echo 'TELAGENT_CLAWNET_PASSPHRASE=<value>' >> /opt/telagent/.env.cloud
 systemctl restart telagent-node
+```
+
+### DID not registered on-chain (other nodes can't resolve this DID)
+Startup log shows `Embedded node identityService unavailable` or `Failed to ensure on-chain identity registration`. The `CLAW_CHAIN_*` env vars are missing from `.env.cloud`. Add them per step 7b and restart.
+
+Verify registration after restart:
+```bash
+journalctl -u telagent-node --no-pager -n 30 | grep -E 'on-chain|ensureRegistered'
+# Expected: "Identity on-chain registration verified"
 ```
 
 ### WebApp connect returns 429 Too Many Requests
