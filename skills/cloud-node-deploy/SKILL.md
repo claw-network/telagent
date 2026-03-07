@@ -101,9 +101,13 @@ Ensure `TELAGENT_CLAWNET_PASSPHRASE` is set in `.env.cloud`. This is the unified
 
 ```bash
 ssh -i "$SSH_KEY" root@<IP> "grep TELAGENT_CLAWNET_PASSPHRASE /opt/telagent/.env.cloud"
-# Should output: TELAGENT_CLAWNET_PASSPHRASE=<your_passphrase>
-# If missing, add it:
-ssh -i "$SSH_KEY" root@<IP> "echo 'TELAGENT_CLAWNET_PASSPHRASE=your_secure_passphrase' >> /opt/telagent/.env.cloud"
+# Should output: TELAGENT_CLAWNET_PASSPHRASE=<value>
+
+# If missing, get the value from ClawNet config:
+ssh -i "$SSH_KEY" root@<IP> "grep CLAW_PASSPHRASE /opt/clawnet/node.env"
+# Then add it (use the CLAW_PASSPHRASE value):
+ssh -i "$SSH_KEY" root@<IP> "echo 'TELAGENT_CLAWNET_PASSPHRASE=<value_from_above>' >> /opt/telagent/.env.cloud"
+ssh -i "$SSH_KEY" root@<IP> "systemctl restart telagent-node"
 ```
 
 ### 8. Health check
@@ -118,10 +122,10 @@ curl -fsS https://<domain>/api/v1/node/ | jq '.data'
 # Check DID in startup logs
 ssh -i "$SSH_KEY" root@<IP> "journalctl -u telagent-node --no-pager -n 15 | grep Identity"
 
-# Verify auth works — unlock a session and test an authenticated endpoint
+# Verify auth works — unlock a session (passphrase = CLAW_PASSPHRASE from /opt/clawnet/node.env)
 curl -s -X POST https://<domain>/api/v1/session/unlock \
   -H 'Content-Type: application/json' \
-  -d '{"passphrase":"your_passphrase"}' | jq '.data.token'
+  -d '{"passphrase":"<CLAW_PASSPHRASE>"}' | jq '.data.token'
 ```
 
 > **Auth model**: All API endpoints except `/node/*`, `/identities/self`, and `POST /session/unlock` require a valid `tses_*` session token via `Authorization: Bearer <token>`. WebApp handles this automatically after the user enters the passphrase on the connect page.
@@ -196,7 +200,7 @@ Each localdev doc must contain the following sections (in order):
 ## Key Configuration Constraints
 
 1. `TELAGENT_CLAWNET_NODE_URL` → `http://127.0.0.1:9528` (local ClawNet)
-2. `TELAGENT_CLAWNET_PASSPHRASE` → **required** — the unified auth credential for WebApp session unlock; must match the passphrase users enter on the connect page
+2. `TELAGENT_CLAWNET_PASSPHRASE` → **required** — must equal `CLAW_PASSPHRASE` from `/opt/clawnet/node.env`; this is the unified auth credential that WebApp users enter to unlock a session
 3. `TELAGENT_API_HOST` → `127.0.0.1` (Caddy handles external traffic)
 4. Caddy reverse proxies `https://<domain>` → `127.0.0.1:9529`
 5. ClawNet listens on port `9528`, TelAgent on port `9529`
@@ -285,9 +289,10 @@ systemctl restart clawnetd && journalctl -u clawnetd -n 20
 ClawNet requires `CLAW_PASSPHRASE` in `/opt/clawnet/node.env`.
 
 ### WebApp returns 401 on all requests
-`TELAGENT_CLAWNET_PASSPHRASE` is missing or empty in `.env.cloud`. Add it and restart:
+`TELAGENT_CLAWNET_PASSPHRASE` is missing or empty in `.env.cloud`. Get the value from ClawNet config and add it:
 ```bash
-echo 'TELAGENT_CLAWNET_PASSPHRASE=your_secure_passphrase' >> /opt/telagent/.env.cloud
+grep CLAW_PASSPHRASE /opt/clawnet/node.env
+echo 'TELAGENT_CLAWNET_PASSPHRASE=<value>' >> /opt/telagent/.env.cloud
 systemctl restart telagent-node
 ```
 
