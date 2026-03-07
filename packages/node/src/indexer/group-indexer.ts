@@ -58,7 +58,11 @@ export class GroupIndexer {
       });
     }
 
-    await this.catchUp();
+    // Run initial catchUp in background so it doesn't block node startup.
+    // The polling loop will pick up where it left off.
+    void this.catchUp().catch(() => {
+      // Initial catch-up failure is non-fatal; polling will retry.
+    });
 
     const intervalMs = this.options.pollIntervalMs ?? 5_000;
     this.interval = setInterval(() => {

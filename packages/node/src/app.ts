@@ -177,6 +177,7 @@ export class TelagentNode {
       }
     }
 
+    logger.info('[telagent] [startup] creating ContractProvider + repos...');
     this.contracts = new ContractProvider(this.config.chain);
     this.repo = new GroupRepository(this.paths.groupIndexerDb);
     this.mailboxStore = this.createMailboxStore(this.config);
@@ -240,10 +241,13 @@ export class TelagentNode {
 
     this.apiServer = new ApiServer(runtime);
 
+    logger.info('[telagent] [startup] initializing mailbox store...');
     if (this.mailboxStore.init) {
       await this.mailboxStore.init();
     }
+    logger.info('[telagent] [startup] starting indexer...');
     await this.indexer.start();
+    logger.info('[telagent] [startup] starting API server...');
     await this.apiServer.start();
     this.clawnetTransportService.startListening({
       onEnvelope: (raw, sourceDid) => this.messageService!.ingestFederatedEnvelope(raw, sourceDid),
