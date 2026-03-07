@@ -144,6 +144,8 @@ export function profileRoutes(ctx: RuntimeContext): Router {
   });
 
   // ── GET /:did  (public — no auth, returns cached peer profile) ────────────
+  // On cache miss, fires a profile-card request via P2P so the next query will
+  // hit the cache once the peer replies.
   router.get('/:did', async ({ res, params, url }) => {
     try {
       const { did } = params;
@@ -152,6 +154,26 @@ export function profileRoutes(ctx: RuntimeContext): Router {
       }
       const profile = ctx.peerProfileRepository.get(did);
       if (!profile) {
+        // Fire-and-forget: request the peer's profile card so we can cache it
+        void (async () => {
+          try {
+            const selfProfile = await ctx.selfProfileStore.loadPublic();
+            if (!selfProfile.nickname) return;
+            const selfDid = ctx.identityService.getSelfDid();
+            let avatarUrl = selfProfile.avatarUrl;
+            if (avatarUrl?.startsWith('/') && ctx.config.publicUrl) {
+              avatarUrl = `${ctx.config.publicUrl.replace(/\/$/, '')}${avatarUrl}`;
+            }
+            await ctx.clawnetTransportService.sendProfileCard(did, {
+              did: selfDid,
+              nickname: selfProfile.nickname,
+              avatarUrl,
+              nodeUrl: ctx.config.publicUrl ?? selfProfile.nodeUrl,
+            });
+          } catch {
+            // best-effort
+          }
+        })();
         throw new TelagentError(ErrorCodes.NOT_FOUND, `No cached profile for did: ${did}`);
       }
       ok(res, profile, { self: `/api/v1/profile/${encodeURIComponent(did)}` });

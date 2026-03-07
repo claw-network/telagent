@@ -50,6 +50,29 @@ export function contactRoutes(ctx: RuntimeContext): Router {
         avatarUrl: typeof payload.avatarUrl === 'string' ? payload.avatarUrl : undefined,
         notes: typeof payload.notes === 'string' ? payload.notes : undefined,
       });
+
+      // Fire-and-forget: push our profile card to the new contact so they know us,
+      // and trigger a reciprocal profile-card reply so we learn their nickname/avatar.
+      void (async () => {
+        try {
+          const profile = await ctx.selfProfileStore.loadPublic();
+          if (!profile.nickname) return;
+          const selfDid = ctx.identityService.getSelfDid();
+          let avatarUrl = profile.avatarUrl;
+          if (avatarUrl?.startsWith('/') && ctx.config.publicUrl) {
+            avatarUrl = `${ctx.config.publicUrl.replace(/\/$/, '')}${avatarUrl}`;
+          }
+          await ctx.clawnetTransportService.sendProfileCard(did, {
+            did: selfDid,
+            nickname: profile.nickname,
+            avatarUrl,
+            nodeUrl: ctx.config.publicUrl ?? profile.nodeUrl,
+          });
+        } catch {
+          // fire-and-forget
+        }
+      })();
+
       created(res, contact, { self: `/api/v1/contacts/${encodeURIComponent(did)}` });
     } catch (error) {
       handleError(res, error, url.pathname);

@@ -90,7 +90,9 @@ export function AddContactDialog({
       setChainVerified(false)
 
       try {
-        // Run identity resolve and peer profile fetch in parallel
+        // Run identity resolve and peer profile fetch in parallel.
+        // The profile fetch also triggers a P2P profile-card request on cache miss,
+        // so a retry after a short delay may succeed.
         const [identity, profile] = await Promise.all([
           resolveContact(normalizedDid).catch(() => null),
           useContactStore.getState().fetchPeerProfile(normalizedDid).catch(() => null),
@@ -107,6 +109,29 @@ export function AddContactDialog({
           if (profile.nickname && !displayName) {
             setDisplayName(profile.nickname)
           }
+        } else {
+          // No cached profile yet — the server sent a P2P request.
+          // Retry after a delay to pick up the reply.
+          setTimeout(async () => {
+            if (seq !== lookupRef.current) return
+            try {
+              // Clear stale cache entry so the SDK re-fetches
+              useContactStore.setState((s) => {
+                const copy = { ...s.peerProfiles }
+                delete copy[normalizedDid]
+                return { peerProfiles: copy }
+              })
+              const retried = await useContactStore.getState().fetchPeerProfile(normalizedDid).catch(() => null)
+              if (seq !== lookupRef.current || !retried) return
+              setPreviewNickname(retried.nickname)
+              setPreviewAvatar(retried.avatarUrl)
+              if (retried.nickname && !displayName) {
+                setDisplayName(retried.nickname)
+              }
+            } catch {
+              // ignore
+            }
+          }, 3000)
         }
       } catch {
         if (seq !== lookupRef.current) return
