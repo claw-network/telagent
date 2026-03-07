@@ -63,7 +63,7 @@ export class SessionManager {
   private static readonly TOKEN_PREFIX = 'tses_';
   private static readonly DEFAULT_TTL_MS = 30 * 60 * 1000;       // 30 分钟
   private static readonly MAX_TTL_MS = 24 * 60 * 60 * 1000;      // 24 小时上限
-  private static readonly MAX_CONCURRENT_SESSIONS = 3;
+  private static readonly MAX_CONCURRENT_SESSIONS = 5;
   private static readonly CLEANUP_INTERVAL_MS = 60 * 1000;
 
   constructor() {
@@ -80,7 +80,8 @@ export class SessionManager {
   async unlock(params: UnlockParams): Promise<UnlockResult> {
     this.evictExpired();
     if (this.sessions.size >= SessionManager.MAX_CONCURRENT_SESSIONS) {
-      throw new Error('Too many active sessions. Lock an existing session first.');
+      // Evict the oldest session to make room instead of hard-blocking
+      this.evictOldest();
     }
 
     // 验证 passphrase
@@ -202,6 +203,22 @@ export class SessionManager {
         session.passphrase = '\0'.repeat(session.passphrase.length);
         this.sessions.delete(key);
       }
+    }
+  }
+
+  private evictOldest(): void {
+    let oldestKey: string | null = null;
+    let oldestCreatedAt = Infinity;
+    for (const [key, session] of this.sessions) {
+      if (session.createdAt < oldestCreatedAt) {
+        oldestCreatedAt = session.createdAt;
+        oldestKey = key;
+      }
+    }
+    if (oldestKey) {
+      const session = this.sessions.get(oldestKey)!;
+      session.passphrase = '\0'.repeat(session.passphrase.length);
+      this.sessions.delete(oldestKey);
     }
   }
 
