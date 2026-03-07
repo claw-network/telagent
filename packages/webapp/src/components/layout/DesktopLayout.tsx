@@ -1,7 +1,10 @@
 import type { ReactNode } from "react"
+import { useState } from "react"
 import { XIcon } from "lucide-react"
 
 import { ConversationDetailPanel } from "@/components/chat/ConversationDetailPanel"
+import { ContactInfoPanel } from "@/components/contact/ContactInfoPanel"
+import { ContactList } from "@/components/contact/ContactList"
 import { ReconnectBanner } from "@/components/layout/ReconnectBanner"
 import { ServerRail } from "@/components/layout/ServerRail"
 import { ConversationList } from "@/components/chat/ConversationList"
@@ -9,6 +12,9 @@ import { StatusBar } from "@/components/layout/StatusBar"
 import { UnlockDialog } from "@/components/session/UnlockDialog"
 import { Button } from "@/components/ui/button"
 import { useUIStore } from "@/stores/ui"
+import { useConversationStore } from "@/stores/conversation"
+
+type SidebarTab = "conversations" | "contacts"
 
 interface DesktopLayoutProps {
   children: ReactNode
@@ -17,21 +23,46 @@ interface DesktopLayoutProps {
 export function DesktopLayout({ children }: DesktopLayoutProps) {
   const detailPanelOpen = useUIStore((state) => state.detailPanelOpen)
   const setDetailPanelOpen = useUIStore((state) => state.setDetailPanelOpen)
+  const [sidebarTab, setSidebarTab] = useState<SidebarTab>("conversations")
+  const [selectedContactDid, setSelectedContactDid] = useState<string | null>(null)
+  const setSelectedConversationId = useConversationStore((state) => state.setSelectedConversationId)
+
+  const handleOpenChat = (conversationId: string) => {
+    setSelectedConversationId(conversationId)
+    setSidebarTab("conversations")
+  }
 
   return (
     <div className="flex h-svh flex-col">
       <ReconnectBanner />
 
       <div className="flex min-h-0 flex-1">
-        <ServerRail />
+        <ServerRail activeTab={sidebarTab} onTabChange={setSidebarTab} />
 
         <aside className="flex w-[240px] min-w-[200px] flex-col bg-[#2b2d31]">
-          <ConversationList />
+          {sidebarTab === "conversations" ? (
+            <ConversationList />
+          ) : (
+            <ContactList
+              selectedDid={selectedContactDid}
+              onSelect={setSelectedContactDid}
+            />
+          )}
         </aside>
 
-        <main className="min-w-0 flex-1">{children}</main>
+        <main className="min-w-0 flex-1">
+          {sidebarTab === "contacts" && selectedContactDid ? (
+            <ContactInfoPanel
+              did={selectedContactDid}
+              onOpenChat={handleOpenChat}
+              onContactRemoved={() => setSelectedContactDid(null)}
+            />
+          ) : (
+            children
+          )}
+        </main>
 
-        {detailPanelOpen ? (
+        {sidebarTab === "conversations" && detailPanelOpen ? (
           <aside className="hidden w-[320px] min-w-[280px] max-w-[460px] resize-x overflow-auto border-l bg-card/35 p-4 lg:block">
             <div className="mb-3 flex items-center justify-between">
               <h2 className="text-sm font-semibold">Details</h2>

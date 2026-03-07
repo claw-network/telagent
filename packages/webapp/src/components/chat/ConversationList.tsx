@@ -1,4 +1,4 @@
-import { HashIcon, HeadphonesIcon, MicIcon, SearchIcon, SettingsIcon, UserRoundPlusIcon } from "lucide-react"
+import { HashIcon, SearchIcon, UserRoundPlusIcon } from "lucide-react"
 import { useMemo } from "react"
 import { useTranslation } from "react-i18next"
 import { useNavigate } from "react-router-dom"
@@ -12,7 +12,6 @@ import { useIsMobile } from "@/hooks/use-mobile"
 import { CreateGroupDialog } from "@/components/group/CreateGroupDialog"
 import { EmptyState } from "@/components/shared/EmptyState"
 import { Button } from "@/components/ui/button"
-import { useIdentityStore } from "@/stores/identity"
 
 export function ConversationList() {
   const { t } = useTranslation()
@@ -23,7 +22,6 @@ export function ConversationList() {
   const searchQuery = useConversationStore((state) => state.searchQuery)
   const setSearchQuery = useConversationStore((state) => state.setSearchQuery)
   const setSelectedConversationId = useConversationStore((state) => state.setSelectedConversationId)
-  const selfDid = useIdentityStore((state) => state.self?.did)
 
   const filtered = useMemo(() => {
     const query = searchQuery.trim().toLowerCase()
@@ -173,7 +171,6 @@ export function ConversationList() {
                 {conversation.conversationId === selectedConversationId ? (
                   <div className="flex items-center gap-1 text-[#b5bac1]">
                     <UserRoundPlusIcon className="size-3.5" />
-                    <SettingsIcon className="size-3.5" />
                   </div>
                 ) : null}
               </div>
@@ -181,27 +178,6 @@ export function ConversationList() {
           )}
         </div>
       </ScrollArea>
-
-      <div className="mt-auto flex h-[60px] items-center justify-between border-t border-black/20 bg-[#232428] px-3">
-        <div className="flex min-w-0 items-center gap-2">
-          <DidAvatar did={selfDid ?? "did:claw:agent"} className="size-9" />
-          <div className="min-w-0">
-            <p className="truncate text-sm font-semibold text-[#f2f3f5]">baggingspam</p>
-            <p className="truncate text-xs text-[#949ba4]">#{(selfDid ?? "3776").slice(-4)}</p>
-          </div>
-        </div>
-        <div className="flex items-center gap-1 text-[#b5bac1]">
-          <Button size="icon-xs" variant="ghost">
-            <MicIcon className="size-4" />
-          </Button>
-          <Button size="icon-xs" variant="ghost">
-            <HeadphonesIcon className="size-4" />
-          </Button>
-          <Button size="icon-xs" variant="ghost" onClick={() => navigate("/settings")}>
-            <SettingsIcon className="size-4" />
-          </Button>
-        </div>
-      </div>
     </div>
   )
 }

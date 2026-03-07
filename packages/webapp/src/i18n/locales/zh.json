@@ -144,7 +144,9 @@
     "actions": "操作"
   },
   "contact": {
+    "title": "联系人",
     "add": "添加联系人",
+    "remove": "删除联系人",
     "addDescription": "使用 DID 新建一个联系人私聊会话。",
     "did": "联系人 DID",
     "displayName": "显示名称（可选）",

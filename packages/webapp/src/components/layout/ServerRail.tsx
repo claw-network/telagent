@@ -1,32 +1,21 @@
-import { CompassIcon, PlusIcon, Settings2Icon, UserRoundPlusIcon, UsersIcon } from "lucide-react"
-import { useEffect, useMemo, useState } from "react"
+import { BookUserIcon, MessageCircleIcon } from "lucide-react"
+import { useEffect } from "react"
 import { useTranslation } from "react-i18next"
 import { Link } from "react-router-dom"
 
-import { AddContactDialog } from "@/components/contact/AddContactDialog"
-import { CreateGroupDialog } from "@/components/group/CreateGroupDialog"
 import { DidAvatar } from "@/components/shared/DidAvatar"
-import { Button } from "@/components/ui/button"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { useGuardedAction } from "@/hooks/use-guarded-action"
-import { useConversationStore } from "@/stores/conversation"
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { useIdentityStore } from "@/stores/identity"
 
-export function ServerRail() {
-  const { t } = useTranslation()
-  const { canExecute: canManageContacts } = useGuardedAction("manage_contacts")
-  const { canExecute: canManageGroups } = useGuardedAction("manage_groups")
-  const conversations = useConversationStore((state) => state.conversations)
-  const selectedConversationId = useConversationStore((state) => state.selectedConversationId)
-  const setSelectedConversationId = useConversationStore((state) => state.setSelectedConversationId)
-  const [addContactOpen, setAddContactOpen] = useState(false)
-  const [createGroupOpen, setCreateGroupOpen] = useState(false)
+type SidebarTab = "conversations" | "contacts"
 
+interface ServerRailProps {
+  activeTab: SidebarTab
+  onTabChange: (tab: SidebarTab) => void
+}
+
+export function ServerRail({ activeTab, onTabChange }: ServerRailProps) {
+  const { t } = useTranslation()
   const selfDid = useIdentityStore((state) => state.self?.did ?? "")
   const selfProfile = useIdentityStore((state) => state.selfProfile)
   const loadSelfProfile = useIdentityStore((state) => state.loadSelfProfile)
@@ -35,95 +24,62 @@ export function ServerRail() {
     void loadSelfProfile()
   }, [loadSelfProfile])
 
-  const servers = useMemo(() => conversations.slice(0, 9), [conversations])
+  const tabs: { id: SidebarTab; icon: React.ReactNode; label: string }[] = [
+    { id: "conversations", icon: <MessageCircleIcon className="size-5" />, label: t("chat.title") },
+    { id: "contacts", icon: <BookUserIcon className="size-5" />, label: t("contact.title") },
+  ]
 
   return (
-    <aside className="flex w-[74px] flex-col items-center gap-3 border-r border-black/25 bg-[#202225] py-3">
-      <Button
-        size="icon"
-        className="size-12 rounded-2xl bg-[#5865f2] text-white hover:rounded-xl hover:bg-[#5e6af4]"
-      >
-        <CompassIcon className="size-5" />
-      </Button>
+    <aside className="flex w-[60px] flex-col items-center gap-2 border-r border-black/30 bg-[#1a1b1e] py-3">
+      {/* Own avatar — links to settings */}
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Link
+            to="/settings"
+            title={selfProfile?.nickname || selfDid || t("settings.profile.title")}
+            className="mb-1 block shrink-0"
+          >
+            <DidAvatar
+              did={selfDid}
+              avatarUrl={selfProfile?.avatarUrl}
+              className="size-10 rounded-xl transition-all hover:rounded-2xl"
+            />
+          </Link>
+        </TooltipTrigger>
+        <TooltipContent side="right">{t("settings.profile.title")}</TooltipContent>
+      </Tooltip>
 
       <div className="h-px w-8 bg-white/10" />
 
-      <div className="flex flex-1 flex-col items-center gap-2 overflow-y-auto px-1">
-        {servers.map((conversation) => {
-          const active = selectedConversationId === conversation.conversationId
+      {/* Navigation tabs */}
+      <nav className="flex flex-1 flex-col items-center gap-1 pt-1">
+        {tabs.map((tab) => {
+          const active = activeTab === tab.id
           return (
-            <button
-              key={conversation.conversationId}
-              type="button"
-              onClick={() => setSelectedConversationId(conversation.conversationId)}
-              className={`group relative rounded-2xl transition-all ${active ? "rounded-xl" : "hover:rounded-xl"}`}
-            >
-              <span
-                className={`absolute -left-2 top-1/2 -translate-y-1/2 rounded-r-full bg-white transition-all ${
-                  active
-                    ? "h-8 w-1 opacity-100"
-                    : "h-0 w-0 opacity-0 group-hover:h-5 group-hover:w-1 group-hover:opacity-100"
-                }`}
-              />
-              <DidAvatar
-                did={conversation.peerDid ?? conversation.groupId ?? conversation.conversationId}
-                avatarUrl={conversation.avatarUrl ?? undefined}
-                className={`size-12 border ${active ? "border-[#5865f2]" : "border-transparent"}`}
-              />
-            </button>
+            <Tooltip key={tab.id}>
+              <TooltipTrigger asChild>
+                <button
+                  type="button"
+                  aria-pressed={active}
+                  onClick={() => onTabChange(tab.id)}
+                  className={`group relative flex size-10 items-center justify-center rounded-xl transition-all ${
+                    active
+                      ? "bg-[#404249] text-white"
+                      : "text-[#7d828a] hover:bg-[#35373c] hover:text-[#dcddde]"
+                  }`}
+                >
+                  {/* Active indicator pill */}
+                  {active && (
+                    <span className="absolute -left-3 top-1/2 h-5 w-1 -translate-y-1/2 rounded-r-full bg-white" />
+                  )}
+                  {tab.icon}
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="right">{tab.label}</TooltipContent>
+            </Tooltip>
           )
         })}
-      </div>
-
-      <div className="flex flex-col items-center gap-2">
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              size="icon"
-              variant="secondary"
-              className="size-12 rounded-2xl bg-[#2b2d31] text-[#8ea1e1] hover:rounded-xl"
-              aria-label={t("group.create")}
-            >
-              <PlusIcon className="size-5" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent side="right" align="center" className="w-48">
-            <DropdownMenuItem
-              disabled={!canManageContacts}
-              onSelect={() => {
-                setAddContactOpen(true)
-              }}
-            >
-              <UserRoundPlusIcon className="size-4" />
-              {t("contact.add")}
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              disabled={!canManageGroups}
-              onSelect={() => {
-                setCreateGroupOpen(true)
-              }}
-            >
-              <UsersIcon className="size-4" />
-              {t("group.create")}
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-
-        {/* Self identity button — shows own avatar, links to settings */}
-        <Button asChild size="icon" variant="secondary" className="size-12 rounded-2xl bg-[#2b2d31] hover:rounded-xl p-0 overflow-hidden">
-          <Link to="/settings" title={selfProfile?.nickname || selfDid || t("settings.profile.title")}>
-            <DidAvatar did={selfDid} avatarUrl={selfProfile?.avatarUrl} className="size-12 rounded-none" />
-          </Link>
-        </Button>
-
-        <Button asChild size="icon" variant="secondary" className="size-12 rounded-2xl bg-[#2b2d31] text-[#b5bac1] hover:rounded-xl">
-          <Link to="/settings">
-            <Settings2Icon className="size-5" />
-          </Link>
-        </Button>
-      </div>
-      <AddContactDialog open={addContactOpen} onOpenChange={setAddContactOpen} hideTrigger />
-      <CreateGroupDialog open={createGroupOpen} onOpenChange={setCreateGroupOpen} hideTrigger />
+      </nav>
     </aside>
   )
 }

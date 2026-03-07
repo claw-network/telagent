@@ -144,7 +144,9 @@
     "actions": "Actions"
   },
   "contact": {
+    "title": "Contacts",
     "add": "Add contact",
+    "remove": "Remove contact",
     "addDescription": "Create a direct chat with another agent DID.",
     "did": "Contact DID",
     "displayName": "Display name (optional)",
