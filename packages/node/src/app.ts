@@ -27,8 +27,10 @@ import type { MailboxStore } from './storage/mailbox-store.js';
 import { MessageRepository } from './storage/message-repository.js';
 import { ContactRepository } from './storage/contact-repository.js';
 import { PostgresMessageRepository } from './storage/postgres-message-repository.js';
+import { IdentityCache } from './storage/identity-cache.js';
+import { getGlobalLogger } from './logger.js';
 
-const logger = console;
+const logger = getGlobalLogger();
 const SESSION_RENEW_MS = 23 * 60 * 60 * 1000;
 const SESSION_TTL_SECONDS = 24 * 60 * 60;
 
@@ -139,7 +141,9 @@ export class TelagentNode {
     }
     logger.info('[telagent] ClawNet Node synced');
 
-    this.identityService = new IdentityAdapterService(this.clawnetGateway);
+    const identityCache = new IdentityCache(this.paths.cache);
+    await identityCache.load();
+    this.identityService = new IdentityAdapterService(this.clawnetGateway, { identityCache });
     await this.identityService.init();
     logger.info('[telagent] Identity: %s', this.identityService.getSelfDid());
 
@@ -187,7 +191,8 @@ export class TelagentNode {
       this.identityService,
       this.repo,
     );
-    this.keyLifecycleService = new KeyLifecycleService();
+    this.keyLifecycleService = new KeyLifecycleService({ keysDir: this.paths.keys });
+    await this.keyLifecycleService.loadFromDisk();
     this.messageService = new MessageService(this.groupService, {
       repository: this.mailboxStore,
       keyLifecycleService: this.keyLifecycleService,

@@ -1,12 +1,15 @@
 import { loadConfigFromEnv } from './config.js';
 import { killStaleTelagentOnPort } from './clawnet/clawnetd-process.js';
-import { createLogger } from './logger.js';
+import { createLogger, setGlobalLogger } from './logger.js';
 import { TelagentNode } from './app.js';
 
 async function main(): Promise<void> {
-  const logger = createLogger((process.env.TELAGENT_LOG_LEVEL as 'debug' | 'info' | 'warn' | 'error') || 'info');
-
   const config = loadConfigFromEnv();
+  const logger = createLogger({
+    level: (process.env.TELAGENT_LOG_LEVEL as 'debug' | 'info' | 'warn' | 'error') || 'info',
+    logDir: config.paths.logs,
+  });
+  setGlobalLogger(logger);
 
   // Kill any stale telagent process on the API port before starting
   if (await killStaleTelagentOnPort(config.port)) {

@@ -94,8 +94,10 @@ export const useConnectionStore = create<ConnectionStore>()(
 
         set({ status: "connecting", error: undefined })
         try {
-          // Probe with session token to validate it's still active
-          const target = new URL("/api/v1/node", nodeUrl).toString()
+          // Probe /api/v1/session (auth-required endpoint) to validate the token is still active.
+          // /api/v1/node is whitelisted (no auth), so probing it would succeed even with an
+          // expired token and leave the app in a broken "connected" state.
+          const target = new URL("/api/v1/session", nodeUrl).toString()
           const response = await fetch(target, {
             method: "GET",
             headers: {

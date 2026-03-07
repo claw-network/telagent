@@ -1,6 +1,7 @@
 import { ErrorCodes, TelagentError, hashDid, isDidClaw, type AgentDID } from '@telagent/protocol';
 
 import type { ClawNetGatewayService, IdentityInfo } from '../clawnet/gateway-service.js';
+import type { IdentityCache } from '../storage/identity-cache.js';
 
 export interface ResolvedIdentity {
   did: AgentDID;
@@ -26,10 +27,14 @@ export class IdentityAdapterService {
   private selfDidCache: AgentDID | null = null;
   private selfAddressCache: string | null = null;
   private readonly revocationListeners = new Set<DidRevocationListener>();
+  private identityCache?: IdentityCache;
 
   constructor(
     private readonly gateway: ClawNetGatewayService,
-  ) {}
+    options?: { identityCache?: IdentityCache },
+  ) {
+    this.identityCache = options?.identityCache;
+  }
 
   subscribeDidRevocations(listener: DidRevocationListener): () => void {
     this.revocationListeners.add(listener);
@@ -97,8 +102,31 @@ export class IdentityAdapterService {
       return this.getSelf();
     }
 
+    // Check disk cache
+    const cached = this.identityCache?.get(rawDid);
+    if (cached) {
+      return {
+        did: cached.did as AgentDID,
+        didHash: cached.didHash,
+        controller: cached.controller,
+        publicKey: cached.publicKey,
+        isActive: cached.isActive,
+        resolvedAtMs: cached.resolvedAtMs,
+        address: cached.address,
+        activeKey: cached.activeKey,
+      };
+    }
+
     const info = await this.gateway.resolveIdentity(rawDid);
-    return this.toResolvedIdentity(info);
+    const resolved = this.toResolvedIdentity(info);
+
+    // Write to disk cache
+    if (this.identityCache) {
+      this.identityCache.set(resolved);
+      void this.identityCache.flush();
+    }
+
+    return resolved;
   }
 
   async assertActiveDid(rawDid: string): Promise<ResolvedIdentity> {

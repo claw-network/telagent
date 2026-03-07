@@ -1,3 +1,6 @@
+import { readdir, readFile, writeFile, unlink, mkdir } from 'node:fs/promises';
+import { resolve } from 'node:path';
+
 import { ErrorCodes, TelagentError, isDidClaw, type AgentDID } from '@telagent/protocol';
 
 export type KeySuite = 'signal' | 'mls';
@@ -69,6 +72,7 @@ export interface KeyLifecycleServiceOptions {
   defaultSignalGraceSec?: number;
   defaultMlsGraceSec?: number;
   clock?: KeyLifecycleClock;
+  keysDir?: string;
 }
 
 const SYSTEM_CLOCK: KeyLifecycleClock = {
@@ -80,11 +84,49 @@ export class KeyLifecycleService {
   private readonly defaultSignalGraceSec: number;
   private readonly defaultMlsGraceSec: number;
   private readonly clock: KeyLifecycleClock;
+  private readonly keysDir?: string;
 
   constructor(options: KeyLifecycleServiceOptions = {}) {
     this.defaultSignalGraceSec = Math.max(30, Math.floor(options.defaultSignalGraceSec ?? 3_600));
     this.defaultMlsGraceSec = Math.max(30, Math.floor(options.defaultMlsGraceSec ?? 600));
     this.clock = options.clock ?? SYSTEM_CLOCK;
+    this.keysDir = options.keysDir;
+  }
+
+  async loadFromDisk(): Promise<void> {
+    if (!this.keysDir) return;
+    let entries: string[];
+    try {
+      entries = await readdir(this.keysDir);
+    } catch {
+      return;
+    }
+    for (const name of entries) {
+      if (!name.endsWith('.json')) continue;
+      try {
+        const raw = await readFile(resolve(this.keysDir, name), 'utf-8');
+        const record = JSON.parse(raw) as KeyLifecycleRecord;
+        const key = this.compositeKey(record.did, record.suite, record.keyId);
+        this.recordByCompositeKey.set(key, record);
+      } catch {
+        // skip corrupted files
+      }
+    }
+  }
+
+  private async persistRecord(record: KeyLifecycleRecord): Promise<void> {
+    if (!this.keysDir) return;
+    const fileName = `${record.keyId}.json`;
+    await writeFile(resolve(this.keysDir, fileName), JSON.stringify(record, null, 2), 'utf-8');
+  }
+
+  private async deleteRecordFile(keyId: string): Promise<void> {
+    if (!this.keysDir) return;
+    try {
+      await unlink(resolve(this.keysDir, `${keyId}.json`));
+    } catch {
+      // file may not exist
+    }
   }
 
   registerKey(input: RegisterKeyInput): KeyLifecycleRecord {
@@ -116,6 +158,7 @@ export class KeyLifecycleService {
       expiresAtMs: normalized.expiresAtMs,
     };
     this.recordByCompositeKey.set(compositeKey, record);
+    void this.persistRecord(record);
     return this.cloneRecord(record);
   }
 
@@ -140,6 +183,7 @@ export class KeyLifecycleService {
     previous.state = 'ROTATING';
     previous.rotationGraceUntilMs = graceUntilMs;
     previous.rotatedToKeyId = normalized.toKeyId;
+    void this.persistRecord(previous);
 
     const nextCompositeKey = this.compositeKey(normalized.did, normalized.suite, normalized.toKeyId);
     const nextExisting = this.recordByCompositeKey.get(nextCompositeKey);
@@ -172,6 +216,7 @@ export class KeyLifecycleService {
       rotatedFromKeyId: normalized.fromKeyId,
     };
     this.recordByCompositeKey.set(nextCompositeKey, next);
+    void this.persistRecord(next);
 
     return {
       previous: this.cloneRecord(previous),
@@ -185,6 +230,7 @@ export class KeyLifecycleService {
     record.state = 'REVOKED';
     record.revokedAtMs = this.clock.now();
     record.revokeReason = normalized.reason;
+    void this.persistRecord(record);
     return this.cloneRecord(record);
   }
 
@@ -209,6 +255,7 @@ export class KeyLifecycleService {
     revoked.state = 'RECOVERED';
     revoked.recoveredAtMs = this.clock.now();
     revoked.recoveredToKeyId = normalized.recoveredKeyId;
+    void this.persistRecord(revoked);
 
     const now = this.clock.now();
     const recovered: KeyLifecycleRecord = {
@@ -222,6 +269,7 @@ export class KeyLifecycleService {
       recoveredFromKeyId: normalized.revokedKeyId,
     };
     this.recordByCompositeKey.set(recoveredComposite, recovered);
+    void this.persistRecord(recovered);
 
     return {
       revoked: this.cloneRecord(revoked),
