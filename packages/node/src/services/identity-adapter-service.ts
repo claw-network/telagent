@@ -9,9 +9,10 @@ import { getGlobalLogger } from '../logger.js';
 
 const logger = getGlobalLogger();
 
-/** Minimal ABI for on-chain DID registration (no artifacts needed) */
+/** Minimal ABI for on-chain DID identity ops (no artifacts needed) */
 const IDENTITY_ABI = [
   'function getController(bytes32 didHash) view returns (address)',
+  'function isActive(bytes32 didHash) view returns (bool)',
   'function batchRegisterDID(bytes32[] didHashes, bytes[] publicKeys, uint8[] purposes, address[] controllers)',
 ];
 
@@ -119,6 +120,11 @@ export class IdentityAdapterService {
     if (self.controller.startsWith('0x')) {
       return;
     }
+    // Double-check on-chain directly (ClawNet DHT may not include chain data)
+    const onChain = await this.resolveOnChain(self.did);
+    if (onChain) {
+      return;
+    }
     // Convert the multibase public key to 0x-prefixed hex for the smart contract
     const rawBytes = publicKeyFromDid(self.did);
     const hexKey = `0x${bytesToHex(rawBytes)}`;
@@ -182,6 +188,44 @@ export class IdentityAdapterService {
     logger.info('[telagent] DID registered on-chain successfully: %s', did);
   }
 
+  /**
+   * Resolve a DID by querying the on-chain ClawIdentity contract.
+   * Returns null if chain config is missing or DID is not registered.
+   */
+  private async resolveOnChain(did: string): Promise<ResolvedIdentity | null> {
+    const rpcUrl = process.env.CLAW_CHAIN_RPC_URL;
+    const identityAddr = process.env.CLAW_CHAIN_IDENTITY_CONTRACT;
+    if (!rpcUrl || !identityAddr) return null;
+
+    const provider = new ethers.JsonRpcProvider(rpcUrl);
+    const contract = new ethers.Contract(identityAddr, IDENTITY_ABI, provider);
+    const didHash = ethers.keccak256(ethers.toUtf8Bytes(did));
+
+    try {
+      const [controller, active] = await Promise.all([
+        contract.getController(didHash),
+        contract.isActive(didHash),
+      ]);
+      if (controller === ethers.ZeroAddress) return null;
+
+      // Extract multibase public key from DID (last segment)
+      const keyPart = did.split(':').pop() || did;
+      return {
+        did: did as AgentDID,
+        didHash,
+        controller,
+        publicKey: keyPart,
+        isActive: active,
+        resolvedAtMs: Date.now(),
+        address: controller,
+        activeKey: keyPart,
+      };
+    } catch {
+      // getController reverts when DID not registered
+      return null;
+    }
+  }
+
   async resolve(rawDid: string): Promise<ResolvedIdentity> {
     if (!isDidClaw(rawDid)) {
       throw new TelagentError(ErrorCodes.VALIDATION, 'DID must use did:claw format');
@@ -206,8 +250,23 @@ export class IdentityAdapterService {
       };
     }
 
-    const info = await this.gateway.resolveIdentity(rawDid);
-    const resolved = this.toResolvedIdentity(info);
+    let resolved: ResolvedIdentity;
+    try {
+      const info = await this.gateway.resolveIdentity(rawDid);
+      resolved = this.toResolvedIdentity(info);
+    } catch (error) {
+      // DHT resolution failed — try on-chain fallback
+      if (this.isDidNotFoundError(error)) {
+        const chainResolved = await this.resolveOnChain(rawDid);
+        if (chainResolved) {
+          resolved = chainResolved;
+        } else {
+          throw error;
+        }
+      } else {
+        throw error;
+      }
+    }
 
     // Write to disk cache
     if (this.identityCache) {

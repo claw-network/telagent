@@ -114,7 +114,11 @@ ssh -i "$SSH_KEY" root@<IP> "systemctl restart telagent-node"
 
 #### 7b. Chain config (on-chain DID auto-registration)
 
-The node's DID must be registered on-chain so other nodes can resolve it. At startup, the embedded ClawNet node calls `batchRegisterDID` automatically — but only if the `CLAW_CHAIN_*` env vars are configured.
+The node's DID must be registered on-chain so other nodes can resolve it. At startup, the node calls `batchRegisterDID` automatically — but only if:
+1. The `CLAW_CHAIN_*` env vars are configured
+2. The node's wallet address has `REGISTRAR_ROLE` on the ClawIdentity contract
+
+On cloud servers (standalone ClawNet node, `TELAGENT_CLAWNET_AUTO_START=false`), the registration uses a direct ethers.js fallback (`registerOnChainDirect`) since there's no embedded managed node.
 
 Verify the required vars are present:
 
@@ -252,6 +256,7 @@ Each localdev doc must contain the following sections (in order):
 5. ClawNet listens on port `9528`, TelAgent on port `9529`
 6. `CLAW_CHAIN_RPC_URL` + `CLAW_CHAIN_IDENTITY_CONTRACT` + `CLAW_CHAIN_ARTIFACTS_DIR` → **required for on-chain DID registration**. Without these, the node's DID is only local and cannot be resolved by other nodes.
 7. `CLAW_SIGNER_ENV=TELAGENT_PRIVATE_KEY` → reuses the TelAgent private key as the chain signer (no extra key needed)
+8. Node wallet must have `REGISTRAR_ROLE` on `ClawIdentity` contract (`0xee9B...2b02548D1149`). Deployer address `0xA9b95A4fDCD673f6aE0D2a873E0f4771CA7D0119` can grant this role (key in alex `/opt/clawnet/infra/testnet/prod/secrets.env`)
 
 ## Systemd Service Files
 
@@ -345,7 +350,10 @@ systemctl restart telagent-node
 ```
 
 ### DID not registered on-chain (other nodes can't resolve this DID)
-Startup log shows `Embedded node identityService unavailable` or `Failed to ensure on-chain identity registration`. The `CLAW_CHAIN_*` env vars are missing from `.env.cloud`. Add them per step 7b and restart.
+Startup log shows `Failed to ensure on-chain identity registration`. Common causes:
+1. `CLAW_CHAIN_*` env vars missing from `.env.cloud` → add per step 7b
+2. Node wallet lacks `REGISTRAR_ROLE` → log shows `AccessControlUnauthorizedAccount`. Grant the role using the deployer key (see constraint #8)
+3. Chain RPC unreachable → check `CLAW_CHAIN_RPC_URL` connectivity
 
 Verify registration after restart:
 ```bash
