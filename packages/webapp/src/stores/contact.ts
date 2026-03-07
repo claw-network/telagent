@@ -82,10 +82,12 @@ export const useContactStore = create<ContactStore>((set, get) => ({
   },
   getEffectiveDisplayName: (did) => {
     const normalizedDid = normalizeDid(did)
-    const contact = get().contacts.find((c) => c.did === normalizedDid)
-    if (contact?.displayName) return contact.displayName
+    // Prefer peer's own nickname — it's always up-to-date from profile-card messages.
+    // Fall back to the contact's displayName (which may be user-set or auto-generated).
     const peer = get().peerProfiles[normalizedDid]
     if (peer?.nickname) return peer.nickname
+    const contact = get().contacts.find((c) => c.did === normalizedDid)
+    if (contact?.displayName) return contact.displayName
     // Fallback: last segment of DID, truncated
     const tail = normalizedDid.split(":").at(-1) ?? normalizedDid
     return tail.slice(0, 12)

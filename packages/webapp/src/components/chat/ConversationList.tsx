@@ -126,7 +126,7 @@ export function ConversationList() {
                     : "text-[#949ba4] hover:bg-[#35373c] hover:text-[#dbdee1]"
                 }`}
               >
-                <DidAvatar did={conversation.peerDid ?? conversation.conversationId} className="size-10 shrink-0" />
+                <DidAvatar did={conversation.peerDid ?? conversation.conversationId} avatarUrl={conversation.avatarUrl ?? undefined} className="size-10 shrink-0" />
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center justify-between gap-2">
                     <span className="truncate text-sm font-semibold text-[#f2f3f5]">{conversation.displayName}</span>

@@ -420,7 +420,8 @@ export class MessageService {
   async listConversations(params?: { scanLimit?: number }): Promise<ConversationSummary[]> {
     if (this.repository?.listConversationSummaries) {
       const limit = Math.min(10_000, Math.max(1, params?.scanLimit ?? 200));
-      return this.repository.listConversationSummaries({ limit });
+      const items = await this.repository.listConversationSummaries({ limit });
+      return items.map((item) => this.enrichConversationSummary(item));
     }
 
     // Fallback: scan envelopes (in-memory mode without persistent repository)
@@ -464,7 +465,18 @@ export class MessageService {
 
     return [...latestByConversation.values()]
       .map((envelope) => this.toConversationSummary(envelope, privateConversationSet.has(envelope.conversationId)))
+      .map((item) => this.enrichConversationSummary(item))
       .sort((left, right) => (right.lastMessageAtMs ?? 0) - (left.lastMessageAtMs ?? 0));
+  }
+
+  private enrichConversationSummary(item: ConversationSummary): ConversationSummary {
+    if (item.conversationType !== 'direct' || !item.peerDid) return item;
+    const peer = this.peerProfileRepository?.get(item.peerDid as Parameters<PeerProfileRepository['get']>[0]);
+    const contact = this.contactService?.getContact(item.peerDid);
+    const displayName = peer?.nickname || contact?.displayName || item.displayName;
+    const avatarUrl = peer?.avatarUrl ?? contact?.avatarUrl ?? item.avatarUrl;
+    if (displayName === item.displayName && avatarUrl === item.avatarUrl) return item;
+    return { ...item, displayName, avatarUrl: avatarUrl ?? null };
   }
 
   async setConversationPrivacy(
