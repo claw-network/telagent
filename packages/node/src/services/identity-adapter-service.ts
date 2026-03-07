@@ -1,6 +1,8 @@
 import { ErrorCodes, TelagentError, hashDid, isDidClaw, type AgentDID } from '@telagent/protocol';
+import { publicKeyFromDid, bytesToHex } from '@claw-network/core';
 
 import type { ClawNetGatewayService, IdentityInfo } from '../clawnet/gateway-service.js';
+import type { ManagedClawNetNode } from '../clawnet/managed-node.js';
 import type { IdentityCache } from '../storage/identity-cache.js';
 
 export interface ResolvedIdentity {
@@ -28,12 +30,14 @@ export class IdentityAdapterService {
   private selfAddressCache: string | null = null;
   private readonly revocationListeners = new Set<DidRevocationListener>();
   private identityCache?: IdentityCache;
+  private managedNode?: ManagedClawNetNode;
 
   constructor(
     private readonly gateway: ClawNetGatewayService,
-    options?: { identityCache?: IdentityCache },
+    options?: { identityCache?: IdentityCache; managedNode?: ManagedClawNetNode },
   ) {
     this.identityCache = options?.identityCache;
+    this.managedNode = options?.managedNode;
   }
 
   subscribeDidRevocations(listener: DidRevocationListener): () => void {
@@ -90,6 +94,32 @@ export class IdentityAdapterService {
   }
 
   async init(): Promise<void> {
+    await this.getSelf();
+  }
+
+  /**
+   * Ensure the node's own DID is registered on-chain.
+   * Uses the embedded ClawNet node's identity service directly (batchRegisterDID)
+   * which is the correct internal registration path.
+   */
+  async ensureRegistered(): Promise<void> {
+    const self = await this.getSelf();
+    // If controller is a real EVM address (starts with 0x), it's already on-chain
+    if (self.controller.startsWith('0x')) {
+      return;
+    }
+    if (!this.managedNode) {
+      throw new Error('No managed ClawNet node — cannot auto-register on-chain');
+    }
+    // Convert the multibase public key to 0x-prefixed hex for the smart contract
+    const rawBytes = publicKeyFromDid(self.did);
+    const hexKey = `0x${bytesToHex(rawBytes)}`;
+    // Register directly via the embedded node's identity service
+    const controller = await this.managedNode.ensureRegisteredOnChain(self.did, hexKey);
+    if (!controller) {
+      throw new Error('Chain identity service unavailable on embedded node');
+    }
+    // Refresh self identity to pick up chain data
     await this.getSelf();
   }
 

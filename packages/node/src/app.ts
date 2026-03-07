@@ -147,7 +147,10 @@ export class TelagentNode {
 
     const identityCache = new IdentityCache(this.paths.cache);
     await identityCache.load();
-    this.identityService = new IdentityAdapterService(this.clawnetGateway, { identityCache });
+    this.identityService = new IdentityAdapterService(this.clawnetGateway, {
+      identityCache,
+      managedNode: this.managedClawNet,
+    });
     await this.identityService.init();
     logger.info('[telagent] Identity: %s', this.identityService.getSelfDid());
 
@@ -161,6 +164,14 @@ export class TelagentNode {
       });
       this.autoSessionToken = result.sessionToken;
       logger.info('[telagent] Auto-session expires: %s', result.expiresAt.toISOString());
+
+      // Ensure our DID is registered on-chain so other nodes can resolve it
+      try {
+        await this.identityService.ensureRegistered();
+        logger.info('[telagent] Identity on-chain registration verified');
+      } catch (err) {
+        logger.warn('[telagent] Failed to ensure on-chain identity registration: %s', (err as Error).message);
+      }
 
       this.renewTimer = setInterval(async () => {
         try {

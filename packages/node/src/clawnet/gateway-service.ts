@@ -105,6 +105,29 @@ export class ClawNetGatewayService {
     }
   }
 
+  /**
+   * Register a DID on-chain via the ClawNet node's identity API.
+   * This is a signed write operation requiring a session token.
+   */
+  async registerIdentity(
+    sessionToken: string,
+    publicKey: string,
+    purpose = 'authentication',
+  ): Promise<IdentityInfo> {
+    return this.executeWithNonceRetry(sessionToken, 'contract', 1,
+      async (did, passphrase, nonce) => {
+        const result = await this.unsafeClient.http.post('/api/v1/identities', {
+          did,
+          passphrase,
+          nonce,
+          publicKey,
+          purpose,
+        });
+        return this.normalizeIdentityInfo(result);
+      },
+    );
+  }
+
   async getBalance(did?: string): Promise<BalanceInfo> {
     const result = await this.unsafeClient.wallet.getBalance(did ? { did } : undefined);
     return result as BalanceInfo;

@@ -1,4 +1,8 @@
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { getGlobalLogger } from '../logger.js';
+
+const logger = getGlobalLogger();
 
 /**
  * 嵌入式 ClawNet Node 生命周期管理
@@ -20,12 +24,90 @@ export class ManagedClawNetNode {
   }
 
   /**
+   * Build chain config from environment variables (CLAW_CHAIN_*).
+   * Returns undefined if required vars are missing.
+   */
+  private buildChainConfig(): Record<string, unknown> | undefined {
+    const rpcUrl = process.env.CLAW_CHAIN_RPC_URL;
+    if (!rpcUrl) return undefined;
+
+    const chainId = Number(process.env.CLAW_CHAIN_ID || 7625);
+
+    // Contract addresses — all must be present for chain services to work
+    const identity = process.env.CLAW_CHAIN_IDENTITY_CONTRACT;
+    if (!identity) {
+      logger.info('[telagent] CLAW_CHAIN_IDENTITY_CONTRACT not set — chain services will be unavailable');
+      return undefined;
+    }
+
+    const rawArtifactsDir = process.env.CLAW_CHAIN_ARTIFACTS_DIR;
+    if (!rawArtifactsDir) {
+      logger.info('[telagent] CLAW_CHAIN_ARTIFACTS_DIR not set — chain services will be unavailable');
+      return undefined;
+    }
+    // Resolve to absolute path so ContractProvider finds artifacts regardless of CWD
+    const artifactsDir = resolve(rawArtifactsDir);
+
+    const contracts: Record<string, string> = { identity };
+    // Optional contracts — chain services degrade gracefully for missing ones
+    const optionalContracts = {
+      token: process.env.CLAW_CHAIN_TOKEN_CONTRACT,
+      escrow: process.env.CLAW_CHAIN_ESCROW_CONTRACT,
+      reputation: process.env.CLAW_CHAIN_REPUTATION_CONTRACT,
+      contracts: process.env.CLAW_CHAIN_CONTRACTS_CONTRACT,
+      dao: process.env.CLAW_CHAIN_DAO_CONTRACT,
+      staking: process.env.CLAW_CHAIN_STAKING_CONTRACT,
+      paramRegistry: process.env.CLAW_CHAIN_PARAM_REGISTRY_CONTRACT,
+    };
+    for (const [key, val] of Object.entries(optionalContracts)) {
+      if (val) contracts[key] = val;
+    }
+
+    const signerType = process.env.CLAW_SIGNER_TYPE || 'env';
+    const signer = signerType === 'keyfile'
+      ? { type: 'keyfile' as const, path: process.env.CLAW_SIGNER_PATH || '' }
+      : { type: 'env' as const, envVar: process.env.CLAW_SIGNER_ENV || 'CLAW_PRIVATE_KEY' };
+
+    return { rpcUrl, chainId, contracts, signer, artifactsDir };
+  }
+
+  /**
+   * Try to read chain config from config.yaml in the data directory.
+   * Falls back to env-var-based config.
+   */
+  private resolveChainConfig(): Record<string, unknown> | undefined {
+    // 1. Try config.yaml (same behaviour as `clawnetd` daemon)
+    try {
+      const configPath = resolve(this.dataDir, 'config.yaml');
+      const raw = readFileSync(configPath, 'utf8');
+      // Lightweight YAML parse for the chain section
+      // We only need to detect if a 'chain:' block exists to hand off to ClawNetNode
+      if (raw.includes('\nchain:') || raw.startsWith('chain:')) {
+        // Full YAML parsing happens inside ClawNetNode via the persisted config
+        // We just need to signal its presence so the daemon code path is triggered.
+        // However, ClawNetNode constructor doesn't read config.yaml for chain —
+        // it only accepts chain config as a constructor parameter.
+        // So we still need env vars or manual parsing.
+      }
+    } catch {
+      // config.yaml not found — OK
+    }
+
+    // 2. Build from CLAW_CHAIN_* env vars
+    return this.buildChainConfig();
+  }
+
+  /**
    * 在已有数据目录上启动 ClawNet Node
    * 如果指定端口被占用，自动尝试 +1 端口（最多 5 次）（RFC §7 风险表）
    */
   async start(): Promise<void> {
     const { killClawnetdOnPort } = await import('./clawnetd-process.js');
     const { ClawNetNode } = await import('@claw-network/node');
+    const chainConfig = this.resolveChainConfig();
+    if (chainConfig) {
+      logger.info('[telagent] ClawNet embedded chain config resolved — identity service will be available');
+    }
     let port = this.apiPort;
     const maxAttempts = 5;
 
@@ -35,6 +117,7 @@ export class ManagedClawNetNode {
           dataDir: this.dataDir,
           passphrase: this.passphrase,
           api: { host: '127.0.0.1', port, enabled: true },
+          chain: chainConfig as any,
         });
         await this.node.start();
         if (port !== this.apiPort) {
@@ -85,6 +168,22 @@ export class ManagedClawNetNode {
 
   getEventStore(): any | undefined {
     return this.node?.eventStore;
+  }
+
+  /**
+   * Call the embedded ClawNet node's identityService.ensureRegistered()
+   * directly — bypasses HTTP and uses batchRegisterDID (REGISTRAR_ROLE).
+   */
+  async ensureRegisteredOnChain(did: string, publicKey: string): Promise<string | null> {
+    const svc = this.node?.identityService;
+    if (!svc) {
+      logger.warn('[telagent] Embedded node identityService unavailable — cannot auto-register on-chain');
+      return null;
+    }
+    logger.info('[telagent] Calling embedded identityService.ensureRegistered for %s', did);
+    const controller = await svc.ensureRegistered(did, publicKey);
+    logger.info('[telagent] ensureRegistered returned controller: %s', controller);
+    return controller;
   }
 
   isRunning(): boolean {
