@@ -19,10 +19,23 @@ import { usePermissionStore } from "@/stores/permission"
 const LOCAL_NODE_URL = "http://127.0.0.1:9529"
 
 /* ------------------------------------------------------------------ */
-/*  Local node auto-detection                                         */
+/*  Helpers                                                           */
 /* ------------------------------------------------------------------ */
 
-interface LocalNodeInfo {
+function isLocalUrl(url: string): boolean {
+  try {
+    const { hostname } = new URL(url)
+    return hostname === "localhost" || hostname === "127.0.0.1" || hostname === "::1"
+  } catch {
+    return false
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/*  Generic node probe (re-runs when targetUrl changes)              */
+/* ------------------------------------------------------------------ */
+
+interface NodeInfo {
   did: string
   didHash: string
   version: string
@@ -30,17 +43,19 @@ interface LocalNodeInfo {
 
 type ProbeStatus = "probing" | "found" | "not-found"
 
-function useLocalNodeProbe() {
+function useNodeProbe(targetUrl: string) {
   const [status, setStatus] = useState<ProbeStatus>("probing")
-  const [info, setInfo] = useState<LocalNodeInfo | null>(null)
+  const [info, setInfo] = useState<NodeInfo | null>(null)
 
   useEffect(() => {
+    if (!targetUrl) return
     const controller = new AbortController()
+    setStatus("probing")
+    setInfo(null)
 
     async function probe() {
-      setStatus("probing")
       try {
-        const nodeRes = await fetch(new URL("/api/v1/node", LOCAL_NODE_URL).toString(), {
+        const nodeRes = await fetch(new URL("/api/v1/node", targetUrl).toString(), {
           signal: controller.signal,
           headers: { accept: "application/json" },
         })
@@ -48,7 +63,7 @@ function useLocalNodeProbe() {
         const nodeBody = await nodeRes.json()
         const node = nodeBody.data ?? nodeBody
 
-        const selfRes = await fetch(new URL("/api/v1/identities/self", LOCAL_NODE_URL).toString(), {
+        const selfRes = await fetch(new URL("/api/v1/identities/self", targetUrl).toString(), {
           signal: controller.signal,
           headers: { accept: "application/json" },
         })
@@ -70,9 +85,9 @@ function useLocalNodeProbe() {
       }
     }
 
-    probe()
+    void probe()
     return () => controller.abort()
-  }, [])
+  }, [targetUrl])
 
   return { status, info }
 }
@@ -81,10 +96,14 @@ function useLocalNodeProbe() {
 /*  Avatar probe display                                              */
 /* ------------------------------------------------------------------ */
 
-function LocalNodeAvatar({ status, info }: { status: ProbeStatus; info: LocalNodeInfo | null }) {
+function NodeAvatar({ status, info, isLocal }: { status: ProbeStatus; info: NodeInfo | null; isLocal: boolean }) {
   const { t } = useTranslation()
 
   const isFound = status === "found" && info
+
+  const foundLabel = isLocal ? t("connect.local.found") : t("connect.remote.found")
+  const detectingLabel = isLocal ? t("connect.local.detecting") : t("connect.remote.detecting")
+  const notFoundLabel = isLocal ? t("connect.local.notFound") : t("connect.remote.notFound")
 
   return (
     <div className="flex flex-col items-center gap-4 py-6">
@@ -131,7 +150,7 @@ function LocalNodeAvatar({ status, info }: { status: ProbeStatus; info: LocalNod
             <div className="flex items-center gap-2">
               <span className="size-2 rounded-full bg-emerald-500" />
               <span className="text-sm font-medium text-foreground">
-                {t("connect.local.found")}
+                {foundLabel}
               </span>
               <Badge variant="secondary" className="px-2 py-0 text-[10px] font-normal">
                 v{info.version}
@@ -144,12 +163,12 @@ function LocalNodeAvatar({ status, info }: { status: ProbeStatus; info: LocalNod
         )}
         {status === "probing" && (
           <span className="text-[13px] text-muted-foreground">
-            {t("connect.local.detecting")}
+            {detectingLabel}
           </span>
         )}
         {status === "not-found" && (
           <span className="text-[13px] text-muted-foreground/70">
-            {t("connect.local.notFound")}
+            {notFoundLabel}
           </span>
         )}
       </div>
@@ -170,16 +189,34 @@ export function ConnectForm() {
   const loadSelf = useIdentityStore((state) => state.loadSelf)
   const refreshPermissions = usePermissionStore((state) => state.refresh)
 
-  const { status: probeStatus, info: probeInfo } = useLocalNodeProbe()
+  const [probeTarget, setProbeTarget] = useState(LOCAL_NODE_URL)
+  const { status: probeStatus, info: probeInfo } = useNodeProbe(probeTarget)
+  const isLocal = isLocalUrl(probeTarget)
+
   const [nodeUrl, setNodeUrl] = useState("")
   const [passphrase, setPassphrase] = useState("")
   const [localError, setLocalError] = useState<string | null>(null)
 
   useEffect(() => {
-    if (probeStatus === "found" && !nodeUrl) {
+    if (probeStatus === "found" && isLocal && !nodeUrl) {
       setNodeUrl(LOCAL_NODE_URL)
     }
-  }, [probeStatus])
+  }, [probeStatus, isLocal, nodeUrl])
+
+  const onNodeUrlBlur = () => {
+    const trimmed = nodeUrl.trim()
+    if (!trimmed) {
+      setProbeTarget(LOCAL_NODE_URL)
+      return
+    }
+    try {
+      new URL(trimmed)
+      setProbeTarget(trimmed)
+    } catch {
+      // invalid URL — keep probing local
+      setProbeTarget(LOCAL_NODE_URL)
+    }
+  }
 
   const onSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -196,6 +233,9 @@ export function ConnectForm() {
 
   const displayError = localError ?? error
 
+  // Show avatar section when probing/found, or when probing a non-local target (show result even if unreachable)
+  const showAvatarSection = probeStatus !== "not-found" || !isLocal
+
   return (
     <div className="flex w-full max-w-[420px] flex-col items-center gap-8">
       {/* Title area */}
@@ -208,23 +248,24 @@ export function ConnectForm() {
       <Card className="w-full border-border/60 py-0 gap-0 shadow-lg">
         <CardContent className="px-6 pt-0 pb-6">
           <form onSubmit={onSubmit}>
-            {probeStatus !== "not-found" && (
+            {showAvatarSection && (
               <>
-                <LocalNodeAvatar status={probeStatus} info={probeInfo} />
+                <NodeAvatar status={probeStatus} info={probeInfo} isLocal={isLocal} />
                 <Separator className="mb-5" />
               </>
             )}
 
-            <div className={cn("space-y-4", probeStatus === "not-found" && "pt-6")}>
+            <div className={cn("space-y-4", !showAvatarSection && "pt-6")}>
               <div>
                 <Label htmlFor="node-url" className="mb-2 block text-[13px]">
                   {t("connect.nodeUrl")}
                 </Label>
                 <Input
                   id="node-url"
-                  placeholder={probeStatus === "found" ? LOCAL_NODE_URL : "https://agent.example.com"}
+                  placeholder={probeStatus === "found" && isLocal ? LOCAL_NODE_URL : "https://agent.example.com"}
                   value={nodeUrl}
                   onChange={(event) => setNodeUrl(event.target.value)}
+                  onBlur={onNodeUrlBlur}
                 />
               </div>
 

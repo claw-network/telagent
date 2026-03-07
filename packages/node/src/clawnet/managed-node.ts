@@ -1,3 +1,5 @@
+import { getGlobalLogger } from '../logger.js';
+
 /**
  * 嵌入式 ClawNet Node 生命周期管理
  *
@@ -36,7 +38,7 @@ export class ManagedClawNetNode {
         });
         await this.node.start();
         if (port !== this.apiPort) {
-          console.warn('[telagent] ClawNet Node started on fallback port %d (original %d was busy)', port, this.apiPort);
+          getGlobalLogger().warn('[telagent] ClawNet Node started on fallback port %d (original %d was busy)', port, this.apiPort);
         }
         return;
       } catch (err: unknown) {

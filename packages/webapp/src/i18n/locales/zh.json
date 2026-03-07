@@ -27,7 +27,10 @@
       "connectHint": "输入口令以解锁本地节点的会话。"
     },
     "remote": {
-      "tab": "远程"
+      "tab": "远程",
+      "detecting": "正在检测远程节点...",
+      "found": "已检测到远程节点",
+      "notFound": "无法连接到该节点"
     }
   },
   "chat": {

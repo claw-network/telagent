@@ -1,5 +1,6 @@
 import { ErrorCodes, SendMessageSchema, TelagentError, type Envelope, type RedactedEnvelope } from '@telagent/protocol';
 
+import { getGlobalLogger } from '../../logger.js';
 import { requireScope } from '../auth.js';
 import { Router } from '../router.js';
 import { created, ok } from '../response.js';
@@ -32,7 +33,7 @@ export function messageRoutes(ctx: RuntimeContext): Router {
         const result = await ctx.clawnetTransportService.sendEnvelope(parsed.data.targetDid, envelope);
         p2pDelivered = result.delivered;
       } catch (p2pError) {
-        console.warn('[messages] P2P delivery failed for %s: %s', envelope.envelopeId, (p2pError as Error).message);
+        getGlobalLogger().warn('[messages] P2P delivery failed for %s: %s', envelope.envelopeId, (p2pError as Error).message);
         p2pDelivered = false;
       }
 

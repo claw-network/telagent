@@ -27,7 +27,10 @@
       "connectHint": "Enter the passphrase to unlock a session on your local node."
     },
     "remote": {
-      "tab": "Remote"
+      "tab": "Remote",
+      "detecting": "Checking node...",
+      "found": "Remote node detected",
+      "notFound": "Unable to reach node"
     }
   },
   "chat": {

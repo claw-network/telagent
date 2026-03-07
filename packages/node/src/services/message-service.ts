@@ -9,6 +9,7 @@ import {
   type Envelope,
 } from '@telagent/protocol';
 
+import { getGlobalLogger } from '../logger.js';
 import type { GroupService } from './group-service.js';
 import type { KeyLifecycleService, KeySuite } from './key-lifecycle-service.js';
 import { SequenceAllocator } from './sequence-allocator.js';
@@ -315,7 +316,7 @@ export class MessageService {
 
     const envelope = this.normalizeEnvelopeForIngestion(raw);
     if (sourceDid) {
-      console.info('[message-service] Ingesting envelope %s from P2P sourceDid=%s', envelope.envelopeId, sourceDid);
+      getGlobalLogger().info('[message-service] Ingesting envelope %s from P2P sourceDid=%s', envelope.envelopeId, sourceDid);
     }
     const signature = this.buildEnvelopeIdempotencySignature(envelope);
 

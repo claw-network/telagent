@@ -1,6 +1,7 @@
 import { homedir } from 'node:os';
 import { resolve } from 'node:path';
 import { mkdir, chmod, stat } from 'node:fs/promises';
+import { getGlobalLogger } from '../logger.js';
 
 const DIR_MODE_OWNER_ONLY = 0o700;   // rwx------
 
@@ -72,7 +73,7 @@ export async function verifySecretsPermissions(paths: TelagentStoragePaths): Pro
 
       // 检查文件 owner 是否为当前用户（RFC §5.4：root 创建后切换用户场景）
       if (process.getuid && s.uid !== process.getuid()) {
-        console.warn(
+        getGlobalLogger().warn(
           `[telagent] WARNING: ${dir} is owned by uid ${s.uid}, but running as uid ${process.getuid()}. ` +
           'This may cause permission errors. Consider running: chown -R $(whoami) ' + dir,
         );

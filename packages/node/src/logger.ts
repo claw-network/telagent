@@ -26,11 +26,29 @@ const priorities: Record<LogLevel, number> = {
 
 let _globalLogger: Logger | undefined;
 
-export function getGlobalLogger(): Logger {
+/**
+ * Returns a stable proxy object that always delegates to the current
+ * global logger.  This means callers who capture the return value at
+ * module-load time will automatically pick up a later setGlobalLogger()
+ * call — solving the "import ordering" problem.
+ */
+const _loggerProxy: Logger = {
+  debug: (...args: unknown[]) => _resolvedLogger().debug(...args),
+  info:  (...args: unknown[]) => _resolvedLogger().info(...args),
+  warn:  (...args: unknown[]) => _resolvedLogger().warn(...args),
+  error: (...args: unknown[]) => _resolvedLogger().error(...args),
+  close: () => _resolvedLogger().close(),
+};
+
+function _resolvedLogger(): Logger {
   if (!_globalLogger) {
     _globalLogger = createLogger('info');
   }
   return _globalLogger;
+}
+
+export function getGlobalLogger(): Logger {
+  return _loggerProxy;
 }
 
 export function setGlobalLogger(logger: Logger): void {
