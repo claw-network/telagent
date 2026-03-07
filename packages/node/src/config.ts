@@ -35,6 +35,8 @@ export interface ClawNetConfig {
   timeoutMs: number;
   autoDiscover: boolean;
   autoStart: boolean;
+  killClawnetdOnStart: boolean;
+  killClawnetdOnStop: boolean;
 }
 
 export interface OwnerConfig {
@@ -116,6 +118,8 @@ export function loadConfigFromEnv(): AppConfig {
     timeoutMs: Number(process.env.TELAGENT_CLAWNET_TIMEOUT_MS || 30_000),
     autoDiscover: parseBoolean(process.env.TELAGENT_CLAWNET_AUTO_DISCOVER, true),
     autoStart: parseBoolean(process.env.TELAGENT_CLAWNET_AUTO_START, true),
+    killClawnetdOnStart: parseBoolean(process.env.TELAGENT_CLAWNET_KILL_ON_START, false),
+    killClawnetdOnStop: parseBoolean(process.env.TELAGENT_CLAWNET_KILL_ON_STOP, false),
   };
 
   const owner: OwnerConfig = {

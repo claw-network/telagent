@@ -30,7 +30,7 @@ const logger = console;  // 替换为项目实际 logger
 export async function discoverOrStartClawNet(
   explicitUrl?: string,
   passphrase?: string,
-  options?: { autoStart?: boolean; autoDiscover?: boolean },
+  options?: { autoStart?: boolean; autoDiscover?: boolean; killClawnetdOnStart?: boolean },
 ): Promise<ClawNetDiscoveryResult> {
   const clawnetHome = process.env.CLAWNET_HOME ?? resolve(homedir(), '.clawnet');
   const autoStart = options?.autoStart ?? true;
@@ -94,7 +94,9 @@ export async function discoverOrStartClawNet(
 
   // 启动嵌入式 ClawNet Node
   const { ManagedClawNetNode } = await import('./managed-node.js');
-  const managedNode = new ManagedClawNetNode(clawnetHome, passphrase);
+  const managedNode = new ManagedClawNetNode(clawnetHome, passphrase, undefined, {
+    killClawnetdOnStart: options?.killClawnetdOnStart,
+  });
 
   if (alreadyInitialized) {
     await managedNode.start();

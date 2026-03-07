@@ -6,18 +6,23 @@
  */
 export class ManagedClawNetNode {
   private node: any = null;  // ClawNetNode 实例
+  private readonly killClawnetdOnStart: boolean;
 
   constructor(
     private readonly dataDir: string,
     private readonly passphrase: string,
     private readonly apiPort: number = 9528,
-  ) {}
+    options?: { killClawnetdOnStart?: boolean },
+  ) {
+    this.killClawnetdOnStart = options?.killClawnetdOnStart ?? false;
+  }
 
   /**
    * 在已有数据目录上启动 ClawNet Node
    * 如果指定端口被占用，自动尝试 +1 端口（最多 5 次）（RFC §7 风险表）
    */
   async start(): Promise<void> {
+    const { killClawnetdOnPort } = await import('./clawnetd-process.js');
     const { ClawNetNode } = await import('@claw-network/node');
     let port = this.apiPort;
     const maxAttempts = 5;
@@ -37,6 +42,9 @@ export class ManagedClawNetNode {
       } catch (err: unknown) {
         const msg = (err as Error)?.message ?? '';
         if ((msg.includes('EADDRINUSE') || msg.includes('address already in use')) && attempt < maxAttempts - 1) {
+          if (this.killClawnetdOnStart && await killClawnetdOnPort(port)) {
+            continue;
+          }
           port++;
           continue;
         }

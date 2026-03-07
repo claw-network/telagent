@@ -3,6 +3,7 @@ import type { RuntimeContext } from './api/types.js';
 import type { AppConfig } from './config.js';
 import { discoverOrStartClawNet, type ClawNetDiscoveryResult } from './clawnet/discovery.js';
 import { ClawNetGatewayService } from './clawnet/gateway-service.js';
+import { killClawnetdOnPort } from './clawnet/clawnetd-process.js';
 import { NonceManager } from './clawnet/nonce-manager.js';
 import { SessionManager } from './clawnet/session-manager.js';
 import { verifyPassphrase } from './clawnet/verify-passphrase.js';
@@ -54,6 +55,7 @@ export class TelagentNode {
   private clawnetGateway!: ClawNetGatewayService;
   private autoSessionToken?: string;
   private renewTimer?: ReturnType<typeof setInterval>;
+  private clawnetApiPort?: number;
 
   constructor(private readonly config: AppConfig) {}
 
@@ -70,10 +72,25 @@ export class TelagentNode {
       {
         autoStart: this.config.clawnet.autoStart,
         autoDiscover: this.config.clawnet.autoDiscover,
+        killClawnetdOnStart: this.config.clawnet.killClawnetdOnStart,
       },
     );
     this.managedClawNet = discovery.managedNode;
     logger.info('[telagent] ClawNet: %s -> %s', discovery.source, discovery.nodeUrl);
+
+    if (discovery.nodeUrl) {
+      try {
+        const url = new URL(discovery.nodeUrl);
+        const port = url.port
+          ? Number.parseInt(url.port, 10)
+          : (url.protocol === 'https:' ? 443 : 80);
+        if (Number.isInteger(port)) {
+          this.clawnetApiPort = port;
+        }
+      } catch {
+        this.clawnetApiPort = undefined;
+      }
+    }
 
     if (!discovery.nodeUrl) {
       throw new Error('[telagent] FATAL: ClawNet discovery returned no nodeUrl');
@@ -262,6 +279,10 @@ export class TelagentNode {
       await this.managedClawNet.stop();
       this.managedClawNet = undefined;
       logger.info('[telagent] Managed ClawNet Node stopped');
+    }
+
+    if (this.config.clawnet.killClawnetdOnStop && this.clawnetApiPort) {
+      await killClawnetdOnPort(this.clawnetApiPort);
     }
 
     logger.info('[telagent] Node stopped');
