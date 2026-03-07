@@ -12,10 +12,10 @@ test('assertSufficient throws INSUFFICIENT_GAS_TOKEN_BALANCE when native balance
     () =>
       service.assertSufficient({
         signer: '0x0000000000000000000000000000000000000001',
-        nativeBalanceWei: 1n,
+        nativeBalance: 1n,
         estimatedGas: 21_000n,
-        estimatedFeeWei: 2n,
-        gasPriceWei: 1n,
+        estimatedFee: 2n,
+        gasPrice: 1n,
         sufficient: false,
       }),
     (error: unknown) => {

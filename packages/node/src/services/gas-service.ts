@@ -1,14 +1,13 @@
 import { ErrorCodes, TelagentError } from '@telagent/protocol';
-import { formatEther } from 'ethers';
 
 import type { ContractProvider } from './contract-provider.js';
 
 export interface GasPreflightResult {
   signer: string;
-  nativeBalanceWei: bigint;
+  nativeBalance: bigint;
   estimatedGas: bigint;
-  estimatedFeeWei: bigint;
-  gasPriceWei: bigint;
+  estimatedFee: bigint;
+  gasPrice: bigint;
   sufficient: boolean;
 }
 
@@ -25,22 +24,22 @@ export class GasService {
   async preflight(tx: { to: string; data: string }): Promise<GasPreflightResult> {
     const signer = this.contracts.signerAddress;
 
-    const [nativeBalanceWei, feeData, estimatedGas] = await Promise.all([
+    const [nativeBalance, feeData, estimatedGas] = await Promise.all([
       this.contracts.provider.getBalance(signer),
       this.contracts.provider.getFeeData(),
       this.contracts.provider.estimateGas({ from: signer, to: tx.to, data: tx.data }),
     ]);
 
-    const gasPriceWei = feeData.gasPrice ?? 0n;
-    const estimatedFeeWei = estimatedGas * gasPriceWei;
-    const sufficient = nativeBalanceWei >= estimatedFeeWei;
+    const gasPrice = feeData.gasPrice ?? 0n;
+    const estimatedFee = estimatedGas * gasPrice;
+    const sufficient = nativeBalance >= estimatedFee;
 
     return {
       signer,
-      nativeBalanceWei,
+      nativeBalance,
       estimatedGas,
-      estimatedFeeWei,
-      gasPriceWei,
+      estimatedFee,
+      gasPrice,
       sufficient,
     };
   }
@@ -52,7 +51,7 @@ export class GasService {
 
     throw new TelagentError(
       ErrorCodes.INSUFFICIENT_GAS_TOKEN_BALANCE,
-      `Insufficient gas token balance: have ${formatEther(result.nativeBalanceWei)} native, need ${formatEther(result.estimatedFeeWei)} native`,
+      `Insufficient gas token balance: have ${result.nativeBalance} native, need ${result.estimatedFee} native`,
     );
   }
 }
