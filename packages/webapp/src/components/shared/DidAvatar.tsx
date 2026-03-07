@@ -2,6 +2,7 @@ import { useState } from "react"
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { cn } from "@/lib/utils"
+import { useConnectionStore } from "@/stores/connection"
 
 function hashString(value: string): number {
   let hash = 0
@@ -32,14 +33,22 @@ interface DidAvatarProps {
 }
 
 export function DidAvatar({ did, avatarUrl, className }: DidAvatarProps) {
+  const nodeUrl = useConnectionStore((state) => state.nodeUrl)
   const [imgError, setImgError] = useState(false)
-  const showImage = Boolean(avatarUrl) && !imgError
+
+  // Resolve relative paths (e.g. /api/v1/profile/avatar) against the node URL
+  const resolvedUrl =
+    avatarUrl && avatarUrl.startsWith("/") && nodeUrl
+      ? `${nodeUrl.replace(/\/$/, "")}${avatarUrl}`
+      : avatarUrl
+
+  const showImage = Boolean(resolvedUrl) && !imgError
 
   return (
     <Avatar className={cn("size-9", className)}>
       {showImage && (
         <AvatarImage
-          src={avatarUrl}
+          src={resolvedUrl}
           alt={did}
           onError={() => setImgError(true)}
         />
