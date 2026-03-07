@@ -91,9 +91,27 @@ export function useMessageSender() {
       return resolveNodeDomain(nodeUrl)
     }
 
+    const resolveTargetDid = (conversation: NonNullable<ReturnType<typeof resolveConversation>>): string => {
+      if (conversation.peerDid) {
+        return conversation.peerDid
+      }
+      if (conversation.conversationType === "group") {
+        const groupId = conversation.groupId
+          ?? (conversation.conversationId.startsWith("group:")
+            ? conversation.conversationId.slice("group:".length)
+            : conversation.conversationId)
+        const foundGroup = groupsById[groupId]
+        if (foundGroup?.creatorDid) {
+          return foundGroup.creatorDid
+        }
+      }
+      throw new Error("Unable to resolve targetDid for this conversation")
+    }
+
     return {
       resolveConversation,
       resolveTargetDomain,
+      resolveTargetDid,
     }
   }, [conversations, groupsById, nodeUrl, selectedConversationId])
 
@@ -106,6 +124,7 @@ export function useMessageSender() {
     attachmentManifestHash?: string
     envelopeId?: string
     targetDomain: string
+    targetDid: string
     mailboxKeyId?: string
     sealedHeader?: string
   }) => {
@@ -124,9 +143,10 @@ export function useMessageSender() {
       conversationType: params.conversationType,
       routeHint: {
         targetDomain: params.targetDomain,
+        targetDid: params.targetDid,
         mailboxKeyId: params.mailboxKeyId ?? DEFAULT_MAILBOX_KEY_ID,
       },
-      sealedHeader: params.sealedHeader ?? `sender:${selfDid.slice(-8)}`,
+      sealedHeader: params.sealedHeader ?? encodeUtf8Hex(selfDid),
       seq,
       ciphertext: params.displayText,
       contentType: params.contentType,
@@ -148,6 +168,7 @@ export function useMessageSender() {
         conversationId: params.conversationId,
         conversationType: params.conversationType,
         targetDomain: params.targetDomain,
+        targetDid: params.targetDid,
         mailboxKeyId: localEnvelope.routeHint.mailboxKeyId,
         sealedHeader: localEnvelope.sealedHeader,
         ciphertext: params.rawCiphertext,
@@ -182,6 +203,7 @@ export function useMessageSender() {
       throw new Error("Conversation is not selected")
     }
     const targetDomain = helpers.resolveTargetDomain(conversation)
+    const targetDid = helpers.resolveTargetDid(conversation)
     return sendEnvelope({
       conversationId: conversation.conversationId,
       conversationType: conversation.conversationType,
@@ -189,6 +211,7 @@ export function useMessageSender() {
       displayText: text,
       rawCiphertext: encodeUtf8Hex(text),
       targetDomain,
+      targetDid,
     })
   }
 
@@ -203,6 +226,7 @@ export function useMessageSender() {
     }
 
     const targetDomain = helpers.resolveTargetDomain(conversation)
+    const targetDid = helpers.resolveTargetDid(conversation)
     const contentType: BaseContentType = input.file.type.startsWith("image/") ? "image" : "file"
 
     const fileBuffer = await input.file.arrayBuffer()
@@ -242,6 +266,7 @@ export function useMessageSender() {
       rawCiphertext: encodeUtf8Hex(rawPayloadText),
       attachmentManifestHash: completed.manifestHash,
       targetDomain,
+      targetDid,
     })
   }
 
@@ -266,8 +291,11 @@ export function useMessageSender() {
         conversationId: message.conversationId,
         conversationType: message.conversationType,
         targetDomain: message.routeHint.targetDomain,
+        targetDid: message.routeHint.targetDid,
         mailboxKeyId: message.routeHint.mailboxKeyId,
-        sealedHeader: message.sealedHeader,
+        sealedHeader: /^0x[0-9a-fA-F]+$/.test(message.sealedHeader)
+          ? message.sealedHeader
+          : encodeUtf8Hex(selfDid),
         ciphertext: rawCiphertext,
         contentType: message.contentType as BaseContentType,
         attachmentManifestHash: message.attachmentManifestHash,
