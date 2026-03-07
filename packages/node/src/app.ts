@@ -11,7 +11,6 @@ import { GroupIndexer } from './indexer/group-indexer.js';
 import { AttachmentService } from './services/attachment-service.js';
 import { ClawNetTransportService } from './services/clawnet-transport-service.js';
 import { ContractProvider } from './services/contract-provider.js';
-import { GasService } from './services/gas-service.js';
 import { GroupService } from './services/group-service.js';
 import { IdentityAdapterService } from './services/identity-adapter-service.js';
 import { KeyLifecycleService } from './services/key-lifecycle-service.js';
@@ -37,7 +36,6 @@ export class TelagentNode {
   private repo: GroupRepository | null = null;
   private mailboxStore: MailboxStore | null = null;
   private identityService!: IdentityAdapterService;
-  private gasService: GasService | null = null;
   private keyLifecycleService: KeyLifecycleService | null = null;
   private groupService: GroupService | null = null;
   private messageService: MessageService | null = null;
@@ -182,11 +180,9 @@ export class TelagentNode {
     this.repo = new GroupRepository(this.paths.groupIndexerDb);
     this.mailboxStore = this.createMailboxStore(this.config);
 
-    this.gasService = new GasService(this.contracts);
     this.groupService = new GroupService(
       this.contracts,
       this.identityService,
-      this.gasService,
       this.repo,
     );
     this.keyLifecycleService = new KeyLifecycleService();
@@ -227,7 +223,6 @@ export class TelagentNode {
       },
       identityService: this.identityService,
       groupService: this.groupService,
-      gasService: this.gasService,
       messageService: this.messageService,
       attachmentService: this.attachmentService,
       monitoringService: this.monitoringService,

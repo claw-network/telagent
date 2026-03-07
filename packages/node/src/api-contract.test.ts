@@ -180,16 +180,6 @@ class FakeGroupService {
   }
 }
 
-class FakeGasService {
-  async getNativeGasBalance() {
-    return 1_000_000n;
-  }
-
-  async getTokenBalance() {
-    return 900_000n;
-  }
-}
-
 class FakeMessageService {
   private nextSeq = 1n;
   private readonly privateConversations = new Set<string>();
@@ -687,7 +677,6 @@ async function startTestServer() {
     config: { host: '127.0.0.1', port: 0 },
     identityService: identityService as unknown as RuntimeContext['identityService'],
     groupService: new FakeGroupService() as unknown as RuntimeContext['groupService'],
-    gasService: new FakeGasService() as unknown as RuntimeContext['gasService'],
     messageService: messageService as unknown as RuntimeContext['messageService'],
     attachmentService: new FakeAttachmentService() as unknown as RuntimeContext['attachmentService'],
     monitoringService: new FakeMonitoringService() as unknown as RuntimeContext['monitoringService'],

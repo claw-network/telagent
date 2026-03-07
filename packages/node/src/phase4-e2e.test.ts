@@ -82,12 +82,6 @@ class FakeIdentityService {
   }
 }
 
-class FakeGasService {
-  async getNativeGasBalance() {
-    return 1_000_000n;
-  }
-}
-
 class FakeKeyLifecycleService {
   assertCanUseKey() {
     return {
@@ -392,7 +386,6 @@ async function startE2EServer(startMs?: number): Promise<{
     },
     identityService: new FakeIdentityService() as unknown as RuntimeContext['identityService'],
     groupService: groupService as unknown as RuntimeContext['groupService'],
-    gasService: new FakeGasService() as unknown as RuntimeContext['gasService'],
     messageService,
     attachmentService,
     monitoringService,

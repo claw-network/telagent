@@ -12,7 +12,6 @@ import {
 } from '@telagent/protocol';
 
 import type { ContractProvider } from './contract-provider.js';
-import type { GasService } from './gas-service.js';
 import type { IdentityAdapterService } from './identity-adapter-service.js';
 import type { GroupRepository } from '../storage/group-repository.js';
 
@@ -50,7 +49,6 @@ export class GroupService {
   constructor(
     private readonly contracts: ContractProvider,
     private readonly identityAdapter: IdentityAdapterService,
-    private readonly gasService: GasService,
     private readonly repo: GroupRepository,
   ) {}
 
@@ -60,20 +58,6 @@ export class GroupService {
     this.assertBytes32(input.initialMlsStateHash, 'initialMlsStateHash');
 
     const identity = await this.identityAdapter.assertControllerBySigner(input.creatorDid);
-
-    const txData = this.contracts.telagentGroupRegistry.interface.encodeFunctionData('createGroup', [
-      input.groupId,
-      identity.didHash,
-      input.groupDomain,
-      input.domainProofHash,
-      input.initialMlsStateHash,
-    ]);
-
-    const preflight = await this.gasService.preflight({
-      to: await this.contracts.telagentGroupRegistry.getAddress(),
-      data: txData,
-    });
-    this.gasService.assertSufficient(preflight);
 
     const pendingGroup: GroupRecord = {
       groupId: input.groupId,
@@ -169,20 +153,6 @@ export class GroupService {
 
     const invitee = await this.identityAdapter.assertActiveDid(input.inviteeDid);
 
-    const txData = this.contracts.telagentGroupRegistry.interface.encodeFunctionData('inviteMember', [
-      input.groupId,
-      input.inviteId,
-      inviter.didHash,
-      invitee.didHash,
-      input.mlsCommitHash,
-    ]);
-
-    const preflight = await this.gasService.preflight({
-      to: await this.contracts.telagentGroupRegistry.getAddress(),
-      data: txData,
-    });
-    this.gasService.assertSufficient(preflight);
-
     this.repo.saveMember({
       groupId: input.groupId,
       did: input.inviteeDid,
@@ -236,19 +206,6 @@ export class GroupService {
     this.requireGroup(input.groupId);
     const invitee = await this.identityAdapter.assertControllerBySigner(input.inviteeDid);
 
-    const txData = this.contracts.telagentGroupRegistry.interface.encodeFunctionData('acceptInvite', [
-      input.groupId,
-      input.inviteId,
-      invitee.didHash,
-      input.mlsWelcomeHash,
-    ]);
-
-    const preflight = await this.gasService.preflight({
-      to: await this.contracts.telagentGroupRegistry.getAddress(),
-      data: txData,
-    });
-    this.gasService.assertSufficient(preflight);
-
     const tx = await this.contracts.telagentGroupRegistry.acceptInvite(
       input.groupId,
       input.inviteId,
@@ -301,18 +258,6 @@ export class GroupService {
     }
 
     const memberDidHash = hashDid(input.memberDid);
-    const txData = this.contracts.telagentGroupRegistry.interface.encodeFunctionData('removeMember', [
-      input.groupId,
-      operator.didHash,
-      memberDidHash,
-      input.mlsCommitHash,
-    ]);
-
-    const preflight = await this.gasService.preflight({
-      to: await this.contracts.telagentGroupRegistry.getAddress(),
-      data: txData,
-    });
-    this.gasService.assertSufficient(preflight);
 
     const tx = await this.contracts.telagentGroupRegistry.removeMember(
       input.groupId,
