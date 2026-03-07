@@ -1,5 +1,6 @@
 import type { ReactNode } from "react"
 import { useState } from "react"
+import { useLocation, useNavigate } from "react-router-dom"
 import { XIcon } from "lucide-react"
 
 import { ConversationDetailPanel } from "@/components/chat/ConversationDetailPanel"
@@ -26,6 +27,16 @@ export function DesktopLayout({ children }: DesktopLayoutProps) {
   const [sidebarTab, setSidebarTab] = useState<SidebarTab>("conversations")
   const [selectedContactDid, setSelectedContactDid] = useState<string | null>(null)
   const setSelectedConversationId = useConversationStore((state) => state.setSelectedConversationId)
+  const location = useLocation()
+  const navigate = useNavigate()
+  const isFullPage = location.pathname === "/settings"
+
+  const handleTabChange = (tab: SidebarTab) => {
+    setSidebarTab(tab)
+    if (isFullPage) {
+      navigate("/chat")
+    }
+  }
 
   const handleOpenChat = (conversationId: string) => {
     setSelectedConversationId(conversationId)
@@ -37,21 +48,23 @@ export function DesktopLayout({ children }: DesktopLayoutProps) {
       <ReconnectBanner />
 
       <div className="flex min-h-0 flex-1">
-        <ServerRail activeTab={sidebarTab} onTabChange={setSidebarTab} />
+        <ServerRail activeTab={sidebarTab} onTabChange={handleTabChange} suppressActive={isFullPage} />
 
-        <aside className="flex w-[240px] min-w-[200px] flex-col bg-[#2b2d31]">
-          {sidebarTab === "conversations" ? (
-            <ConversationList />
-          ) : (
-            <ContactList
-              selectedDid={selectedContactDid}
-              onSelect={setSelectedContactDid}
-            />
-          )}
-        </aside>
+        {!isFullPage && (
+          <aside className="flex w-[240px] min-w-[200px] flex-col bg-[#2b2d31]">
+            {sidebarTab === "conversations" ? (
+              <ConversationList />
+            ) : (
+              <ContactList
+                selectedDid={selectedContactDid}
+                onSelect={setSelectedContactDid}
+              />
+            )}
+          </aside>
+        )}
 
         <main className="min-w-0 flex-1">
-          {sidebarTab === "contacts" && selectedContactDid ? (
+          {!isFullPage && sidebarTab === "contacts" && selectedContactDid ? (
             <ContactInfoPanel
               did={selectedContactDid}
               onOpenChat={handleOpenChat}
@@ -62,7 +75,7 @@ export function DesktopLayout({ children }: DesktopLayoutProps) {
           )}
         </main>
 
-        {sidebarTab === "conversations" && detailPanelOpen ? (
+        {!isFullPage && sidebarTab === "conversations" && detailPanelOpen ? (
           <aside className="hidden w-[320px] min-w-[280px] max-w-[460px] resize-x overflow-auto border-l bg-card/35 p-4 lg:block">
             <div className="mb-3 flex items-center justify-between">
               <h2 className="text-sm font-semibold">Details</h2>

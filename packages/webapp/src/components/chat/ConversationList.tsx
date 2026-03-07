@@ -1,4 +1,4 @@
-import { HashIcon, SearchIcon, UserRoundPlusIcon } from "lucide-react"
+import { SearchIcon } from "lucide-react"
 import { useMemo } from "react"
 import { useTranslation } from "react-i18next"
 import { useNavigate } from "react-router-dom"
@@ -11,7 +11,6 @@ import { ConversationItem } from "@/components/chat/ConversationItem"
 import { useIsMobile } from "@/hooks/use-mobile"
 import { CreateGroupDialog } from "@/components/group/CreateGroupDialog"
 import { EmptyState } from "@/components/shared/EmptyState"
-import { Button } from "@/components/ui/button"
 
 export function ConversationList() {
   const { t } = useTranslation()
@@ -25,24 +24,13 @@ export function ConversationList() {
 
   const filtered = useMemo(() => {
     const query = searchQuery.trim().toLowerCase()
-    if (!query) {
-      return conversations
-    }
-    return conversations.filter((conversation) => {
-      return (
-        conversation.displayName.toLowerCase().includes(query)
-        || conversation.conversationId.toLowerCase().includes(query)
-      )
-    })
+    if (!query) return conversations
+    return conversations.filter(
+      (c) =>
+        c.displayName.toLowerCase().includes(query) ||
+        c.conversationId.toLowerCase().includes(query),
+    )
   }, [conversations, searchQuery])
-  const contactConversations = useMemo(
-    () => filtered.filter((conversation) => conversation.conversationType === "direct"),
-    [filtered],
-  )
-  const groupConversations = useMemo(
-    () => filtered.filter((conversation) => conversation.conversationType === "group"),
-    [filtered],
-  )
 
   const isSearching = searchQuery.trim().length > 0
 
@@ -92,7 +80,10 @@ export function ConversationList() {
     <div className="flex h-full flex-col text-[#b5bac1]">
       <div className="border-b border-black/25 px-3 py-3 shadow-[0_1px_0_rgba(0,0,0,0.25)]">
         <div className="relative">
-          <SearchIcon className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-[#949ba4]" strokeWidth={1.8} />
+          <SearchIcon
+            className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-[#949ba4]"
+            strokeWidth={1.8}
+          />
           <Input
             value={searchQuery}
             placeholder={t("chat.search")}
@@ -104,16 +95,12 @@ export function ConversationList() {
 
       <ScrollArea className="min-h-0 flex-1 px-3 pt-3">
         <div className="pb-4">
-          <div className="mb-1 px-2 text-xs font-semibold tracking-wide text-[#949ba4]">
-            <span>联系人</span>
-          </div>
-
-          {contactConversations.length === 0 ? (
-            <p className="px-2 py-2 text-xs text-[#7d828a]">
-              {isSearching ? "没有匹配的联系人" : "暂无联系人"}
+          {filtered.length === 0 ? (
+            <p className="px-2 py-4 text-center text-xs text-[#7d828a]">
+              {isSearching ? "没有匹配的会话" : "暂无会话"}
             </p>
           ) : (
-            contactConversations.map((conversation) => (
+            filtered.map((conversation) => (
               <button
                 type="button"
                 key={conversation.conversationId}
@@ -124,56 +111,30 @@ export function ConversationList() {
                     : "text-[#949ba4] hover:bg-[#35373c] hover:text-[#dbdee1]"
                 }`}
               >
-                <DidAvatar did={conversation.peerDid ?? conversation.conversationId} avatarUrl={conversation.avatarUrl ?? undefined} className="size-10 shrink-0" />
+                <DidAvatar
+                  did={conversation.peerDid ?? conversation.groupId ?? conversation.conversationId}
+                  avatarUrl={conversation.avatarUrl ?? undefined}
+                  className="size-10 shrink-0"
+                />
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center justify-between gap-2">
-                    <span className="truncate text-sm font-semibold text-[#f2f3f5]">{conversation.displayName}</span>
+                    <span className="truncate text-sm font-semibold text-[#f2f3f5]">
+                      {conversation.displayName}
+                    </span>
                     {conversation.lastMessageAtMs ? (
                       <span className="shrink-0 text-[11px] text-[#949ba4]">
-                        {new Date(conversation.lastMessageAtMs).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                        {new Date(conversation.lastMessageAtMs).toLocaleTimeString([], {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
                       </span>
                     ) : null}
                   </div>
                   <p className="truncate text-xs text-[#949ba4]">
-                    {conversation.private ? "••••••" : conversation.lastMessagePreview ?? ""}
+                    {conversation.private ? "••••••" : (conversation.lastMessagePreview ?? "")}
                   </p>
                 </div>
               </button>
-            ))
-          )}
-
-          <div className="mt-4 mb-1 px-2 text-xs font-semibold tracking-wide text-[#949ba4]">
-            <span>群组</span>
-          </div>
-
-          {groupConversations.length === 0 ? (
-            <p className="px-2 py-2 text-xs text-[#7d828a]">
-              {isSearching ? "没有匹配的群组" : "暂无群组"}
-            </p>
-          ) : (
-            groupConversations.map((conversation) => (
-              <div
-                key={conversation.conversationId}
-                className={`mb-0.5 flex w-full items-center gap-2 rounded px-2 py-1.5 text-left text-[17px] transition-colors ${
-                  conversation.conversationId === selectedConversationId
-                    ? "bg-[#404249] text-[#f2f3f5]"
-                    : "text-[#949ba4] hover:bg-[#35373c] hover:text-[#dbdee1]"
-                }`}
-              >
-                <button
-                  type="button"
-                  onClick={() => handleSelect(conversation.conversationId)}
-                  className="flex min-w-0 flex-1 items-center gap-2 text-left"
-                >
-                  <HashIcon className="size-4 shrink-0" />
-                  <span className="truncate text-base">{conversation.displayName.replace(/^Group\s/, "")}</span>
-                </button>
-                {conversation.conversationId === selectedConversationId ? (
-                  <div className="flex items-center gap-1 text-[#b5bac1]">
-                    <UserRoundPlusIcon className="size-3.5" />
-                  </div>
-                ) : null}
-              </div>
             ))
           )}
         </div>

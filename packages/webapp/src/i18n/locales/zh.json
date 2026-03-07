@@ -70,7 +70,11 @@
       "avatarUrl": "头像 URL",
       "uploadAvatar": "上传图片",
       "save": "保存",
-      "saved": "已保存！"
+      "saved": "已保存！",
+      "identity": "身份信息",
+      "editInfo": "编辑资料",
+      "didHash": "DID 哈希",
+      "copiedToast": "已复制到剪贴板"
     }
   },
   "theme": {

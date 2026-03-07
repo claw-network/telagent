@@ -70,7 +70,11 @@
       "avatarUrl": "Avatar URL",
       "uploadAvatar": "Upload image",
       "save": "Save",
-      "saved": "Saved!"
+      "saved": "Saved!",
+      "identity": "Identity",
+      "editInfo": "Edit profile",
+      "didHash": "DID Hash",
+      "copiedToast": "Copied to clipboard"
     }
   },
   "theme": {

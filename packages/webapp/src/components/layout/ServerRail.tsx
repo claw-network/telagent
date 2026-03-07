@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next"
 import { Link } from "react-router-dom"
 
 import { DidAvatar } from "@/components/shared/DidAvatar"
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { useIdentityStore } from "@/stores/identity"
 
 type SidebarTab = "conversations" | "contacts"
@@ -12,9 +12,10 @@ type SidebarTab = "conversations" | "contacts"
 interface ServerRailProps {
   activeTab: SidebarTab
   onTabChange: (tab: SidebarTab) => void
+  suppressActive?: boolean
 }
 
-export function ServerRail({ activeTab, onTabChange }: ServerRailProps) {
+export function ServerRail({ activeTab, onTabChange, suppressActive }: ServerRailProps) {
   const { t } = useTranslation()
   const selfDid = useIdentityStore((state) => state.self?.did ?? "")
   const selfProfile = useIdentityStore((state) => state.selfProfile)
@@ -31,6 +32,7 @@ export function ServerRail({ activeTab, onTabChange }: ServerRailProps) {
 
   return (
     <aside className="flex w-[60px] flex-col items-center gap-2 border-r border-black/30 bg-[#1a1b1e] py-3">
+      <TooltipProvider delayDuration={300}>
       {/* Own avatar — links to settings */}
       <Tooltip>
         <TooltipTrigger asChild>
@@ -54,7 +56,7 @@ export function ServerRail({ activeTab, onTabChange }: ServerRailProps) {
       {/* Navigation tabs */}
       <nav className="flex flex-1 flex-col items-center gap-1 pt-1">
         {tabs.map((tab) => {
-          const active = activeTab === tab.id
+          const active = !suppressActive && activeTab === tab.id
           return (
             <Tooltip key={tab.id}>
               <TooltipTrigger asChild>
@@ -80,6 +82,7 @@ export function ServerRail({ activeTab, onTabChange }: ServerRailProps) {
           )
         })}
       </nav>
+      </TooltipProvider>
     </aside>
   )
 }
