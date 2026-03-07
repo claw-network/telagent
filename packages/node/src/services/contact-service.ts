@@ -18,6 +18,13 @@ export interface UpdateContactInput {
 export class ContactService {
   constructor(private readonly repository: ContactRepository) {}
 
+  ensureContact(input: AddContactInput): Contact {
+    const did = input.did.trim();
+    const existing = this.repository.get(did);
+    if (existing) return existing;
+    return this.addContact(input);
+  }
+
   addContact(input: AddContactInput): Contact {
     const did = input.did.trim();
     if (!did) {

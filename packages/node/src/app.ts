@@ -197,10 +197,16 @@ export class TelagentNode {
     );
     this.keyLifecycleService = new KeyLifecycleService({ keysDir: this.paths.keys });
     await this.keyLifecycleService.loadFromDisk();
+    const contactRepository = new ContactRepository(this.paths.contactsDb);
+    const contactService = new ContactService(contactRepository);
+    this.selfProfileStore = new SelfProfileStore(this.paths);
+    this.peerProfileRepository = new PeerProfileRepository(this.paths.peerProfilesDb);
     this.messageService = new MessageService(this.groupService, {
       repository: this.mailboxStore,
       keyLifecycleService: this.keyLifecycleService,
       identityService: this.identityService,
+      contactService,
+      peerProfileRepository: this.peerProfileRepository,
     });
     this.ownerPermissionService = new OwnerPermissionService({
       mode: this.config.owner.mode,
@@ -208,10 +214,6 @@ export class TelagentNode {
       privateConversations: this.config.owner.privateConversations,
     });
     this.attachmentService = new AttachmentService();
-    const contactRepository = new ContactRepository(this.paths.contactsDb);
-    const contactService = new ContactService(contactRepository);
-    this.selfProfileStore = new SelfProfileStore(this.paths);
-    this.peerProfileRepository = new PeerProfileRepository(this.paths.peerProfilesDb);
     this.clawnetTransportService = new ClawNetTransportService(
       this.clawnetGateway,
       { baseUrl: discovery.nodeUrl, apiKey: this.config.clawnet.apiKey },

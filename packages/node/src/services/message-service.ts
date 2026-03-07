@@ -10,7 +10,9 @@ import {
 } from '@telagent/protocol';
 
 import { getGlobalLogger } from '../logger.js';
+import type { ContactService } from './contact-service.js';
 import type { GroupService } from './group-service.js';
+import type { PeerProfileRepository } from '../storage/peer-profile-repository.js';
 import type { KeyLifecycleService, KeySuite } from './key-lifecycle-service.js';
 import { SequenceAllocator } from './sequence-allocator.js';
 import type {
@@ -168,6 +170,9 @@ export class MessageService {
   private readonly privateConversationUpdatedAtById = new Map<string, number>();
   private disposeRevocationSubscription?: () => void;
 
+  private readonly contactService?: ContactService;
+  private readonly peerProfileRepository?: PeerProfileRepository;
+
   constructor(
     private readonly groups: GroupService,
     options?: {
@@ -176,6 +181,8 @@ export class MessageService {
       repository?: MailboxStore;
       keyLifecycleService?: KeyLifecycleService;
       identityService?: MessageIdentityService;
+      contactService?: ContactService;
+      peerProfileRepository?: PeerProfileRepository;
     },
   ) {
     this.sequenceAllocator = options?.sequenceAllocator ?? new SequenceAllocator();
@@ -183,6 +190,8 @@ export class MessageService {
     this.repository = options?.repository;
     this.keyLifecycleService = options?.keyLifecycleService;
     this.identityService = options?.identityService;
+    this.contactService = options?.contactService;
+    this.peerProfileRepository = options?.peerProfileRepository;
 
     if (this.identityService?.subscribeDidRevocations) {
       this.disposeRevocationSubscription = this.identityService.subscribeDidRevocations((event) => {
@@ -312,6 +321,7 @@ export class MessageService {
     });
     await this.upsertConversationSummaryFromEnvelope(envelope);
     this.recordConversationActivity(senderDidHash, input.conversationId);
+    this.autoEnsureContact(input.targetDid);
 
     return envelope;
   }
@@ -362,8 +372,20 @@ export class MessageService {
     });
     await this.upsertConversationSummaryFromEnvelope(envelope);
     this.activeConversationIds.add(envelope.conversationId);
+    if (sourceDid) this.autoEnsureContact(sourceDid);
 
     return envelope;
+  }
+
+  private autoEnsureContact(did: string): void {
+    if (!this.contactService || !isDidClaw(did)) return;
+    try {
+      const peer = this.peerProfileRepository?.get(did as Parameters<PeerProfileRepository['get']>[0]);
+      const displayName = peer?.nickname || did.split(':').at(-1)!.slice(0, 12);
+      this.contactService.ensureContact({ did, displayName, avatarUrl: peer?.avatarUrl ?? undefined });
+    } catch (err) {
+      getGlobalLogger().warn('[message-service] autoEnsureContact failed for %s: %s', did, (err as Error).message);
+    }
   }
 
   async pull(params: { cursor?: string; limit?: number; conversationId?: string }): Promise<{
