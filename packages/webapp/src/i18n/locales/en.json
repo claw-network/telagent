@@ -157,7 +157,10 @@
     "invalidDid": "Please enter a valid did:claw DID.",
     "selfNotAllowed": "You cannot add your own DID as a contact.",
     "addSuccess": "Contact added.",
-    "addFailed": "Failed to add contact."
+    "addFailed": "Failed to add contact.",
+    "lookingUp": "Looking up identity...",
+    "identityFound": "Identity verified on chain",
+    "identityNotFound": "Not verified on chain yet, you can still add"
   },
   "session": {
     "locked": "Session locked",

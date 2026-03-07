@@ -157,7 +157,10 @@
     "invalidDid": "请输入合法的 did:claw DID。",
     "selfNotAllowed": "不能把自己的 DID 添加为联系人。",
     "addSuccess": "联系人已添加。",
-    "addFailed": "添加联系人失败。"
+    "addFailed": "添加联系人失败。",
+    "lookingUp": "正在查询身份...",
+    "identityFound": "链上已验证身份",
+    "identityNotFound": "链上暂未验证，仍可添加"
   },
   "session": {
     "locked": "会话已锁定",
