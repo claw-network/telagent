@@ -50,7 +50,10 @@ export function ContactActions({ conversationId }: ContactActionsProps) {
           className="text-destructive"
           onClick={async () => {
             const conversation = conversations.find((c) => c.conversationId === conversationId)
-            const peerDid = conversation?.peerDid
+            // peerDid may be absent on envelope-derived conversations; derive from conversationId format
+            const peerDid =
+              conversation?.peerDid ??
+              (conversationId.startsWith("direct:") ? conversationId.slice("direct:".length) : undefined)
             try {
               await Promise.all([
                 peerDid ? removeContact(peerDid) : Promise.resolve(),

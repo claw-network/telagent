@@ -697,6 +697,15 @@ export class MessageRepository implements MailboxStore {
     this.db
       .prepare('DELETE FROM mailbox_conversations WHERE conversation_id = ?')
       .run(conversationId);
+    this.db
+      .prepare('DELETE FROM mailbox_envelopes WHERE conversation_id = ?')
+      .run(conversationId);
+    this.db
+      .prepare('DELETE FROM mailbox_sequences WHERE conversation_id = ?')
+      .run(conversationId);
+    this.db
+      .prepare('DELETE FROM mailbox_direct_conversations WHERE conversation_id = ?')
+      .run(conversationId);
   }
 
   async listConversationSummaries(params: {
