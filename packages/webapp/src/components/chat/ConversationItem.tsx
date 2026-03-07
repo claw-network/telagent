@@ -31,7 +31,7 @@ export function ConversationItem({ conversation, selected, onSelect }: Conversat
         selected ? "bg-accent" : "hover:bg-accent/60",
       )}
     >
-      <DidAvatar did={conversation.peerDid ?? conversation.groupId ?? conversation.conversationId} />
+      <DidAvatar did={conversation.peerDid ?? conversation.groupId ?? conversation.conversationId} avatarUrl={conversation.avatarUrl ?? undefined} />
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-1.5">
           <span className="truncate text-sm font-medium">{conversation.displayName}</span>

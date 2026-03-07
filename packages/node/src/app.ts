@@ -279,6 +279,18 @@ export class TelagentNode {
             nodeUrl: typeof payload.nodeUrl === 'string' ? payload.nodeUrl : undefined,
             receivedAtMs: Date.now(),
           });
+          // Update existing contact with the peer's profile data
+          try {
+            const existing = contactService.getContact(sourceDid);
+            if (existing) {
+              contactService.updateContact(sourceDid, {
+                displayName: typeof payload.nickname === 'string' ? payload.nickname : undefined,
+                avatarUrl: typeof payload.avatarUrl === 'string' ? payload.avatarUrl : undefined,
+              });
+            }
+          } catch {
+            // non-critical — contact may not exist yet
+          }
           // Reciprocal exchange: reply with our own profile the first time we hear from a peer.
           // This ensures both sides get each other's nickname/avatar without requiring
           // both nodes to independently create a conversation.

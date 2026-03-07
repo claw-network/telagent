@@ -112,6 +112,13 @@ export function AddContactDialog({
       setSelectedConversationId(conversationId)
       toast.success(t("contact.addSuccess"))
       setDialogOpen(false)
+
+      // Delayed re-fetch: profile card exchange via P2P is async;
+      // re-fetch after a few seconds to pick up the peer's nickname and avatar.
+      setTimeout(() => {
+        void refreshConversations()
+        void useContactStore.getState().loadContacts()
+      }, 3_000)
     } catch (error) {
       toast.error(error instanceof Error ? error.message : t("contact.addFailed"))
     } finally {

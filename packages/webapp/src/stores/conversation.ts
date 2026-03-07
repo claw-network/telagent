@@ -16,6 +16,7 @@ interface ConversationStore {
   setConversations: (items: ConversationSummary[]) => void
   upsertConversation: (item: ConversationSummary) => void
   removeConversation: (conversationId: string) => void
+  deleteConversation: (conversationId: string) => Promise<void>
   mergeFromEnvelopes: (items: Envelope[]) => void
   markRead: (conversationId: string) => void
 }
@@ -127,6 +128,20 @@ export const useConversationStore = create<ConversationStore>()(
     set({ conversations: merged })
   },
   removeConversation: (conversationId) => {
+    const next = get().conversations.filter((item) => item.conversationId !== conversationId)
+    set({
+      conversations: next,
+      selectedConversationId:
+        get().selectedConversationId === conversationId
+          ? null
+          : get().selectedConversationId,
+    })
+  },
+  deleteConversation: async (conversationId) => {
+    const sdk = useConnectionStore.getState().sdk
+    if (sdk) {
+      await sdk.deleteConversation(conversationId)
+    }
     const next = get().conversations.filter((item) => item.conversationId !== conversationId)
     set({
       conversations: next,

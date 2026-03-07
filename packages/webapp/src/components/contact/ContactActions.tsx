@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { useConversationStore } from "@/stores/conversation"
 import { useMessageStore } from "@/stores/message"
+import { useContactStore } from "@/stores/contact"
 
 interface ContactActionsProps {
   conversationId: string
@@ -20,8 +21,10 @@ interface ContactActionsProps {
 export function ContactActions({ conversationId }: ContactActionsProps) {
   const navigate = useNavigate()
   const { canExecute } = useGuardedAction("manage_contacts")
-  const removeConversation = useConversationStore((state) => state.removeConversation)
+  const conversations = useConversationStore((state) => state.conversations)
+  const deleteConversation = useConversationStore((state) => state.deleteConversation)
   const removeMessageConversation = useMessageStore((state) => state.removeConversation)
+  const removeContact = useContactStore((state) => state.removeContact)
 
   if (!canExecute) {
     return null
@@ -45,10 +48,20 @@ export function ContactActions({ conversationId }: ContactActionsProps) {
         </DropdownMenuItem>
         <DropdownMenuItem
           className="text-destructive"
-          onClick={() => {
-            removeConversation(conversationId)
+          onClick={async () => {
+            const conversation = conversations.find((c) => c.conversationId === conversationId)
+            const peerDid = conversation?.peerDid
+            try {
+              await Promise.all([
+                peerDid ? removeContact(peerDid) : Promise.resolve(),
+                deleteConversation(conversationId),
+              ])
+            } catch {
+              toast.error("Failed to remove contact")
+              return
+            }
             removeMessageConversation(conversationId)
-            toast.success("Contact conversation removed from local view")
+            toast.success("Contact removed")
             navigate("/chat")
           }}
         >
