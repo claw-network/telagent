@@ -270,6 +270,8 @@ export class TelagentNode {
       onEnvelope: (raw, sourceDid) => this.messageService!.ingestFederatedEnvelope(raw, sourceDid),
       onProfileCard: async (payload, sourceDid) => {
         try {
+          // Check before upsert so we know if this is the first time we hear from this peer
+          const isFirstSeen = !this.peerProfileRepository!.get(sourceDid as Parameters<PeerProfileRepository['get']>[0]);
           this.peerProfileRepository!.upsert({
             did: sourceDid,
             nickname: typeof payload.nickname === 'string' ? payload.nickname : undefined,
@@ -277,6 +279,25 @@ export class TelagentNode {
             nodeUrl: typeof payload.nodeUrl === 'string' ? payload.nodeUrl : undefined,
             receivedAtMs: Date.now(),
           });
+          // Reciprocal exchange: reply with our own profile the first time we hear from a peer.
+          // This ensures both sides get each other's nickname/avatar without requiring
+          // both nodes to independently create a conversation.
+          if (isFirstSeen) {
+            const selfProfile = await this.selfProfileStore!.loadPublic();
+            if (selfProfile.nickname) {
+              const selfDid = this.identityService.getSelfDid();
+              let avatarUrl = selfProfile.avatarUrl;
+              if (avatarUrl?.startsWith('/') && this.config.publicUrl) {
+                avatarUrl = `${this.config.publicUrl.replace(/\/$/, '')}${avatarUrl}`;
+              }
+              void this.clawnetTransportService!.sendProfileCard(sourceDid, {
+                did: selfDid,
+                nickname: selfProfile.nickname,
+                avatarUrl,
+                nodeUrl: this.config.publicUrl ?? selfProfile.nodeUrl,
+              }).catch((err: Error) => logger.warn('[telagent] Failed to reply profile card to %s: %s', sourceDid, err.message));
+            }
+          }
         } catch (err) {
           logger.warn('[telagent] Failed to cache peer profile from %s: %s', sourceDid, (err as Error).message);
         }
