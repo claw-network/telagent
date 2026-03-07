@@ -1,9 +1,19 @@
 import { ErrorCodes, TelagentError, hashDid, isDidClaw, type AgentDID } from '@telagent/protocol';
 import { publicKeyFromDid, bytesToHex } from '@claw-network/core';
+import { ethers } from 'ethers';
 
 import type { ClawNetGatewayService, IdentityInfo } from '../clawnet/gateway-service.js';
 import type { ManagedClawNetNode } from '../clawnet/managed-node.js';
 import type { IdentityCache } from '../storage/identity-cache.js';
+import { getGlobalLogger } from '../logger.js';
+
+const logger = getGlobalLogger();
+
+/** Minimal ABI for on-chain DID registration (no artifacts needed) */
+const IDENTITY_ABI = [
+  'function getController(bytes32 didHash) view returns (address)',
+  'function batchRegisterDID(bytes32[] didHashes, bytes[] publicKeys, uint8[] purposes, address[] controllers)',
+];
 
 export interface ResolvedIdentity {
   did: AgentDID;
@@ -99,8 +109,9 @@ export class IdentityAdapterService {
 
   /**
    * Ensure the node's own DID is registered on-chain.
-   * Uses the embedded ClawNet node's identity service directly (batchRegisterDID)
-   * which is the correct internal registration path.
+   * Strategy:
+   * 1. If a managed ClawNet node is available, use its identity service (batchRegisterDID)
+   * 2. Otherwise, fall back to direct ethers.js contract call using CLAW_CHAIN_* env vars
    */
   async ensureRegistered(): Promise<void> {
     const self = await this.getSelf();
@@ -108,19 +119,67 @@ export class IdentityAdapterService {
     if (self.controller.startsWith('0x')) {
       return;
     }
-    if (!this.managedNode) {
-      throw new Error('No managed ClawNet node — cannot auto-register on-chain');
-    }
     // Convert the multibase public key to 0x-prefixed hex for the smart contract
     const rawBytes = publicKeyFromDid(self.did);
     const hexKey = `0x${bytesToHex(rawBytes)}`;
-    // Register directly via the embedded node's identity service
-    const controller = await this.managedNode.ensureRegisteredOnChain(self.did, hexKey);
-    if (!controller) {
-      throw new Error('Chain identity service unavailable on embedded node');
+
+    if (this.managedNode) {
+      // Path A: embedded managed node (local dev)
+      const controller = await this.managedNode.ensureRegisteredOnChain(self.did, hexKey);
+      if (!controller) {
+        throw new Error('Chain identity service unavailable on embedded node');
+      }
+    } else {
+      // Path B: direct ethers.js call (cloud with standalone ClawNet node)
+      await this.registerOnChainDirect(self.did, hexKey);
     }
     // Refresh self identity to pick up chain data
     await this.getSelf();
+  }
+
+  /**
+   * Register DID on-chain directly using ethers.js and CLAW_CHAIN_* env vars.
+   * Used as fallback when no managed ClawNet node is available.
+   */
+  private async registerOnChainDirect(did: string, publicKeyHex: string): Promise<void> {
+    const rpcUrl = process.env.CLAW_CHAIN_RPC_URL;
+    const identityAddr = process.env.CLAW_CHAIN_IDENTITY_CONTRACT;
+    const signerEnv = process.env.CLAW_SIGNER_ENV || 'CLAW_PRIVATE_KEY';
+    const privateKey = process.env[signerEnv];
+
+    if (!rpcUrl || !identityAddr || !privateKey) {
+      throw new Error(
+        'Missing chain config for direct registration. ' +
+        'Set CLAW_CHAIN_RPC_URL, CLAW_CHAIN_IDENTITY_CONTRACT, and CLAW_SIGNER_ENV/private key.',
+      );
+    }
+
+    const provider = new ethers.JsonRpcProvider(rpcUrl);
+    const wallet = new ethers.Wallet(privateKey, provider);
+    const contract = new ethers.Contract(identityAddr, IDENTITY_ABI, wallet);
+    const didHash = ethers.keccak256(ethers.toUtf8Bytes(did));
+
+    // Check if already registered on-chain
+    try {
+      const controller = await contract.getController(didHash);
+      if (controller !== ethers.ZeroAddress) {
+        logger.info('[telagent] DID already on-chain: %s → controller %s', did, controller);
+        return;
+      }
+    } catch {
+      // getController reverts when DID not found — proceed to register
+    }
+
+    // Register via batchRegisterDID (REGISTRAR_ROLE, no ECDSA sig needed)
+    logger.info('[telagent] Direct chain registration: %s → controller %s', did, wallet.address);
+    const tx = await contract.batchRegisterDID(
+      [didHash],
+      [publicKeyHex],
+      [0], // authentication purpose
+      [wallet.address],
+    );
+    await tx.wait();
+    logger.info('[telagent] DID registered on-chain successfully: %s', did);
   }
 
   async resolve(rawDid: string): Promise<ResolvedIdentity> {
