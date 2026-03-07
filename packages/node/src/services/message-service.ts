@@ -240,12 +240,18 @@ export class MessageService {
 
     if (this.keyLifecycleService) {
       const suite: KeySuite = input.conversationType === 'direct' ? 'signal' : 'mls';
-      this.keyLifecycleService.assertCanUseKey({
-        did: input.senderDid,
-        suite,
-        keyId: input.mailboxKeyId,
-        atMs: nowMs,
-      });
+      // Only enforce key validation when keys have been explicitly registered for this
+      // DID+suite. An empty keystore (fresh install / key management not configured)
+      // is treated as "no restriction" so out-of-the-box usage works without setup.
+      const registeredKeys = this.keyLifecycleService.listKeys(input.senderDid, suite);
+      if (registeredKeys.length > 0) {
+        this.keyLifecycleService.assertCanUseKey({
+          did: input.senderDid,
+          suite,
+          keyId: input.mailboxKeyId,
+          atMs: nowMs,
+        });
+      }
     }
 
     let provisional = false;

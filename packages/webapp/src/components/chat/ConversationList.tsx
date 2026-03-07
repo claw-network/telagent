@@ -116,29 +116,31 @@ export function ConversationList() {
             </p>
           ) : (
             contactConversations.map((conversation) => (
-              <div
+              <button
+                type="button"
                 key={conversation.conversationId}
-                className={`mb-0.5 flex w-full items-center gap-2 rounded px-2 py-1.5 text-left text-[17px] transition-colors ${
+                onClick={() => handleSelect(conversation.conversationId)}
+                className={`mb-0.5 flex w-full items-center gap-3 rounded-lg px-2 py-2 text-left transition-colors ${
                   conversation.conversationId === selectedConversationId
                     ? "bg-[#404249] text-[#f2f3f5]"
                     : "text-[#949ba4] hover:bg-[#35373c] hover:text-[#dbdee1]"
                 }`}
               >
-                <button
-                  type="button"
-                  onClick={() => handleSelect(conversation.conversationId)}
-                  className="flex min-w-0 flex-1 items-center gap-2 text-left"
-                >
-                  <HashIcon className="size-4 shrink-0" />
-                  <span className="truncate text-base">{conversation.displayName.replace(/^Group\s/, "")}</span>
-                </button>
-                {conversation.conversationId === selectedConversationId ? (
-                  <div className="flex items-center gap-1 text-[#b5bac1]">
-                    <UserRoundPlusIcon className="size-3.5" />
-                    <SettingsIcon className="size-3.5" />
+                <DidAvatar did={conversation.peerDid ?? conversation.conversationId} className="size-10 shrink-0" />
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="truncate text-sm font-semibold text-[#f2f3f5]">{conversation.displayName}</span>
+                    {conversation.lastMessageAtMs ? (
+                      <span className="shrink-0 text-[11px] text-[#949ba4]">
+                        {new Date(conversation.lastMessageAtMs).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                      </span>
+                    ) : null}
                   </div>
-                ) : null}
-              </div>
+                  <p className="truncate text-xs text-[#949ba4]">
+                    {conversation.private ? "••••••" : conversation.lastMessagePreview ?? ""}
+                  </p>
+                </div>
+              </button>
             ))
           )}
 
