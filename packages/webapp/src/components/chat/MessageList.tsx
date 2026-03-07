@@ -123,6 +123,7 @@ export function MessageList({ messages }: MessageListProps) {
                 style={{
                   transform: `translateY(${virtualItem.start}px)`,
                 }}
+                data-index={virtualItem.index}
                 ref={rowVirtualizer.measureElement}
               >
                 <div className="my-2 text-center text-[11px] text-[#949ba4]">
@@ -149,6 +150,7 @@ export function MessageList({ messages }: MessageListProps) {
               style={{
                 transform: `translateY(${virtualItem.start}px)`,
               }}
+              data-index={virtualItem.index}
               ref={rowVirtualizer.measureElement}
             >
               <div className="group flex gap-3 rounded-sm px-1 py-1 hover:bg-[#2e3035]">
