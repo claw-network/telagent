@@ -3,9 +3,9 @@
   "networkName": "clawnetTestnet",
   "chainId": 7625,
   "deployer": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
-  "identityAddress": "0xee9B2D7eb0CD51e1d0a14278bCA32b02548D1149",
-  "proxyAddress": "0xDc64a140Aa3E981100a9becA4E685f962f0cF6C9",
-  "implementationAddress": "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9",
-  "deployTxHash": "0x003e7042e36e6f111429d0cbdadb8b160a9afafd40afef6e9614719b0b34d2d4",
-  "generatedAt": "2026-03-07T10:27:14.069Z"
+  "identityAddress": "0xa513E6E4b8f2a923D98304ec87F64353C4D5C853",
+  "proxyAddress": "0xB7f8BC63BbcaD18155201308C8f3540b07f84F5e",
+  "implementationAddress": "0x610178dA211FEF7D417bC0e6FeD39F05609AD788",
+  "note": "Uses MockClawIdentity with pre-registered DIDs (alex + bess)",
+  "generatedAt": "2026-03-07T11:04:00.000Z"
 }
