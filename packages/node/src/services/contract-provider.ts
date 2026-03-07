@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs';
 
 import {
   Contract,
+  FeeData,
   HDNodeWallet,
   JsonRpcProvider,
   NonceManager,
@@ -25,6 +26,9 @@ export class ContractProvider {
       chainId: config.chainId,
       name: 'clawnet',
     });
+
+    // ClawNet is a zero-gas chain — override fee data to avoid querying the node
+    this.provider.getFeeData = async () => new FeeData(0n, 0n, 0n);
 
     const signer = this.resolveSigner();
     this.signer = new NonceManager(signer);
