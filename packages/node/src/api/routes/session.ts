@@ -1,3 +1,5 @@
+import { timingSafeEqual } from 'node:crypto';
+
 import { ErrorCodes, TelagentError } from '@telagent/protocol';
 
 import { Router } from '../router.js';
@@ -62,19 +64,12 @@ export function sessionRoutes(ctx: RuntimeContext): Router {
           : undefined,
         maxOperations: typeof payload.maxOperations === 'number' ? payload.maxOperations : undefined,
         validatePassphrase: async (_did, passphrase) => {
-          try {
-            const resp = await fetch(`${ctx.clawnetGateway.baseUrl}/api/v1/auth/verify-passphrase`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ passphrase }),
-              signal: AbortSignal.timeout(5000),
-            });
-            if (!resp.ok) return false;
-            const body = await resp.json() as { data?: { valid?: boolean } };
-            return body?.data?.valid === true;
-          } catch {
-            return false;
-          }
+          const expected = ctx.configuredPassphrase;
+          if (!expected) return false;
+          if (expected.length !== passphrase.length) return false;
+          const a = Buffer.from(expected, 'utf8');
+          const b = Buffer.from(passphrase, 'utf8');
+          return timingSafeEqual(a, b);
         },
       });
 

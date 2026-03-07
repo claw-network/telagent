@@ -232,6 +232,7 @@ export class TelagentNode {
       sessionManager: this.sessionManager,
       nonceManager: this.nonceManager,
       ownerPermissionService: this.ownerPermissionService,
+      configuredPassphrase: passphrase ?? undefined,
     };
 
     this.apiServer = new ApiServer(runtime);

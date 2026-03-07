@@ -28,4 +28,5 @@ export interface RuntimeContext {
   sessionManager: SessionManager;
   nonceManager: NonceManager;
   ownerPermissionService?: OwnerPermissionService;
+  configuredPassphrase?: string;
 }
