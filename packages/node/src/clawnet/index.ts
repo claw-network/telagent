@@ -3,7 +3,7 @@ export type { ClawNetDiscoveryResult } from './discovery.js';
 
 export { ManagedClawNetNode } from './managed-node.js';
 
-export { killClawnetdOnPort } from './clawnetd-process.js';
+export { killClawnetdOnPort, killStaleTelagentOnPort, killProcessOnPort } from './clawnetd-process.js';
 
 export { verifyPassphrase } from './verify-passphrase.js';
 
