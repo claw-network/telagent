@@ -255,23 +255,18 @@ export function useMessageSender() {
       checksum,
       fileData,
       fileContentType: input.file.type || "application/octet-stream",
+      targetDid,
     })
 
-    // Build the downloadUrl from nodeUrl (the URL the webapp is ACTUALLY connected to).
-    //
-    // The server-computed downloadUrl uses the node's *bind address* (e.g. 127.0.0.1),
-    // which is unreachable by any other machine. nodeUrl is what the user typed to
-    // connect — it's the real externally-reachable address (e.g. https://alex.telagent.org
-    // or http://173.249.46.252:9529), so it works for receivers on other machines too.
-    //
-    // The blob: URL is only used for the sender's immediate preview in the current session.
-    // After a reload, clientDisplayText is gone and the message falls back to
-    // readableCiphertext(ciphertext) = downloadUrl, fetched from the node.
-    const downloadUrl = `${nodeUrl.replace(/\/$/, "")}/api/v1/attachments/${encodeURIComponent(initialized.objectKey)}`
+    // Use a "local:" URI as the wire payload.
+    // The receiver's node gets the file via ClawNet P2P (relayed during completeAttachmentUpload)
+    // and stores it under the same objectKey. Both sender and receiver resolve
+    // "local:<objectKey>" → "${nodeUrl}/api/v1/attachments/<objectKey>" using their own nodeUrl,
+    // so the file is always served from the locally-reachable node — no cross-machine HTTP needed.
+    const rawPayloadText = `local:${initialized.objectKey}`
     const displayText = contentType === "image"
       ? URL.createObjectURL(input.file)  // local blob for sender's immediate preview
       : input.file.name
-    const rawPayloadText = downloadUrl   // what the receiver (and sender-after-reload) uses
 
     return sendEnvelope({
       conversationId: conversation.conversationId,

@@ -8,6 +8,7 @@ const TOPIC_ENVELOPE = 'telagent/envelope';
 const TOPIC_RECEIPT = 'telagent/receipt';
 const TOPIC_GROUP_SYNC = 'telagent/group-sync';
 const TOPIC_PROFILE_CARD = 'telagent/profile-card';
+const TOPIC_ATTACHMENT = '_attachment';
 const RECONNECT_DELAY_MS = 3_000;
 
 /** JSON replacer that converts BigInt to string (needed for Envelope.seq). */
@@ -26,11 +27,20 @@ export interface GroupSyncPayload {
   memberDids: string[];
 }
 
+export interface AttachmentNotification {
+  attachmentId: string;
+  sourceDid: string;
+  contentType: string;
+  fileName?: string;
+  totalSize: number;
+}
+
 export type TopicCallbacks = {
   onEnvelope?: (raw: Record<string, unknown>, sourceDid: string) => Promise<unknown>;
   onReceipt?: (receipt: DeliveryReceipt, sourceDid: string) => Promise<unknown>;
   onGroupSync?: (payload: GroupSyncPayload, sourceDid: string) => Promise<unknown>;
   onProfileCard?: (payload: ProfileCardPayload, sourceDid: string) => Promise<unknown>;
+  onAttachment?: (info: AttachmentNotification, sourceDid: string) => Promise<void>;
 };
 
 export class ClawNetTransportService {
@@ -127,7 +137,43 @@ export class ClawNetTransportService {
       idempotencyKey: `profile-card:${payload.did}:${Date.now()}`,
     });
   }
+  /**
+   * Relay an attachment to a target DID via ClawNet P2P.
+   * The file is stored on the receiver's ClawNet node under `attachmentId`.
+   * Returns { delivered: true } when the receiver's node accepted the file.
+   */
+  async relayAttachment(
+    targetDid: string,
+    data: Buffer,
+    contentType: string,
+    attachmentId: string,
+    fileName?: string,
+  ): Promise<{ delivered: boolean }> {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const messaging = this.gateway.client.messaging as any;
+    return messaging.relayAttachment({
+      targetDid,
+      data: data.toString('base64'),
+      contentType,
+      fileName,
+      attachmentId,
+    });
+  }
 
+  /**
+   * Download a previously-relayed attachment from this node's local ClawNet instance.
+   * Returns the raw binary, or null if not found.
+   */
+  async downloadAttachment(attachmentId: string): Promise<Buffer | null> {
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const messaging = this.gateway.client.messaging as any;
+      const arrayBuf = await messaging.getAttachment(attachmentId);
+      return Buffer.from(arrayBuf as ArrayBuffer);
+    } catch {
+      return null;
+    }
+  }
   stopListening(): void {
     this.stopping = true;
     if (this.ws) {
@@ -241,6 +287,9 @@ export class ClawNetTransportService {
         break;
       case TOPIC_PROFILE_CARD:
         await this.callbacks.onProfileCard?.(parsed as unknown as ProfileCardPayload, data.sourceDid);
+        break;
+      case TOPIC_ATTACHMENT:
+        await this.callbacks.onAttachment?.(parsed as unknown as AttachmentNotification, data.sourceDid);
         break;
       default:
         logger.warn('[p2p-transport] Unknown topic: %s', data.topic);

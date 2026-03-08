@@ -107,6 +107,8 @@ export interface CompleteAttachmentUploadInput {
   /** Base64-encoded file bytes to store inline (avoids a separate binary PUT). */
   fileData?: string;
   fileContentType?: string;
+  /** When set, the node will relay the attachment to this DID via ClawNet P2P. */
+  targetDid?: string;
 }
 
 export interface GroupMemberListInput {

@@ -33,6 +33,7 @@ import { readableCiphertext } from "@/lib/message-content"
 import { toast } from "sonner"
 import { useTranslation } from "react-i18next"
 import { usePermissionStore } from "@/stores/permission"
+import { useConnectionStore } from "@/stores/connection"
 import type { MessageWithStatus } from "@/types/webapp"
 
 interface MessageBubbleProps {
@@ -44,6 +45,17 @@ interface MessageBubbleProps {
 
 function isProbableImageUrl(value: string): boolean {
   return /^https?:\/\//.test(value) || /^data:image\//.test(value) || /^blob:/.test(value)
+}
+
+/** Resolve a "local:<objectKey>" URI to the TelagentNode URL.
+ * Other URL schemes are returned unchanged.
+ * Backwards-compatible: existing messages with https:// URLs work as-is. */
+function resolveAttachmentUrl(value: string, nodeUrl: string): string {
+  if (value.startsWith('local:')) {
+    const objectKey = value.slice(6)
+    return `${nodeUrl.replace(/\/$/, '')}/api/v1/attachments/${encodeURIComponent(objectKey)}`
+  }
+  return value
 }
 
 function alignedCard(align: "left" | "right", content: import("react").ReactNode) {
@@ -85,13 +97,15 @@ function deliveryState(
 export function MessageBubble({ message, align, onRetry, showTail = true }: MessageBubbleProps) {
   const { t } = useTranslation()
   const mode = usePermissionStore((state) => state.mode)
+  const nodeUrl = useConnectionStore((state) => state.nodeUrl)
   const readableText = message.clientDisplayText ?? readableCiphertext(message.ciphertext)
   let content: import("react").ReactNode
 
   if (message.contentType === "control") {
     content = <ControlNotice text="Control message" />
   } else if (message.contentType === "image") {
-    const candidate = message.clientDisplayText ?? readableText
+    const raw = message.clientDisplayText ?? readableText
+    const candidate = resolveAttachmentUrl(raw, nodeUrl)
     content = (
       <ImageBubble
         align={align}

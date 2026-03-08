@@ -62,9 +62,23 @@ export function attachmentRoutes(ctx: RuntimeContext): Router {
       });
 
       // If the client included inline base64 file data, decode and save it now.
+      let fileBuffer: Buffer | undefined;
       if (parsed.data.fileData) {
-        const fileBuffer = Buffer.from(parsed.data.fileData, 'base64');
+        fileBuffer = Buffer.from(parsed.data.fileData, 'base64');
         await ctx.attachmentService.saveFile(result.objectKey, fileBuffer);
+      }
+
+      // Relay to target peer via ClawNet P2P so they can serve it from their local node.
+      if (parsed.data.targetDid && fileBuffer) {
+        ctx.clawnetTransportService.relayAttachment(
+          parsed.data.targetDid,
+          fileBuffer,
+          parsed.data.fileContentType ?? 'application/octet-stream',
+          result.objectKey,
+          parsed.data.objectKey.split('/').pop(),
+        ).catch((err: unknown) => {
+          getGlobalLogger().warn('[attachments] P2P relay failed for %s: %s', result.objectKey, (err as Error).message);
+        });
       }
 
       const downloadUrl = `${nodeBaseUrl(ctx.config)}/api/v1/attachments/${encodeURIComponent(result.objectKey)}`;

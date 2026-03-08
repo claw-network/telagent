@@ -82,4 +82,6 @@ export const CompleteAttachmentSchema = z.object({
   // file inline so no separate binary PUT is needed.
   fileData: z.string().optional(),
   fileContentType: z.string().optional(),
+  // When set, the server will relay the file to this DID via ClawNet P2P.
+  targetDid: z.string().optional(),
 });

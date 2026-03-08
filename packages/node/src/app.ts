@@ -291,6 +291,22 @@ export class TelagentNode {
     await this.apiServer.start();
     this.clawnetTransportService.startListening({
       onEnvelope: (raw, sourceDid) => this.messageService!.ingestFederatedEnvelope(raw, sourceDid),
+      onAttachment: async (info, _sourceDid) => {
+        // A peer relayed an attachment to us via ClawNet P2P.
+        // Download from our local ClawNet node and save under the same objectKey
+        // so `GET /api/v1/attachments/<objectKey>` on this node can serve it.
+        try {
+          const data = await this.clawnetTransportService!.downloadAttachment(info.attachmentId);
+          if (data) {
+            await this.attachmentService!.saveFile(info.attachmentId, data);
+            logger.info('[telagent] Stored relayed attachment %s (%d bytes)', info.attachmentId, data.length);
+          } else {
+            logger.warn('[telagent] Relayed attachment %s not found on local ClawNet', info.attachmentId);
+          }
+        } catch (err) {
+          logger.warn('[telagent] Failed to store relayed attachment %s: %s', info.attachmentId, (err as Error).message);
+        }
+      },
       onProfileCard: async (payload, sourceDid) => {
         try {
           const peerNodeUrl = typeof payload.nodeUrl === 'string' ? payload.nodeUrl : undefined;
