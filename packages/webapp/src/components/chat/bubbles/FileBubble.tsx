@@ -3,6 +3,7 @@ import { FileIcon, DownloadIcon } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { shortHash } from "@/components/chat/bubbles/payload-utils"
+import { BubbleTail } from "@/components/chat/bubbles/BubbleTail"
 
 interface FileBubbleProps {
   align: "left" | "right"
@@ -11,6 +12,7 @@ interface FileBubbleProps {
   onDownload?: () => void
   provisional?: boolean
   attachmentManifestHash?: string
+  showTail?: boolean
 }
 
 export function FileBubble({
@@ -20,32 +22,39 @@ export function FileBubble({
   onDownload,
   provisional,
   attachmentManifestHash,
+  showTail = true,
 }: FileBubbleProps) {
+  const self = align === "right"
   return (
-    <div
-      className={cn(
-        "w-fit rounded-2xl px-3.5 py-2 shadow-sm",
-        align === "right"
-          ? "rounded-br-md bg-[color:var(--chat-bubble-self)] text-[color:var(--chat-bubble-self-fg)]"
-          : "rounded-bl-md bg-[color:var(--chat-bubble-peer)] text-[color:var(--chat-bubble-peer-fg)]",
-        provisional ? "border border-dashed border-amber-400/70" : "",
-      )}
-    >
-        <div className="flex items-center gap-2">
-          <FileIcon className="size-4 text-muted-foreground" />
-          <span className="max-w-56 truncate text-sm">{filename}</span>
-          <Button variant="ghost" size="icon-xs" onClick={onDownload}>
-            <DownloadIcon className="size-3.5" />
-          </Button>
-        </div>
-        {attachmentManifestHash ? (
+    <div className="relative w-fit">
+      <div
+        className={cn(
+          "w-fit rounded-[18px] px-3 py-1.5",
+          self
+            ? "bg-[var(--chat-bubble-self)] text-[var(--chat-bubble-self-fg)]"
+            : "bg-[var(--chat-bubble-peer)] text-[var(--chat-bubble-peer-fg)]",
+          showTail && self && "rounded-br-[4px]",
+          showTail && !self && "rounded-bl-[4px]",
+          provisional ? "opacity-60" : "",
+        )}
+      >
+          <div className="flex items-center gap-2">
+            <FileIcon className="size-4 text-muted-foreground" />
+            <span className="max-w-56 truncate text-sm">{filename}</span>
+            <Button variant="ghost" size="icon-xs" onClick={onDownload}>
+              <DownloadIcon className="size-3.5" />
+            </Button>
+          </div>
+          {attachmentManifestHash ? (
+            <p className="mt-1 text-[10px] text-muted-foreground">
+              attachment: {shortHash(attachmentManifestHash, 8)}
+            </p>
+          ) : null}
           <p className="mt-1 text-[10px] text-muted-foreground">
-            attachment: {shortHash(attachmentManifestHash, 8)}
+            {new Date(timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
           </p>
-        ) : null}
-        <p className="mt-1 text-[10px] text-muted-foreground">
-          {new Date(timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-        </p>
+      </div>
+      {showTail && <BubbleTail align={align} />}
     </div>
   )
 }

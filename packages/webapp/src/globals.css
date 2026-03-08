@@ -33,10 +33,10 @@
   --sidebar-border: oklch(0.88 0.01 248);
   --sidebar-ring: oklch(0.66 0.14 252);
 
-  --chat-bubble-self: oklch(0.62 0.16 250);
-  --chat-bubble-peer: oklch(0.92 0.005 250);
-  --chat-bubble-self-fg: oklch(1 0 0);
-  --chat-bubble-peer-fg: oklch(0.15 0.01 250);
+  --chat-bubble-self: #007AFF;
+  --chat-bubble-peer: #E9E9EB;
+  --chat-bubble-self-fg: #FFFFFF;
+  --chat-bubble-peer-fg: #000000;
   --privacy-overlay: oklch(1 0 0 / 0.6);
 }
 
@@ -69,10 +69,10 @@
   --sidebar-border: oklch(1 0 0 / 0.12);
   --sidebar-ring: oklch(0.72 0.13 252);
 
-  --chat-bubble-self: oklch(0.55 0.18 250);
-  --chat-bubble-peer: oklch(0.28 0.014 250);
-  --chat-bubble-self-fg: oklch(1 0 0);
-  --chat-bubble-peer-fg: oklch(0.92 0.005 250);
+  --chat-bubble-self: #0B84FE;
+  --chat-bubble-peer: #26262A;
+  --chat-bubble-self-fg: #FFFFFF;
+  --chat-bubble-peer-fg: #FFFFFF;
   --privacy-overlay: oklch(0.16 0.01 250 / 0.62);
 }
 

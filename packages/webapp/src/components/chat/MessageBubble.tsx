@@ -39,6 +39,7 @@ interface MessageBubbleProps {
   message: MessageWithStatus
   align: "left" | "right"
   onRetry?: (message: MessageWithStatus) => void
+  showTail?: boolean
 }
 
 function isProbableImageUrl(value: string): boolean {
@@ -81,7 +82,7 @@ function deliveryState(
   return null
 }
 
-export function MessageBubble({ message, align, onRetry }: MessageBubbleProps) {
+export function MessageBubble({ message, align, onRetry, showTail = true }: MessageBubbleProps) {
   const { t } = useTranslation()
   const mode = usePermissionStore((state) => state.mode)
   const readableText = message.clientDisplayText ?? readableCiphertext(message.ciphertext)
@@ -98,6 +99,7 @@ export function MessageBubble({ message, align, onRetry }: MessageBubbleProps) {
         timestamp={message.sentAtMs}
         provisional={message.provisional}
         attachmentManifestHash={message.attachmentManifestHash}
+        showTail={showTail}
       />
     )
   } else if (message.contentType === "file") {
@@ -113,6 +115,7 @@ export function MessageBubble({ message, align, onRetry }: MessageBubbleProps) {
         timestamp={message.sentAtMs}
         provisional={message.provisional}
         attachmentManifestHash={message.attachmentManifestHash}
+        showTail={showTail}
       />
     )
   } else if (message.contentType === "text") {
@@ -123,6 +126,7 @@ export function MessageBubble({ message, align, onRetry }: MessageBubbleProps) {
         timestamp={message.sentAtMs}
         provisional={message.provisional}
         attachmentManifestHash={message.attachmentManifestHash}
+        showTail={showTail}
       />
     )
   } else if (message.contentType === "telagent/identity-card") {
@@ -160,6 +164,7 @@ export function MessageBubble({ message, align, onRetry }: MessageBubbleProps) {
         timestamp={message.sentAtMs}
         provisional={message.provisional}
         attachmentManifestHash={message.attachmentManifestHash}
+        showTail={showTail}
       />
     )
   }
@@ -171,6 +176,7 @@ export function MessageBubble({ message, align, onRetry }: MessageBubbleProps) {
       timestamp={message.sentAtMs}
       provisional={message.provisional}
       attachmentManifestHash={message.attachmentManifestHash}
+      showTail={showTail}
     />
   )
 

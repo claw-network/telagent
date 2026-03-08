@@ -48,7 +48,6 @@ export function MessageList({ messages }: MessageListProps) {
     state.conversations.find((item) => item.conversationId === selectedConversationId) ?? null,
   )
   const peerDid = activeConversation?.peerDid
-  const fetchPeerProfile = useContactStore((state) => state.fetchPeerProfile)
   const peerProfile = useContactStore((state) => peerDid ? state.peerProfiles[peerDid] : undefined)
   const contacts = useContactStore((state) => state.contacts)
   const { retryMessage } = useMessageSender()
@@ -56,12 +55,6 @@ export function MessageList({ messages }: MessageListProps) {
   const handleRetry = useCallback((message: MessageWithStatus) => {
     void retryMessage(message)
   }, [retryMessage])
-
-  useEffect(() => {
-    if (peerDid) {
-      void fetchPeerProfile(peerDid)
-    }
-  }, [peerDid, fetchPeerProfile])
 
   const peerAvatarUrl = useMemo(() => {
     if (!peerDid) return undefined
@@ -140,15 +133,15 @@ export function MessageList({ messages }: MessageListProps) {
             return (
               <div
                 key={row.key}
-                className="absolute left-0 w-full px-1"
+                className="absolute left-0 w-full"
                 style={{
                   transform: `translateY(${virtualItem.start}px)`,
                 }}
                 data-index={virtualItem.index}
                 ref={rowVirtualizer.measureElement}
               >
-                <div className="my-2 text-center text-[11px] text-[#949ba4]">
-                  <span className="rounded-full bg-[#232428] px-2 py-0.5">{row.label}</span>
+                <div className="py-2 text-center text-[12px] font-medium text-muted-foreground">
+                  {row.label}
                 </div>
               </div>
             )
@@ -156,37 +149,44 @@ export function MessageList({ messages }: MessageListProps) {
 
           const senderDid = decodeUtf8Hex(row.value.sealedHeader)
           const isSelf = !!(selfDid && senderDid && senderDid === selfDid)
+
+          // Show tail & avatar only on the last message in a consecutive group from the same sender
+          const nextRow = rows[virtualItem.index + 1]
+          const nextSenderDid = nextRow?.kind === "message"
+            ? decodeUtf8Hex(nextRow.value.sealedHeader)
+            : null
+          const showTail = !nextRow || nextRow.kind === "date" || nextSenderDid !== senderDid
+
           const avatarDid = isSelf
             ? (selfDid ?? "did:claw:me")
             : (peerDid ?? "did:claw:unknown")
-          const avatarUrl = isSelf
-            ? selfProfile?.avatarUrl
-            : peerAvatarUrl
+          const avatarUrl = isSelf ? selfProfile?.avatarUrl : peerAvatarUrl
+
+          const avatarSlot = showTail
+            ? <DidAvatar did={avatarDid} avatarUrl={avatarUrl} className="size-7 shrink-0 rounded-full" />
+            : <div className="size-7 shrink-0" />
 
           return (
             <div
               key={row.key}
-              className="absolute left-0 w-full px-3"
+              className="absolute left-0 w-full px-2"
               style={{
                 transform: `translateY(${virtualItem.start}px)`,
               }}
               data-index={virtualItem.index}
               ref={rowVirtualizer.measureElement}
             >
-              <div className={`flex items-end gap-2 py-[3px] ${isSelf ? "justify-end" : "justify-start"}`}>
-                {!isSelf && (
-                  <DidAvatar did={avatarDid} avatarUrl={avatarUrl} className="size-8 shrink-0 rounded-full" />
-                )}
-                <div style={{ maxWidth: "min(720px, 80%)" }}>
+              <div className={`flex items-end gap-1.5 py-[2px] ${isSelf ? "justify-end" : "justify-start"}`}>
+                {!isSelf && avatarSlot}
+                <div style={{ maxWidth: "min(680px, 75%)" }}>
                   <MemoMessageBubble
                     message={row.value}
                     align={isSelf ? "right" : "left"}
                     onRetry={handleRetry}
+                    showTail={showTail}
                   />
                 </div>
-                {isSelf && (
-                  <DidAvatar did={avatarDid} avatarUrl={avatarUrl} className="size-8 shrink-0 rounded-full" />
-                )}
+                {isSelf && avatarSlot}
               </div>
             </div>
           )

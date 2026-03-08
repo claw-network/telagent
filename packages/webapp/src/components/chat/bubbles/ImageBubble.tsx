@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react"
 import { cn } from "@/lib/utils"
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog"
 import { shortHash } from "@/components/chat/bubbles/payload-utils"
+import { BubbleTail } from "@/components/chat/bubbles/BubbleTail"
 
 interface ImageBubbleProps {
   align: "left" | "right"
@@ -10,6 +11,7 @@ interface ImageBubbleProps {
   timestamp: number
   provisional?: boolean
   attachmentManifestHash?: string
+  showTail?: boolean
 }
 
 export function ImageBubble({
@@ -18,6 +20,7 @@ export function ImageBubble({
   timestamp,
   provisional,
   attachmentManifestHash,
+  showTail = true,
 }: ImageBubbleProps) {
   const containerRef = useRef<HTMLDivElement | null>(null)
   const [inView, setInView] = useState(false)
@@ -52,15 +55,19 @@ export function ImageBubble({
 
   const shouldLoad = inView || !imageUrl
 
+  const self = align === "right"
   return (
+    <div className="relative w-fit">
     <div
       ref={containerRef}
       className={cn(
-        "w-fit overflow-hidden rounded-2xl shadow-sm",
-        align === "right"
-          ? "rounded-br-md bg-[color:var(--chat-bubble-self)]"
-          : "rounded-bl-md bg-[color:var(--chat-bubble-peer)]",
-        provisional ? "border border-dashed border-amber-400/70" : "",
+        "w-fit overflow-hidden rounded-[18px]",
+        self
+          ? "bg-[var(--chat-bubble-self)]"
+          : "bg-[var(--chat-bubble-peer)]",
+        showTail && self && "rounded-br-[4px]",
+        showTail && !self && "rounded-bl-[4px]",
+        provisional ? "opacity-60" : "",
       )}
     >
         {imageUrl && shouldLoad ? (
@@ -97,6 +104,8 @@ export function ImageBubble({
         <p className="mt-1 text-[10px] text-muted-foreground">
           {new Date(timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
         </p>
+    </div>
+    {showTail && <BubbleTail align={align} />}
     </div>
   )
 }
