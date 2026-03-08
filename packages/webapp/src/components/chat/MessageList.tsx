@@ -82,7 +82,7 @@ export function MessageList({ messages }: MessageListProps) {
         kind: "message",
         key: message.envelopeId,
         value: message,
-        senderDid: decodeUtf8Hex(message.sealedHeader),
+        senderDid: decodeUtf8Hex(message.sealedHeader) ?? "",
         showTail: false, // will be patched below
       })
     }

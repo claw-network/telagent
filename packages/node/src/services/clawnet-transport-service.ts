@@ -149,9 +149,7 @@ export class ClawNetTransportService {
     attachmentId: string,
     fileName?: string,
   ): Promise<{ delivered: boolean }> {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const messaging = this.gateway.client.messaging as any;
-    return messaging.relayAttachment({
+    return this.gateway.client.messaging.relayAttachment({
       targetDid,
       data: data.toString('base64'),
       contentType,
@@ -166,9 +164,7 @@ export class ClawNetTransportService {
    */
   async downloadAttachment(attachmentId: string): Promise<Buffer | null> {
     try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const messaging = this.gateway.client.messaging as any;
-      const arrayBuf = await messaging.getAttachment(attachmentId);
+      const arrayBuf = await this.gateway.client.messaging.getAttachment(attachmentId);
       return Buffer.from(arrayBuf as ArrayBuffer);
     } catch {
       return null;
@@ -190,7 +186,8 @@ export class ClawNetTransportService {
     let wsUrl = this.baseUrl.replace(/^http/, 'ws')
       + '/api/v1/messaging/subscribe';
     const params = new URLSearchParams();
-    params.set('topic', 'telagent/*');
+    // Subscribe to telagent app topics AND the _attachment relay notification from ClawNet P2P.
+    params.set('topic', 'telagent/*,_attachment');
     if (this.apiKey) {
       params.set('apiKey', this.apiKey);
     }

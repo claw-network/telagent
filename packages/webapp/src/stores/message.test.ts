@@ -11,6 +11,7 @@ function makeEnvelope(overrides: Partial<Envelope> = {}): Envelope {
     conversationType: overrides.conversationType ?? "direct",
     routeHint: overrides.routeHint ?? {
       targetDomain: "local",
+      targetDid: "did:claw:test",
       mailboxKeyId: "key",
     },
     sealedHeader: overrides.sealedHeader ?? "header",
