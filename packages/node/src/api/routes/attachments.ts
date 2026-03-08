@@ -8,8 +8,13 @@ import {
 import { Router } from '../router.js';
 import { created, ok } from '../response.js';
 import { handleError } from '../route-utils.js';
-import type { RuntimeContext } from '../types.js';
+import type { ApiServerConfig, RuntimeContext } from '../types.js';
 import { validate } from '../validate.js';
+
+function nodeBaseUrl(config: ApiServerConfig): string {
+  if (config.publicUrl) return config.publicUrl.replace(/\/$/, '');
+  return `http://${config.host}:${config.port}`;
+}
 
 export function attachmentRoutes(ctx: RuntimeContext): Router {
   const router = new Router();
@@ -23,7 +28,8 @@ export function attachmentRoutes(ctx: RuntimeContext): Router {
 
     try {
       const result = ctx.attachmentService.initUpload(parsed.data);
-      created(res, result, { self: `/api/v1/attachments/${encodeURIComponent(result.objectKey)}` });
+      const uploadUrl = `${nodeBaseUrl(ctx.config)}/api/v1/attachments/${encodeURIComponent(result.objectKey)}`;
+      created(res, { ...result, uploadUrl }, { self: `/api/v1/attachments/${encodeURIComponent(result.objectKey)}` });
     } catch (error) {
       handleError(res, error, url.pathname);
     }
@@ -38,7 +44,43 @@ export function attachmentRoutes(ctx: RuntimeContext): Router {
 
     try {
       const result = ctx.attachmentService.completeUpload(parsed.data);
-      ok(res, result, { self: `/api/v1/attachments/${encodeURIComponent(result.objectKey)}` });
+      const downloadUrl = `${nodeBaseUrl(ctx.config)}/api/v1/attachments/${encodeURIComponent(result.objectKey)}`;
+      ok(res, { ...result, downloadUrl }, { self: `/api/v1/attachments/${encodeURIComponent(result.objectKey)}` });
+    } catch (error) {
+      handleError(res, error, url.pathname);
+    }
+  });
+
+  // Receive uploaded file bytes
+  router.put('/:objectKey', async ({ res, body, params, url }) => {
+    try {
+      if (!Buffer.isBuffer(body)) {
+        handleError(res, new TelagentError(ErrorCodes.VALIDATION, 'Expected binary body'), url.pathname);
+        return;
+      }
+      await ctx.attachmentService.saveFile(params.objectKey!, body);
+      res.writeHead(204);
+      res.end();
+    } catch (error) {
+      handleError(res, error, url.pathname);
+    }
+  });
+
+  // Serve stored file
+  router.get('/:objectKey', async ({ res, params, url }) => {
+    try {
+      const data = await ctx.attachmentService.readFile(params.objectKey!);
+      if (!data) {
+        handleError(res, new TelagentError(ErrorCodes.NOT_FOUND, 'Attachment not found'), url.pathname);
+        return;
+      }
+      const contentType = ctx.attachmentService.getContentType(params.objectKey!);
+      res.writeHead(200, {
+        'Content-Type': contentType,
+        'Content-Length': data.length,
+        'Cache-Control': 'private, max-age=86400',
+      });
+      res.end(data);
     } catch (error) {
       handleError(res, error, url.pathname);
     }

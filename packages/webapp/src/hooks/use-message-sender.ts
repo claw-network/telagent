@@ -253,10 +253,14 @@ export function useMessageSender() {
       checksum,
     })
 
+    // downloadUrl is the node-served URL; send it as the payload so the
+    // receiver can display the image directly from the sender's node.
+    const downloadUrl = (completed as { downloadUrl?: string }).downloadUrl
+      ?? `${initialized.uploadUrl.replace(/\/[^/]+$/, '')}`  // fallback: strip objectKey from uploadUrl
     const displayText = contentType === "image"
-      ? URL.createObjectURL(input.file)
+      ? URL.createObjectURL(input.file)  // local blob for sender's own preview
       : input.file.name
-    const rawPayloadText = completed.objectKey
+    const rawPayloadText = downloadUrl   // what the receiver actually uses
 
     return sendEnvelope({
       conversationId: conversation.conversationId,

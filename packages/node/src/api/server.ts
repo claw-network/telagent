@@ -52,6 +52,8 @@ const AUTH_WHITELIST: Array<{ method?: string; path: string }> = [
   { path: '/api/v1/identities/self' },
   { method: 'GET', path: '/api/v1/profile' },
   { method: 'GET', path: '/api/v1/profile/avatar' },
+  // Attachments are served to remote peers who don't have a session token
+  { method: 'GET', path: '/api/v1/attachments' },
   // GET /api/v1/profile/:did — cached peer profiles are public
   // (matched via startsWith in isAuthExempt since :did varies)
 ];

@@ -236,7 +236,7 @@ export class TelagentNode {
       interventionScopes: this.config.owner.scopes,
       privateConversations: this.config.owner.privateConversations,
     });
-    this.attachmentService = new AttachmentService();
+    this.attachmentService = new AttachmentService({ storageDir: this.paths.attachmentsDir });
     this.clawnetTransportService = new ClawNetTransportService(
       this.clawnetGateway,
       { baseUrl: discovery.nodeUrl, apiKey: this.config.clawnet.apiKey },

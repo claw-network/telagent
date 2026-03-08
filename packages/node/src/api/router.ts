@@ -143,7 +143,12 @@ async function parseBody(req: IncomingMessage): Promise<unknown> {
     return undefined;
   }
 
-  const text = Buffer.concat(chunks).toString('utf8').trim();
+  const rawBuffer = Buffer.concat(chunks);
+  if (rawBuffer.length === 0) {
+    return undefined;
+  }
+
+  const text = rawBuffer.toString('utf8').trim();
   if (!text) {
     return undefined;
   }
@@ -151,6 +156,7 @@ async function parseBody(req: IncomingMessage): Promise<unknown> {
   try {
     return JSON.parse(text) as unknown;
   } catch {
-    return text;
+    // Return raw Buffer for binary content (images, files, etc.)
+    return rawBuffer;
   }
 }

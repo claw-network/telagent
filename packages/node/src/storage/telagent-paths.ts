@@ -23,6 +23,7 @@ export interface TelagentStoragePaths {
   profileFile: string;       // ~/.telagent/data/profile.json
   peerProfilesDb: string;    // ~/.telagent/data/peer-profiles.sqlite
   avatarFile: string;        // ~/.telagent/data/profile-avatar.bin
+  attachmentsDir: string;    // ~/.telagent/data/attachments/
 }
 
 export function defaultTelagentHome(): string {
@@ -49,11 +50,12 @@ export function resolveTelagentPaths(root?: string): TelagentStoragePaths {
     profileFile: resolve(r, 'data', 'profile.json'),
     peerProfilesDb: resolve(r, 'data', 'peer-profiles.sqlite'),
     avatarFile: resolve(r, 'data', 'profile-avatar.bin'),
+    attachmentsDir: resolve(r, 'data', 'attachments'),
   };
 }
 
 export async function ensureTelagentDirs(paths: TelagentStoragePaths): Promise<void> {
-  for (const dir of [paths.root, paths.secrets, paths.keys, paths.data, paths.logs, paths.cache]) {
+  for (const dir of [paths.root, paths.secrets, paths.keys, paths.data, paths.logs, paths.cache, paths.attachmentsDir]) {
     await mkdir(dir, { recursive: true });
   }
   // 对 root 和 secrets 强制设置严格权限
