@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next"
 import { useVirtualizer } from "@tanstack/react-virtual"
 
 import { useMessageSender } from "@/hooks/use-message-sender"
+import { decodeUtf8Hex } from "@/lib/message-content"
 import { DidAvatar } from "@/components/shared/DidAvatar"
 import { useIdentityStore } from "@/stores/identity"
 import { useContactStore } from "@/stores/contact"
@@ -153,8 +154,8 @@ export function MessageList({ messages }: MessageListProps) {
             )
           }
 
-          const senderHint = row.value.sealedHeader
-          const isSelf = selfDid ? senderHint.includes(selfDid.slice(-8)) : false
+          const senderDid = decodeUtf8Hex(row.value.sealedHeader)
+          const isSelf = !!(selfDid && senderDid && senderDid === selfDid)
           const avatarDid = isSelf
             ? (selfDid ?? "did:claw:me")
             : (peerDid ?? "did:claw:unknown")
@@ -172,15 +173,20 @@ export function MessageList({ messages }: MessageListProps) {
               data-index={virtualItem.index}
               ref={rowVirtualizer.measureElement}
             >
-              <div className={`flex items-end gap-2 py-[3px] ${isSelf ? "flex-row-reverse justify-end" : "flex-row justify-start"}`}>
-                <DidAvatar did={avatarDid} avatarUrl={avatarUrl} className="size-8 shrink-0 rounded-full" />
-                <div className="min-w-0" style={{ maxWidth: "min(720px, 80%)" }}>
+              <div className={`flex items-end gap-2 py-[3px] ${isSelf ? "justify-end" : "justify-start"}`}>
+                {!isSelf && (
+                  <DidAvatar did={avatarDid} avatarUrl={avatarUrl} className="size-8 shrink-0 rounded-full" />
+                )}
+                <div style={{ maxWidth: "min(720px, 80%)" }}>
                   <MemoMessageBubble
                     message={row.value}
                     align={isSelf ? "right" : "left"}
                     onRetry={handleRetry}
                   />
                 </div>
+                {isSelf && (
+                  <DidAvatar did={avatarDid} avatarUrl={avatarUrl} className="size-8 shrink-0 rounded-full" />
+                )}
               </div>
             </div>
           )

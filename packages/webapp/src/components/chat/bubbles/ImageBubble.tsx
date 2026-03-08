@@ -56,7 +56,7 @@ export function ImageBubble({
     <div
       ref={containerRef}
       className={cn(
-        "inline-block overflow-hidden rounded-2xl shadow-sm",
+        "w-fit overflow-hidden rounded-2xl shadow-sm",
         align === "right"
           ? "rounded-br-md bg-[color:var(--chat-bubble-self)]"
           : "rounded-bl-md bg-[color:var(--chat-bubble-peer)]",

@@ -24,7 +24,7 @@ export function FileBubble({
   return (
     <div
       className={cn(
-        "inline-block rounded-2xl px-3.5 py-2 shadow-sm",
+        "w-fit rounded-2xl px-3.5 py-2 shadow-sm",
         align === "right"
           ? "rounded-br-md bg-[color:var(--chat-bubble-self)] text-[color:var(--chat-bubble-self-fg)]"
           : "rounded-bl-md bg-[color:var(--chat-bubble-peer)] text-[color:var(--chat-bubble-peer-fg)]",

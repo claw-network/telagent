@@ -14,7 +14,7 @@ export function TextBubble({ align, text, timestamp, provisional, attachmentMani
   return (
     <div
       className={cn(
-        "inline-block rounded-2xl px-3.5 py-2 text-[16px] leading-[22px] shadow-sm",
+        "w-fit rounded-2xl px-3.5 py-2 text-[16px] leading-[22px] shadow-sm",
         self
           ? "rounded-br-md bg-[color:var(--chat-bubble-self)] text-[color:var(--chat-bubble-self-fg)]"
           : "rounded-bl-md bg-[color:var(--chat-bubble-peer)] text-[color:var(--chat-bubble-peer-fg)]",

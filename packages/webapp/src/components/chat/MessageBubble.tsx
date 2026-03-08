@@ -47,7 +47,7 @@ function isProbableImageUrl(value: string): boolean {
 
 function alignedCard(align: "left" | "right", content: import("react").ReactNode) {
   return (
-    <div className="max-w-[88%]">{content}</div>
+    <div className="w-fit">{content}</div>
   )
 }
 
@@ -186,7 +186,7 @@ export function MessageBubble({ message, align, onRetry }: MessageBubbleProps) {
   return (
     <ContextMenu>
       <ContextMenuTrigger asChild>
-        <div>
+        <div className="w-fit">
           {renderedContent}
           {deliveryState(align, message, onRetry)}
         </div>
