@@ -5,6 +5,7 @@ import { useVirtualizer } from "@tanstack/react-virtual"
 import { useMessageSender } from "@/hooks/use-message-sender"
 import { DidAvatar } from "@/components/shared/DidAvatar"
 import { useIdentityStore } from "@/stores/identity"
+import { useContactStore } from "@/stores/contact"
 import { useConversationStore } from "@/stores/conversation"
 import type { MessageWithStatus } from "@/types/webapp"
 import { MemoMessageBubble } from "@/components/chat/MessageBubble"
@@ -40,10 +41,13 @@ function dateLabel(timestamp: number): string {
 export function MessageList({ messages }: MessageListProps) {
   const { t } = useTranslation()
   const selfDid = useIdentityStore((state) => state.self?.did)
+  const selfProfile = useIdentityStore((state) => state.selfProfile)
   const selectedConversationId = useConversationStore((state) => state.selectedConversationId)
   const activeConversation = useConversationStore((state) =>
     state.conversations.find((item) => item.conversationId === selectedConversationId) ?? null,
   )
+  const getEffectiveDisplayName = useContactStore((state) => state.getEffectiveDisplayName)
+  const getEffectiveAvatarUrl = useContactStore((state) => state.getEffectiveAvatarUrl)
   const { retryMessage } = useMessageSender()
   const parentRef = useRef<HTMLDivElement | null>(null)
   const handleRetry = useCallback((message: MessageWithStatus) => {
@@ -135,13 +139,16 @@ export function MessageList({ messages }: MessageListProps) {
 
           const senderHint = row.value.sealedHeader
           const isSelf = selfDid ? senderHint.includes(selfDid.slice(-8)) : false
-          const fallbackPeerName = activeConversation?.peerDid
-            ? activeConversation.peerDid.split(":").at(-1)
-            : "baggingspam"
-          const senderName = isSelf ? "you" : (fallbackPeerName || "baggingspam")
+          const peerDid = activeConversation?.peerDid
+          const senderName = isSelf
+            ? (selfProfile?.nickname || "you")
+            : (peerDid ? getEffectiveDisplayName(peerDid) : "unknown")
           const avatarDid = isSelf
             ? (selfDid ?? "did:claw:me")
-            : (activeConversation?.peerDid ?? "did:claw:baggingspam")
+            : (peerDid ?? "did:claw:unknown")
+          const avatarUrl = isSelf
+            ? selfProfile?.avatarUrl
+            : (peerDid ? getEffectiveAvatarUrl(peerDid) : undefined)
 
           return (
             <div
@@ -154,7 +161,7 @@ export function MessageList({ messages }: MessageListProps) {
               ref={rowVirtualizer.measureElement}
             >
               <div className="group flex gap-3 rounded-sm px-1 py-1 hover:bg-[#2e3035]">
-                <DidAvatar did={avatarDid} className="mt-0.5 size-10 rounded-full" />
+                <DidAvatar did={avatarDid} avatarUrl={avatarUrl} className="mt-0.5 size-10 rounded-full" />
                 <div className="min-w-0 flex-1">
                   <div className="mb-0.5 flex items-end gap-2">
                     <span className="text-base font-semibold text-[#f2f3f5]">{senderName}</span>

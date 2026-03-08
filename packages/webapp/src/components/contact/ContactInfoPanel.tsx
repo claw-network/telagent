@@ -223,7 +223,7 @@ export function ContactInfoPanel({ did, onOpenChat, onContactRemoved }: ContactI
         {/* Info card */}
         <div className="mx-4 mb-4 overflow-hidden rounded-xl bg-[#2b2d31] divide-y divide-[#3f4147]">
           <InfoRow label="DID 地址" value={did} mono copyable />
-          <InfoRow label="节点" value={peerProfile?.nodeUrl ?? "-"} />
+          {peerProfile?.nodeUrl ? <InfoRow label="节点" value={peerProfile.nodeUrl} /> : null}
           {chainLoading || identityLoading ? (
             <div className="flex items-center justify-between px-4 py-3">
               <span className="text-sm text-[#949ba4]">链上信息</span>
