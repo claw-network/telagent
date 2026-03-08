@@ -370,7 +370,7 @@ export class MessageService {
       envelope,
       idempotencySignature: signature,
     });
-    await this.upsertConversationSummaryFromEnvelope(envelope);
+    await this.upsertConversationSummaryFromEnvelope(envelope, { sourceDid });
     this.activeConversationIds.add(envelope.conversationId);
     if (sourceDid) this.autoEnsureContact(sourceDid);
 
@@ -1111,7 +1111,10 @@ export class MessageService {
     this.envelopes.push(record.envelope);
   }
 
-  private async upsertConversationSummaryFromEnvelope(envelope: Envelope): Promise<void> {
+  private async upsertConversationSummaryFromEnvelope(
+    envelope: Envelope,
+    options?: { sourceDid?: string },
+  ): Promise<void> {
     if (!this.repository?.upsertConversationSummary) {
       return;
     }
@@ -1124,7 +1127,7 @@ export class MessageService {
         : conversationId
       : undefined;
     const peerDid = conversationType === 'direct'
-      ? this.extractPeerDid(conversationId)
+      ? this.resolveDirectPeerDid(conversationId, options?.sourceDid)
       : undefined;
     const isPrivate = this.privateConversationUpdatedAtById.has(conversationId);
 
@@ -1302,6 +1305,16 @@ export class MessageService {
       return undefined;
     }
     return matches[0];
+  }
+
+  private resolveDirectPeerDid(conversationId: string, sourceDid?: string): string | undefined {
+    // Inbound P2P envelopes should trust transport metadata to identify the peer.
+    // This avoids mis-routing replies when conversationId only encodes the recipient DID
+    // (for example: direct:<receiverDid>).
+    if (sourceDid && isDidClaw(sourceDid)) {
+      return sourceDid;
+    }
+    return this.extractPeerDid(conversationId);
   }
 
   private parsePullCursor(cursorRaw: string | undefined, conversationId?: string): {
