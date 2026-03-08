@@ -18,7 +18,7 @@ interface MessageListProps {
 
 type RenderRow =
   | { kind: "date"; key: string; label: string }
-  | { kind: "message"; key: string; value: MessageWithStatus }
+  | { kind: "message"; key: string; value: MessageWithStatus; senderDid: string; showTail: boolean }
 
 function dateLabel(timestamp: number): string {
   const date = new Date(timestamp)
@@ -82,8 +82,20 @@ export function MessageList({ messages }: MessageListProps) {
         kind: "message",
         key: message.envelopeId,
         value: message,
+        senderDid: decodeUtf8Hex(message.sealedHeader),
+        showTail: false, // will be patched below
       })
     }
+
+    // Patch showTail: true only on the last message of each consecutive sender group
+    for (let i = 0; i < nextRows.length; i++) {
+      const row = nextRows[i]
+      if (row?.kind !== "message") continue
+      const nextRow = nextRows[i + 1]
+      const nextSenderDid = nextRow?.kind === "message" ? nextRow.senderDid : null
+      row.showTail = !nextRow || nextRow.kind === "date" || nextSenderDid !== row.senderDid
+    }
+
     return nextRows
   }, [messages])
 
@@ -147,15 +159,9 @@ export function MessageList({ messages }: MessageListProps) {
             )
           }
 
-          const senderDid = decodeUtf8Hex(row.value.sealedHeader)
+          const senderDid = row.senderDid
           const isSelf = !!(selfDid && senderDid && senderDid === selfDid)
-
-          // Show tail & avatar only on the last message in a consecutive group from the same sender
-          const nextRow = rows[virtualItem.index + 1]
-          const nextSenderDid = nextRow?.kind === "message"
-            ? decodeUtf8Hex(nextRow.value.sealedHeader)
-            : null
-          const showTail = !nextRow || nextRow.kind === "date" || nextSenderDid !== senderDid
+          const { showTail } = row
 
           const avatarDid = isSelf
             ? (selfDid ?? "did:claw:me")
