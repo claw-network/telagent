@@ -7,7 +7,7 @@ import { Router } from '../router.js';
 import { handleError } from '../route-utils.js';
 import { ok } from '../response.js';
 import type { RuntimeContext } from '../types.js';
-import { resolvePeerAvatarUrl } from '../../utils/avatar-url.js';
+import { resolvePeerAvatarUrl, localPeerAvatarUrl } from '../../utils/avatar-url.js';
 
 const ALLOWED_MIME_TYPES = new Set([
   'image/jpeg',
@@ -144,6 +144,35 @@ export function profileRoutes(ctx: RuntimeContext): Router {
     }
   });
 
+  // ── GET /:did/avatar  (public — proxies peer avatar via local node) ────────
+  // The frontend should never fetch images directly from remote nodes (cross-origin
+  // / firewall issues). This endpoint proxies the avatar from the peer's node URL.
+  router.get('/:did/avatar', async ({ res, params, url }) => {
+    try {
+      const { did } = params;
+      if (!did) {
+        throw new TelagentError(ErrorCodes.VALIDATION, 'did is required');
+      }
+      const profile = ctx.peerProfileRepository.get(did);
+      if (!profile?.avatarUrl) {
+        throw new TelagentError(ErrorCodes.NOT_FOUND, `No avatar for did: ${did}`);
+      }
+      const remoteUrl = resolvePeerAvatarUrl(profile.avatarUrl, profile.nodeUrl);
+      if (!remoteUrl || remoteUrl.startsWith('/')) {
+        throw new TelagentError(ErrorCodes.NOT_FOUND, `Cannot resolve avatar URL for did: ${did}`);
+      }
+      const response = await fetch(remoteUrl, { signal: AbortSignal.timeout(8000) });
+      if (!response.ok) {
+        throw new TelagentError(ErrorCodes.NOT_FOUND, `Remote avatar fetch failed: ${response.status}`);
+      }
+      const contentType = response.headers.get('content-type') ?? 'image/jpeg';
+      const data = Buffer.from(await response.arrayBuffer());
+      sendBinary(res, 200, data, contentType);
+    } catch (error) {
+      handleError(res, error, url.pathname);
+    }
+  });
+
   // ── GET /:did  (public — no auth, returns cached peer profile) ────────────
   // On cache miss, fires a profile-card request via P2P so the next query will
   // hit the cache once the peer replies.
@@ -179,7 +208,7 @@ export function profileRoutes(ctx: RuntimeContext): Router {
       }
       const normalizedProfile = {
         ...profile,
-        avatarUrl: resolvePeerAvatarUrl(profile.avatarUrl, profile.nodeUrl),
+        avatarUrl: localPeerAvatarUrl(did, profile.avatarUrl),
       };
       ok(res, normalizedProfile, { self: `/api/v1/profile/${encodeURIComponent(did)}` });
     } catch (error) {

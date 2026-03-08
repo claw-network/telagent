@@ -4,7 +4,7 @@ import { Router } from '../router.js';
 import { handleError } from '../route-utils.js';
 import { ok, created, noContent } from '../response.js';
 import type { RuntimeContext } from '../types.js';
-import { resolvePeerAvatarUrl } from '../../utils/avatar-url.js';
+import { localPeerAvatarUrl } from '../../utils/avatar-url.js';
 
 export function contactRoutes(ctx: RuntimeContext): Router {
   const router = new Router();
@@ -13,9 +13,10 @@ export function contactRoutes(ctx: RuntimeContext): Router {
     try {
       const contacts = ctx.contactService.listContacts().map((contact) => {
         const peer = ctx.peerProfileRepository.get(contact.did);
+        const rawAvatarUrl = peer?.avatarUrl ?? contact.avatarUrl;
         return {
           ...contact,
-          avatarUrl: resolvePeerAvatarUrl(contact.avatarUrl, peer?.nodeUrl),
+          avatarUrl: localPeerAvatarUrl(contact.did, rawAvatarUrl),
         };
       });
       ok(res, contacts, { self: '/api/v1/contacts' });
@@ -31,11 +32,12 @@ export function contactRoutes(ctx: RuntimeContext): Router {
         throw new TelagentError(ErrorCodes.NOT_FOUND, `Contact not found: ${params.did}`);
       }
       const peer = ctx.peerProfileRepository.get(params.did);
+      const rawAvatarUrl = peer?.avatarUrl ?? contact.avatarUrl;
       ok(
         res,
         {
           ...contact,
-          avatarUrl: resolvePeerAvatarUrl(contact.avatarUrl, peer?.nodeUrl),
+          avatarUrl: localPeerAvatarUrl(params.did, rawAvatarUrl),
         },
         { self: `/api/v1/contacts/${encodeURIComponent(params.did)}` },
       );
