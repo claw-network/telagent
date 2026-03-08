@@ -104,6 +104,9 @@ export interface CompleteAttachmentUploadInput {
   objectKey: string;
   manifestHash: string;
   checksum: string;
+  /** Base64-encoded file bytes to store inline (avoids a separate binary PUT). */
+  fileData?: string;
+  fileContentType?: string;
 }
 
 export interface GroupMemberListInput {

@@ -148,6 +148,15 @@ async function parseBody(req: IncomingMessage): Promise<unknown> {
     return undefined;
   }
 
+  // For non-JSON content types skip the expensive string conversion and return
+  // the raw buffer immediately.
+  const contentType = (req.headers['content-type'] ?? '').toLowerCase();
+  const isJson =
+    contentType.startsWith('application/json') || contentType.startsWith('text/');
+  if (!isJson) {
+    return rawBuffer;
+  }
+
   const text = rawBuffer.toString('utf8').trim();
   if (!text) {
     return undefined;

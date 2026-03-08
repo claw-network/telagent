@@ -97,7 +97,12 @@ export class AttachmentService {
     };
   }
 
-  completeUpload(input: { objectKey: string; manifestHash: string; checksum: string }): {
+  completeUpload(input: {
+    objectKey: string;
+    manifestHash: string;
+    checksum: string;
+    fileContentType?: string;
+  }): {
     objectKey: string;
     manifestHash: string;
     checksum: string;
@@ -133,6 +138,9 @@ export class AttachmentService {
     upload.completed = true;
     upload.completedAtMs = this.clock.now();
     upload.checksum = input.checksum;
+    if (input.fileContentType) {
+      upload.contentType = input.fileContentType;
+    }
 
     return {
       objectKey: input.objectKey,

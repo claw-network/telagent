@@ -238,15 +238,23 @@ export function useMessageSender() {
       manifestHash: checksum,
     })
 
-    await fetch(initialized.uploadUrl, {
-      method: "PUT",
-      body: input.file,
-    })
+    // Encode file as base64 and include it directly in completeAttachmentUpload.
+    // This avoids a separate binary PUT request which can fail on remote telagent
+    // nodes due to firewall rules or infrastructure that only allow GET/POST.
+    const uint8 = new Uint8Array(fileBuffer)
+    let binary = ""
+    const CHUNK = 0x8000
+    for (let i = 0; i < uint8.length; i += CHUNK) {
+      binary += String.fromCharCode(...uint8.subarray(i, i + CHUNK))
+    }
+    const fileData = btoa(binary)
 
     const completed = await sdk.completeAttachmentUpload({
       objectKey: initialized.objectKey,
       manifestHash: checksum,
       checksum,
+      fileData,
+      fileContentType: input.file.type || "application/octet-stream",
     })
 
     // downloadUrl is the node-served URL; send it as the payload so the

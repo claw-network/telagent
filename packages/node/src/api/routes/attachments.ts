@@ -35,7 +35,7 @@ export function attachmentRoutes(ctx: RuntimeContext): Router {
     }
   });
 
-  router.post('/complete-upload', ({ res, body, url }) => {
+  router.post('/complete-upload', async ({ res, body, url }) => {
     const parsed = validate(CompleteAttachmentSchema, body);
     if (!parsed.success) {
       handleError(res, new TelagentError(ErrorCodes.VALIDATION, parsed.error), url.pathname);
@@ -43,7 +43,19 @@ export function attachmentRoutes(ctx: RuntimeContext): Router {
     }
 
     try {
-      const result = ctx.attachmentService.completeUpload(parsed.data);
+      const result = ctx.attachmentService.completeUpload({
+        objectKey: parsed.data.objectKey,
+        manifestHash: parsed.data.manifestHash,
+        checksum: parsed.data.checksum,
+        fileContentType: parsed.data.fileContentType,
+      });
+
+      // If the client included inline base64 file data, decode and save it now.
+      if (parsed.data.fileData) {
+        const fileBuffer = Buffer.from(parsed.data.fileData, 'base64');
+        await ctx.attachmentService.saveFile(result.objectKey, fileBuffer);
+      }
+
       const downloadUrl = `${nodeBaseUrl(ctx.config)}/api/v1/attachments/${encodeURIComponent(result.objectKey)}`;
       ok(res, { ...result, downloadUrl }, { self: `/api/v1/attachments/${encodeURIComponent(result.objectKey)}` });
     } catch (error) {

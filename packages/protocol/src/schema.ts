@@ -78,4 +78,8 @@ export const CompleteAttachmentSchema = z.object({
   objectKey: z.string().min(1),
   manifestHash: Bytes32,
   checksum: Bytes32,
+  // Optional base64-encoded file data; when present the server saves the
+  // file inline so no separate binary PUT is needed.
+  fileData: z.string().optional(),
+  fileContentType: z.string().optional(),
 });
