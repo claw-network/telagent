@@ -257,14 +257,14 @@ export function useMessageSender() {
       fileContentType: input.file.type || "application/octet-stream",
     })
 
-    // downloadUrl is the node-served URL; send it as the payload so the
-    // receiver can display the image directly from the sender's node.
+    // downloadUrl is the node-served URL. Use it as displayText so the URL
+    // is persistent after page reload (blob: URLs die on navigation). By this
+    // point the file is already saved on the server (saved inline in
+    // completeAttachmentUpload above), so the sender can fetch it immediately.
     const downloadUrl = (completed as { downloadUrl?: string }).downloadUrl
-      ?? `${initialized.uploadUrl.replace(/\/[^/]+$/, '')}`  // fallback: strip objectKey from uploadUrl
-    const displayText = contentType === "image"
-      ? URL.createObjectURL(input.file)  // local blob for sender's own preview
-      : input.file.name
-    const rawPayloadText = downloadUrl   // what the receiver actually uses
+      ?? `${initialized.uploadUrl.replace(/\/[^/]+$/, '')}`  // fallback
+    const displayText = contentType === "image" ? downloadUrl : input.file.name
+    const rawPayloadText = downloadUrl
 
     return sendEnvelope({
       conversationId: conversation.conversationId,

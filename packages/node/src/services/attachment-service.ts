@@ -27,6 +27,19 @@ const SystemClock: AttachmentServiceClock = {
 
 const INIT_UPLOAD_TTL_SEC = 900;
 
+const MIME_BY_EXT: Record<string, string> = {
+  png: 'image/png',
+  jpg: 'image/jpeg',
+  jpeg: 'image/jpeg',
+  gif: 'image/gif',
+  webp: 'image/webp',
+  svg: 'image/svg+xml',
+  avif: 'image/avif',
+  pdf: 'application/pdf',
+  mp4: 'video/mp4',
+  webm: 'video/webm',
+};
+
 export class AttachmentService {
   private readonly uploads = new Map<string, PendingUpload>();
   private readonly clock: AttachmentServiceClock;
@@ -60,9 +73,17 @@ export class AttachmentService {
     }
   }
 
-  /** Get the MIME content-type for a stored upload. */
+  /** Get the MIME content-type for a stored upload.
+   * Falls back to deriving the type from the file extension so the correct
+   * Content-Type is returned even after a server restart (when the in-memory
+   * uploads map has been cleared).
+   */
   getContentType(objectKey: string): string {
-    return this.uploads.get(objectKey)?.contentType ?? 'application/octet-stream';
+    const stored = this.uploads.get(objectKey)?.contentType;
+    if (stored && stored !== 'application/octet-stream') return stored;
+    // Derive from extension — objectKey preserves the original filename suffix.
+    const ext = objectKey.split('.').pop()?.toLowerCase() ?? '';
+    return MIME_BY_EXT[ext] ?? stored ?? 'application/octet-stream';
   }
 
   initUpload(input: {
