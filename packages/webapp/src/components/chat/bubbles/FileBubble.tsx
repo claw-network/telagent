@@ -22,16 +22,15 @@ export function FileBubble({
   attachmentManifestHash,
 }: FileBubbleProps) {
   return (
-    <div className={cn("flex w-full", align === "right" ? "justify-end" : "justify-start")}>
-      <div
-        className={cn(
-          "max-w-[80%] px-3 py-2",
-          align === "right"
-            ? "rounded-2xl rounded-br-sm bg-[color:var(--chat-bubble-self)] shadow-sm"
-            : "rounded-lg bg-[#2b2d31]/80",
-          provisional ? "border border-dashed border-amber-400/70" : "",
-        )}
-      >
+    <div
+      className={cn(
+        "inline-block rounded-2xl px-3.5 py-2 shadow-sm",
+        align === "right"
+          ? "rounded-br-md bg-[color:var(--chat-bubble-self)] text-[color:var(--chat-bubble-self-fg)]"
+          : "rounded-bl-md bg-[color:var(--chat-bubble-peer)] text-[color:var(--chat-bubble-peer-fg)]",
+        provisional ? "border border-dashed border-amber-400/70" : "",
+      )}
+    >
         <div className="flex items-center gap-2">
           <FileIcon className="size-4 text-muted-foreground" />
           <span className="max-w-56 truncate text-sm">{filename}</span>
@@ -47,7 +46,6 @@ export function FileBubble({
         <p className="mt-1 text-[10px] text-muted-foreground">
           {new Date(timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
         </p>
-      </div>
     </div>
   )
 }

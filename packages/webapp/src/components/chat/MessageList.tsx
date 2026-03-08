@@ -48,7 +48,6 @@ export function MessageList({ messages }: MessageListProps) {
   )
   const peerDid = activeConversation?.peerDid
   const fetchPeerProfile = useContactStore((state) => state.fetchPeerProfile)
-  // Subscribe to reactive data so re-renders happen when profiles/contacts change
   const peerProfile = useContactStore((state) => peerDid ? state.peerProfiles[peerDid] : undefined)
   const contacts = useContactStore((state) => state.contacts)
   const { retryMessage } = useMessageSender()
@@ -57,22 +56,11 @@ export function MessageList({ messages }: MessageListProps) {
     void retryMessage(message)
   }, [retryMessage])
 
-  // Ensure the peer's profile (avatar, nickname) is loaded when the conversation opens
   useEffect(() => {
     if (peerDid) {
       void fetchPeerProfile(peerDid)
     }
   }, [peerDid, fetchPeerProfile])
-
-  // Derive peer display name and avatar from reactive store data
-  const peerDisplayName = useMemo(() => {
-    if (!peerDid) return "unknown"
-    if (peerProfile?.nickname) return peerProfile.nickname
-    const contact = contacts.find((c) => c.did === peerDid)
-    if (contact?.displayName) return contact.displayName
-    const tail = peerDid.split(":").at(-1) ?? peerDid
-    return tail.slice(0, 12)
-  }, [peerDid, peerProfile, contacts])
 
   const peerAvatarUrl = useMemo(() => {
     if (!peerDid) return undefined
@@ -108,7 +96,7 @@ export function MessageList({ messages }: MessageListProps) {
   const rowVirtualizer = useVirtualizer({
     count: rows.length,
     getScrollElement: () => parentRef.current,
-    estimateSize: (index) => (rows[index]?.kind === "date" ? 30 : 108),
+    estimateSize: (index) => (rows[index]?.kind === "date" ? 30 : 56),
     overscan: 12,
   })
 
@@ -167,9 +155,6 @@ export function MessageList({ messages }: MessageListProps) {
 
           const senderHint = row.value.sealedHeader
           const isSelf = selfDid ? senderHint.includes(selfDid.slice(-8)) : false
-          const senderName = isSelf
-            ? (selfProfile?.nickname || "you")
-            : peerDisplayName
           const avatarDid = isSelf
             ? (selfDid ?? "did:claw:me")
             : (peerDid ?? "did:claw:unknown")
@@ -180,22 +165,16 @@ export function MessageList({ messages }: MessageListProps) {
           return (
             <div
               key={row.key}
-              className="absolute left-0 w-full px-4"
+              className="absolute left-0 w-full px-3"
               style={{
                 transform: `translateY(${virtualItem.start}px)`,
               }}
               data-index={virtualItem.index}
               ref={rowVirtualizer.measureElement}
             >
-              <div className="group flex gap-3 rounded-sm px-1 py-1 hover:bg-[#2e3035]">
-                <DidAvatar did={avatarDid} avatarUrl={avatarUrl} className="mt-0.5 size-10 rounded-full" />
-                <div className="min-w-0 flex-1">
-                  <div className="mb-0.5 flex items-end gap-2">
-                    <span className="text-base font-semibold text-[#f2f3f5]">{senderName}</span>
-                    <span className="text-xs text-[#949ba4]">
-                      {new Date(row.value.sentAtMs).toLocaleDateString()} {new Date(row.value.sentAtMs).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-                    </span>
-                  </div>
+              <div className={`flex items-end gap-2 py-[3px] ${isSelf ? "flex-row-reverse justify-end" : "flex-row justify-start"}`}>
+                <DidAvatar did={avatarDid} avatarUrl={avatarUrl} className="size-8 shrink-0 rounded-full" />
+                <div className="min-w-0" style={{ maxWidth: "min(720px, 80%)" }}>
                   <MemoMessageBubble
                     message={row.value}
                     align={isSelf ? "right" : "left"}

@@ -53,17 +53,16 @@ export function ImageBubble({
   const shouldLoad = inView || !imageUrl
 
   return (
-    <div className={cn("flex w-full", align === "right" ? "justify-end" : "justify-start")}>
-      <div
-        ref={containerRef}
-        className={cn(
-          "max-w-[80%]",
-          align === "right"
-            ? "rounded-2xl rounded-br-sm bg-[color:var(--chat-bubble-self)] px-2 py-2 shadow-sm"
-            : "px-0 py-0",
-          provisional ? "border border-dashed border-amber-400/70" : "",
-        )}
-      >
+    <div
+      ref={containerRef}
+      className={cn(
+        "inline-block overflow-hidden rounded-2xl shadow-sm",
+        align === "right"
+          ? "rounded-br-md bg-[color:var(--chat-bubble-self)]"
+          : "rounded-bl-md bg-[color:var(--chat-bubble-peer)]",
+        provisional ? "border border-dashed border-amber-400/70" : "",
+      )}
+    >
         {imageUrl && shouldLoad ? (
           <Dialog>
             <DialogTrigger asChild>
@@ -98,7 +97,6 @@ export function ImageBubble({
         <p className="mt-1 text-[10px] text-muted-foreground">
           {new Date(timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
         </p>
-      </div>
     </div>
   )
 }

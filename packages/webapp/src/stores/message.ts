@@ -20,9 +20,6 @@ interface MessageStore {
 }
 
 function compareMessages(left: MessageWithStatus, right: MessageWithStatus): number {
-  if (left.seq !== right.seq) {
-    return left.seq < right.seq ? -1 : 1
-  }
   if (left.sentAtMs !== right.sentAtMs) {
     return left.sentAtMs - right.sentAtMs
   }

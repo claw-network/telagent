@@ -47,9 +47,7 @@ function isProbableImageUrl(value: string): boolean {
 
 function alignedCard(align: "left" | "right", content: import("react").ReactNode) {
   return (
-    <div className={cn("flex w-full", align === "right" ? "justify-end" : "justify-start")}>
-      <div className="max-w-[88%]">{content}</div>
-    </div>
+    <div className="max-w-[88%]">{content}</div>
   )
 }
 
