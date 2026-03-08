@@ -25,6 +25,7 @@ export function ImageBubble({
   const [inView, setInView] = useState(false)
   const [retryCount, setRetryCount] = useState(0)
   const [failed, setFailed] = useState(false)
+  const [loaded, setLoaded] = useState(false)
   const retryTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined)
 
   // Clean up pending retry timer on unmount.
@@ -76,10 +77,11 @@ export function ImageBubble({
     }, delay)
   }, [imageUrl, retryCount])
 
-  // Reset retry state when imageUrl changes (e.g. sender switches from blob to http).
+  // Reset retry/loading state when imageUrl changes (e.g. sender switches from blob to http).
   useEffect(() => {
     setRetryCount(0)
     setFailed(false)
+    setLoaded(false)
   }, [imageUrl])
 
   const shouldLoad = inView || !imageUrl
@@ -104,21 +106,38 @@ export function ImageBubble({
             Image unavailable
           </div>
         ) : (
-          <Dialog>
-            <DialogTrigger asChild>
-              <img
-                src={src}
-                alt="image"
-                loading="lazy"
-                onError={handleError}
-                className="block max-h-72 max-w-[280px] cursor-zoom-in rounded-[4px] object-cover"
-              />
-            </DialogTrigger>
-            <DialogContent className="max-w-4xl bg-black/95 p-2" aria-describedby={undefined}>
-              <DialogTitle className="sr-only">Image preview</DialogTitle>
-              <img src={src} alt="image-full" className="max-h-[85vh] w-full rounded object-contain" />
-            </DialogContent>
-          </Dialog>
+          <>
+            {/* Spinner overlay while loading */}
+            {!loaded && (
+              <div className="flex h-48 w-[280px] items-center justify-center rounded-[4px] bg-muted">
+                <svg
+                  className="h-8 w-8 animate-spin text-muted-foreground"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+                </svg>
+              </div>
+            )}
+            <Dialog>
+              <DialogTrigger asChild>
+                <img
+                  src={src}
+                  alt="image"
+                  loading="lazy"
+                  onLoad={() => setLoaded(true)}
+                  onError={handleError}
+                  className={`block max-h-72 max-w-[280px] cursor-zoom-in rounded-[4px] object-cover${loaded ? "" : " hidden"}`}
+                />
+              </DialogTrigger>
+              <DialogContent className="max-w-4xl bg-black/95 p-2" aria-describedby={undefined}>
+                <DialogTitle className="sr-only">Image preview</DialogTitle>
+                <img src={src} alt="image-full" className="max-h-[85vh] w-full rounded object-contain" />
+              </DialogContent>
+            </Dialog>
+          </>
         )
       ) : (
         <div className="h-48 w-[280px]" />
