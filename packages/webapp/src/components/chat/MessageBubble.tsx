@@ -213,7 +213,8 @@ export function MessageBubble({ message, align, onRetry, showTail = true }: Mess
 
 function areMessagePropsEqual(prev: MessageBubbleProps, next: MessageBubbleProps): boolean {
   return (
-    prev.align === next.align
+    prev.showTail === next.showTail
+    && prev.align === next.align
     && prev.message.envelopeId === next.message.envelopeId
     && prev.message.deliveryStatus === next.message.deliveryStatus
     && prev.message.lastError === next.message.lastError
