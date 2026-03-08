@@ -47,6 +47,21 @@ if [[ $# -lt 1 ]]; then
     exit 1
 fi
 
+# ── Bump version, commit & push ───────────────────────────────────────────────
+REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+echo ""
+echo "[local] Running version:patch..."
+cd "$REPO_ROOT"
+pnpm run version:patch
+NEW_VERSION=$(node -p "require('./package.json').version")
+echo "[local] Version bumped to $NEW_VERSION"
+
+echo "[local] Committing & pushing..."
+git add -A
+git commit -m "chore: bump version to $NEW_VERSION"
+git push
+echo "[local] Pushed."
+
 case "$1" in
     all)
         deploy_one alex
