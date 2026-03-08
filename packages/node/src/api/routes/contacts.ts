@@ -4,13 +4,20 @@ import { Router } from '../router.js';
 import { handleError } from '../route-utils.js';
 import { ok, created, noContent } from '../response.js';
 import type { RuntimeContext } from '../types.js';
+import { resolvePeerAvatarUrl } from '../../utils/avatar-url.js';
 
 export function contactRoutes(ctx: RuntimeContext): Router {
   const router = new Router();
 
   router.get('/', async ({ res, url }) => {
     try {
-      const contacts = ctx.contactService.listContacts();
+      const contacts = ctx.contactService.listContacts().map((contact) => {
+        const peer = ctx.peerProfileRepository.get(contact.did);
+        return {
+          ...contact,
+          avatarUrl: resolvePeerAvatarUrl(contact.avatarUrl, peer?.nodeUrl),
+        };
+      });
       ok(res, contacts, { self: '/api/v1/contacts' });
     } catch (error) {
       handleError(res, error, url.pathname);
@@ -23,7 +30,15 @@ export function contactRoutes(ctx: RuntimeContext): Router {
       if (!contact) {
         throw new TelagentError(ErrorCodes.NOT_FOUND, `Contact not found: ${params.did}`);
       }
-      ok(res, contact, { self: `/api/v1/contacts/${encodeURIComponent(params.did)}` });
+      const peer = ctx.peerProfileRepository.get(params.did);
+      ok(
+        res,
+        {
+          ...contact,
+          avatarUrl: resolvePeerAvatarUrl(contact.avatarUrl, peer?.nodeUrl),
+        },
+        { self: `/api/v1/contacts/${encodeURIComponent(params.did)}` },
+      );
     } catch (error) {
       handleError(res, error, url.pathname);
     }

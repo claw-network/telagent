@@ -14,6 +14,7 @@ import type { ContactService } from './contact-service.js';
 import type { GroupService } from './group-service.js';
 import type { PeerProfileRepository } from '../storage/peer-profile-repository.js';
 import type { KeyLifecycleService, KeySuite } from './key-lifecycle-service.js';
+import { resolvePeerAvatarUrl } from '../utils/avatar-url.js';
 import { SequenceAllocator } from './sequence-allocator.js';
 import type {
   MailboxStore,
@@ -474,9 +475,12 @@ export class MessageService {
     const peer = this.peerProfileRepository?.get(item.peerDid as Parameters<PeerProfileRepository['get']>[0]);
     const contact = this.contactService?.getContact(item.peerDid);
     const displayName = peer?.nickname || contact?.displayName || item.displayName;
-    const avatarUrl = peer?.avatarUrl ?? contact?.avatarUrl ?? item.avatarUrl;
+    const avatarUrl = resolvePeerAvatarUrl(
+      peer?.avatarUrl ?? contact?.avatarUrl ?? item.avatarUrl ?? undefined,
+      peer?.nodeUrl,
+    ) ?? null;
     if (displayName === item.displayName && avatarUrl === item.avatarUrl) return item;
-    return { ...item, displayName, avatarUrl: avatarUrl ?? null };
+    return { ...item, displayName, avatarUrl };
   }
 
   async setConversationPrivacy(

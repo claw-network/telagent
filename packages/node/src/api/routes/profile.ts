@@ -7,6 +7,7 @@ import { Router } from '../router.js';
 import { handleError } from '../route-utils.js';
 import { ok } from '../response.js';
 import type { RuntimeContext } from '../types.js';
+import { resolvePeerAvatarUrl } from '../../utils/avatar-url.js';
 
 const ALLOWED_MIME_TYPES = new Set([
   'image/jpeg',
@@ -176,7 +177,11 @@ export function profileRoutes(ctx: RuntimeContext): Router {
         })();
         throw new TelagentError(ErrorCodes.NOT_FOUND, `No cached profile for did: ${did}`);
       }
-      ok(res, profile, { self: `/api/v1/profile/${encodeURIComponent(did)}` });
+      const normalizedProfile = {
+        ...profile,
+        avatarUrl: resolvePeerAvatarUrl(profile.avatarUrl, profile.nodeUrl),
+      };
+      ok(res, normalizedProfile, { self: `/api/v1/profile/${encodeURIComponent(did)}` });
     } catch (error) {
       handleError(res, error, url.pathname);
     }

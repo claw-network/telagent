@@ -31,6 +31,7 @@ import { ContactRepository } from './storage/contact-repository.js';
 import { PostgresMessageRepository } from './storage/postgres-message-repository.js';
 import { IdentityCache } from './storage/identity-cache.js';
 import { getGlobalLogger } from './logger.js';
+import { resolvePeerAvatarUrl } from './utils/avatar-url.js';
 
 const logger = getGlobalLogger();
 const SESSION_RENEW_MS = 23 * 60 * 60 * 1000;
@@ -281,13 +282,18 @@ export class TelagentNode {
       onEnvelope: (raw, sourceDid) => this.messageService!.ingestFederatedEnvelope(raw, sourceDid),
       onProfileCard: async (payload, sourceDid) => {
         try {
+          const peerNodeUrl = typeof payload.nodeUrl === 'string' ? payload.nodeUrl : undefined;
+          const peerAvatarUrl = resolvePeerAvatarUrl(
+            typeof payload.avatarUrl === 'string' ? payload.avatarUrl : undefined,
+            peerNodeUrl,
+          );
           // Check before upsert so we know if this is the first time we hear from this peer
           const isFirstSeen = !this.peerProfileRepository!.get(sourceDid as Parameters<PeerProfileRepository['get']>[0]);
           this.peerProfileRepository!.upsert({
             did: sourceDid,
             nickname: typeof payload.nickname === 'string' ? payload.nickname : undefined,
-            avatarUrl: typeof payload.avatarUrl === 'string' ? payload.avatarUrl : undefined,
-            nodeUrl: typeof payload.nodeUrl === 'string' ? payload.nodeUrl : undefined,
+            avatarUrl: peerAvatarUrl,
+            nodeUrl: peerNodeUrl,
             receivedAtMs: Date.now(),
           });
           // Update existing contact with the peer's profile data
@@ -296,7 +302,7 @@ export class TelagentNode {
             if (existing) {
               contactService.updateContact(sourceDid, {
                 displayName: typeof payload.nickname === 'string' ? payload.nickname : undefined,
-                avatarUrl: typeof payload.avatarUrl === 'string' ? payload.avatarUrl : undefined,
+                avatarUrl: peerAvatarUrl,
               });
             }
           } catch {
