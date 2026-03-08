@@ -4,6 +4,7 @@ import { Router } from '../router.js';
 import { handleError } from '../route-utils.js';
 import { ok, created, noContent, paginated, parsePagination } from '../response.js';
 import type { RuntimeContext } from '../types.js';
+import { pushOwnProfileCard } from '../../utils/push-profile-card.js';
 
 export function conversationRoutes(ctx: RuntimeContext): Router {
   const router = new Router();
@@ -90,27 +91,7 @@ export function conversationRoutes(ctx: RuntimeContext): Router {
 
       // Fire-and-forget: push our profile card to the peer for direct conversations
       if (conversationType === 'direct' && typeof payload.peerDid === 'string') {
-        const peerDid = payload.peerDid;
-        void (async () => {
-          try {
-            const profile = await ctx.selfProfileStore.loadPublic();
-            if (!profile.nickname) return; // only push if a nickname has been set
-            const selfDid = ctx.identityService.getSelfDid();
-            // Resolve relative avatarUrl to absolute using publicUrl
-            let avatarUrl = profile.avatarUrl;
-            if (avatarUrl?.startsWith('/') && ctx.config.publicUrl) {
-              avatarUrl = `${ctx.config.publicUrl.replace(/\/$/, '')}${avatarUrl}`;
-            }
-            await ctx.clawnetTransportService.sendProfileCard(peerDid, {
-              did: selfDid,
-              nickname: profile.nickname,
-              avatarUrl,
-              nodeUrl: ctx.config.publicUrl ?? profile.nodeUrl,
-            });
-          } catch {
-            // fire-and-forget — do not block conversation creation response
-          }
-        })();
+        void pushOwnProfileCard(ctx, payload.peerDid).catch(() => {});
       }
 
       created(res, result, {

@@ -5,6 +5,7 @@ import { handleError } from '../route-utils.js';
 import { ok, created, noContent } from '../response.js';
 import type { RuntimeContext } from '../types.js';
 import { localPeerAvatarUrl } from '../../utils/avatar-url.js';
+import { pushOwnProfileCard } from '../../utils/push-profile-card.js';
 
 export function contactRoutes(ctx: RuntimeContext): Router {
   const router = new Router();
@@ -70,25 +71,7 @@ export function contactRoutes(ctx: RuntimeContext): Router {
 
       // Fire-and-forget: push our profile card to the new contact so they know us,
       // and trigger a reciprocal profile-card reply so we learn their nickname/avatar.
-      void (async () => {
-        try {
-          const profile = await ctx.selfProfileStore.loadPublic();
-          if (!profile.nickname) return;
-          const selfDid = ctx.identityService.getSelfDid();
-          let avatarUrl = profile.avatarUrl;
-          if (avatarUrl?.startsWith('/') && ctx.config.publicUrl) {
-            avatarUrl = `${ctx.config.publicUrl.replace(/\/$/, '')}${avatarUrl}`;
-          }
-          await ctx.clawnetTransportService.sendProfileCard(did, {
-            did: selfDid,
-            nickname: profile.nickname,
-            avatarUrl,
-            nodeUrl: ctx.config.publicUrl ?? profile.nodeUrl,
-          });
-        } catch {
-          // fire-and-forget
-        }
-      })();
+      void pushOwnProfileCard(ctx, did).catch(() => {});
 
       created(res, contact, { self: `/api/v1/contacts/${encodeURIComponent(did)}` });
     } catch (error) {

@@ -8,6 +8,7 @@ import { handleError } from '../route-utils.js';
 import { ok } from '../response.js';
 import type { RuntimeContext } from '../types.js';
 import { resolvePeerAvatarUrl, localPeerAvatarUrl } from '../../utils/avatar-url.js';
+import { pushOwnProfileCard } from '../../utils/push-profile-card.js';
 
 const ALLOWED_MIME_TYPES = new Set([
   'image/jpeg',
@@ -185,25 +186,7 @@ export function profileRoutes(ctx: RuntimeContext): Router {
       const profile = ctx.peerProfileRepository.get(did);
       if (!profile) {
         // Fire-and-forget: request the peer's profile card so we can cache it
-        void (async () => {
-          try {
-            const selfProfile = await ctx.selfProfileStore.loadPublic();
-            if (!selfProfile.nickname) return;
-            const selfDid = ctx.identityService.getSelfDid();
-            let avatarUrl = selfProfile.avatarUrl;
-            if (avatarUrl?.startsWith('/') && ctx.config.publicUrl) {
-              avatarUrl = `${ctx.config.publicUrl.replace(/\/$/, '')}${avatarUrl}`;
-            }
-            await ctx.clawnetTransportService.sendProfileCard(did, {
-              did: selfDid,
-              nickname: selfProfile.nickname,
-              avatarUrl,
-              nodeUrl: ctx.config.publicUrl ?? selfProfile.nodeUrl,
-            });
-          } catch {
-            // best-effort
-          }
-        })();
+        void pushOwnProfileCard(ctx, did).catch(() => {});
         throw new TelagentError(ErrorCodes.NOT_FOUND, `No cached profile for did: ${did}`);
       }
       const normalizedProfile = {

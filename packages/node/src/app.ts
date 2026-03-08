@@ -32,6 +32,7 @@ import { PostgresMessageRepository } from './storage/postgres-message-repository
 import { IdentityCache } from './storage/identity-cache.js';
 import { getGlobalLogger } from './logger.js';
 import { resolvePeerAvatarUrl } from './utils/avatar-url.js';
+import { pushOwnProfileCard } from './utils/push-profile-card.js';
 
 const logger = getGlobalLogger();
 const SESSION_RENEW_MS = 23 * 60 * 60 * 1000;
@@ -322,20 +323,14 @@ export class TelagentNode {
           // This ensures both sides get each other's nickname/avatar without requiring
           // both nodes to independently create a conversation.
           if (isFirstSeen) {
-            const selfProfile = await this.selfProfileStore!.loadPublic();
-            if (selfProfile.nickname) {
-              const selfDid = this.identityService.getSelfDid();
-              let avatarUrl = selfProfile.avatarUrl;
-              if (avatarUrl?.startsWith('/') && this.config.publicUrl) {
-                avatarUrl = `${this.config.publicUrl.replace(/\/$/, '')}${avatarUrl}`;
-              }
-              void this.clawnetTransportService!.sendProfileCard(sourceDid, {
-                did: selfDid,
-                nickname: selfProfile.nickname,
-                avatarUrl,
-                nodeUrl: this.config.publicUrl ?? selfProfile.nodeUrl,
-              }).catch((err: Error) => logger.warn('[telagent] Failed to reply profile card to %s: %s', sourceDid, err.message));
-            }
+            void pushOwnProfileCard({
+              config: this.config,
+              selfProfileStore: this.selfProfileStore!,
+              identityService: this.identityService,
+              clawnetTransportService: this.clawnetTransportService!,
+            }, sourceDid).catch((err: Error) =>
+              logger.warn('[telagent] Failed to reply profile card to %s: %s', sourceDid, err.message),
+            );
           }
         } catch (err) {
           logger.warn('[telagent] Failed to cache peer profile from %s: %s', sourceDid, (err as Error).message);
