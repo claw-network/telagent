@@ -257,19 +257,17 @@ export function useMessageSender() {
       fileContentType: input.file.type || "application/octet-stream",
     })
 
-    // downloadUrl is the node-served URL, sent as rawCiphertext so both the
-    // receiver AND the sender-after-reload can decode it and fetch the image.
+    // Build the downloadUrl from nodeUrl (the URL the webapp is ACTUALLY connected to).
     //
-    // For the sender's IMMEDIATE display we still use a local blob: URL so that:
-    //   1. The image is visible instantly (no round-trip to server needed).
-    //   2. If the server is a local node (e.g. localhost) that the receiver
-    //      can't reach, the sender still sees their own image.
+    // The server-computed downloadUrl uses the node's *bind address* (e.g. 127.0.0.1),
+    // which is unreachable by any other machine. nodeUrl is what the user typed to
+    // connect — it's the real externally-reachable address (e.g. https://alex.telagent.org
+    // or http://173.249.46.252:9529), so it works for receivers on other machines too.
     //
-    // After a page reload `clientDisplayText` is gone; the message falls back
-    // to readableCiphertext(ciphertext) = decodeUtf8Hex(encodeUtf8Hex(downloadUrl))
-    // = downloadUrl — so the image reloads from the server correctly.
-    const downloadUrl = (completed as { downloadUrl?: string }).downloadUrl
-      ?? `${initialized.uploadUrl.replace(/\/[^/]+$/, '')}`  // fallback
+    // The blob: URL is only used for the sender's immediate preview in the current session.
+    // After a reload, clientDisplayText is gone and the message falls back to
+    // readableCiphertext(ciphertext) = downloadUrl, fetched from the node.
+    const downloadUrl = `${nodeUrl.replace(/\/$/, "")}/api/v1/attachments/${encodeURIComponent(initialized.objectKey)}`
     const displayText = contentType === "image"
       ? URL.createObjectURL(input.file)  // local blob for sender's immediate preview
       : input.file.name

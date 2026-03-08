@@ -8,11 +8,22 @@ import {
 import { Router } from '../router.js';
 import { created, ok } from '../response.js';
 import { handleError } from '../route-utils.js';
+import { getGlobalLogger } from '../../logger.js';
 import type { ApiServerConfig, RuntimeContext } from '../types.js';
 import { validate } from '../validate.js';
 
+const LOOPBACK_HOSTS = new Set(['127.0.0.1', 'localhost', '::1', '0.0.0.0', '']);
+
 function nodeBaseUrl(config: ApiServerConfig): string {
   if (config.publicUrl) return config.publicUrl.replace(/\/$/, '');
+  if (LOOPBACK_HOSTS.has(config.host)) {
+    getGlobalLogger().warn(
+      '[attachments] Node is bound to a loopback address (%s) and TELAGENT_PUBLIC_URL is not set. ' +
+      'Attachment download URLs will use this loopback address and will NOT be reachable by ' +
+      'other nodes. Set TELAGENT_PUBLIC_URL to the publicly-reachable URL of this node to fix this.',
+      config.host,
+    );
+  }
   return `http://${config.host}:${config.port}`;
 }
 
