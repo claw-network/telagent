@@ -15,16 +15,18 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SSH_KEY="$HOME/.ssh/id_ed25519_clawnet"
 SSH_OPTS="-i $SSH_KEY -o ConnectTimeout=15 -o BatchMode=yes"
 
-# Node name → IP map
-declare -A NODE_IPS=(
-    [alex]="173.249.46.252"
-    [bess]="167.86.93.216"
-)
+resolve_host() {
+    case "$1" in
+        alex) echo "173.249.46.252" ;;
+        bess) echo "167.86.93.216"  ;;
+        *)    echo "$1"             ;;
+    esac
+}
 
 deploy_one() {
     local target="$1"
-    # Resolve name to IP if needed
-    local host="${NODE_IPS[$target]:-$target}"
+    local host
+    host=$(resolve_host "$target")
 
     echo ""
     echo "╔══════════════════════════════════════════════════════╗"
