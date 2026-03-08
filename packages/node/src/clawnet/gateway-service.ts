@@ -180,11 +180,8 @@ export class ClawNetGatewayService {
       this.resolveIdentity(did),
       this.getReputation(did).catch(() => null),
     ]);
-    if (identity.status === 'rejected') {
-      throw identity.reason;
-    }
     return {
-      identity: identity.value,
+      identity: identity.status === 'fulfilled' ? identity.value : null,
       reputation: reputation.status === 'fulfilled' ? reputation.value : null,
     };
   }
