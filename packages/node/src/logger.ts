@@ -77,25 +77,29 @@ export function createLogger(levelOrOptions: LogLevel | LoggerOptions = 'info'):
   const logger: Logger = {
     debug: (...args: unknown[]) => {
       if (shouldLog('debug')) {
-        console.debug('[debug]', ...args);
+        const msg = format(...args);
+        console.debug('[debug]', msg);
         writeToFile('debug', args);
       }
     },
     info: (...args: unknown[]) => {
       if (shouldLog('info')) {
-        console.info('[info]', ...args);
+        const msg = format(...args);
+        console.info('[info]', msg);
         writeToFile('info', args);
       }
     },
     warn: (...args: unknown[]) => {
       if (shouldLog('warn')) {
-        console.warn('[warn]', ...args);
+        const msg = format(...args);
+        console.warn('[warn]', msg);
         writeToFile('warn', args);
       }
     },
     error: (...args: unknown[]) => {
       if (shouldLog('error')) {
-        console.error('[error]', ...args);
+        const msg = format(...args);
+        console.error('[error]', msg);
         writeToFile('error', args);
       }
     },
