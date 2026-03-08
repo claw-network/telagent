@@ -68,8 +68,8 @@ export const SendMessageSchema = z.object({
 });
 
 export const InitAttachmentSchema = z.object({
-  filename: z.string().min(1),
-  contentType: z.string().min(1),
+  filename: z.string().min(1).max(255),
+  contentType: z.string().min(1).max(255),
   sizeBytes: z.number().int().positive().max(50 * 1024 * 1024),
   manifestHash: Bytes32,
 });

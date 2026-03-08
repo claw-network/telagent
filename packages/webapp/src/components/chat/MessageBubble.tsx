@@ -117,11 +117,24 @@ export function MessageBubble({ message, align, onRetry, showTail = true }: Mess
       />
     )
   } else if (message.contentType === "file") {
-    const defaultName = readableText && !readableText.startsWith("0x")
-      ? readableText
-      : message.attachmentManifestHash
+    // Resolve the display filename.
+    // - Sender side: clientDisplayText holds the original file.name from the OS.
+    // - Receiver side: ciphertext decodes to "local:attachments/{ts}-{uuid}-{safeFilename}".
+    //   Extract the safeFilename portion so we show something human-readable.
+    const rawFile = message.clientDisplayText ?? readableText
+    let defaultName: string
+    if (rawFile?.startsWith('local:')) {
+      // objectKey format: "attachments/{timestamp}-{8hex}-{4hex}-{4hex}-{4hex}-{12hex}-{filename}"
+      // Split by "-": ["attachments/{ts}", uuid4 parts (×5), ...filename parts]
+      const parts = rawFile.slice(6).split('-')
+      defaultName = parts.length > 6 ? parts.slice(6).join('-') : (parts.at(-1) ?? 'file')
+    } else if (rawFile && !rawFile.startsWith('0x')) {
+      defaultName = rawFile
+    } else {
+      defaultName = message.attachmentManifestHash
         ? `file-${message.attachmentManifestHash.slice(0, 8)}`
-        : "attachment.bin"
+        : 'attachment.bin'
+    }
     content = (
       <FileBubble
         align={align}

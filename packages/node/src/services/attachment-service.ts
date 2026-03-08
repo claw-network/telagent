@@ -199,10 +199,16 @@ export class AttachmentService {
   }
 
   private toSafeFilename(filename: string): string {
+    // basename() guards against path traversal (e.g. "../../etc/passwd" → "passwd").
+    // Replace every character that is not URL- and FS-safe with an underscore.
     const normalized = basename(filename).replace(/[^A-Za-z0-9._-]/g, '_');
-    if (!normalized || normalized === '.' || normalized === '..') {
+    // Reject empty strings and filenames that consist only of dots (".", "..", "...", …).
+    if (!normalized || /^\.+$/.test(normalized)) {
       throw new TelagentError(ErrorCodes.VALIDATION, 'filename is invalid');
     }
-    return normalized;
+    // Truncate to 100 chars so the generated objectKey (prefix ~63 chars) always
+    // stays within the 255-byte per-component FS limit, even after ClawNet appends
+    // a MIME extension suffix when storing the relayed attachment.
+    return normalized.slice(0, 100);
   }
 }
