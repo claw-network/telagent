@@ -238,14 +238,10 @@ export function useMessageSender() {
       manifestHash: checksum,
     })
 
-    try {
-      await fetch(initialized.uploadUrl, {
-        method: "PUT",
-        body: input.file,
-      })
-    } catch {
-      // best effort for MVP mock endpoints
-    }
+    await fetch(initialized.uploadUrl, {
+      method: "PUT",
+      body: input.file,
+    })
 
     const completed = await sdk.completeAttachmentUpload({
       objectKey: initialized.objectKey,
