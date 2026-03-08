@@ -104,7 +104,17 @@ export class TelagentNode {
     }
 
     if (passphrase) {
-      const check = await verifyPassphrase(discovery.nodeUrl, passphrase);
+      const wasJustStarted = discovery.source === 'auto-started' || discovery.source === 'auto-initialized';
+      let check = await verifyPassphrase(discovery.nodeUrl, passphrase);
+
+      // When we just auto-started ClawNet, its auth layer may not be fully
+      // initialized yet — retry once with a short delay before treating a
+      // mismatch as fatal.
+      if (!check.valid && wasJustStarted) {
+        await new Promise((resolve) => setTimeout(resolve, 2000));
+        check = await verifyPassphrase(discovery.nodeUrl, passphrase);
+      }
+
       if (!check.valid) {
         if (this.managedClawNet) {
           await this.managedClawNet.stop();
