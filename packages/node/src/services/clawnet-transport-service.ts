@@ -10,6 +10,9 @@ const TOPIC_GROUP_SYNC = 'telagent/group-sync';
 const TOPIC_PROFILE_CARD = 'telagent/profile-card';
 const RECONNECT_DELAY_MS = 3_000;
 
+/** JSON replacer that converts BigInt to string (needed for Envelope.seq). */
+const bigintReplacer = (_k: string, v: unknown) => typeof v === 'bigint' ? v.toString() : v;
+
 export interface DeliveryReceipt {
   envelopeId: string;
   status: 'delivered' | 'read';
@@ -52,7 +55,7 @@ export class ClawNetTransportService {
     const result = await this.gateway.client.messaging.send({
       targetDid,
       topic: TOPIC_ENVELOPE,
-      payload: JSON.stringify(envelope),
+      payload: JSON.stringify(envelope, bigintReplacer),
       ttlSec: envelope.ttlSec,
       priority: envelope.contentType.startsWith('control/') ? 3 : 1,
       compress: true,
@@ -71,7 +74,7 @@ export class ClawNetTransportService {
     await this.gateway.client.messaging.sendBatch({
       targetDids,
       topic: TOPIC_ENVELOPE,
-      payload: JSON.stringify(envelope),
+      payload: JSON.stringify(envelope, bigintReplacer),
       ttlSec: envelope.ttlSec,
       priority: envelope.contentType.startsWith('control/') ? 3 : 1,
       compress: true,
