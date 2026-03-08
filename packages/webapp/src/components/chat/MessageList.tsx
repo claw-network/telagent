@@ -46,13 +46,41 @@ export function MessageList({ messages }: MessageListProps) {
   const activeConversation = useConversationStore((state) =>
     state.conversations.find((item) => item.conversationId === selectedConversationId) ?? null,
   )
-  const getEffectiveDisplayName = useContactStore((state) => state.getEffectiveDisplayName)
-  const getEffectiveAvatarUrl = useContactStore((state) => state.getEffectiveAvatarUrl)
+  const peerDid = activeConversation?.peerDid
+  const fetchPeerProfile = useContactStore((state) => state.fetchPeerProfile)
+  // Subscribe to reactive data so re-renders happen when profiles/contacts change
+  const peerProfile = useContactStore((state) => peerDid ? state.peerProfiles[peerDid] : undefined)
+  const contacts = useContactStore((state) => state.contacts)
   const { retryMessage } = useMessageSender()
   const parentRef = useRef<HTMLDivElement | null>(null)
   const handleRetry = useCallback((message: MessageWithStatus) => {
     void retryMessage(message)
   }, [retryMessage])
+
+  // Ensure the peer's profile (avatar, nickname) is loaded when the conversation opens
+  useEffect(() => {
+    if (peerDid) {
+      void fetchPeerProfile(peerDid)
+    }
+  }, [peerDid, fetchPeerProfile])
+
+  // Derive peer display name and avatar from reactive store data
+  const peerDisplayName = useMemo(() => {
+    if (!peerDid) return "unknown"
+    if (peerProfile?.nickname) return peerProfile.nickname
+    const contact = contacts.find((c) => c.did === peerDid)
+    if (contact?.displayName) return contact.displayName
+    const tail = peerDid.split(":").at(-1) ?? peerDid
+    return tail.slice(0, 12)
+  }, [peerDid, peerProfile, contacts])
+
+  const peerAvatarUrl = useMemo(() => {
+    if (!peerDid) return undefined
+    const contact = contacts.find((c) => c.did === peerDid)
+    if (contact?.avatarUrl) return contact.avatarUrl
+    if (peerProfile?.avatarUrl) return peerProfile.avatarUrl
+    return undefined
+  }, [peerDid, peerProfile, contacts])
 
   const rows = useMemo<RenderRow[]>(() => {
     const nextRows: RenderRow[] = []
@@ -139,16 +167,15 @@ export function MessageList({ messages }: MessageListProps) {
 
           const senderHint = row.value.sealedHeader
           const isSelf = selfDid ? senderHint.includes(selfDid.slice(-8)) : false
-          const peerDid = activeConversation?.peerDid
           const senderName = isSelf
             ? (selfProfile?.nickname || "you")
-            : (peerDid ? getEffectiveDisplayName(peerDid) : "unknown")
+            : peerDisplayName
           const avatarDid = isSelf
             ? (selfDid ?? "did:claw:me")
             : (peerDid ?? "did:claw:unknown")
           const avatarUrl = isSelf
             ? selfProfile?.avatarUrl
-            : (peerDid ? getEffectiveAvatarUrl(peerDid) : undefined)
+            : peerAvatarUrl
 
           return (
             <div
