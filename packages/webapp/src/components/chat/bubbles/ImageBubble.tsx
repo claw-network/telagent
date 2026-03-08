@@ -107,7 +107,7 @@ export function ImageBubble({
           </div>
         ) : (
           <>
-            {/* Spinner overlay while loading */}
+            {/* Spinner placeholder while image is loading */}
             {!loaded && (
               <div className="flex h-48 w-[280px] items-center justify-center rounded-[4px] bg-muted">
                 <svg
@@ -129,7 +129,9 @@ export function ImageBubble({
                   loading="lazy"
                   onLoad={() => setLoaded(true)}
                   onError={handleError}
-                  className={`block max-h-72 max-w-[280px] cursor-zoom-in rounded-[4px] object-cover${loaded ? "" : " hidden"}`}
+                  className={loaded
+                    ? "block max-h-72 max-w-[280px] cursor-zoom-in rounded-[4px] object-cover"
+                    : "absolute h-0 w-0 opacity-0 overflow-hidden"}
                 />
               </DialogTrigger>
               <DialogContent className="max-w-4xl bg-black/95 p-2" aria-describedby={undefined}>
