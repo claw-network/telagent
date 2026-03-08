@@ -1,47 +1,56 @@
 #!/usr/bin/env bash
+# =============================================================================
+# TelAgent Node Deploy — 本地执行脚本
+# 将 redeploy.sh 上传到服务器并一键运行。
+#
+# 用法:
+#   bash scripts/deploy-node.sh <IP或hostname>
+#   bash scripts/deploy-node.sh alex          # 173.249.46.252
+#   bash scripts/deploy-node.sh bess          # 167.86.93.216
+#   bash scripts/deploy-node.sh all           # 依次部署两个节点
+# =============================================================================
 set -euo pipefail
 
-HOST="$1"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SSH_KEY="$HOME/.ssh/id_ed25519_clawnet"
+SSH_OPTS="-i $SSH_KEY -o ConnectTimeout=15 -o BatchMode=yes"
 
-echo "=== Deploying to $HOST ==="
+# Node name → IP map
+declare -A NODE_IPS=(
+    [alex]="173.249.46.252"
+    [bess]="167.86.93.216"
+)
 
-ssh -i "$SSH_KEY" "root@$HOST" 'bash -s' <<'REMOTE'
-set -euo pipefail
+deploy_one() {
+    local target="$1"
+    # Resolve name to IP if needed
+    local host="${NODE_IPS[$target]:-$target}"
 
-echo "--- Step 1: Stop service, backup env ---"
-systemctl stop telagent-node
-cp /opt/telagent/.env.cloud /tmp/.env.cloud.bak
-echo "Done."
+    echo ""
+    echo "╔══════════════════════════════════════════════════════╗"
+    echo "  Deploying to: $target ($host)"
+    echo "╚══════════════════════════════════════════════════════╝"
 
-echo "--- Step 2: Fresh clone ---"
-rm -rf /opt/telagent
-git clone --depth 1 https://github.com/claw-network/telagent.git /opt/telagent
-cp /tmp/.env.cloud.bak /opt/telagent/.env.cloud
-echo "Done."
+    # Upload redeploy.sh
+    echo "[local] Uploading redeploy.sh → root@$host:/opt/redeploy.sh"
+    scp $SSH_OPTS "$SCRIPT_DIR/redeploy.sh" "root@$host:/opt/redeploy.sh"
 
-echo "--- Step 3: Install deps ---"
-cd /opt/telagent
-pnpm install --frozen-lockfile 2>&1 | tail -5
-echo "Done."
+    # Execute
+    echo "[local] Running redeploy.sh on $host..."
+    ssh $SSH_OPTS "root@$host" 'bash /opt/redeploy.sh'
+}
 
-echo "--- Step 4: Fix start script ---"
-sed -i 's|tsx --env-file=../../.env src/daemon.ts|tsx src/daemon.ts|' packages/node/package.json
-grep '"start"' packages/node/package.json
-echo "Done."
+if [[ $# -lt 1 ]]; then
+    echo "Usage: $0 <alex|bess|all|IP>"
+    exit 1
+fi
 
-echo "--- Step 5: Build workspace deps ---"
-pnpm --filter @telagent/protocol build 2>&1 | tail -3
-pnpm --filter @telagent/sdk build 2>&1 | tail -3
-echo "Done."
-
-echo "--- Step 6: Start service ---"
-systemctl start telagent-node
-sleep 4
-systemctl is-active telagent-node
-
-echo "--- Step 7: Check logs ---"
-journalctl -u telagent-node --no-pager -n 30 | grep -iE 'Identity|register|chain|error|listen' || true
-
-echo "=== DEPLOY COMPLETE ==="
-REMOTE
+case "$1" in
+    all)
+        deploy_one alex
+        deploy_one bess
+        ;;
+    *)
+        deploy_one "$1"
+        ;;
+esac
