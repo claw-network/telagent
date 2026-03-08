@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react"
 
-import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 
 interface ImageBubbleProps {
   align: "left" | "right"
@@ -67,7 +67,8 @@ export function ImageBubble({
               className="block max-h-72 max-w-[280px] cursor-zoom-in rounded-[4px] object-cover"
             />
           </DialogTrigger>
-          <DialogContent className="max-w-4xl bg-black/95 p-2">
+          <DialogContent className="max-w-4xl bg-black/95 p-2" aria-describedby={undefined}>
+            <DialogTitle className="sr-only">Image preview</DialogTitle>
             <img src={imageUrl} alt="image-full" className="max-h-[85vh] w-full rounded object-contain" />
           </DialogContent>
         </Dialog>
