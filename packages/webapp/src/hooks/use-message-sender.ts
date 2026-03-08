@@ -257,14 +257,23 @@ export function useMessageSender() {
       fileContentType: input.file.type || "application/octet-stream",
     })
 
-    // downloadUrl is the node-served URL. Use it as displayText so the URL
-    // is persistent after page reload (blob: URLs die on navigation). By this
-    // point the file is already saved on the server (saved inline in
-    // completeAttachmentUpload above), so the sender can fetch it immediately.
+    // downloadUrl is the node-served URL, sent as rawCiphertext so both the
+    // receiver AND the sender-after-reload can decode it and fetch the image.
+    //
+    // For the sender's IMMEDIATE display we still use a local blob: URL so that:
+    //   1. The image is visible instantly (no round-trip to server needed).
+    //   2. If the server is a local node (e.g. localhost) that the receiver
+    //      can't reach, the sender still sees their own image.
+    //
+    // After a page reload `clientDisplayText` is gone; the message falls back
+    // to readableCiphertext(ciphertext) = decodeUtf8Hex(encodeUtf8Hex(downloadUrl))
+    // = downloadUrl — so the image reloads from the server correctly.
     const downloadUrl = (completed as { downloadUrl?: string }).downloadUrl
       ?? `${initialized.uploadUrl.replace(/\/[^/]+$/, '')}`  // fallback
-    const displayText = contentType === "image" ? downloadUrl : input.file.name
-    const rawPayloadText = downloadUrl
+    const displayText = contentType === "image"
+      ? URL.createObjectURL(input.file)  // local blob for sender's immediate preview
+      : input.file.name
+    const rawPayloadText = downloadUrl   // what the receiver (and sender-after-reload) uses
 
     return sendEnvelope({
       conversationId: conversation.conversationId,
