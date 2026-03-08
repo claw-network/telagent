@@ -113,6 +113,9 @@ export function attachmentRoutes(ctx: RuntimeContext): Router {
     try {
       const data = await ctx.attachmentService.readFile(params.objectKey!);
       if (!data) {
+        // Explicitly prevent caching of 404 responses so the client can retry
+        // once the P2P relay delivers the file to this node.
+        res.setHeader('Cache-Control', 'no-store');
         handleError(res, new TelagentError(ErrorCodes.NOT_FOUND, 'Attachment not found'), url.pathname);
         return;
       }
