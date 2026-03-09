@@ -162,7 +162,12 @@ export function profileRoutes(ctx: RuntimeContext): Router {
       if (!remoteUrl || remoteUrl.startsWith('/')) {
         throw new TelagentError(ErrorCodes.NOT_FOUND, `Cannot resolve avatar URL for did: ${did}`);
       }
-      const response = await fetch(remoteUrl, { signal: AbortSignal.timeout(8000) });
+      let response: Response;
+      try {
+        response = await fetch(remoteUrl, { signal: AbortSignal.timeout(8000) });
+      } catch {
+        throw new TelagentError(ErrorCodes.NOT_FOUND, `Remote node unreachable for avatar: ${did}`);
+      }
       if (!response.ok) {
         throw new TelagentError(ErrorCodes.NOT_FOUND, `Remote avatar fetch failed: ${response.status}`);
       }
