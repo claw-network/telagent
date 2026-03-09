@@ -220,3 +220,43 @@ export interface ApiProxyResponse {
   /** Response body as string. */
   body?: string;
 }
+
+// ── Event Push (Real-time SSE) ────────────────────────────────────────────────
+
+/**
+ * An event notification pushed to Webapp via SSE.
+ * Used for both local (direct) and gateway (delegated) connections.
+ */
+export interface EventNotification {
+  type: 'new-envelope' | 'receipt' | 'retraction' | 'conversation-update' | 'profile-update';
+  conversationId?: string;
+  envelopeId?: string;
+  sourceDid?: string;
+  atMs: number;
+}
+
+/**
+ * Request from gateway to target to establish event subscription.
+ * Sent via API Proxy: POST /api/v1/events/subscribe
+ */
+export interface EventSubscribeRequest {
+  gatewayDid: string;
+  topics: string[];
+  expiresInSec: number;
+}
+
+/**
+ * Response from target node with delegation info.
+ */
+export interface EventSubscribeResponse {
+  delegationId: string;
+  expiresAtMs: number;
+}
+
+/**
+ * Request from gateway to revoke a delegation.
+ * Sent via API Proxy: POST /api/v1/events/unsubscribe
+ */
+export interface EventUnsubscribeRequest {
+  delegationId: string;
+}

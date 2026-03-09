@@ -11,6 +11,7 @@ import { GroupIndexer } from './indexer/group-indexer.js';
 import { AttachmentService } from './services/attachment-service.js';
 import { ClawNetTransportService } from './services/clawnet-transport-service.js';
 import { ApiProxyService } from './services/api-proxy-service.js';
+import { EventPushService } from './services/event-push-service.js';
 import { ContractProvider } from './services/contract-provider.js';
 import { GroupService } from './services/group-service.js';
 import { IdentityAdapterService } from './services/identity-adapter-service.js';
@@ -51,6 +52,7 @@ export class TelagentNode {
   private attachmentService: AttachmentService | null = null;
   private clawnetTransportService: ClawNetTransportService | null = null;
   private apiProxyService: ApiProxyService | null = null;
+  private eventPushService: EventPushService | null = null;
   private monitoringService: NodeMonitoringService | null = null;
   private ownerPermissionService: OwnerPermissionService | null = null;
   private indexer: GroupIndexer | null = null;
@@ -253,6 +255,12 @@ export class TelagentNode {
       );
     }
 
+    // Event Push Service (real-time SSE for Webapp)
+    this.eventPushService = new EventPushService(
+      this.clawnetGateway,
+      this.apiProxyService ?? undefined,
+    );
+
     this.monitoringService = new NodeMonitoringService({
       thresholds: {
         errorRateWarnRatio: this.config.monitoring.errorRateWarnRatio,
@@ -290,6 +298,7 @@ export class TelagentNode {
       peerProfileRepository: this.peerProfileRepository,
       configuredPassphrase: passphrase ?? undefined,
       apiProxyService: this.apiProxyService ?? undefined,
+      eventPushService: this.eventPushService ?? undefined,
     };
 
     this.apiServer = new ApiServer(runtime);
@@ -303,7 +312,17 @@ export class TelagentNode {
     logger.info('[telagent] [startup] starting API server...');
     await this.apiServer.start();
     this.clawnetTransportService.startListening({
-      onEnvelope: (raw, sourceDid) => this.messageService!.ingestFederatedEnvelope(raw, sourceDid),
+      onEnvelope: async (raw, sourceDid) => {
+        await this.messageService!.ingestFederatedEnvelope(raw, sourceDid);
+        // Push real-time event to local SSE clients
+        this.eventPushService?.emitLocal({
+          type: 'new-envelope',
+          sourceDid,
+          envelopeId: typeof raw.envelopeId === 'string' ? raw.envelopeId : undefined,
+          conversationId: typeof raw.conversationId === 'string' ? raw.conversationId : undefined,
+          atMs: Date.now(),
+        });
+      },
       onAttachment: async (info, _sourceDid) => {
         // A peer relayed an attachment to us via ClawNet P2P.
         // Download from our local ClawNet node and save under the same objectKey
@@ -398,6 +417,7 @@ export class TelagentNode {
 
     this.stopMailboxCleaner();
     this.apiProxyService?.dispose();
+    this.eventPushService?.dispose();
     this.clawnetTransportService?.stopListening();
     await this.apiServer?.stop();
     await this.indexer?.stop();

@@ -138,6 +138,28 @@ export async function handleRelayRequest(
     return true;
   }
 
+  // ── SSE relay: GET /:targetDid/api/v1/events ──────────
+  // This is a long-lived SSE connection — NOT a normal API proxy call.
+  if (remaining === '/api/v1/events' || remaining === '/api/v1/events/') {
+    if (req.method !== 'GET') {
+      writeJson(res, 405, { error: 'Method not allowed' });
+      return true;
+    }
+    if (!ctx.eventPushService) {
+      writeJson(res, 503, { error: 'Event push service unavailable' });
+      return true;
+    }
+    try {
+      await ctx.eventPushService.addGatewayClient(res, decodedDid);
+      // Do NOT call res.end() — SSE is a long-lived connection
+    } catch (err) {
+      if (!res.headersSent) {
+        writeJson(res, 502, { error: `Event subscription failed: ${(err as Error).message}` });
+      }
+    }
+    return true;
+  }
+
   // Read request body
   let body: string | undefined;
   if (req.method !== 'GET' && req.method !== 'HEAD' && req.method !== 'DELETE') {

@@ -1,15 +1,20 @@
-import { useEffect, useRef } from "react"
+import { useEffect, useRef, useCallback } from "react"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 
+import type { EventNotification } from "@telagent/protocol"
 import { formatApiError, isLikelyNetworkError } from "@/lib/api-error"
 import { useConnectionStore } from "@/stores/connection"
 import { useConversationStore } from "@/stores/conversation"
 import { useMessageStore } from "@/stores/message"
 import { useUIStore } from "@/stores/ui"
+import { useEventSource } from "./use-event-source"
 
 const ACTIVE_INTERVAL_MS = 3_000
 const IDLE_INTERVAL_MS = 15_000
+// When SSE is active, relax polling to save bandwidth (polling becomes fallback only)
+const SSE_ACTIVE_INTERVAL_MS = 15_000
+const SSE_IDLE_INTERVAL_MS = 60_000
 
 export function usePollMessages() {
   const { t } = useTranslation()
@@ -32,6 +37,31 @@ export function usePollMessages() {
   const globalInFlight = useRef(false)
   const seenRetractionIds = useRef(new Set<string>())
   const lastErrorRef = useRef<{ key: string; at: number }>({ key: "", at: 0 })
+  const sseActiveRef = useRef(false)
+  // Refs for imperative poll triggers from SSE events
+  const pollActiveRef = useRef<() => void>()
+  const pollGlobalRef = useRef<() => void>()
+
+  // ── SSE event handler ─────────────────────────────────
+  const handleSseEvent = useCallback((event: EventNotification) => {
+    sseActiveRef.current = true
+    switch (event.type) {
+      case "new-envelope":
+        // Immediately fetch new messages
+        pollActiveRef.current?.()
+        pollGlobalRef.current?.()
+        break
+      case "receipt":
+      case "conversation-update":
+        pollGlobalRef.current?.()
+        break
+      case "retraction":
+        pollGlobalRef.current?.()
+        break
+    }
+  }, [])
+
+  useEventSource(handleSseEvent)
 
   useEffect(() => {
     if (!sdk || !nodeUrl || status !== "connected") {
@@ -147,15 +177,23 @@ export function usePollMessages() {
       window.clearInterval(activeTimer)
       window.clearInterval(globalTimer)
 
+      // When SSE is active, relax polling intervals (polling is fallback only)
+      const activeMs = sseActiveRef.current ? SSE_ACTIVE_INTERVAL_MS : ACTIVE_INTERVAL_MS
+      const idleMs = sseActiveRef.current ? SSE_IDLE_INTERVAL_MS : IDLE_INTERVAL_MS
+
       activeTimer = window.setInterval(() => {
         void pollActiveConversation()
-      }, ACTIVE_INTERVAL_MS)
+      }, activeMs)
 
       globalTimer = window.setInterval(() => {
         void pollGlobal()
         void pollRetracted()
-      }, IDLE_INTERVAL_MS)
+      }, idleMs)
     }
+
+    // Expose poll functions for SSE-triggered immediate refetch
+    pollActiveRef.current = () => void pollActiveConversation()
+    pollGlobalRef.current = () => void pollGlobal()
 
     const handleVisibility = () => {
       if (document.hidden) {

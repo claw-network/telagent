@@ -20,6 +20,7 @@ import { profileRoutes } from './routes/profile.js';
 import { sessionRoutes } from './routes/session.js';
 import { walletRoutes } from './routes/wallets.js';
 import { handleRelayRequest } from './routes/relay.js';
+import { eventRoutes } from './routes/events.js';
 import type { RuntimeContext } from './types.js';
 
 function buildRouter(ctx: RuntimeContext): Router {
@@ -38,6 +39,7 @@ function buildRouter(ctx: RuntimeContext): Router {
   router.mount('/api/v1/session', sessionRoutes(ctx));
   router.mount('/api/v1/clawnet', clawnetRoutes(ctx));
   router.mount('/api/v1/profile', profileRoutes(ctx));
+  router.mount('/api/v1/events', eventRoutes(ctx));
 
   return router;
 }
@@ -61,6 +63,8 @@ const AUTH_WHITELIST: Array<{ method?: string; path: string }> = [
   // (matched via startsWith in isAuthExempt since :did varies)
   // Relay routes — auth is enforced on the target node side
   { path: '/relay' },
+  // Local SSE events — auth enforced separately (session token in query)
+  { method: 'GET', path: '/api/v1/events' },
 ];
 
 function isAuthExempt(method: string, pathname: string): boolean {

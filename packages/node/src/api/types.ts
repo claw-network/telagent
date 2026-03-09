@@ -13,6 +13,7 @@ import type { OwnerPermissionService } from '../services/owner-permission-servic
 import type { SelfProfileStore } from '../storage/profile-store.js';
 import type { PeerProfileRepository } from '../storage/peer-profile-repository.js';
 import type { ApiProxyService } from '../services/api-proxy-service.js';
+import type { EventPushService } from '../services/event-push-service.js';
 
 export interface ApiServerConfig {
   host: string;
@@ -38,4 +39,5 @@ export interface RuntimeContext {
   peerProfileRepository: PeerProfileRepository;
   configuredPassphrase?: string;
   apiProxyService?: ApiProxyService;
+  eventPushService?: EventPushService;
 }
