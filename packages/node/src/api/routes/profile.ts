@@ -146,8 +146,8 @@ export function profileRoutes(ctx: RuntimeContext): Router {
   });
 
   // ── GET /:did/avatar  (public — proxies peer avatar via local node) ────────
-  // The frontend should never fetch images directly from remote nodes (cross-origin
-  // / firewall issues). This endpoint proxies the avatar from the peer's node URL.
+  // Serves the cached avatar first (embedded in profile card via P2P).
+  // Falls back to fetching from the peer's HTTP endpoint if no local cache.
   router.get('/:did/avatar', async ({ res, params, url }) => {
     try {
       const { did } = params;
@@ -158,6 +158,15 @@ export function profileRoutes(ctx: RuntimeContext): Router {
       if (!profile?.avatarUrl) {
         throw new TelagentError(ErrorCodes.NOT_FOUND, `No avatar for did: ${did}`);
       }
+
+      // 1. Try local cache (avatar embedded in the P2P profile card).
+      const cached = ctx.peerProfileRepository.loadAvatar(did);
+      if (cached) {
+        sendBinary(res, 200, cached.data, cached.mimeType);
+        return;
+      }
+
+      // 2. Fallback: fetch from the peer's HTTP endpoint.
       const remoteUrl = resolvePeerAvatarUrl(profile.avatarUrl, profile.nodeUrl);
       if (!remoteUrl || remoteUrl.startsWith('/')) {
         throw new TelagentError(ErrorCodes.NOT_FOUND, `Cannot resolve avatar URL for did: ${did}`);
@@ -173,6 +182,10 @@ export function profileRoutes(ctx: RuntimeContext): Router {
       }
       const contentType = response.headers.get('content-type') ?? 'image/jpeg';
       const data = Buffer.from(await response.arrayBuffer());
+
+      // Cache for future requests.
+      try { ctx.peerProfileRepository.saveAvatar(did, data, contentType); } catch { /* best-effort */ }
+
       sendBinary(res, 200, data, contentType);
     } catch (error) {
       handleError(res, error, url.pathname);

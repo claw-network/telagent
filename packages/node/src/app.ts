@@ -225,7 +225,7 @@ export class TelagentNode {
     const contactRepository = new ContactRepository(this.paths.contactsDb);
     const contactService = new ContactService(contactRepository);
     this.selfProfileStore = new SelfProfileStore(this.paths);
-    this.peerProfileRepository = new PeerProfileRepository(this.paths.peerProfilesDb);
+    this.peerProfileRepository = new PeerProfileRepository(this.paths.peerProfilesDb, this.paths.peerAvatarsDir);
     this.messageService = new MessageService(this.groupService, {
       repository: this.mailboxStore,
       keyLifecycleService: this.keyLifecycleService,
