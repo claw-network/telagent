@@ -31,6 +31,16 @@
       "detecting": "Checking node...",
       "found": "Remote node detected",
       "notFound": "Unable to reach node"
+    },
+    "did": {
+      "label": "DID",
+      "gateway": "Gateway Node",
+      "customGateway": "Custom gateway...",
+      "reachable": "Node reachable",
+      "unreachable": "Node offline or unreachable",
+      "latency": "Latency",
+      "detecting": "Checking reachability...",
+      "hint": "Enter a DID to connect through a gateway node. Your node can be behind NAT."
     }
   },
   "chat": {

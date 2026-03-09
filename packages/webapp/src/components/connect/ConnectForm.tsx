@@ -17,6 +17,16 @@ import { useIdentityStore } from "@/stores/identity"
 import { usePermissionStore } from "@/stores/permission"
 
 const LOCAL_NODE_URL = "http://127.0.0.1:9529"
+const DID_REGEX = /^did:claw:z[A-Za-z0-9]{32,}$/
+
+const DEFAULT_GATEWAYS = [
+  { label: "alex.telagent.org", value: "https://alex.telagent.org" },
+  { label: "bess.telagent.org", value: "https://bess.telagent.org" },
+]
+
+function isDidInput(value: string): boolean {
+  return DID_REGEX.test(value.trim())
+}
 
 /* ------------------------------------------------------------------ */
 /*  Helpers                                                           */
@@ -90,6 +100,79 @@ function useNodeProbe(targetUrl: string) {
   }, [targetUrl])
 
   return { status, info }
+}
+
+/* ------------------------------------------------------------------ */
+/*  DID probe (via gateway relay)                                     */
+/* ------------------------------------------------------------------ */
+
+type DidProbeStatus = "idle" | "probing" | "reachable" | "unreachable"
+
+function useDidProbe(did: string, gatewayUrl: string) {
+  const [status, setStatus] = useState<DidProbeStatus>("idle")
+  const [latencyMs, setLatencyMs] = useState(-1)
+  const [nodeInfo, setNodeInfo] = useState<NodeInfo | null>(null)
+
+  useEffect(() => {
+    if (!did || !gatewayUrl || !isDidInput(did)) {
+      setStatus("idle")
+      setNodeInfo(null)
+      setLatencyMs(-1)
+      return
+    }
+    const controller = new AbortController()
+    setStatus("probing")
+
+    async function probe() {
+      try {
+        const encodedDid = encodeURIComponent(did.trim())
+
+        // 1. Ping via gateway
+        const pingRes = await fetch(
+          `${gatewayUrl}/relay/${encodedDid}/ping`,
+          { signal: controller.signal, headers: { accept: "application/json" } },
+        )
+        const pingData = await pingRes.json()
+        if (!pingData.data?.reachable) {
+          setStatus("unreachable")
+          return
+        }
+        setLatencyMs(pingData.data.latencyMs)
+
+        // 2. Fetch node info via gateway
+        const nodeRes = await fetch(
+          `${gatewayUrl}/relay/${encodedDid}/api/v1/node`,
+          { signal: controller.signal, headers: { accept: "application/json" } },
+        )
+        const nodeBody = await nodeRes.json()
+        const node = nodeBody.data ?? nodeBody
+
+        // 3. Fetch identity
+        const selfRes = await fetch(
+          `${gatewayUrl}/relay/${encodedDid}/api/v1/identities/self`,
+          { signal: controller.signal, headers: { accept: "application/json" } },
+        )
+        const selfBody = await selfRes.json()
+        const self = selfBody.data ?? selfBody
+
+        setNodeInfo({
+          did: self.did ?? did.trim(),
+          didHash: self.didHash ?? "",
+          version: node.version ?? "unknown",
+        })
+        setStatus("reachable")
+      } catch {
+        if (!controller.signal.aborted) {
+          setStatus("unreachable")
+        }
+      }
+    }
+
+    void probe()
+    return () => controller.abort()
+  }, [did, gatewayUrl])
+
+  return { status, latencyMs, nodeInfo }
 }
 
 /* ------------------------------------------------------------------ */
@@ -197,23 +280,35 @@ export function ConnectForm() {
   const [passphrase, setPassphrase] = useState("")
   const [localError, setLocalError] = useState<string | null>(null)
 
+  // DID mode state
+  const [isDid, setIsDid] = useState(false)
+  const [gatewayUrl, setGatewayUrl] = useState(DEFAULT_GATEWAYS[0].value)
+  const { status: didProbeStatus, latencyMs, nodeInfo: didNodeInfo } = useDidProbe(
+    isDid ? nodeUrl : "",
+    gatewayUrl,
+  )
+
   useEffect(() => {
     if (probeStatus === "found" && isLocal && !nodeUrl) {
       setNodeUrl(LOCAL_NODE_URL)
     }
   }, [probeStatus, isLocal, nodeUrl])
 
+  const onNodeUrlChange = (value: string) => {
+    setNodeUrl(value)
+    setIsDid(isDidInput(value))
+  }
+
   const onNodeUrlBlur = () => {
     const trimmed = nodeUrl.trim()
-    if (!trimmed) {
-      setProbeTarget(LOCAL_NODE_URL)
+    if (isDid || !trimmed) {
+      if (!isDid) setProbeTarget(LOCAL_NODE_URL)
       return
     }
     try {
       new URL(trimmed)
       setProbeTarget(trimmed)
     } catch {
-      // invalid URL — keep probing local
       setProbeTarget(LOCAL_NODE_URL)
     }
   }
@@ -222,7 +317,19 @@ export function ConnectForm() {
     event.preventDefault()
     setLocalError(null)
     try {
-      await connect({ nodeUrl: nodeUrl.trim(), passphrase })
+      if (isDid) {
+        const trimmedDid = nodeUrl.trim()
+        const relayNodeUrl = `${gatewayUrl}/relay/${encodeURIComponent(trimmedDid)}`
+        await connect({
+          nodeUrl: relayNodeUrl,
+          passphrase,
+          connectionMode: "relay",
+          targetDid: trimmedDid,
+          gatewayUrl,
+        })
+      } else {
+        await connect({ nodeUrl: nodeUrl.trim(), passphrase })
+      }
       await loadSelf()
       await refreshPermissions()
       navigate("/chat")
@@ -233,8 +340,19 @@ export function ConnectForm() {
 
   const displayError = localError ?? error
 
-  // Show avatar section when probing/found, or when probing a non-local target (show result even if unreachable)
-  const showAvatarSection = probeStatus !== "not-found" || !isLocal
+  // DID mode uses didProbeStatus mapping
+  const effectiveProbeStatus: ProbeStatus = isDid
+    ? (didProbeStatus === "reachable" ? "found" : didProbeStatus === "unreachable" ? "not-found" : "probing")
+    : probeStatus
+  const effectiveInfo = isDid ? didNodeInfo : probeInfo
+
+  const showAvatarSection = isDid
+    ? didProbeStatus !== "idle"
+    : (probeStatus !== "not-found" || !isLocal)
+
+  const canSubmit = isDid
+    ? !!nodeUrl.trim() && !!passphrase
+    : !!nodeUrl.trim() && !!passphrase
 
   return (
     <div className="flex w-full max-w-[420px] flex-col items-center gap-8">
@@ -250,7 +368,14 @@ export function ConnectForm() {
           <form onSubmit={onSubmit}>
             {showAvatarSection && (
               <>
-                <NodeAvatar status={probeStatus} info={probeInfo} isLocal={isLocal} />
+                <NodeAvatar status={effectiveProbeStatus} info={effectiveInfo} isLocal={!isDid && isLocal} />
+                {isDid && latencyMs > 0 && (
+                  <div className="flex justify-center -mt-2 mb-2">
+                    <Badge variant="secondary" className="px-2 py-0 text-[10px] font-normal">
+                      {latencyMs}ms
+                    </Badge>
+                  </div>
+                )}
                 <Separator className="mb-5" />
               </>
             )}
@@ -258,16 +383,39 @@ export function ConnectForm() {
             <div className={cn("space-y-4", !showAvatarSection && "pt-6")}>
               <div>
                 <Label htmlFor="node-url" className="mb-2 block text-[13px]">
-                  {t("connect.nodeUrl")}
+                  {isDid ? t("connect.did.label") : t("connect.nodeUrl")}
                 </Label>
                 <Input
                   id="node-url"
-                  placeholder={probeStatus === "found" && isLocal ? LOCAL_NODE_URL : "https://agent.example.com"}
+                  placeholder={isDid ? "did:claw:z6tor6XFy..." : (probeStatus === "found" && isLocal ? LOCAL_NODE_URL : "https://agent.example.com")}
                   value={nodeUrl}
-                  onChange={(event) => setNodeUrl(event.target.value)}
+                  onChange={(event) => onNodeUrlChange(event.target.value)}
                   onBlur={onNodeUrlBlur}
                 />
+                {isDid && (
+                  <p className="mt-1 text-[11px] text-muted-foreground">
+                    {t("connect.did.hint")}
+                  </p>
+                )}
               </div>
+
+              {isDid && (
+                <div>
+                  <Label htmlFor="gateway" className="mb-2 block text-[13px]">
+                    {t("connect.did.gateway")}
+                  </Label>
+                  <select
+                    id="gateway"
+                    value={gatewayUrl}
+                    onChange={(e) => setGatewayUrl(e.target.value)}
+                    className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                  >
+                    {DEFAULT_GATEWAYS.map((gw) => (
+                      <option key={gw.value} value={gw.value}>{gw.label}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
 
               <div>
                 <Label htmlFor="passphrase" className="mb-2 block text-[13px]">
@@ -294,7 +442,7 @@ export function ConnectForm() {
             <Button
               type="submit"
               className="mt-5 w-full"
-              disabled={status === "connecting" || !nodeUrl.trim() || !passphrase}
+              disabled={status === "connecting" || !canSubmit}
             >
               {status === "connecting" ? t("connect.connecting") : t("connect.submit")}
             </Button>

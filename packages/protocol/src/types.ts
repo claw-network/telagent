@@ -186,3 +186,37 @@ export interface ProfileCardPayload {
   avatarUrl?: string;
   nodeUrl?: string;
 }
+
+// ── API Proxy (DID-based Remote Access) ───────────────────────────────────────
+
+/**
+ * An API request proxied through ClawNet P2P.
+ * Gateway node sends this to the target node via topic 'telagent/api-proxy'.
+ */
+export interface ApiProxyRequest {
+  /** UUID for correlating request with response. */
+  requestId: string;
+  /** HTTP method: GET, POST, PUT, DELETE. */
+  method: string;
+  /** Request path including query string, e.g. '/api/v1/conversations?limit=20'. */
+  path: string;
+  /** HTTP headers to forward (including Authorization). */
+  headers: Record<string, string>;
+  /** Request body as string (JSON-serialized). Absent for GET/DELETE. */
+  body?: string;
+}
+
+/**
+ * Response to an API proxy request.
+ * Target node sends this back to the gateway via topic 'telagent/api-proxy-response'.
+ */
+export interface ApiProxyResponse {
+  /** Must match the requestId from the corresponding ApiProxyRequest. */
+  requestId: string;
+  /** HTTP status code (200, 401, 404, 500, etc.). */
+  status: number;
+  /** Response headers. */
+  headers: Record<string, string>;
+  /** Response body as string. */
+  body?: string;
+}

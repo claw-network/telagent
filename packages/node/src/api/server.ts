@@ -19,6 +19,7 @@ import { clawnetRoutes } from './routes/clawnet.js';
 import { profileRoutes } from './routes/profile.js';
 import { sessionRoutes } from './routes/session.js';
 import { walletRoutes } from './routes/wallets.js';
+import { handleRelayRequest } from './routes/relay.js';
 import type { RuntimeContext } from './types.js';
 
 function buildRouter(ctx: RuntimeContext): Router {
@@ -58,6 +59,8 @@ const AUTH_WHITELIST: Array<{ method?: string; path: string }> = [
   { method: 'PUT', path: '/api/v1/attachments' },
   // GET /api/v1/profile/:did — cached peer profiles are public
   // (matched via startsWith in isAuthExempt since :did varies)
+  // Relay routes — auth is enforced on the target node side
+  { path: '/relay' },
 ];
 
 function isAuthExempt(method: string, pathname: string): boolean {
@@ -127,6 +130,17 @@ export class ApiServer {
       } catch (error) {
         const authErr = error instanceof TelagentError ? error : new TelagentError(ErrorCodes.UNAUTHORIZED, 'Authentication required');
         problem(res, authErr.toProblem(req.url));
+        return;
+      }
+
+      // Handle /relay/* before standard router (relay needs wildcard path matching)
+      try {
+        const relayHandled = await handleRelayRequest(req, res, parsedUrl.pathname, this.ctx);
+        if (relayHandled) return;
+      } catch (error) {
+        if (res.headersSent) return;
+        const internal = error instanceof TelagentError ? error : new TelagentError(ErrorCodes.INTERNAL, error instanceof Error ? error.message : 'Unexpected error');
+        problem(res, internal.toProblem(req.url));
         return;
       }
 

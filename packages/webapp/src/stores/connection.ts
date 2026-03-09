@@ -7,6 +7,9 @@ export type ConnectionStatus = "disconnected" | "connecting" | "connected" | "er
 interface ConnectInput {
   nodeUrl: string
   passphrase: string
+  connectionMode?: "direct" | "relay"
+  targetDid?: string
+  gatewayUrl?: string
 }
 
 interface ConnectionStore {
@@ -16,6 +19,9 @@ interface ConnectionStore {
   error?: string
   reconnectHintVisible: boolean
   sdk: TelagentSdk | null
+  connectionMode: "direct" | "relay"
+  targetDid: string
+  gatewayUrl: string
   connect: (input: ConnectInput) => Promise<void>
   reconnectFromStorage: () => Promise<void>
   disconnect: () => void
@@ -55,6 +61,9 @@ export const useConnectionStore = create<ConnectionStore>()(
       error: undefined,
       reconnectHintVisible: false,
       sdk: null,
+      connectionMode: "direct",
+      targetDid: "",
+      gatewayUrl: "",
       connect: async (input) => {
         const nodeUrl = normalizeNodeUrl(input.nodeUrl)
         const passphrase = input.passphrase
@@ -90,6 +99,9 @@ export const useConnectionStore = create<ConnectionStore>()(
             status: "connected",
             error: undefined,
             reconnectHintVisible: false,
+            connectionMode: input.connectionMode === "relay" ? "relay" : "direct",
+            targetDid: input.targetDid ?? "",
+            gatewayUrl: input.gatewayUrl ?? "",
           })
         } catch (error) {
           set({ status: "error", error: error instanceof Error ? error.message : String(error), sdk: null })
@@ -158,6 +170,9 @@ export const useConnectionStore = create<ConnectionStore>()(
           status: "disconnected",
           error: undefined,
           reconnectHintVisible: false,
+          connectionMode: "direct",
+          targetDid: "",
+          gatewayUrl: "",
         })
       },
       setStatus: (status) => {
@@ -184,6 +199,9 @@ export const useConnectionStore = create<ConnectionStore>()(
       partialize: (state) => ({
         nodeUrl: state.nodeUrl,
         sessionToken: state.sessionToken,
+        connectionMode: state.connectionMode,
+        targetDid: state.targetDid,
+        gatewayUrl: state.gatewayUrl,
       }),
     },
   ),

@@ -10,6 +10,7 @@ import { verifyPassphrase } from './clawnet/verify-passphrase.js';
 import { GroupIndexer } from './indexer/group-indexer.js';
 import { AttachmentService } from './services/attachment-service.js';
 import { ClawNetTransportService } from './services/clawnet-transport-service.js';
+import { ApiProxyService } from './services/api-proxy-service.js';
 import { ContractProvider } from './services/contract-provider.js';
 import { GroupService } from './services/group-service.js';
 import { IdentityAdapterService } from './services/identity-adapter-service.js';
@@ -49,6 +50,7 @@ export class TelagentNode {
   private messageService: MessageService | null = null;
   private attachmentService: AttachmentService | null = null;
   private clawnetTransportService: ClawNetTransportService | null = null;
+  private apiProxyService: ApiProxyService | null = null;
   private monitoringService: NodeMonitoringService | null = null;
   private ownerPermissionService: OwnerPermissionService | null = null;
   private indexer: GroupIndexer | null = null;
@@ -241,6 +243,16 @@ export class TelagentNode {
       this.clawnetGateway,
       { baseUrl: discovery.nodeUrl, apiKey: this.config.clawnet.apiKey },
     );
+
+    // API Proxy Service (DID-based remote access)
+    if (this.config.apiProxy.enabled || this.config.apiProxy.gatewayEnabled) {
+      this.apiProxyService = new ApiProxyService(
+        this.config.apiProxy,
+        this.clawnetTransportService,
+        this.config.port,
+      );
+    }
+
     this.monitoringService = new NodeMonitoringService({
       thresholds: {
         errorRateWarnRatio: this.config.monitoring.errorRateWarnRatio,
@@ -277,6 +289,7 @@ export class TelagentNode {
       selfProfileStore: this.selfProfileStore,
       peerProfileRepository: this.peerProfileRepository,
       configuredPassphrase: passphrase ?? undefined,
+      apiProxyService: this.apiProxyService ?? undefined,
     };
 
     this.apiServer = new ApiServer(runtime);
@@ -352,6 +365,19 @@ export class TelagentNode {
           logger.warn('[telagent] Failed to cache peer profile from %s: %s', sourceDid, (err as Error).message);
         }
       },
+      // API Proxy callbacks (DID-based remote access)
+      onApiProxyRequest: this.apiProxyService
+        ? (req, sourceDid) => this.apiProxyService!.handleProxyRequest(req, sourceDid)
+        : undefined,
+      onApiProxyResponse: this.apiProxyService
+        ? (res) => this.apiProxyService!.handleProxyResponse(res)
+        : undefined,
+      onApiProxyPing: this.apiProxyService
+        ? (pingId, sourceDid) => this.apiProxyService!.handlePing(sourceDid, pingId)
+        : undefined,
+      onApiProxyPong: this.apiProxyService
+        ? (pingId) => this.apiProxyService!.handlePong(pingId)
+        : undefined,
     });
     logger.info('[telagent] P2P transport listener started');
     this.monitoringService.recordMailboxMaintenance(await this.messageService.runMaintenance());
@@ -371,6 +397,7 @@ export class TelagentNode {
     this.sessionManager?.lockAll();
 
     this.stopMailboxCleaner();
+    this.apiProxyService?.dispose();
     this.clawnetTransportService?.stopListening();
     await this.apiServer?.stop();
     await this.indexer?.stop();

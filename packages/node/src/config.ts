@@ -53,6 +53,14 @@ export interface OwnerConfig {
   privateConversations: string[];
 }
 
+export interface ApiProxyConfig {
+  enabled: boolean;
+  gatewayEnabled: boolean;
+  timeoutMs: number;
+  rateLimitPerMinute: number;
+  maxBodyBytes: number;
+}
+
 export interface AppConfig {
   host: string;
   port: number;
@@ -64,6 +72,7 @@ export interface AppConfig {
   clawnet: ClawNetConfig;
   owner: OwnerConfig;
   monitoring: MonitoringConfig;
+  apiProxy: ApiProxyConfig;
 }
 
 export function loadConfigFromEnv(): AppConfig {
@@ -157,6 +166,14 @@ export function loadConfigFromEnv(): AppConfig {
 
   const publicUrl = process.env.TELAGENT_PUBLIC_URL?.trim() || undefined;
 
+  const apiProxy: ApiProxyConfig = {
+    enabled: parseBoolean(process.env.TELAGENT_API_PROXY_ENABLED, true),
+    gatewayEnabled: parseBoolean(process.env.TELAGENT_API_PROXY_GATEWAY_ENABLED, true),
+    timeoutMs: Number(process.env.TELAGENT_API_PROXY_TIMEOUT_MS || 30_000),
+    rateLimitPerMinute: Number(process.env.TELAGENT_API_PROXY_RATE_LIMIT || 60),
+    maxBodyBytes: Number(process.env.TELAGENT_API_PROXY_MAX_BODY_BYTES || 1_048_576),
+  };
+
   return {
     host,
     port,
@@ -175,6 +192,7 @@ export function loadConfigFromEnv(): AppConfig {
       maintenanceStaleWarnSec: Number(process.env.TELAGENT_MONITOR_MAINT_STALE_WARN_SEC || 180),
       maintenanceStaleCriticalSec: Number(process.env.TELAGENT_MONITOR_MAINT_STALE_CRITICAL_SEC || 300),
     },
+    apiProxy,
   };
 }
 

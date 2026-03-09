@@ -1,4 +1,4 @@
-import type { Envelope } from '@telagent/protocol';
+import type { Envelope, ApiProxyRequest, ApiProxyResponse } from '@telagent/protocol';
 import type { ProfileCardPayload } from '@telagent/protocol';
 import type { ClawNetGatewayService } from '../clawnet/gateway-service.js';
 
@@ -9,6 +9,10 @@ const TOPIC_RECEIPT = 'telagent/receipt';
 const TOPIC_GROUP_SYNC = 'telagent/group-sync';
 const TOPIC_PROFILE_CARD = 'telagent/profile-card';
 const TOPIC_ATTACHMENT = '_attachment';
+const TOPIC_API_PROXY = 'telagent/api-proxy';
+const TOPIC_API_PROXY_RESPONSE = 'telagent/api-proxy-response';
+const TOPIC_API_PROXY_PING = 'telagent/api-proxy-ping';
+const TOPIC_API_PROXY_PONG = 'telagent/api-proxy-pong';
 const RECONNECT_DELAY_MS = 3_000;
 
 /** JSON replacer that converts BigInt to string (needed for Envelope.seq). */
@@ -41,6 +45,10 @@ export type TopicCallbacks = {
   onGroupSync?: (payload: GroupSyncPayload, sourceDid: string) => Promise<unknown>;
   onProfileCard?: (payload: ProfileCardPayload, sourceDid: string) => Promise<unknown>;
   onAttachment?: (info: AttachmentNotification, sourceDid: string) => Promise<void>;
+  onApiProxyRequest?: (request: ApiProxyRequest, sourceDid: string) => Promise<void>;
+  onApiProxyResponse?: (response: ApiProxyResponse) => void;
+  onApiProxyPing?: (pingId: string, sourceDid: string) => Promise<void>;
+  onApiProxyPong?: (pingId: string) => void;
 };
 
 export class ClawNetTransportService {
@@ -288,8 +296,68 @@ export class ClawNetTransportService {
       case TOPIC_ATTACHMENT:
         await this.callbacks.onAttachment?.(parsed as unknown as AttachmentNotification, data.sourceDid);
         break;
+      case TOPIC_API_PROXY:
+        await this.callbacks.onApiProxyRequest?.(parsed as unknown as ApiProxyRequest, data.sourceDid);
+        break;
+      case TOPIC_API_PROXY_RESPONSE:
+        this.callbacks.onApiProxyResponse?.(parsed as unknown as ApiProxyResponse);
+        break;
+      case TOPIC_API_PROXY_PING:
+        await this.callbacks.onApiProxyPing?.((parsed as Record<string, unknown>).pingId as string, data.sourceDid);
+        break;
+      case TOPIC_API_PROXY_PONG:
+        this.callbacks.onApiProxyPong?.((parsed as Record<string, unknown>).pingId as string);
+        break;
       default:
         logger.warn('[p2p-transport] Unknown topic: %s', data.topic);
     }
+  }
+
+  // ── API Proxy outbound ────────────────────────────────────
+
+  async sendApiProxyRequest(targetDid: string, request: ApiProxyRequest): Promise<void> {
+    await this.gateway.client.messaging.send({
+      targetDid,
+      topic: TOPIC_API_PROXY,
+      payload: JSON.stringify(request),
+      ttlSec: 60,
+      priority: 2,
+      compress: true,
+      idempotencyKey: `api-proxy:${request.requestId}`,
+    });
+  }
+
+  async sendApiProxyResponse(targetDid: string, response: ApiProxyResponse): Promise<void> {
+    await this.gateway.client.messaging.send({
+      targetDid,
+      topic: TOPIC_API_PROXY_RESPONSE,
+      payload: JSON.stringify(response),
+      ttlSec: 60,
+      priority: 2,
+      compress: true,
+      idempotencyKey: `api-proxy-res:${response.requestId}`,
+    });
+  }
+
+  async sendApiProxyPing(targetDid: string, pingId: string): Promise<void> {
+    await this.gateway.client.messaging.send({
+      targetDid,
+      topic: TOPIC_API_PROXY_PING,
+      payload: JSON.stringify({ pingId }),
+      ttlSec: 30,
+      priority: 3,
+      compress: false,
+    });
+  }
+
+  async sendApiProxyPong(targetDid: string, pingId: string): Promise<void> {
+    await this.gateway.client.messaging.send({
+      targetDid,
+      topic: TOPIC_API_PROXY_PONG,
+      payload: JSON.stringify({ pingId }),
+      ttlSec: 30,
+      priority: 3,
+      compress: false,
+    });
   }
 }

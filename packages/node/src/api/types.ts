@@ -12,6 +12,7 @@ import type { NodeMonitoringService } from '../services/node-monitoring-service.
 import type { OwnerPermissionService } from '../services/owner-permission-service.js';
 import type { SelfProfileStore } from '../storage/profile-store.js';
 import type { PeerProfileRepository } from '../storage/peer-profile-repository.js';
+import type { ApiProxyService } from '../services/api-proxy-service.js';
 
 export interface ApiServerConfig {
   host: string;
@@ -36,4 +37,5 @@ export interface RuntimeContext {
   selfProfileStore: SelfProfileStore;
   peerProfileRepository: PeerProfileRepository;
   configuredPassphrase?: string;
+  apiProxyService?: ApiProxyService;
 }

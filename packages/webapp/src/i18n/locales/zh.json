@@ -31,6 +31,16 @@
       "detecting": "正在检测远程节点...",
       "found": "已检测到远程节点",
       "notFound": "无法连接到该节点"
+    },
+    "did": {
+      "label": "DID",
+      "gateway": "网关节点",
+      "customGateway": "自定义网关...",
+      "reachable": "节点在线",
+      "unreachable": "节点离线或不可达",
+      "latency": "延迟",
+      "detecting": "检查可达性...",
+      "hint": "输入 DID 通过网关节点连接。你的节点可以在 NAT 后面。"
     }
   },
   "chat": {
