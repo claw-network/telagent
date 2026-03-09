@@ -24,6 +24,15 @@ const DEFAULT_GATEWAYS = [
   { label: "bess.telagent.org", value: "https://bess.telagent.org" },
 ]
 
+type InputMode = "did" | "url"
+
+function detectInputMode(value: string): InputMode {
+  const trimmed = value.trim()
+  if (!trimmed) return "did"
+  if (DID_REGEX.test(trimmed) || trimmed.startsWith("did:")) return "did"
+  return "url"
+}
+
 function isDidInput(value: string): boolean {
   return DID_REGEX.test(value.trim())
 }
@@ -260,6 +269,51 @@ function NodeAvatar({ status, info, isLocal }: { status: ProbeStatus; info: Node
 }
 
 /* ------------------------------------------------------------------ */
+/*  Local node shortcut card                                          */
+/* ------------------------------------------------------------------ */
+
+function LocalNodeCard({
+  probeStatus,
+  info,
+  onUse,
+}: {
+  probeStatus: ProbeStatus
+  info: NodeInfo | null
+  onUse: () => void
+}) {
+  const { t } = useTranslation()
+  if (probeStatus !== "found" || !info) return null
+
+  return (
+    <button
+      type="button"
+      onClick={onUse}
+      className="group mt-3 flex w-full items-center gap-3 rounded-lg border border-border/60 bg-muted/30 px-3.5 py-3 text-left transition-colors hover:bg-muted/60"
+    >
+      <div className="relative shrink-0">
+        <div className="absolute inset-[-3px] rounded-full border-[2px] border-primary/20" />
+        <DidAvatar did={info.did} className="relative size-9 text-sm" />
+      </div>
+      <div className="flex min-w-0 flex-1 flex-col">
+        <div className="flex items-center gap-1.5">
+          <span className="size-1.5 rounded-full bg-emerald-500" />
+          <span className="text-[13px] font-medium">{t("connect.local.found")}</span>
+          <Badge variant="secondary" className="px-1.5 py-0 text-[9px] font-normal">
+            v{info.version}
+          </Badge>
+        </div>
+        <p className="truncate font-mono text-[10px] text-muted-foreground/70">
+          {info.did}
+        </p>
+      </div>
+      <span className="shrink-0 text-[11px] text-muted-foreground group-hover:text-foreground">
+        {t("connect.local.useLocal")}
+      </span>
+    </button>
+  )
+}
+
+/* ------------------------------------------------------------------ */
 /*  Connect form                                                      */
 /* ------------------------------------------------------------------ */
 
@@ -272,45 +326,51 @@ export function ConnectForm() {
   const loadSelf = useIdentityStore((state) => state.loadSelf)
   const refreshPermissions = usePermissionStore((state) => state.refresh)
 
-  const [probeTarget, setProbeTarget] = useState(LOCAL_NODE_URL)
-  const { status: probeStatus, info: probeInfo } = useNodeProbe(probeTarget)
-  const isLocal = isLocalUrl(probeTarget)
+  // Always probe local node in background for the shortcut card
+  const { status: localProbeStatus, info: localProbeInfo } = useNodeProbe(LOCAL_NODE_URL)
 
-  const [nodeUrl, setNodeUrl] = useState("")
+  // Remote URL probe — only when user types a URL
+  const [remoteProbeTarget, setRemoteProbeTarget] = useState("")
+  const { status: remoteProbeStatus, info: remoteProbeInfo } = useNodeProbe(remoteProbeTarget)
+
+  const [nodeInput, setNodeInput] = useState("")
   const [passphrase, setPassphrase] = useState("")
   const [localError, setLocalError] = useState<string | null>(null)
 
+  // Input mode: "did" (default) or "url"
+  const inputMode = detectInputMode(nodeInput)
+  const isDid = inputMode === "did" && isDidInput(nodeInput)
+
   // DID mode state
-  const [isDid, setIsDid] = useState(false)
   const [gatewayUrl, setGatewayUrl] = useState(DEFAULT_GATEWAYS[0].value)
   const { status: didProbeStatus, latencyMs, nodeInfo: didNodeInfo } = useDidProbe(
-    isDid ? nodeUrl : "",
+    isDid ? nodeInput : "",
     gatewayUrl,
   )
 
-  useEffect(() => {
-    if (probeStatus === "found" && isLocal && !nodeUrl) {
-      setNodeUrl(LOCAL_NODE_URL)
-    }
-  }, [probeStatus, isLocal, nodeUrl])
-
-  const onNodeUrlChange = (value: string) => {
-    setNodeUrl(value)
-    setIsDid(isDidInput(value))
+  const onInputChange = (value: string) => {
+    setNodeInput(value)
   }
 
-  const onNodeUrlBlur = () => {
-    const trimmed = nodeUrl.trim()
-    if (isDid || !trimmed) {
-      if (!isDid) setProbeTarget(LOCAL_NODE_URL)
+  const onInputBlur = () => {
+    const trimmed = nodeInput.trim()
+    if (!trimmed || detectInputMode(trimmed) === "did") {
+      setRemoteProbeTarget("")
       return
     }
     try {
       new URL(trimmed)
-      setProbeTarget(trimmed)
+      if (!isLocalUrl(trimmed)) {
+        setRemoteProbeTarget(trimmed)
+      }
     } catch {
-      setProbeTarget(LOCAL_NODE_URL)
+      setRemoteProbeTarget("")
     }
+  }
+
+  const useLocalNode = () => {
+    setNodeInput(LOCAL_NODE_URL)
+    setRemoteProbeTarget("")
   }
 
   const onSubmit = async (event: FormEvent<HTMLFormElement>) => {
@@ -318,7 +378,7 @@ export function ConnectForm() {
     setLocalError(null)
     try {
       if (isDid) {
-        const trimmedDid = nodeUrl.trim()
+        const trimmedDid = nodeInput.trim()
         const relayNodeUrl = `${gatewayUrl}/relay/${encodeURIComponent(trimmedDid)}`
         await connect({
           nodeUrl: relayNodeUrl,
@@ -328,7 +388,7 @@ export function ConnectForm() {
           gatewayUrl,
         })
       } else {
-        await connect({ nodeUrl: nodeUrl.trim(), passphrase })
+        await connect({ nodeUrl: nodeInput.trim(), passphrase })
       }
       await loadSelf()
       await refreshPermissions()
@@ -340,19 +400,28 @@ export function ConnectForm() {
 
   const displayError = localError ?? error
 
-  // DID mode uses didProbeStatus mapping
+  // Determine avatar section state
+  const isUrlMode = inputMode === "url" && !!nodeInput.trim()
+  const showUrlAvatar = isUrlMode && (isLocalUrl(nodeInput.trim())
+    ? localProbeStatus !== "not-found"
+    : remoteProbeTarget && remoteProbeStatus !== "not-found")
+
   const effectiveProbeStatus: ProbeStatus = isDid
     ? (didProbeStatus === "reachable" ? "found" : didProbeStatus === "unreachable" ? "not-found" : "probing")
-    : probeStatus
-  const effectiveInfo = isDid ? didNodeInfo : probeInfo
+    : isUrlMode
+      ? (isLocalUrl(nodeInput.trim()) ? localProbeStatus : (remoteProbeTarget ? remoteProbeStatus : "probing"))
+      : "probing"
+  const effectiveInfo = isDid
+    ? didNodeInfo
+    : isUrlMode
+      ? (isLocalUrl(nodeInput.trim()) ? localProbeInfo : remoteProbeInfo)
+      : null
 
   const showAvatarSection = isDid
     ? didProbeStatus !== "idle"
-    : (probeStatus !== "not-found" || !isLocal)
+    : showUrlAvatar
 
-  const canSubmit = isDid
-    ? !!nodeUrl.trim() && !!passphrase
-    : !!nodeUrl.trim() && !!passphrase
+  const canSubmit = !!nodeInput.trim() && !!passphrase
 
   return (
     <div className="flex w-full max-w-[420px] flex-col items-center gap-8">
@@ -368,7 +437,11 @@ export function ConnectForm() {
           <form onSubmit={onSubmit}>
             {showAvatarSection && (
               <>
-                <NodeAvatar status={effectiveProbeStatus} info={effectiveInfo} isLocal={!isDid && isLocal} />
+                <NodeAvatar
+                  status={effectiveProbeStatus}
+                  info={effectiveInfo}
+                  isLocal={isUrlMode && isLocalUrl(nodeInput.trim())}
+                />
                 {isDid && latencyMs > 0 && (
                   <div className="flex justify-center -mt-2 mb-2">
                     <Badge variant="secondary" className="px-2 py-0 text-[10px] font-normal">
@@ -381,24 +454,32 @@ export function ConnectForm() {
             )}
 
             <div className={cn("space-y-4", !showAvatarSection && "pt-6")}>
+              {/* Unified input: DID-first, URL also accepted */}
               <div>
-                <Label htmlFor="node-url" className="mb-2 block text-[13px]">
-                  {isDid ? t("connect.did.label") : t("connect.nodeUrl")}
+                <Label htmlFor="node-input" className="mb-2 block text-[13px]">
+                  {isDid ? t("connect.did.label") : (isUrlMode ? t("connect.nodeUrl") : t("connect.inputLabel"))}
                 </Label>
                 <Input
-                  id="node-url"
-                  placeholder={isDid ? "did:claw:z6tor6XFy..." : (probeStatus === "found" && isLocal ? LOCAL_NODE_URL : "https://agent.example.com")}
-                  value={nodeUrl}
-                  onChange={(event) => onNodeUrlChange(event.target.value)}
-                  onBlur={onNodeUrlBlur}
+                  id="node-input"
+                  placeholder="did:claw:z...  or  https://..."
+                  value={nodeInput}
+                  onChange={(event) => onInputChange(event.target.value)}
+                  onBlur={onInputBlur}
+                  autoFocus
                 />
                 {isDid && (
                   <p className="mt-1 text-[11px] text-muted-foreground">
                     {t("connect.did.hint")}
                   </p>
                 )}
+                {!nodeInput && (
+                  <p className="mt-1 text-[11px] text-muted-foreground">
+                    {t("connect.inputHint")}
+                  </p>
+                )}
               </div>
 
+              {/* Gateway selector — only in DID mode */}
               {isDid && (
                 <div>
                   <Label htmlFor="gateway" className="mb-2 block text-[13px]">
@@ -417,6 +498,7 @@ export function ConnectForm() {
                 </div>
               )}
 
+              {/* Passphrase */}
               <div>
                 <Label htmlFor="passphrase" className="mb-2 block text-[13px]">
                   {t("connect.passphrase")}
@@ -446,6 +528,15 @@ export function ConnectForm() {
             >
               {status === "connecting" ? t("connect.connecting") : t("connect.submit")}
             </Button>
+
+            {/* Local node shortcut — shown when user hasn't typed anything or is in DID mode */}
+            {!isUrlMode && (
+              <LocalNodeCard
+                probeStatus={localProbeStatus}
+                info={localProbeInfo}
+                onUse={useLocalNode}
+              />
+            )}
           </form>
         </CardContent>
       </Card>

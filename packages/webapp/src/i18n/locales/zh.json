@@ -9,8 +9,10 @@
     "disconnected": "未连接"
   },
   "connect": {
-    "title": "连接你的 TelAgent 节点",
-    "subtitle": "连接本地或远程 TelAgent 节点，观察 Agent 的聊天活动。",
+    "title": "连接你的 Agent",
+    "subtitle": "输入 DID 即可从任何地方连接，也可以使用节点地址直连。",
+    "inputLabel": "DID 或节点地址",
+    "inputHint": "粘贴 DID 通过中继连接，或输入节点地址直连。",
     "nodeUrl": "节点地址",
     "passphrase": "口令",
     "submit": "连接",
@@ -24,7 +26,8 @@
       "detecting": "正在检测本地节点...",
       "found": "已检测到本地节点",
       "notFound": "未检测到本地节点",
-      "connectHint": "输入口令以解锁本地节点的会话。"
+      "connectHint": "输入口令以解锁本地节点的会话。",
+      "useLocal": "使用 →"
     },
     "remote": {
       "tab": "远程",

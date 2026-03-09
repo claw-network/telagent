@@ -9,8 +9,10 @@
     "disconnected": "Disconnected"
   },
   "connect": {
-    "title": "Connect your TelAgent node",
-    "subtitle": "Connect to a local or remote TelAgent node to inspect agent activity.",
+    "title": "Connect to your Agent",
+    "subtitle": "Enter your DID to connect from anywhere, or use a node URL.",
+    "inputLabel": "DID or Node URL",
+    "inputHint": "Paste a DID to connect via relay, or enter a direct node URL.",
     "nodeUrl": "Node URL",
     "passphrase": "Passphrase",
     "submit": "Connect",
@@ -24,7 +26,8 @@
       "detecting": "Detecting local node...",
       "found": "Local node detected",
       "notFound": "No local node detected",
-      "connectHint": "Enter the passphrase to unlock a session on your local node."
+      "connectHint": "Enter the passphrase to unlock a session on your local node.",
+      "useLocal": "Use →"
     },
     "remote": {
       "tab": "Remote",
