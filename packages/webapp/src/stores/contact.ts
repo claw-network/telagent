@@ -95,9 +95,12 @@ export const useContactStore = create<ContactStore>((set, get) => ({
   getEffectiveAvatarUrl: (did) => {
     const normalizedDid = normalizeDid(did)
     const contact = get().contacts.find((c) => c.did === normalizedDid)
-    if (contact?.avatarUrl) return contact.avatarUrl
     const peer = get().peerProfiles[normalizedDid]
-    if (peer?.avatarUrl) return peer.avatarUrl
+    // If the peer has an avatar, use the local proxy endpoint so the browser
+    // doesn't need to reach the remote node directly (NAT / CORS safe).
+    if (contact?.avatarUrl || peer?.avatarUrl) {
+      return `/api/v1/profile/${encodeURIComponent(normalizedDid)}/avatar`
+    }
     return undefined
   },
   resolve: async (did, force = false) => {

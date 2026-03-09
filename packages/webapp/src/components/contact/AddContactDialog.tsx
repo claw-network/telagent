@@ -105,7 +105,13 @@ export function AddContactDialog({
 
         if (profile) {
           setPreviewNickname(profile.nickname)
-          setPreviewAvatar(profile.avatarUrl)
+          // Use local proxy URL — the raw avatarUrl points to the peer's node
+          // which may be unreachable from the browser (NAT / CORS).
+          setPreviewAvatar(
+            profile.avatarUrl
+              ? `/api/v1/profile/${encodeURIComponent(normalizedDid)}/avatar`
+              : undefined,
+          )
           if (profile.nickname && !displayName) {
             setDisplayName(profile.nickname)
           }
@@ -124,7 +130,11 @@ export function AddContactDialog({
               const retried = await useContactStore.getState().fetchPeerProfile(normalizedDid).catch(() => null)
               if (seq !== lookupRef.current || !retried) return
               setPreviewNickname(retried.nickname)
-              setPreviewAvatar(retried.avatarUrl)
+              setPreviewAvatar(
+                retried.avatarUrl
+                  ? `/api/v1/profile/${encodeURIComponent(normalizedDid)}/avatar`
+                  : undefined,
+              )
               if (retried.nickname && !displayName) {
                 setDisplayName(retried.nickname)
               }
