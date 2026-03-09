@@ -120,6 +120,9 @@ export function usePollMessages() {
           signal: AbortSignal.timeout(5_000),
         })
         if (!response.ok) {
+          if (response.status === 401) {
+            useConnectionStore.getState().disconnect()
+          }
           return
         }
         const payload = (await response.json()) as {

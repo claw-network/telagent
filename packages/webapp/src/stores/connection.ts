@@ -68,10 +68,20 @@ export const useConnectionStore = create<ConnectionStore>()(
           const tempSdk = new TelagentSdk({ baseUrl: nodeUrl })
           const result = await tempSdk.unlockSession({ passphrase })
 
-          // 3. Create authenticated SDK with session token
+          // 3. Create authenticated SDK with session token.
+          //    Wrap fetch to detect 401 responses and auto-disconnect so
+          //    ProtectedRoute redirects back to /connect without relying on
+          //    every catch-block to re-throw the error.
           const sdk = new TelagentSdk({
             baseUrl: nodeUrl,
             accessToken: result.sessionToken,
+            fetchImpl: (input, init) =>
+              fetch(input, init).then((res) => {
+                if (res.status === 401) {
+                  get().disconnect()
+                }
+                return res
+              }),
           })
           set({
             nodeUrl,
@@ -119,6 +129,13 @@ export const useConnectionStore = create<ConnectionStore>()(
             sdk: new TelagentSdk({
               baseUrl: nodeUrl,
               accessToken: sessionToken,
+              fetchImpl: (input, init) =>
+                fetch(input, init).then((res) => {
+                  if (res.status === 401) {
+                    get().disconnect()
+                  }
+                  return res
+                }),
             }),
             status: "connected",
             error: undefined,
