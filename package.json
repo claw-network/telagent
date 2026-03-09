@@ -14,7 +14,7 @@
     "version:major": "node scripts/bump-version.mjs major"
   },
   "engines": {
-    "node": ">=22 <25",
+    "node": ">=22",
     "pnpm": ">=10.18.1 <11"
   },
   "pnpm": {
