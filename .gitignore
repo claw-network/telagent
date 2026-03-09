@@ -16,3 +16,4 @@ packages/*/coverage
 .telagent
 localdev/
 packages/contracts/.openzeppelin/
+temp/
