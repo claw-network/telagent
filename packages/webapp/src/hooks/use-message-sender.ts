@@ -258,11 +258,11 @@ export function useMessageSender() {
       targetDid,
     })
 
-    // Wire format: `local:<objectKey>` — resolved by the receiver via their own node URL.
-    // The P2P relay (relayAttachment above) pushes the file to the receiver's ClawNet node,
-    // so the receiver serves it at their own nodeUrl. MessageBubble.resolveAttachmentUrl()
-    // expands this schema into a full URL at render time.
-    const rawPayloadText = `local:${initialized.objectKey}`
+    // Wire format: sender's public URL so the receiver can always fetch the image
+    // directly from the sender's node — no dependency on P2P relay completing first.
+    // P2P relay still runs in the background (triggered by targetDid in completeAttachmentUpload)
+    // and if it succeeds the receiver's node will also have a local copy for faster future access.
+    const rawPayloadText = `${nodeUrl.replace(/\/$/, "")}/api/v1/attachments/${encodeURIComponent(initialized.objectKey)}`
     const displayText = contentType === "image"
       ? URL.createObjectURL(input.file)  // local blob for sender's immediate preview
       : input.file.name
