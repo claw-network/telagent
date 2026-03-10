@@ -240,6 +240,8 @@ export class ClawNetTransportService {
           topic: string;
           payload?: string;
           payloadSize?: number;
+          compressed?: boolean;
+          encrypted?: boolean;
           messageId: string;
           seq: number;
         };
@@ -306,11 +308,13 @@ export class ClawNetTransportService {
     }
 
     // All other topics are JSON text messages
-    if (!data.payload) {
-      logger.warn('[p2p-transport] Missing payload for topic: %s', data.topic);
-      return;
+    // If payload is absent (compressed/encrypted), download raw bytes and decode
+    let payloadText = data.payload;
+    if (!payloadText) {
+      const buf = await this.gateway.client.messaging.downloadPayload(data.messageId);
+      payloadText = new TextDecoder().decode(buf);
     }
-    const parsed = JSON.parse(data.payload) as Record<string, unknown>;
+    const parsed = JSON.parse(payloadText) as Record<string, unknown>;
     switch (data.topic) {
       case TOPIC_ENVELOPE:
         await this.callbacks.onEnvelope?.(parsed, data.sourceDid);
