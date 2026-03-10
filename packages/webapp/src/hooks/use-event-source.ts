@@ -28,15 +28,22 @@ export function useEventSource(
 
   // Build the SSE URL
   const buildSseUrl = useCallback((): string | null => {
-    if (!nodeUrl || status !== "connected") return null
+    if (!nodeUrl || status !== "connected") {
+      console.debug("[sse] buildSseUrl → null (nodeUrl=%s, status=%s)", nodeUrl, status)
+      return null
+    }
 
     if (connectionMode === "relay" && targetDid && gatewayUrl) {
       // DID relay mode: SSE through gateway
-      return `${gatewayUrl.replace(/\/$/, "")}/relay/${encodeURIComponent(targetDid)}/api/v1/events`
+      const url = `${gatewayUrl.replace(/\/$/, "")}/relay/${encodeURIComponent(targetDid)}/api/v1/events`
+      console.debug("[sse] buildSseUrl → %s (relay mode)", url)
+      return url
     }
 
     // Local mode: direct SSE to node
-    return `${nodeUrl.replace(/\/$/, "")}/api/v1/events`
+    const url = `${nodeUrl.replace(/\/$/, "")}/api/v1/events`
+    console.debug("[sse] buildSseUrl → %s (direct mode)", url)
+    return url
   }, [nodeUrl, status, connectionMode, targetDid, gatewayUrl])
 
   useEffect(() => {
@@ -53,9 +60,11 @@ export function useEventSource(
     let reconnectTimer: number | undefined
 
     const connect = () => {
+      console.info("[sse] Connecting to %s", url)
       es = new EventSource(url)
 
       es.onopen = () => {
+        console.info("[sse] Connected ✓")
         isConnectedRef.current = true
       }
 
@@ -80,6 +89,7 @@ export function useEventSource(
       }
 
       es.onerror = () => {
+        console.warn("[sse] Connection error, reconnecting in 5s…")
         isConnectedRef.current = false
         es?.close()
         es = null

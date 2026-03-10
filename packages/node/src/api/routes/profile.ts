@@ -133,11 +133,17 @@ export function profileRoutes(ctx: RuntimeContext): Router {
   });
 
   // ── GET /avatar  (public — no auth) ──────────────────────────────────────
-  router.get('/avatar', async ({ res, url }) => {
+  // Returns raw binary by default. With ?format=base64, returns JSON { data, mimeType }
+  // so the API proxy relay (text-only) can transport avatar data safely.
+  router.get('/avatar', async ({ res, query, url }) => {
     try {
       const avatar = await ctx.selfProfileStore.loadAvatar();
       if (!avatar) {
         throw new TelagentError(ErrorCodes.NOT_FOUND, 'No avatar uploaded');
+      }
+      if (query.get('format') === 'base64') {
+        ok(res, { data: avatar.data.toString('base64'), mimeType: avatar.mimeType }, { self: '/api/v1/profile/avatar' });
+        return;
       }
       sendBinary(res, 200, avatar.data, avatar.mimeType);
     } catch (error) {
@@ -146,8 +152,7 @@ export function profileRoutes(ctx: RuntimeContext): Router {
   });
 
   // ── GET /:did/avatar  (public — proxies peer avatar via local node) ────────
-  // Serves the cached avatar first (embedded in profile card via P2P).
-  // Falls back to fetching from the peer's HTTP endpoint if no local cache.
+  // 1. Local cache → 2. Direct HTTP → 3. P2P relay → 404
   router.get('/:did/avatar', async ({ res, params, url }) => {
     try {
       const { did } = params;
@@ -159,34 +164,54 @@ export function profileRoutes(ctx: RuntimeContext): Router {
         throw new TelagentError(ErrorCodes.NOT_FOUND, `No avatar for did: ${did}`);
       }
 
-      // 1. Try local cache (avatar embedded in the P2P profile card).
+      // 1. Try local cache.
       const cached = ctx.peerProfileRepository.loadAvatar(did);
       if (cached) {
         sendBinary(res, 200, cached.data, cached.mimeType);
         return;
       }
 
-      // 2. Fallback: fetch from the peer's HTTP endpoint.
+      // 2. Try direct HTTP to the peer's node.
       const remoteUrl = resolvePeerAvatarUrl(profile.avatarUrl, profile.nodeUrl);
-      if (!remoteUrl || remoteUrl.startsWith('/')) {
-        throw new TelagentError(ErrorCodes.NOT_FOUND, `Cannot resolve avatar URL for did: ${did}`);
+      if (remoteUrl && !remoteUrl.startsWith('/')) {
+        try {
+          const response = await fetch(remoteUrl, { signal: AbortSignal.timeout(5000) });
+          if (response.ok) {
+            const contentType = response.headers.get('content-type') ?? 'image/jpeg';
+            const data = Buffer.from(await response.arrayBuffer());
+            try { ctx.peerProfileRepository.saveAvatar(did, data, contentType); } catch { /* best-effort */ }
+            sendBinary(res, 200, data, contentType);
+            return;
+          }
+        } catch {
+          // Direct HTTP failed — fall through to P2P relay.
+        }
       }
-      let response: Response;
-      try {
-        response = await fetch(remoteUrl, { signal: AbortSignal.timeout(8000) });
-      } catch {
-        throw new TelagentError(ErrorCodes.NOT_FOUND, `Remote node unreachable for avatar: ${did}`);
-      }
-      if (!response.ok) {
-        throw new TelagentError(ErrorCodes.NOT_FOUND, `Remote avatar fetch failed: ${response.status}`);
-      }
-      const contentType = response.headers.get('content-type') ?? 'image/jpeg';
-      const data = Buffer.from(await response.arrayBuffer());
 
-      // Cache for future requests.
-      try { ctx.peerProfileRepository.saveAvatar(did, data, contentType); } catch { /* best-effort */ }
+      // 3. P2P relay: request avatar as base64 JSON through ClawNet.
+      if (ctx.apiProxyService) {
+        try {
+          const proxyRes = await ctx.apiProxyService.proxyRequest(
+            did, 'GET', '/api/v1/profile/avatar?format=base64',
+            { accept: 'application/json' },
+          );
+          if (proxyRes.status === 200 && proxyRes.body) {
+            const json = JSON.parse(proxyRes.body) as { data?: { data?: string; mimeType?: string } };
+            const b64 = json.data?.data;
+            const mimeType = json.data?.mimeType ?? 'image/jpeg';
+            if (b64) {
+              const data = Buffer.from(b64, 'base64');
+              try { ctx.peerProfileRepository.saveAvatar(did, data, mimeType); } catch { /* best-effort */ }
+              sendBinary(res, 200, data, mimeType);
+              return;
+            }
+          }
+        } catch {
+          // P2P relay also failed — fall through to 404.
+        }
+      }
 
-      sendBinary(res, 200, data, contentType);
+      throw new TelagentError(ErrorCodes.NOT_FOUND, `Avatar unavailable for did: ${did}`);
     } catch (error) {
       handleError(res, error, url.pathname);
     }
