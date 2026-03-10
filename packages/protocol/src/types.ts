@@ -209,6 +209,10 @@ export interface ApiProxyRequest {
 /**
  * Response to an API proxy request.
  * Target node sends this back to the gateway via topic 'telagent/api-proxy-response'.
+ *
+ * Wire format (binary): [4-byte BE header length][JSON header][raw body bytes]
+ * JSON header = { requestId, status, headers }
+ * Body is raw bytes (may be text or binary, determined by content-type header).
  */
 export interface ApiProxyResponse {
   /** Must match the requestId from the corresponding ApiProxyRequest. */
@@ -217,8 +221,8 @@ export interface ApiProxyResponse {
   status: number;
   /** Response headers. */
   headers: Record<string, string>;
-  /** Response body as string. */
-  body?: string;
+  /** Response body as raw bytes. */
+  bodyBytes?: Uint8Array;
 }
 
 // ── Event Push (Real-time SSE) ────────────────────────────────────────────────

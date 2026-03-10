@@ -133,17 +133,11 @@ export function profileRoutes(ctx: RuntimeContext): Router {
   });
 
   // ── GET /avatar  (public — no auth) ──────────────────────────────────────
-  // Returns raw binary by default. With ?format=base64, returns JSON { data, mimeType }
-  // so the API proxy relay (text-only) can transport avatar data safely.
-  router.get('/avatar', async ({ res, query, url }) => {
+  router.get('/avatar', async ({ res, url }) => {
     try {
       const avatar = await ctx.selfProfileStore.loadAvatar();
       if (!avatar) {
         throw new TelagentError(ErrorCodes.NOT_FOUND, 'No avatar uploaded');
-      }
-      if (query.get('format') === 'base64') {
-        ok(res, { data: avatar.data.toString('base64'), mimeType: avatar.mimeType }, { self: '/api/v1/profile/avatar' });
-        return;
       }
       sendBinary(res, 200, avatar.data, avatar.mimeType);
     } catch (error) {
@@ -188,23 +182,19 @@ export function profileRoutes(ctx: RuntimeContext): Router {
         }
       }
 
-      // 3. P2P relay: request avatar as base64 JSON through ClawNet.
+      // 3. P2P relay: request avatar binary through ClawNet.
       if (ctx.apiProxyService) {
         try {
           const proxyRes = await ctx.apiProxyService.proxyRequest(
-            did, 'GET', '/api/v1/profile/avatar?format=base64',
-            { accept: 'application/json' },
+            did, 'GET', '/api/v1/profile/avatar',
+            { accept: 'image/*' },
           );
-          if (proxyRes.status === 200 && proxyRes.body) {
-            const json = JSON.parse(proxyRes.body) as { data?: { data?: string; mimeType?: string } };
-            const b64 = json.data?.data;
-            const mimeType = json.data?.mimeType ?? 'image/jpeg';
-            if (b64) {
-              const data = Buffer.from(b64, 'base64');
-              try { ctx.peerProfileRepository.saveAvatar(did, data, mimeType); } catch { /* best-effort */ }
-              sendBinary(res, 200, data, mimeType);
-              return;
-            }
+          if (proxyRes.status === 200 && proxyRes.bodyBytes) {
+            const mimeType = proxyRes.headers['content-type'] ?? 'image/jpeg';
+            const data = Buffer.from(proxyRes.bodyBytes);
+            try { ctx.peerProfileRepository.saveAvatar(did, data, mimeType); } catch { /* best-effort */ }
+            sendBinary(res, 200, data, mimeType);
+            return;
           }
         } catch {
           // P2P relay also failed — fall through to 404.

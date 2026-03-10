@@ -196,7 +196,7 @@ export async function handleRelayRequest(
       res.setHeader(key, String(value));
     }
     res.writeHead(proxyResponse.status);
-    res.end(proxyResponse.body ?? '');
+    res.end(proxyResponse.bodyBytes ? Buffer.from(proxyResponse.bodyBytes) : '');
   } catch (err) {
     writeJson(res, 504, {
       error: 'Gateway timeout — target node did not respond',

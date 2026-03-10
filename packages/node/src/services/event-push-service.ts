@@ -101,8 +101,7 @@ export class EventPushService {
    * Called when gateway sends POST /api/v1/events/subscribe via API Proxy.
    */
   async createDelegation(gatewayDid: string): Promise<EventSubscribeResponse> {
-    const sdkClient = this.clawnetGateway.client as any;
-    const result = await sdkClient.messaging.createSubscriptionDelegation({
+    const result = await this.clawnetGateway.client.messaging.createSubscriptionDelegation({
       delegateDid: gatewayDid,
       topics: DELEGATION_TOPICS,
       expiresInSec: DEFAULT_DELEGATION_TTL_SEC,
@@ -120,8 +119,7 @@ export class EventPushService {
    */
   async revokeDelegation(delegationId: string): Promise<void> {
     try {
-      const sdkClient = this.clawnetGateway.client as any;
-      await sdkClient.messaging.revokeSubscriptionDelegation(delegationId);
+      await this.clawnetGateway.client.messaging.revokeSubscriptionDelegation(delegationId);
       logger.info('[event-push] Revoked delegation %s', delegationId);
     } catch (err) {
       logger.warn('[event-push] Failed to revoke delegation %s: %s', delegationId, (err as Error).message);
@@ -172,10 +170,11 @@ export class EventPushService {
       );
 
       if (proxyResponse.status !== 200 && proxyResponse.status !== 201) {
-        throw new Error(`Target refused event subscription: ${proxyResponse.status} ${proxyResponse.body ?? ''}`);
+        const errText = proxyResponse.bodyBytes ? new TextDecoder().decode(proxyResponse.bodyBytes) : '';
+        throw new Error(`Target refused event subscription: ${proxyResponse.status} ${errText}`);
       }
 
-      const body = JSON.parse(proxyResponse.body ?? '{}');
+      const body = JSON.parse(proxyResponse.bodyBytes ? new TextDecoder().decode(proxyResponse.bodyBytes) : '{}');
       const delegationId = body.data?.delegationId as string;
       if (!delegationId) {
         throw new Error('Target did not return delegation ID');

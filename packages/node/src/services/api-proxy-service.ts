@@ -54,7 +54,7 @@ export class ApiProxyService {
         requestId: request.requestId,
         status: 403,
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ error: 'API proxy not enabled on this node' }),
+        bodyBytes: new TextEncoder().encode(JSON.stringify({ error: 'API proxy not enabled on this node' })),
       });
       return;
     }
@@ -71,14 +71,14 @@ export class ApiProxyService {
       }
 
       const res = await fetch(url, fetchInit);
-      const bodyText = await res.text();
+      const bodyBuf = await res.arrayBuffer();
 
-      if (bodyText.length > this.config.maxBodyBytes) {
+      if (bodyBuf.byteLength > this.config.maxBodyBytes) {
         await this.transport.sendApiProxyResponse(sourceDid, {
           requestId: request.requestId,
           status: 413,
           headers: { 'content-type': 'application/json' },
-          body: JSON.stringify({ error: 'Response body exceeds size limit' }),
+          bodyBytes: new TextEncoder().encode(JSON.stringify({ error: 'Response body exceeds size limit' })),
         });
         return;
       }
@@ -92,7 +92,7 @@ export class ApiProxyService {
         requestId: request.requestId,
         status: res.status,
         headers: resHeaders,
-        body: bodyText,
+        bodyBytes: new Uint8Array(bodyBuf),
       });
     } catch (err) {
       logger.error('[api-proxy] Failed to proxy request %s: %s', request.requestId, (err as Error).message);
@@ -100,7 +100,7 @@ export class ApiProxyService {
         requestId: request.requestId,
         status: 504,
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ error: 'Gateway timeout' }),
+        bodyBytes: new TextEncoder().encode(JSON.stringify({ error: 'Gateway timeout' })),
       }).catch(() => {});
     }
   }
@@ -123,7 +123,7 @@ export class ApiProxyService {
         requestId: '',
         status: 413,
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ error: 'Request body exceeds size limit' }),
+        bodyBytes: new TextEncoder().encode(JSON.stringify({ error: 'Request body exceeds size limit' })),
       };
     }
 

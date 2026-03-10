@@ -238,7 +238,8 @@ export class ClawNetTransportService {
         data?: {
           sourceDid: string;
           topic: string;
-          payload: string;
+          payload?: string;
+          payloadSize?: number;
           messageId: string;
           seq: number;
         };
@@ -278,7 +279,37 @@ export class ClawNetTransportService {
     }
   }
 
-  private async routeMessage(data: { sourceDid: string; topic: string; payload: string }): Promise<void> {
+  private async routeMessage(data: {
+    sourceDid: string;
+    topic: string;
+    payload?: string;
+    messageId: string;
+  }): Promise<void> {
+    // Binary proxy response — payload sent via sendBinary(), must be downloaded
+    if (data.topic === TOPIC_API_PROXY_RESPONSE) {
+      const buf = await this.gateway.client.messaging.downloadPayload(data.messageId);
+      const bytes = new Uint8Array(buf);
+      const metaLen = new DataView(bytes.buffer, bytes.byteOffset).getUint32(0);
+      const meta = JSON.parse(new TextDecoder().decode(bytes.subarray(4, 4 + metaLen))) as {
+        requestId: string;
+        status: number;
+        headers: Record<string, string>;
+      };
+      const bodyBytes = bytes.subarray(4 + metaLen);
+      this.callbacks.onApiProxyResponse?.({
+        requestId: meta.requestId,
+        status: meta.status,
+        headers: meta.headers,
+        bodyBytes: bodyBytes.length > 0 ? bodyBytes : undefined,
+      });
+      return;
+    }
+
+    // All other topics are JSON text messages
+    if (!data.payload) {
+      logger.warn('[p2p-transport] Missing payload for topic: %s', data.topic);
+      return;
+    }
     const parsed = JSON.parse(data.payload) as Record<string, unknown>;
     switch (data.topic) {
       case TOPIC_ENVELOPE:
@@ -298,9 +329,6 @@ export class ClawNetTransportService {
         break;
       case TOPIC_API_PROXY:
         await this.callbacks.onApiProxyRequest?.(parsed as unknown as ApiProxyRequest, data.sourceDid);
-        break;
-      case TOPIC_API_PROXY_RESPONSE:
-        this.callbacks.onApiProxyResponse?.(parsed as unknown as ApiProxyResponse);
         break;
       case TOPIC_API_PROXY_PING:
         await this.callbacks.onApiProxyPing?.((parsed as Record<string, unknown>).pingId as string, data.sourceDid);
@@ -328,10 +356,22 @@ export class ClawNetTransportService {
   }
 
   async sendApiProxyResponse(targetDid: string, response: ApiProxyResponse): Promise<void> {
-    await this.gateway.client.messaging.send({
+    // Encode as binary: [4-byte BE header length][JSON header][raw body bytes]
+    const meta = JSON.stringify({
+      requestId: response.requestId,
+      status: response.status,
+      headers: response.headers,
+    });
+    const metaBytes = new TextEncoder().encode(meta);
+    const bodyBytes = response.bodyBytes ?? new Uint8Array(0);
+    const frame = new Uint8Array(4 + metaBytes.length + bodyBytes.length);
+    new DataView(frame.buffer).setUint32(0, metaBytes.length);
+    frame.set(metaBytes, 4);
+    frame.set(bodyBytes, 4 + metaBytes.length);
+    await this.gateway.client.messaging.sendBinary({
       targetDid,
       topic: TOPIC_API_PROXY_RESPONSE,
-      payload: JSON.stringify(response),
+      payload: frame,
       ttlSec: 60,
       priority: 2,
       compress: true,
