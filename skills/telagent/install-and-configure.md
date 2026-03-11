@@ -16,8 +16,8 @@ This will:
 1. Check prerequisites (Node.js >=22, pnpm >=10, git)
 2. Clone the repo
 3. Install dependencies
-4. Generate a private key and passphrase
-5. Create `.env` with generated values
+4. Generate an encrypted keyfile (`~/.telagent/secrets/signer-key.json`) and passphrase
+5. Create `.env` with `TELAGENT_SIGNER_TYPE=keyfile`
 6. Build workspace packages
 7. Install and start TelAgent as a system service:
    - **Linux**: systemd user service (`~/.config/systemd/user/telagent.service`)
@@ -59,8 +59,9 @@ The installer generates `.env` automatically. To customize, edit `~/telagent/.en
 | `TELAGENT_API_HOST` | `127.0.0.1` | HTTP listen address |
 | `TELAGENT_API_PORT` | `9529` | HTTP listen port |
 | `TELAGENT_HOME` | `~/.telagent` | Data root directory |
-| `TELAGENT_SIGNER_TYPE` | `env` | Signer type: `env`, `keyfile`, or `mnemonic` |
-| `TELAGENT_PRIVATE_KEY` | _(generated)_ | Private key for signing |
+| `TELAGENT_SIGNER_TYPE` | `keyfile` | Signer type: `env`, `keyfile`, or `mnemonic` |
+| `TELAGENT_SIGNER_PATH` | `~/.telagent/secrets/signer-key.json` | Path to encrypted keyfile |
+| `TELAGENT_SIGNER_PASSWORD` | _(generated)_ | Keyfile decryption password |
 | `TELAGENT_CLAWNET_PASSPHRASE` | _(generated)_ | ClawNet passphrase (also WebApp auth credential) |
 | `TELAGENT_CLAWNET_AUTO_DISCOVER` | `true` | Auto-discover local ClawNet node |
 | `TELAGENT_CLAWNET_AUTO_START` | `true` | Auto-start embedded ClawNet node |
