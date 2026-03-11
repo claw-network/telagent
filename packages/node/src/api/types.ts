@@ -15,10 +15,17 @@ import type { PeerProfileRepository } from '../storage/peer-profile-repository.j
 import type { ApiProxyService } from '../services/api-proxy-service.js';
 import type { EventPushService } from '../services/event-push-service.js';
 
+export interface TlsServerConfig {
+  certPath: string;
+  keyPath: string;
+  httpsPort: number;
+}
+
 export interface ApiServerConfig {
   host: string;
   port: number;
   publicUrl?: string;
+  tls?: TlsServerConfig;
 }
 
 export interface RuntimeContext {

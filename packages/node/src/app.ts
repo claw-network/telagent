@@ -281,6 +281,11 @@ export class TelagentNode {
         host: this.config.host,
         port: this.config.port,
         publicUrl: this.config.publicUrl,
+        tls: this.config.tls ? {
+          certPath: this.config.tls.certPath,
+          keyPath: this.config.tls.keyPath,
+          httpsPort: this.config.tls.httpsPort,
+        } : undefined,
       },
       identityService: this.identityService,
       groupService: this.groupService,

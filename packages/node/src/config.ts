@@ -1,3 +1,5 @@
+import { accessSync, constants as fsConstants } from 'node:fs';
+
 import { ChainConfigSchema, type ChainConfig } from './services/chain-config.js';
 import {
   parseOwnerMode,
@@ -53,6 +55,12 @@ export interface OwnerConfig {
   privateConversations: string[];
 }
 
+export interface TlsConfig {
+  certPath: string;
+  keyPath: string;
+  httpsPort: number;
+}
+
 export interface ApiProxyConfig {
   enabled: boolean;
   gatewayEnabled: boolean;
@@ -65,6 +73,7 @@ export interface AppConfig {
   host: string;
   port: number;
   publicUrl?: string;
+  tls?: TlsConfig;
   paths: TelagentStoragePaths;
   mailboxCleanupIntervalSec: number;
   mailboxStore: MailboxStoreConfig;
@@ -106,6 +115,27 @@ export function loadConfigFromEnv(): AppConfig {
 
   const host = process.env.TELAGENT_API_HOST || '127.0.0.1';
   const port = Number(process.env.TELAGENT_API_PORT || 9529);
+
+  // ── TLS (optional) ──────────────────────────────────────
+  let tls: TlsConfig | undefined;
+  const tlsCert = process.env.TELAGENT_TLS_CERT?.trim();
+  const tlsKey = process.env.TELAGENT_TLS_KEY?.trim();
+  if (tlsCert && tlsKey) {
+    for (const p of [tlsCert, tlsKey]) {
+      try {
+        accessSync(p, fsConstants.R_OK);
+      } catch {
+        throw new Error(`TLS file not readable: ${p}`);
+      }
+    }
+    tls = {
+      certPath: tlsCert,
+      keyPath: tlsKey,
+      httpsPort: Number(process.env.TELAGENT_TLS_PORT || 9443),
+    };
+  } else if (tlsCert || tlsKey) {
+    throw new Error('Both TELAGENT_TLS_CERT and TELAGENT_TLS_KEY must be set to enable TLS');
+  }
 
   const chain = ChainConfigSchema.parse({
     rpcUrl: process.env.TELAGENT_CHAIN_RPC_URL,
@@ -178,6 +208,7 @@ export function loadConfigFromEnv(): AppConfig {
     host,
     port,
     publicUrl,
+    tls,
     paths,
     mailboxCleanupIntervalSec: Number(process.env.TELAGENT_MAILBOX_CLEANUP_INTERVAL_SEC || 60),
     mailboxStore,

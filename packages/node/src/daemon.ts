@@ -19,7 +19,12 @@ async function main(): Promise<void> {
   const node = new TelagentNode(config);
 
   await node.start();
-  logger.info(`telagent node started at http://${config.host}:${config.port}`);
+  if (config.tls) {
+    logger.info(`telagent node started at https://${config.host}:${config.tls.httpsPort}`);
+    logger.info(`http://${config.host}:${config.port} → redirect to HTTPS`);
+  } else {
+    logger.info(`telagent node started at http://${config.host}:${config.port}`);
+  }
   logger.info(`chainId: ${config.chain.chainId}`);
 
   const shutdown = async (signal: string): Promise<void> => {

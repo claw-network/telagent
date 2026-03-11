@@ -1,4 +1,6 @@
-import { createServer, type IncomingMessage, type Server } from 'node:http';
+import { createServer, type IncomingMessage, type Server, type ServerResponse } from 'node:http';
+import { createServer as createHttpsServer, type Server as HttpsServer } from 'node:https';
+import { readFileSync } from 'node:fs';
 import { performance } from 'node:perf_hooks';
 
 import { ErrorCodes, TelagentError } from '@telagent/protocol';
@@ -96,18 +98,15 @@ function requireGlobalAuth(req: IncomingMessage, pathname: string, ctx: RuntimeC
 
 export class ApiServer {
   private server: Server | null = null;
+  private secureServer: HttpsServer | null = null;
   private readonly router: Router;
 
   constructor(private readonly ctx: RuntimeContext) {
     this.router = buildRouter(ctx);
   }
 
-  async start(): Promise<void> {
-    if (this.server) {
-      return;
-    }
-
-    this.server = createServer(async (req, res) => {
+  private createRequestHandler() {
+    return async (req: IncomingMessage, res: ServerResponse) => {
       const parsedUrl = new URL(req.url || '/', 'http://127.0.0.1');
       const startedAt = performance.now();
       res.once('finish', () => {
@@ -161,25 +160,68 @@ export class ApiServer {
         const internal = error instanceof TelagentError ? error : new TelagentError(ErrorCodes.INTERNAL, error instanceof Error ? error.message : 'Unexpected error');
         problem(res, internal.toProblem(req.url));
       }
-    });
+    };
+  }
 
-    await new Promise<void>((resolve) => {
-      this.server!.listen(this.ctx.config.port, this.ctx.config.host, resolve);
-    });
+  async start(): Promise<void> {
+    if (this.server || this.secureServer) {
+      return;
+    }
+
+    const { tls } = this.ctx.config;
+
+    if (tls) {
+      // ── HTTPS mode: main traffic on HTTPS, HTTP redirects to HTTPS ──
+      const cert = readFileSync(tls.certPath);
+      const key = readFileSync(tls.keyPath);
+
+      this.secureServer = createHttpsServer({ cert, key }, this.createRequestHandler());
+      await new Promise<void>((resolve) => {
+        this.secureServer!.listen(tls.httpsPort, this.ctx.config.host, resolve);
+      });
+
+      // HTTP → HTTPS redirect server
+      const httpsPort = tls.httpsPort;
+      const redirectHost = this.ctx.config.host;
+      this.server = createServer((req, res) => {
+        const host = req.headers.host?.replace(/:\d+$/, '') || redirectHost;
+        const location = `https://${host}${httpsPort === 443 ? '' : ':' + httpsPort}${req.url || '/'}`;
+        res.writeHead(301, { Location: location });
+        res.end();
+      });
+      await new Promise<void>((resolve) => {
+        this.server!.listen(this.ctx.config.port, this.ctx.config.host, resolve);
+      });
+    } else {
+      // ── Plain HTTP mode (default, unchanged) ──
+      this.server = createServer(this.createRequestHandler());
+      await new Promise<void>((resolve) => {
+        this.server!.listen(this.ctx.config.port, this.ctx.config.host, resolve);
+      });
+    }
   }
 
   async stop(): Promise<void> {
-    if (!this.server) {
-      return;
+    const closeServer = (s: Server | HttpsServer) =>
+      new Promise<void>((resolve) => { s.close(() => resolve()); });
+
+    const tasks: Promise<void>[] = [];
+    if (this.secureServer) {
+      tasks.push(closeServer(this.secureServer));
+      this.secureServer = null;
     }
-    const current = this.server;
-    this.server = null;
-    await new Promise<void>((resolve) => {
-      current.close(() => resolve());
-    });
+    if (this.server) {
+      tasks.push(closeServer(this.server));
+      this.server = null;
+    }
+    await Promise.all(tasks);
   }
 
   get httpServer(): Server | null {
     return this.server;
+  }
+
+  get httpsServer(): HttpsServer | null {
+    return this.secureServer;
   }
 }
