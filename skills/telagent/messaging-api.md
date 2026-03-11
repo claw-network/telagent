@@ -316,7 +316,7 @@ curl -s -X POST "$TELAGENT_NODE_URL/api/v1/messages" \
 
 ## 5. Sending Attachments (Images & Files)
 
-Attachments use a 3-step flow: init upload → complete upload (with inline base64 data) → send envelope.
+Attachments use a 4-step flow: init upload → binary PUT → complete upload → send envelope.
 
 ### Step 1: Init Upload
 
@@ -336,26 +336,34 @@ INIT=$(curl -s -X POST "$TELAGENT_NODE_URL/api/v1/attachments/init-upload" \
     '{filename: $fn, contentType: $ct, sizeBytes: $sz, manifestHash: $mh}')")
 
 OBJECT_KEY=$(echo "$INIT" | jq -r '.data.objectKey')
+UPLOAD_URL=$(echo "$INIT" | jq -r '.data.uploadUrl')
 echo "objectKey: $OBJECT_KEY"
 ```
 
-### Step 2: Complete Upload (with inline base64)
+### Step 2: Upload Binary Data
 
 ```bash
-FILE_DATA=$(base64 < "$FILE_PATH" | tr -d '\n')
+curl -s -X PUT "$UPLOAD_URL" \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/octet-stream" \
+  --data-binary @"$FILE_PATH"
+```
 
+### Step 3: Complete Upload
+
+```bash
 curl -s -X POST "$TELAGENT_NODE_URL/api/v1/attachments/complete-upload" \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
   -d "$(jq -n \
     --arg ok "$OBJECT_KEY" --arg mh "$CHECKSUM" --arg cs "$CHECKSUM" \
-    --arg fd "$FILE_DATA" --arg fct "$MIME_TYPE" --arg td "$TARGET_DID" \
-    '{objectKey: $ok, manifestHash: $mh, checksum: $cs, fileData: $fd, fileContentType: $fct, targetDid: $td}')" | jq .
+    --arg fct "$MIME_TYPE" --arg td "$TARGET_DID" \
+    '{objectKey: $ok, manifestHash: $mh, checksum: $cs, fileContentType: $fct, targetDid: $td}')" | jq .
 ```
 
 Setting `targetDid` triggers P2P relay — the receiver gets a local copy automatically.
 
-### Step 3: Send the Envelope
+### Step 4: Send the Envelope
 
 The ciphertext is the hex-encoded download URL:
 
@@ -385,7 +393,7 @@ curl -s -X POST "$TELAGENT_NODE_URL/api/v1/messages" \
 
 - **Max file size**: 50 MB
 - **contentType**: `"image"` for images, `"file"` for other files
-- **Inline upload**: Sending `fileData` (base64) in complete-upload avoids a separate binary PUT
+- **Binary upload**: File bytes must be uploaded via binary PUT before calling complete-upload
 - **P2P relay**: `targetDid` in complete-upload triggers background relay via ClawNet
 - **Download URL**: The ciphertext is the hex-encoded download URL
 
