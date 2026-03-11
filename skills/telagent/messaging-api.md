@@ -461,10 +461,14 @@ CONV_ID="direct:did:claw:0xABCDEF..."
 curl -s "$TELAGENT_NODE_URL/api/v1/messages/pull?conversation_id=$(jq -rn --arg c "$CONV_ID" '$c|@uri')&limit=50" \
   -H "Authorization: Bearer $TOKEN" | jq '.data'
 
-# Continue from cursor
-CURSOR="..."
-curl -s "$TELAGENT_NODE_URL/api/v1/messages/pull?cursor=$(jq -rn --arg c "$CURSOR" '$c|@uri')&limit=50" \
-  -H "Authorization: Bearer $TOKEN" | jq '.data'
+# Continue from cursor (use the `cursor` value from the previous response)
+CURSOR=$(curl -s "$TELAGENT_NODE_URL/api/v1/messages/pull?limit=50" \
+  -H "Authorization: Bearer $TOKEN" | jq -r '.data.cursor')
+
+if [ "$CURSOR" != "null" ]; then
+  curl -s "$TELAGENT_NODE_URL/api/v1/messages/pull?cursor=$(jq -rn --arg c "$CURSOR" '$c|@uri')&limit=50" \
+    -H "Authorization: Bearer $TOKEN" | jq '.data'
+fi
 ```
 
 Response: `{ data: { items: [...envelopes], cursor: "..." | null } }`
