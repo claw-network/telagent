@@ -61,29 +61,25 @@ export function attachmentRoutes(ctx: RuntimeContext): Router {
         fileContentType: parsed.data.fileContentType,
       });
 
-      // If the client included inline base64 file data, decode and save it now.
-      let fileBuffer: Buffer | undefined;
-      if (parsed.data.fileData) {
-        fileBuffer = Buffer.from(parsed.data.fileData, 'base64');
-        await ctx.attachmentService.saveFile(result.objectKey, fileBuffer);
-      }
-
       // Relay to target peer via ClawNet P2P so they can serve it from their local node.
-      if (parsed.data.targetDid && fileBuffer) {
-        // ClawNet uses attachmentId as a plain filename component — strip any
-        // characters that would be interpreted as path separators (e.g. the '/'
-        // in "attachments/uuid-file.jpg") so writeFile() doesn't try to create
-        // a subdirectory that doesn't exist and silently drop the transfer.
-        const relayAttachmentId = result.objectKey.replace(/[^A-Za-z0-9._-]/g, '_');
-        ctx.clawnetTransportService.relayAttachment(
-          parsed.data.targetDid,
-          fileBuffer,
-          parsed.data.fileContentType ?? 'application/octet-stream',
-          relayAttachmentId,
-          parsed.data.objectKey.split('/').pop(),
-        ).catch((err: unknown) => {
-          getGlobalLogger().warn('[attachments] P2P relay failed for %s: %s', result.objectKey, (err as Error).message);
-        });
+      if (parsed.data.targetDid) {
+        const fileBuffer = await ctx.attachmentService.readFile(result.objectKey);
+        if (fileBuffer) {
+          // ClawNet uses attachmentId as a plain filename component — strip any
+          // characters that would be interpreted as path separators (e.g. the '/'
+          // in "attachments/uuid-file.jpg") so writeFile() doesn't try to create
+          // a subdirectory that doesn't exist and silently drop the transfer.
+          const relayAttachmentId = result.objectKey.replace(/[^A-Za-z0-9._-]/g, '_');
+          ctx.clawnetTransportService.relayAttachment(
+            parsed.data.targetDid,
+            fileBuffer,
+            parsed.data.fileContentType ?? 'application/octet-stream',
+            relayAttachmentId,
+            parsed.data.objectKey.split('/').pop(),
+          ).catch((err: unknown) => {
+            getGlobalLogger().warn('[attachments] P2P relay failed for %s: %s', result.objectKey, (err as Error).message);
+          });
+        }
       }
 
       const downloadUrl = `${nodeBaseUrl(ctx.config)}/api/v1/attachments/${encodeURIComponent(result.objectKey)}`;
