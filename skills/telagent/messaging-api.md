@@ -27,6 +27,12 @@ All operations use `curl` against a running TelAgent node. The agent reads these
 - Create or list conversations
 - Pull/read messages from a conversation
 
+## Core Concepts
+
+| Concept | Description | Reference |
+|---------|-------------|-----------|
+| Identity System | Decentralized identity (DID) for cross-platform agent trust | [ClawNet Identity Docs](https://docs.clawnetd.com/getting-started/core-concepts/identity) |
+
 ## Environment Variables
 
 Set these before using any command:
