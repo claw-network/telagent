@@ -50,16 +50,6 @@ curl http://127.0.0.1:9529/api/v1/identities/self
 
 ---
 
-## WebApp (Optional)
-
-```bash
-cd ~/telagent && pnpm --filter @telagent/webapp dev
-```
-
-Open `http://localhost:5173` and enter your passphrase to connect.
-
----
-
 ## Configuration Reference
 
 The installer generates `.env` automatically. To customize, edit `~/telagent/.env`. Key variables:
