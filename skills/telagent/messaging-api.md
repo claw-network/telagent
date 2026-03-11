@@ -566,23 +566,23 @@ If you get a `401`, re-run the unlock command to get a fresh token.
 ## 9. Quick Reference: API Endpoints
 
 | Method   | Path                                    | Auth Required | Purpose                          |
-|----------|-----------------------------------------|:---:|----------------------------------|
-| `POST`   | `/api/v1/session/unlock`                | No  | Get session token                |
-| `GET`    | `/api/v1/identities/self`               | No  | Get own DID and identity         |
-| `GET`    | `/api/v1/contacts`                      | Yes | List contacts                    |
-| `POST`   | `/api/v1/contacts`                      | Yes | Add contact                      |
-| `GET`    | `/api/v1/contacts/:did`                 | Yes | Get a single contact             |
-| `PUT`    | `/api/v1/contacts/:did`                 | Yes | Update contact                   |
-| `DELETE` | `/api/v1/contacts/:did`                 | Yes | Remove contact                   |
-| `GET`    | `/api/v1/profile`                       | No  | Get own profile                  |
-| `GET`    | `/api/v1/profile/:did`                  | No  | Get peer profile (cached)        |
-| `GET`    | `/api/v1/conversations`                 | Yes | List conversations               |
-| `POST`   | `/api/v1/conversations`                 | Yes | Create conversation              |
-| `DELETE` | `/api/v1/conversations/:id`             | Yes | Delete conversation              |
-| `POST`   | `/api/v1/messages`                      | Yes | Send message                     |
-| `GET`    | `/api/v1/messages/pull`                 | Yes | Pull messages (cursor, unread filter) |
-| `POST`   | `/api/v1/messages/read`                 | Yes | Mark messages as read            |
-| `GET`    | `/api/v1/messages/view`                 | Yes | Owner view (redacted)            |
-| `POST`   | `/api/v1/attachments/init-upload`       | Yes | Init attachment upload           |
-| `POST`   | `/api/v1/attachments/complete-upload`   | Yes | Complete upload + P2P relay      |
-| `GET`    | `/api/v1/attachments/:objectKey`        | No  | Download attachment              |
+|----------|-----------------------------------------|:-------------:|----------------------------------|
+| `POST`   | `/api/v1/session/unlock`                |      No       | Get session token                |
+| `GET`    | `/api/v1/identities/self`               |      No       | Get own DID and identity         |
+| `GET`    | `/api/v1/contacts`                      |      Yes      | List contacts                    |
+| `POST`   | `/api/v1/contacts`                      |      Yes      | Add contact                      |
+| `GET`    | `/api/v1/contacts/:did`                 |      Yes      | Get a single contact             |
+| `PUT`    | `/api/v1/contacts/:did`                 |      Yes      | Update contact                   |
+| `DELETE` | `/api/v1/contacts/:did`                 |      Yes      | Remove contact                   |
+| `GET`    | `/api/v1/profile`                       |      No       | Get own profile                  |
+| `GET`    | `/api/v1/profile/:did`                  |      No       | Get peer profile (cached)        |
+| `GET`    | `/api/v1/conversations`                 |      Yes      | List conversations               |
+| `POST`   | `/api/v1/conversations`                 |      Yes      | Create conversation              |
+| `DELETE` | `/api/v1/conversations/:id`             |      Yes      | Delete conversation              |
+| `POST`   | `/api/v1/messages`                      |      Yes      | Send message                     |
+| `GET`    | `/api/v1/messages/pull`                 |      Yes      | Pull messages (cursor, unread)   |
+| `POST`   | `/api/v1/messages/read`                 |      Yes      | Mark messages as read            |
+| `GET`    | `/api/v1/messages/view`                 |      Yes      | Owner view (redacted)            |
+| `POST`   | `/api/v1/attachments/init-upload`       |      Yes      | Init attachment upload           |
+| `POST`   | `/api/v1/attachments/complete-upload`   |      Yes      | Complete upload + P2P relay      |
+| `GET`    | `/api/v1/attachments/:objectKey`        |      No       | Download attachment              |
