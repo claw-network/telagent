@@ -27,6 +27,7 @@ CREATE TABLE IF NOT EXISTS mailbox_envelopes (
   sent_at_ms INTEGER NOT NULL,
   ttl_sec INTEGER NOT NULL,
   provisional INTEGER NOT NULL DEFAULT 0,
+  read INTEGER NOT NULL DEFAULT 0,
   idempotency_signature TEXT NOT NULL,
   expires_at_ms INTEGER NOT NULL
 );
@@ -71,6 +72,7 @@ CREATE INDEX IF NOT EXISTS idx_mailbox_envelopes_conversation_seq ON mailbox_env
 CREATE INDEX IF NOT EXISTS idx_mailbox_envelopes_pull_cursor ON mailbox_envelopes(sent_at_ms, conversation_id, seq, envelope_id);
 CREATE INDEX IF NOT EXISTS idx_mailbox_envelopes_expires ON mailbox_envelopes(expires_at_ms);
 CREATE INDEX IF NOT EXISTS idx_mailbox_envelopes_provisional ON mailbox_envelopes(conversation_type, provisional);
+CREATE INDEX IF NOT EXISTS idx_mailbox_envelopes_read ON mailbox_envelopes(read);
 CREATE INDEX IF NOT EXISTS idx_mailbox_retractions_time ON mailbox_retractions(retracted_at_ms DESC);
 CREATE INDEX IF NOT EXISTS idx_mailbox_direct_conversations_a ON mailbox_direct_conversations(participant_a_hash);
 CREATE INDEX IF NOT EXISTS idx_mailbox_direct_conversations_b ON mailbox_direct_conversations(participant_b_hash);
@@ -94,6 +96,7 @@ interface MailboxEnvelopeRow {
   sentAtMs: number;
   ttlSec: number;
   provisional: 0 | 1;
+  read: 0 | 1;
   idempotencySignature: string;
 }
 
@@ -146,6 +149,13 @@ export class MessageRepository implements MailboxStore {
     this.db.pragma('journal_mode = WAL');
     this.db.exec(SCHEMA);
 
+    // Add read column if missing (existing databases).
+    try {
+      this.db.exec('ALTER TABLE mailbox_envelopes ADD COLUMN read INTEGER NOT NULL DEFAULT 0');
+    } catch {
+      // Column already exists — ignore.
+    }
+
     this.nextSequenceTransaction = this.db.transaction((conversationId: string) => {
       const row = this.db
         .prepare('SELECT last_seq AS lastSeq FROM mailbox_sequences WHERE conversation_id = ?')
@@ -178,8 +188,8 @@ export class MessageRepository implements MailboxStore {
         `INSERT INTO mailbox_envelopes (
           envelope_id, conversation_id, conversation_type, target_domain, target_did, mailbox_key_id,
           sealed_header, seq, epoch, ciphertext, content_type, attachment_manifest_hash,
-          sent_at_ms, ttl_sec, provisional, idempotency_signature, expires_at_ms
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          sent_at_ms, ttl_sec, provisional, read, idempotency_signature, expires_at_ms
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       )
       .run(
         envelope.envelopeId,
@@ -197,6 +207,7 @@ export class MessageRepository implements MailboxStore {
         envelope.sentAtMs,
         envelope.ttlSec,
         envelope.provisional ? 1 : 0,
+        envelope.read ? 1 : 0,
         record.idempotencySignature,
         expiresAtMs,
       );
@@ -221,6 +232,7 @@ export class MessageRepository implements MailboxStore {
           sent_at_ms AS sentAtMs,
           ttl_sec AS ttlSec,
           provisional,
+          read,
           idempotency_signature AS idempotencySignature
         FROM mailbox_envelopes
         WHERE envelope_id = ?`,
@@ -309,7 +321,15 @@ export class MessageRepository implements MailboxStore {
     limit: number;
     afterSeq?: bigint;
     afterKey?: EnvelopeCursorKey;
+    unread?: boolean;
   }): Promise<Envelope[]> {
+    const readFilter = typeof params.unread === 'boolean'
+      ? (params.unread ? ' AND read = 0' : ' AND read = 1')
+      : '';
+    const readWhere = typeof params.unread === 'boolean'
+      ? (params.unread ? ' WHERE read = 0' : ' WHERE read = 1')
+      : '';
+
     const rows = params.conversationId
       ? (() => {
         if (typeof params.afterSeq !== 'undefined') {
@@ -331,10 +351,11 @@ export class MessageRepository implements MailboxStore {
                 sent_at_ms AS sentAtMs,
                 ttl_sec AS ttlSec,
                 provisional,
+                read,
                 idempotency_signature AS idempotencySignature
               FROM mailbox_envelopes
               WHERE conversation_id = ?
-                AND CAST(seq AS INTEGER) > CAST(? AS INTEGER)
+                AND CAST(seq AS INTEGER) > CAST(? AS INTEGER)${readFilter}
               ORDER BY CAST(seq AS INTEGER) ASC, envelope_id ASC
               LIMIT ?`,
             )
@@ -359,9 +380,10 @@ export class MessageRepository implements MailboxStore {
               sent_at_ms AS sentAtMs,
               ttl_sec AS ttlSec,
               provisional,
+              read,
               idempotency_signature AS idempotencySignature
             FROM mailbox_envelopes
-            WHERE conversation_id = ?
+            WHERE conversation_id = ?${readFilter}
             ORDER BY CAST(seq AS INTEGER) ASC, envelope_id ASC
             LIMIT ?`,
           )
@@ -388,9 +410,10 @@ export class MessageRepository implements MailboxStore {
                 sent_at_ms AS sentAtMs,
                 ttl_sec AS ttlSec,
                 provisional,
+                read,
                 idempotency_signature AS idempotencySignature
               FROM mailbox_envelopes
-              WHERE
+              WHERE (
                 sent_at_ms > ?
                 OR (
                   sent_at_ms = ?
@@ -407,6 +430,7 @@ export class MessageRepository implements MailboxStore {
                   AND CAST(seq AS INTEGER) = CAST(? AS INTEGER)
                   AND envelope_id > ?
                 )
+              )${readFilter}
               ORDER BY sent_at_ms ASC, conversation_id ASC, CAST(seq AS INTEGER) ASC, envelope_id ASC
               LIMIT ?`,
             )
@@ -443,8 +467,9 @@ export class MessageRepository implements MailboxStore {
               sent_at_ms AS sentAtMs,
               ttl_sec AS ttlSec,
               provisional,
+              read,
               idempotency_signature AS idempotencySignature
-            FROM mailbox_envelopes
+            FROM mailbox_envelopes${readWhere}
             ORDER BY sent_at_ms ASC, conversation_id ASC, CAST(seq AS INTEGER) ASC, envelope_id ASC
             LIMIT ?`,
           )
@@ -543,6 +568,7 @@ export class MessageRepository implements MailboxStore {
           sent_at_ms AS sentAtMs,
           ttl_sec AS ttlSec,
           provisional,
+          read,
           idempotency_signature AS idempotencySignature
         FROM mailbox_envelopes
         WHERE conversation_type = 'group' AND provisional = 1
@@ -740,6 +766,15 @@ export class MessageRepository implements MailboxStore {
     return rows.map(toConversationSummaryFromRow);
   }
 
+  async markAsRead(envelopeIds: string[]): Promise<number> {
+    if (envelopeIds.length === 0) return 0;
+    const placeholders = envelopeIds.map(() => '?').join(', ');
+    const result = this.db
+      .prepare(`UPDATE mailbox_envelopes SET read = 1 WHERE envelope_id IN (${placeholders}) AND read = 0`)
+      .run(...envelopeIds);
+    return result.changes;
+  }
+
   async close(): Promise<void> {
     this.db.close();
   }
@@ -763,6 +798,7 @@ export class MessageRepository implements MailboxStore {
       sentAtMs: row.sentAtMs,
       ttlSec: row.ttlSec,
       provisional: row.provisional === 1,
+      read: row.read === 1,
     };
   }
 }

@@ -38,7 +38,9 @@ export interface MailboxStore {
     limit: number;
     afterSeq?: bigint;
     afterKey?: EnvelopeCursorKey;
+    unread?: boolean;
   }): Promise<Envelope[]>;
+  markAsRead?(envelopeIds: string[]): Promise<number>;
   ensureDirectConversationParticipant(params: {
     conversationId: string;
     didHash: string;

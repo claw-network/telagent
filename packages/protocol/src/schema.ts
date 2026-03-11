@@ -23,6 +23,7 @@ export const EnvelopeSchema = z.object({
   sentAtMs: z.number().int().nonnegative(),
   ttlSec: z.number().int().positive(),
   provisional: z.boolean().optional(),
+  read: z.boolean().optional(),
 });
 
 export const CreateGroupSchema = z.object({

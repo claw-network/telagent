@@ -45,6 +45,7 @@ export interface Envelope {
   sentAtMs: number;
   ttlSec: number;
   provisional?: boolean;
+  read?: boolean;
 }
 
 /** Envelope with sensitive fields replaced by '[redacted]'. Used by Owner view API. */

@@ -314,6 +314,7 @@ export class MessageService {
       sentAtMs: nowMs,
       ttlSec: input.ttlSec,
       provisional,
+      read: true,
     };
 
     await this.persistEnvelope({
@@ -389,7 +390,7 @@ export class MessageService {
     }
   }
 
-  async pull(params: { cursor?: string; limit?: number; conversationId?: string }): Promise<{
+  async pull(params: { cursor?: string; limit?: number; conversationId?: string; unread?: boolean }): Promise<{
     items: Envelope[];
     nextCursor: string | null;
   }> {
@@ -402,6 +403,7 @@ export class MessageService {
       limit: limit + 1,
       afterSeq: cursor.afterSeq,
       afterKey: cursor.afterKey,
+      unread: params.unread,
     });
     const hasMore = itemsWithProbe.length > limit;
     const items = hasMore ? itemsWithProbe.slice(0, limit) : itemsWithProbe;
@@ -416,6 +418,25 @@ export class MessageService {
             : this.encodeGlobalPullCursor(tail)
       : null,
     };
+  }
+
+  async markAsRead(envelopeIds: string[]): Promise<number> {
+    if (envelopeIds.length === 0) return 0;
+
+    if (this.repository?.markAsRead) {
+      return this.repository.markAsRead(envelopeIds);
+    }
+
+    // In-memory fallback
+    let count = 0;
+    for (const id of envelopeIds) {
+      const envelope = this.envelopeById.get(id);
+      if (envelope && !envelope.read) {
+        envelope.read = true;
+        count++;
+      }
+    }
+    return count;
   }
 
   async listConversations(params?: { scanLimit?: number }): Promise<ConversationSummary[]> {
@@ -1182,6 +1203,7 @@ export class MessageService {
     limit: number;
     afterSeq?: bigint;
     afterKey?: GlobalPullCursorKey;
+    unread?: boolean;
   }): Promise<Envelope[]> {
     if (this.repository) {
       return this.repository.listEnvelopes(params);
@@ -1190,6 +1212,11 @@ export class MessageService {
     const filtered = this.envelopes.filter((item) => {
       if (params.conversationId && item.conversationId !== params.conversationId) {
         return false;
+      }
+      if (typeof params.unread === 'boolean') {
+        const isRead = item.read ?? false;
+        if (params.unread && isRead) return false;
+        if (!params.unread && !isRead) return false;
       }
       return true;
     });

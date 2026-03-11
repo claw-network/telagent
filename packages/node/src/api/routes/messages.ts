@@ -49,10 +49,14 @@ export function messageRoutes(ctx: RuntimeContext): Router {
 
   router.get('/pull', async ({ res, query, url }) => {
     try {
+      const unreadRaw = query.get('unread');
+      const unread = unreadRaw === '1' ? true : unreadRaw === '0' ? false : undefined;
+
       const result = await ctx.messageService.pull({
         cursor: query.get('cursor') ?? undefined,
         limit: query.get('limit') ? Number.parseInt(query.get('limit') ?? '', 10) : undefined,
         conversationId: query.get('conversation_id') ?? undefined,
+        unread,
       });
 
       ok(
@@ -112,6 +116,28 @@ export function messageRoutes(ctx: RuntimeContext): Router {
         { items, cursor: result.nextCursor },
         { self: '/api/v1/messages/view' },
       );
+    } catch (error) {
+      handleError(res, error, url.pathname);
+    }
+  });
+
+  router.post('/read', async ({ req, res, body, url }) => {
+    try {
+      requireScope(req.headers, ctx, 'send_message');
+    } catch (error) {
+      handleError(res, error, url.pathname);
+      return;
+    }
+
+    const envelopeIds = body?.envelopeIds;
+    if (!Array.isArray(envelopeIds) || envelopeIds.length === 0 || !envelopeIds.every((id: unknown) => typeof id === 'string')) {
+      handleError(res, new TelagentError(ErrorCodes.VALIDATION, 'envelopeIds must be a non-empty array of strings'), url.pathname);
+      return;
+    }
+
+    try {
+      const updated = await ctx.messageService.markAsRead(envelopeIds);
+      ok(res, { updated }, { self: '/api/v1/messages/read' });
     } catch (error) {
       handleError(res, error, url.pathname);
     }
