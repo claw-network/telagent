@@ -61,7 +61,7 @@ TelAgent uses session-based auth. First unlock the node to get a `tses_*` token,
 ```bash
 TOKEN=$(curl -s -X POST "$TELAGENT_NODE_URL/api/v1/session/unlock" \
   -H "Content-Type: application/json" \
-  -d "{\"passphrase\": \"$TELAGENT_PASSPHRASE\"}" | jq -r '.data.token')
+  -d "{\"passphrase\": \"$TELAGENT_PASSPHRASE\"}" | jq -r '.data.sessionToken')
 ```
 
 The token is valid for the configured TTL (default: 1 hour). Re-run this command if you get a 401 response.
@@ -275,7 +275,7 @@ hex_encode() { printf '%s' "$1" | xxd -p | tr -d '\n' | sed 's/^/0x/'; }
 
 TOKEN=$(curl -s -X POST "$TELAGENT_NODE_URL/api/v1/session/unlock" \
   -H "Content-Type: application/json" \
-  -d "{\"passphrase\": \"$TELAGENT_PASSPHRASE\"}" | jq -r '.data.token')
+  -d "{\"passphrase\": \"$TELAGENT_PASSPHRASE\"}" | jq -r '.data.sessionToken')
 
 SELF_DID=$(curl -s "$TELAGENT_NODE_URL/api/v1/identities/self" | jq -r '.data.did')
 TARGET_DID="did:claw:0xABCDEF1234567890"
@@ -336,18 +336,20 @@ INIT=$(curl -s -X POST "$TELAGENT_NODE_URL/api/v1/attachments/init-upload" \
     '{filename: $fn, contentType: $ct, sizeBytes: $sz, manifestHash: $mh}')")
 
 OBJECT_KEY=$(echo "$INIT" | jq -r '.data.objectKey')
-UPLOAD_URL=$(echo "$INIT" | jq -r '.data.uploadUrl')
 echo "objectKey: $OBJECT_KEY"
 ```
 
 ### Step 2: Upload Binary Data
 
 ```bash
-curl -s -X PUT "$UPLOAD_URL" \
+ENCODED_KEY=$(jq -rn --arg k "$OBJECT_KEY" '$k|@uri')
+curl -s -X PUT "$TELAGENT_NODE_URL/api/v1/attachments/$ENCODED_KEY" \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/octet-stream" \
   --data-binary @"$FILE_PATH"
 ```
+
+> **Note**: Use `$TELAGENT_NODE_URL` + encoded object key instead of `$UPLOAD_URL` — the `uploadUrl` from init-upload may contain an internal IP when the node is behind a reverse proxy.
 
 ### Step 3: Complete Upload
 
