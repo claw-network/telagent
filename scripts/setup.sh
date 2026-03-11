@@ -92,8 +92,11 @@ ok "Dependencies installed"
 
 # ── Step 4: Generate .env ─────────────────────────────────────────────
 if [ -f .env ]; then
-  warn ".env already exists, skipping generation. Delete it and re-run to regenerate."
-else
+  BACKUP=".env.backup.$(date +%Y%m%d%H%M%S)"
+  warn ".env already exists, backing up to ${BACKUP}"
+  cp .env "$BACKUP"
+fi
+{
   # Generate a random passphrase for ClawNet (32 hex chars)
   PASSPHRASE=$(node -e "console.log(require('crypto').randomBytes(16).toString('hex'))")
 
@@ -140,7 +143,7 @@ else
   echo ""
   warn "Save these values! The keyfile is encrypted at ${KEYFILE_PATH}."
   warn "The keyfile password and passphrase are in .env — do not commit it to git."
-fi
+}
 
 # ── Step 5: Build workspace packages ─────────────────────────────────
 info "Building workspace packages..."
