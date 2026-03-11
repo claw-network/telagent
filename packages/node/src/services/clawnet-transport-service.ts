@@ -8,7 +8,7 @@ const TOPIC_ENVELOPE = 'telagent/envelope';
 const TOPIC_RECEIPT = 'telagent/receipt';
 const TOPIC_GROUP_SYNC = 'telagent/group-sync';
 const TOPIC_PROFILE_CARD = 'telagent/profile-card';
-const TOPIC_ATTACHMENT = '_attachment';
+const TOPIC_ATTACHMENT = 'telagent/attachment';
 const TOPIC_API_PROXY = 'telagent/api-proxy';
 const TOPIC_API_PROXY_RESPONSE = 'telagent/api-proxy-response';
 const TOPIC_API_PROXY_PING = 'telagent/api-proxy-ping';
@@ -33,7 +33,6 @@ export interface GroupSyncPayload {
 
 export interface AttachmentNotification {
   attachmentId: string;
-  sourceDid: string;
   contentType: string;
   fileName?: string;
   totalSize: number;
@@ -44,7 +43,8 @@ export type TopicCallbacks = {
   onReceipt?: (receipt: DeliveryReceipt, sourceDid: string) => Promise<unknown>;
   onGroupSync?: (payload: GroupSyncPayload, sourceDid: string) => Promise<unknown>;
   onProfileCard?: (payload: ProfileCardPayload, sourceDid: string) => Promise<unknown>;
-  onAttachment?: (info: AttachmentNotification, sourceDid: string) => Promise<void>;
+  /** Receives binary attachment data directly — no separate download step needed. */
+  onAttachment?: (info: AttachmentNotification, data: Buffer, sourceDid: string) => Promise<void>;
   onApiProxyRequest?: (request: ApiProxyRequest, sourceDid: string) => Promise<void>;
   onApiProxyResponse?: (response: ApiProxyResponse) => void;
   onApiProxyPing?: (pingId: string, sourceDid: string) => Promise<void>;
@@ -146,9 +146,10 @@ export class ClawNetTransportService {
     });
   }
   /**
-   * Relay an attachment to a target DID via ClawNet P2P.
-   * The file is stored on the receiver's ClawNet node under `attachmentId`.
-   * Returns { delivered: true } when the receiver's node accepted the file.
+   * Relay an attachment to a target DID via ClawNet P2P using raw binary.
+   *
+   * Frame format: [4-byte BE meta_length][meta JSON (UTF-8)][raw file bytes]
+   * Sent as application/octet-stream — no base64 encoding overhead.
    */
   async relayAttachment(
     targetDid: string,
@@ -157,26 +158,22 @@ export class ClawNetTransportService {
     attachmentId: string,
     fileName?: string,
   ): Promise<{ delivered: boolean }> {
-    return this.gateway.client.messaging.relayAttachment({
+    const meta = JSON.stringify({ attachmentId, contentType, fileName, totalSize: data.length });
+    const metaBytes = new TextEncoder().encode(meta);
+    const frame = new Uint8Array(4 + metaBytes.length + data.length);
+    new DataView(frame.buffer).setUint32(0, metaBytes.length);
+    frame.set(metaBytes, 4);
+    frame.set(data, 4 + metaBytes.length);
+    const result = await this.gateway.client.messaging.sendBinary({
       targetDid,
-      data: data.toString('base64'),
-      contentType,
-      fileName,
-      attachmentId,
+      topic: TOPIC_ATTACHMENT,
+      payload: frame,
+      ttlSec: 7 * 24 * 3600,
+      priority: 1,
+      compress: false,
+      idempotencyKey: `attachment:${attachmentId}`,
     });
-  }
-
-  /**
-   * Download a previously-relayed attachment from this node's local ClawNet instance.
-   * Returns the raw binary, or null if not found.
-   */
-  async downloadAttachment(attachmentId: string): Promise<Buffer | null> {
-    try {
-      const arrayBuf = await this.gateway.client.messaging.getAttachment(attachmentId);
-      return Buffer.from(arrayBuf as ArrayBuffer);
-    } catch {
-      return null;
-    }
+    return { delivered: result.delivered };
   }
   stopListening(): void {
     this.stopping = true;
@@ -194,8 +191,8 @@ export class ClawNetTransportService {
     let wsUrl = this.baseUrl.replace(/^http/, 'ws')
       + '/api/v1/messaging/subscribe';
     const params = new URLSearchParams();
-    // Subscribe to telagent app topics AND the _attachment relay notification from ClawNet P2P.
-    params.set('topic', 'telagent/*,_attachment');
+    // Subscribe to all telagent topics (covers telagent/attachment binary relay too).
+    params.set('topic', 'telagent/*');
     if (this.apiKey) {
       params.set('apiKey', this.apiKey);
     }
@@ -287,6 +284,26 @@ export class ClawNetTransportService {
     payload?: string;
     messageId: string;
   }): Promise<void> {
+    // Binary attachment — frame: [4B meta_len][meta JSON][raw file bytes]
+    if (data.topic === TOPIC_ATTACHMENT) {
+      const buf = await this.gateway.client.messaging.downloadPayload(data.messageId);
+      const bytes = new Uint8Array(buf);
+      const metaLen = new DataView(bytes.buffer, bytes.byteOffset).getUint32(0);
+      const meta = JSON.parse(new TextDecoder().decode(bytes.subarray(4, 4 + metaLen))) as {
+        attachmentId: string;
+        contentType: string;
+        fileName?: string;
+        totalSize: number;
+      };
+      const fileBytes = bytes.subarray(4 + metaLen);
+      await this.callbacks.onAttachment?.(
+        { attachmentId: meta.attachmentId, contentType: meta.contentType, fileName: meta.fileName, totalSize: meta.totalSize },
+        Buffer.from(fileBytes),
+        data.sourceDid,
+      );
+      return;
+    }
+
     // Binary proxy response — payload sent via sendBinary(), must be downloaded
     if (data.topic === TOPIC_API_PROXY_RESPONSE) {
       const buf = await this.gateway.client.messaging.downloadPayload(data.messageId);
@@ -328,9 +345,7 @@ export class ClawNetTransportService {
       case TOPIC_PROFILE_CARD:
         await this.callbacks.onProfileCard?.(parsed as unknown as ProfileCardPayload, data.sourceDid);
         break;
-      case TOPIC_ATTACHMENT:
-        await this.callbacks.onAttachment?.(parsed as unknown as AttachmentNotification, data.sourceDid);
-        break;
+      // TOPIC_ATTACHMENT is handled above as binary — should not reach here
       case TOPIC_API_PROXY:
         await this.callbacks.onApiProxyRequest?.(parsed as unknown as ApiProxyRequest, data.sourceDid);
         break;

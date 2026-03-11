@@ -5056,8 +5056,8 @@ packages:
   v8-compile-cache-lib@3.0.1:
     resolution: {integrity: sha512-wa7YjyUGfNZngI/vtK0UHAN+lgDCxBPCylVXGp0zu59Fz5aiGtNXaq3DhIov063MorB+VfufLh3JlF2KdTK3xg==}
 
-  viem@2.47.0:
-    resolution: {integrity: sha512-jU5e1E1s5E5M1y+YrELDnNar/34U8NXfVcRfxtVETigs2gS1vvW2ngnBoQUGBwLnNr0kNv+NUu4m10OqHByoFw==}
+  viem@2.47.1:
+    resolution: {integrity: sha512-frlK109+X5z2vlZeIGKa6Rxev6CcIpumV/VVhaIPc/QFotiB6t/CgUwkMlYfr4F2YNBZZ2l6jguWz2sY1XrQHw==}
     peerDependencies:
       typescript: '>=5.0.4'
     peerDependenciesMeta:
@@ -7797,7 +7797,7 @@ snapshots:
 
   '@scure/bip32@1.7.0':
     dependencies:
-      '@noble/curves': 1.9.7
+      '@noble/curves': 1.9.1
       '@noble/hashes': 1.8.0
       '@scure/base': 1.2.6
 
@@ -9434,7 +9434,7 @@ snapshots:
       lodash: 4.17.23
       markdown-table: 2.0.0
       sha1: 1.1.1
-      viem: 2.47.0(typescript@5.9.3)(zod@4.3.6)
+      viem: 2.47.1(typescript@5.9.3)(zod@4.3.6)
     transitivePeerDependencies:
       - bufferutil
       - debug
@@ -11132,7 +11132,7 @@ snapshots:
 
   v8-compile-cache-lib@3.0.1: {}
 
-  viem@2.47.0(typescript@5.9.3)(zod@4.3.6):
+  viem@2.47.1(typescript@5.9.3)(zod@4.3.6):
     dependencies:
       '@noble/curves': 1.9.1
       '@noble/hashes': 1.8.0
