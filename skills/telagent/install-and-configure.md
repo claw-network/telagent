@@ -62,11 +62,7 @@ The installer generates `.env` automatically. To customize, edit `~/telagent/.en
 | `TELAGENT_SIGNER_PATH` | `~/.telagent/secrets/signer-key.json` | Path to encrypted keyfile |
 | `TELAGENT_SIGNER_PASSWORD` | _(generated)_ | Keyfile decryption password |
 | `TELAGENT_CLAWNET_PASSPHRASE` | _(generated)_ | ClawNet passphrase (also WebApp auth credential) |
-| `TELAGENT_CLAWNET_AUTO_DISCOVER` | `true` | Auto-discover local ClawNet node |
-| `TELAGENT_CLAWNET_AUTO_START` | `true` | Auto-start embedded ClawNet node |
-| `TELAGENT_CHAIN_RPC_URL` | `https://rpc.clawnetd.com` | ClawNet chain RPC endpoint |
 | `TELAGENT_OWNER_MODE` | `observer` | `observer` (read-only) / `intervener` (read-write) |
-| `TELAGENT_MAILBOX_STORE_BACKEND` | `sqlite` | `sqlite` or `postgres` |
 
 ---
 
