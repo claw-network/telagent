@@ -238,8 +238,11 @@ export function useMessageSender() {
       manifestHash: checksum,
     })
 
-    // Upload file bytes via binary PUT to the upload URL returned by init.
-    await fetch(initialized.uploadUrl, {
+    // Upload file bytes via binary PUT.
+    // Build the URL from the webapp's own nodeUrl (not the server's uploadUrl)
+    // because the server may return an internal address unreachable from the browser.
+    const putUrl = `${nodeUrl.replace(/\/$/, '')}/api/v1/attachments/${encodeURIComponent(initialized.objectKey)}`
+    await fetch(putUrl, {
       method: "PUT",
       body: new Uint8Array(fileBuffer),
     })
