@@ -1,94 +1,127 @@
-# TelAgent 本地开发环境搭建指南
+# TelAgent Local Development Setup Guide
 
-> **适用版本**: v0.2.0  
-> **最后更新**: 2026-03-06
-
----
-
-## 目录
-
-1. [前置条件](#1-前置条件)
-2. [安装依赖](#2-安装依赖)
-3. [生成 `.env` 文件](#3-生成-env-文件)
-4. [配置说明](#4-配置说明)
-   - [4.1 API 服务](#41-api-服务)
-   - [4.2 存储路径](#42-存储路径)
-   - [4.3 私钥与签名器](#43-私钥与签名器)
-   - [4.4 链配置](#44-链配置)
-   - [4.5 ClawNet 集成](#45-clawnet-集成)
-   - [4.6 Owner 权限](#46-owner-权限)
-   - [4.7 邮箱存储](#47-邮箱存储)
-   - [4.8 监控阈值](#48-监控阈值)
-5. [最小化本地 `.env` 示例](#5-最小化本地-env-示例)
-6. [启动节点](#6-启动节点)
-7. [启动 WebApp](#7-启动-webapp)
-8. [常见问题](#8-常见问题)
+> **Applicable version**: v0.2.6  
+> **Last updated**: 2026-03-12
 
 ---
 
-## 1. 前置条件
+## Table of Contents
 
-| 工具 | 版本要求 | 检查命令 |
-|------|---------|---------|
+1. [One-Click Install (Recommended)](#1-one-click-install-recommended)
+2. [Prerequisites](#2-prerequisites)
+3. [Install Dependencies](#3-install-dependencies)
+4. [Generate `.env` File](#4-generate-env-file)
+5. [Configuration Reference](#5-configuration-reference)
+   - [5.1 API Server](#51-api-server)
+   - [5.2 Storage Paths](#52-storage-paths)
+   - [5.3 Private Keys & Signer](#53-private-keys--signer)
+   - [5.4 Chain Configuration](#54-chain-configuration)
+   - [5.5 ClawNet Integration](#55-clawnet-integration)
+   - [5.6 ClawNet Embedded Node Chain Configuration](#56-clawnet-embedded-node-chain-configuration)
+   - [5.7 Owner Permissions](#57-owner-permissions)
+   - [5.8 Mailbox Storage](#58-mailbox-storage)
+   - [5.9 Monitoring Thresholds](#59-monitoring-thresholds)
+   - [5.10 TLS / HTTPS (Local Development)](#510-tls--https-local-development)
+6. [Minimal Local `.env` Example](#6-minimal-local-env-example)
+7. [Start the Node](#7-start-the-node)
+8. [Start the WebApp](#8-start-the-webapp)
+9. [FAQ](#9-faq)
+
+---
+
+## 1. One-Click Install (Recommended)
+
+On a fresh machine, a single command handles everything (Node.js >= 22 must be pre-installed):
+
+**Linux / macOS:**
+```bash
+curl -fsSL https://install.telagent.org/setup.sh | bash
+```
+
+**Windows PowerShell:**
+```powershell
+iwr -useb https://install.telagent.org/setup.ps1 | iex
+```
+
+**Windows CMD:**
+```cmd
+curl -fsSL https://install.telagent.org/setup.cmd -o setup.cmd && setup.cmd && del setup.cmd
+```
+
+The one-click installer automatically: clones the repo, installs dependencies, generates an encrypted keyfile and passphrase, creates `.env`, generates mkcert certificates, builds workspace packages, and installs & starts a system service.
+
+Set `TELAGENT_INSTALL_DIR` to customize the install directory (default `~/telagent` or `%USERPROFILE%\telagent`).
+
+> If you have already cloned the repo or prefer manual configuration, continue reading the steps below.
+
+---
+
+## 2. Prerequisites
+
+| Tool | Version Requirement | Check Command |
+|------|---------------------|---------------|
 | Node.js | >=22 <25 | `node -v` |
 | pnpm | >=10.18.1 <11 | `pnpm -v` |
-| Git | 任意 | `git --version` |
+| Git | Any | `git --version` |
 
-如果 Node.js 版本不对，推荐使用 [nvm](https://github.com/nvm-sh/nvm) 或 [fnm](https://github.com/Schniz/fnm)：
+> **Windows users**: The one-click install (see Section 1) is recommended — setup.ps1 handles Node.js installation and PATH configuration automatically.
+
+If Node.js version is incorrect, use [nvm](https://github.com/nvm-sh/nvm) or [fnm](https://github.com/Schniz/fnm):
 
 ```bash
-# 用 fnm 举例
+# fnm example
 fnm install 22
 fnm use 22
 ```
 
 ---
 
-## 2. 安装依赖
+## 3. Install Dependencies
 
 ```bash
-# 在仓库根目录
+# From the repo root
 pnpm install
 ```
 
-这会安装所有 workspace 子包的依赖，包括 `better-sqlite3` 原生模块。
+This installs dependencies for all workspace packages, including the `better-sqlite3` native module.
 
 ---
 
-## 3. 生成 `.env` 文件
+## 4. Generate `.env` File
 
 ```bash
 cp .env.example .env
 ```
 
-接下来按照第 4 节的说明逐项配置。
+Then configure each item according to Section 5.
 
 ---
 
-## 4. 配置说明
+## 5. Configuration Reference
 
-### 4.1 API 服务
+### 5.1 API Server
 
-| 变量 | 默认值 | 说明 |
-|------|--------|------|
-| `TELAGENT_API_HOST` | `127.0.0.1` | 节点 HTTP 监听地址 |
-| `TELAGENT_API_PORT` | `9529` | 节点 HTTP 监听端口 |
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `TELAGENT_API_HOST` | `127.0.0.1` | Node HTTP listen address |
+| `TELAGENT_API_PORT` | `9529` | Node HTTP listen port |
+| `TELAGENT_PUBLIC_URL` | _(none)_ | Public URL of the node (included in profile cards sent to peers); **required** for cloud/public deployments |
 
-本地开发一般保持默认即可。
+For local development, keep the defaults.
 
 
-### 4.2 存储路径
+### 5.2 Storage Paths
 
-| 变量 | 默认值 | 说明 |
-|------|--------|------|
-| `TELAGENT_HOME` | `~/.telagent` | 所有数据的根目录 |
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `TELAGENT_HOME` | `~/.telagent` | Root directory for all data |
 
-通常不需要设置。启动时会自动创建以下子目录（权限 `0700`）：
+Usually does not need to be set. The following subdirectories are created automatically on startup (permissions `0700`):
 
 ```
 ~/.telagent/
 ├── config.yaml
-├── secrets/           # 加密的密钥文件
+├── secrets/           # Encrypted key files
 │   ├── mnemonic.enc
 │   ├── passphrase.enc
 │   └── signer-key.enc
@@ -100,41 +133,41 @@ cp .env.example .env
 └── cache/
 ```
 
-### 4.3 私钥与签名器
+### 5.3 Private Keys & Signer
 
-这是最关键的配置。TelAgent 需要一个以太坊私钥来签名链上交易和身份验证。
+This is the most critical configuration. TelAgent needs an Ethereum private key to sign on-chain transactions and authenticate identity.
 
-#### 方式一：环境变量私钥（推荐本地开发使用）
+#### Option 1: Environment Variable Key (Recommended for Local Development)
 
-**生成私钥**（需要在 `packages/node` 目录下运行，因为 `ethers` 安装在该子包中）：
+**Generate a private key** (must be run in the `packages/node` directory, since `ethers` is installed in that sub-package):
 
 ```bash
 cd packages/node
 node --input-type=module -e "import { Wallet } from 'ethers'; const w = Wallet.createRandom(); console.log('Private Key:', w.privateKey); console.log('Address:', w.address)"
 ```
 
-然后在 `.env` 中设置：
+Then set in `.env`:
 
 ```env
 TELAGENT_SIGNER_TYPE=env
 TELAGENT_SIGNER_ENV=TELAGENT_PRIVATE_KEY
-TELAGENT_PRIVATE_KEY=0x你生成的私钥
+TELAGENT_PRIVATE_KEY=0xyour_generated_private_key
 ```
 
-**原理**：`TELAGENT_SIGNER_ENV` 指定"哪个环境变量保存了私钥"，默认就是 `TELAGENT_PRIVATE_KEY`。
+**How it works**: `TELAGENT_SIGNER_ENV` specifies which environment variable holds the private key; the default is `TELAGENT_PRIVATE_KEY`.
 
-#### 方式二：Keyfile 文件
+#### Option 2: Keyfile
 
-JSON Keystore 是以太坊标准的加密密钥文件格式（[Web3 Secret Storage](https://ethereum.org/en/developers/docs/data-structures-and-encoding/web3-secret-storage/)）。它将私钥用密码加密后存储为 JSON 文件，比明文私钥更安全，适合生产环境。
+JSON Keystore is the Ethereum-standard encrypted key file format ([Web3 Secret Storage](https://ethereum.org/en/developers/docs/data-structures-and-encoding/web3-secret-storage/)). It stores the private key encrypted with a password as a JSON file — more secure than a plaintext private key, suitable for production environments.
 
-**生成 keyfile**（在 `packages/node` 目录下运行）：
+**Generate a keyfile** (run in the `packages/node` directory):
 
 ```bash
 cd packages/node
 node --input-type=module -e "
 import { Wallet } from 'ethers';
 const w = Wallet.createRandom();
-const json = await w.encrypt('你的密码');
+const json = await w.encrypt('your_password');
 const fs = await import('node:fs');
 fs.writeFileSync('signer-key.json', json);
 console.log('Address:', w.address);
@@ -142,7 +175,7 @@ console.log('Keyfile saved to: signer-key.json');
 "
 ```
 
-生成的 `signer-key.json` 内容类似：
+The generated `signer-key.json` looks like:
 
 ```json
 {
@@ -153,20 +186,20 @@ console.log('Keyfile saved to: signer-key.json');
 }
 ```
 
-然后在 `.env` 中设置：
+Then set in `.env`:
 
 ```env
 TELAGENT_SIGNER_TYPE=keyfile
 TELAGENT_SIGNER_PATH=/absolute/path/to/signer-key.json
 ```
 
-> **提示**：Geth、MetaMask 导出的 keystore 文件也是同一格式，可以直接使用。
+> **Tip**: Keystore files exported from Geth or MetaMask use the same format and can be used directly.
 
-#### 方式三：助记词
+#### Option 3: Mnemonic
 
-助记词（Mnemonic）是 [BIP-39](https://github.com/bitcoin/bips/blob/master/bip-0039.mediawiki) 标准定义的 12 或 24 个英文单词序列，可以确定性地派生出一棵密钥树（HD Wallet）。一个助记词可以派生出无限个地址，适合需要管理多个身份的场景。
+A mnemonic is a sequence of 12 or 24 English words defined by the [BIP-39](https://github.com/bitcoin/bips/blob/master/bip-0039.mediawiki) standard. It deterministically derives a key tree (HD Wallet). A single mnemonic can derive unlimited addresses, making it suitable for scenarios that require managing multiple identities.
 
-**生成助记词**（在 `packages/node` 目录下运行）：
+**Generate a mnemonic** (run in the `packages/node` directory):
 
 ```bash
 cd packages/node
@@ -180,7 +213,7 @@ console.log('Account 0 Private Key:', w.privateKey);
 "
 ```
 
-输出示例：
+Sample output:
 
 ```
 Mnemonic (12 words): abandon ability able about above absent absorb abstract absurd abuse access accident
@@ -188,110 +221,137 @@ Account 0 Address: 0x1234...
 Account 0 Private Key: 0xabcd...
 ```
 
-然后在 `.env` 中设置：
+Then set in `.env`:
 
 ```env
 TELAGENT_SIGNER_TYPE=mnemonic
 TELAGENT_SIGNER_ENV=TELAGENT_MNEMONIC
-TELAGENT_MNEMONIC=你生成的12个单词 用空格分隔
+TELAGENT_MNEMONIC=your_generated_12_words separated_by_spaces
 TELAGENT_SIGNER_INDEX=0
 ```
 
-**配置说明**：
+**Configuration details**:
 
-- `TELAGENT_SIGNER_ENV=TELAGENT_MNEMONIC` — 告诉签名器"去 `TELAGENT_MNEMONIC` 这个环境变量读取助记词"
-- `TELAGENT_SIGNER_INDEX=0` — 使用 HD 派生路径 `m/44'/60'/0'/0/0` 中的第几个账户（从 0 开始），改为 `1` 则使用 `m/44'/60'/0'/0/1`，以此类推
+- `TELAGENT_SIGNER_ENV=TELAGENT_MNEMONIC` — tells the signer to read the mnemonic from the `TELAGENT_MNEMONIC` environment variable
+- `TELAGENT_SIGNER_INDEX=0` — which account to use from the HD derivation path `m/44'/60'/0'/0/0` (0-based); set to `1` to use `m/44'/60'/0'/0/1`, and so on
 
-> **安全提醒**：务必用密码学安全的随机源生成助记词（如上面的 `crypto.getRandomValues`），**绝对不要自己编造单词**。助记词请妥善保管，泄露等于丢失所有派生账户。
+> **Security warning**: Always generate mnemonics from a cryptographically secure random source (such as `crypto.getRandomValues` above). **Never make up words manually.** Store the mnemonic securely — leaking it means losing all derived accounts.
 
-> **安全提醒**：`.env` 文件已加入 `.gitignore`，但仍建议在生产环境使用 keyfile 或密钥管理服务，不要直接在环境变量中放私钥。
+> **Security warning**: The `.env` file is in `.gitignore`, but for production environments it is still recommended to use a keyfile or a key management service rather than storing private keys directly in environment variables.
 
-### 4.4 链配置
+### 5.4 Chain Configuration
 
-| 变量 | 默认值 | 说明 |
-|------|--------|------|
-| `TELAGENT_CHAIN_RPC_URL` | *必填* | ClawNet 链的 RPC 端点 |
-| `TELAGENT_CHAIN_ID` | `7625` | ClawNet 链 ID |
-| `TELAGENT_GROUP_REGISTRY_CONTRACT` | *必填* | 群组注册合约地址（0x 开头的 40 位十六进制） |
-| `TELAGENT_FINALITY_DEPTH` | `12` | 区块确认深度 |
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `TELAGENT_CHAIN_RPC_URL` | *required* | RPC endpoint for the ClawNet chain |
+| `TELAGENT_CHAIN_ID` | `7625` | ClawNet chain ID |
+| `TELAGENT_GROUP_REGISTRY_CONTRACT` | *required* | Group registry contract address (0x-prefixed, 40 hex digits) |
+| `TELAGENT_FINALITY_DEPTH` | `12` | Block confirmation depth |
 
-**本地开发**：
+**Local development**:
 
-- 如果你连接 ClawNet 测试网：使用 `https://rpc.clawnetd.com`
-- 如果你本地运行 Geth 节点：使用 `http://127.0.0.1:8545`
-
-群组注册合约地址需要从部署记录中获取。如果只是做本地调试且不涉及链上交互，可以暂用零地址占位：
+- Connecting to ClawNet testnet: use `https://rpc.clawnetd.com`
+- Running a local Geth node: use `http://127.0.0.1:8545`
 
 ```env
 TELAGENT_CHAIN_RPC_URL=https://rpc.clawnetd.com
 TELAGENT_CHAIN_ID=7625
-TELAGENT_GROUP_REGISTRY_CONTRACT=0x0000000000000000000000000000000000000000
+TELAGENT_GROUP_REGISTRY_CONTRACT=0xB7f8BC63BbcaD18155201308C8f3540b07f84F5e
 TELAGENT_FINALITY_DEPTH=12
 ```
 
-### 4.5 ClawNet 集成
+### 5.5 ClawNet Integration
 
-| 变量 | 默认值 | 说明 |
-|------|--------|------|
-| `TELAGENT_CLAWNET_NODE_URL` | _(自动发现)_ | ClawNet 节点 URL |
-| `TELAGENT_CLAWNET_API_KEY` | _(无)_ | 连接远端 ClawNet 节点的 API Key |
-| `TELAGENT_CLAWNET_PASSPHRASE` | _(无)_ | ClawNet 口令，同时也是 WebApp 统一认证凭据 |
-| `TELAGENT_CLAWNET_AUTO_DISCOVER` | `true` | 是否自动发现本地 ClawNet 节点 |
-| `TELAGENT_CLAWNET_AUTO_START` | `true` | 是否自动启动 ClawNet 节点 |
-| `TELAGENT_CLAWNET_TIMEOUT_MS` | `30000` | 请求超时时间 |
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `TELAGENT_CLAWNET_NODE_URL` | _(auto-discover)_ | ClawNet node URL |
+| `TELAGENT_CLAWNET_API_KEY` | _(none)_ | API key for connecting to a remote ClawNet node |
+| `TELAGENT_CLAWNET_PASSPHRASE` | _(none)_ | ClawNet passphrase, also used as the WebApp unified authentication credential |
+| `TELAGENT_CLAWNET_AUTO_DISCOVER` | `true` | Whether to auto-discover a local ClawNet node |
+| `TELAGENT_CLAWNET_AUTO_START` | `true` | Whether to auto-start a ClawNet node |
+| `TELAGENT_CLAWNET_TIMEOUT_MS` | `30000` | Request timeout |
+| `TELAGENT_CLAWNET_KILL_ON_START` | `false` | Whether to kill leftover clawnetd processes with port conflicts on start |
+| `TELAGENT_CLAWNET_KILL_ON_STOP` | `false` | Whether to kill the clawnetd process on stop |
 
-> **认证模型**：WebApp 连接时（无论本地或远程），用户在连接页面输入 ClawNet passphrase → 服务器验证后返回 `tses_*` 会话令牌 → 后续所有 API 请求使用该令牌。未认证的请求（除 `/node/*`、`/identities/self`、`POST /session/unlock` 外）会被全局中间件拦截返回 401。
+> **Authentication model**: When the WebApp connects (local or remote), the user enters the ClawNet passphrase on the connection page → the server validates it and returns a `tses_*` session token → all subsequent API requests use that token. Unauthenticated requests (except `/node/*`, `/identities/self`, `POST /session/unlock`) are intercepted by global middleware and return 401.
 
-**本地开发场景**：
+**Local development scenarios**:
 
-- **连接云端 ClawNet 节点**：设置 `TELAGENT_CLAWNET_NODE_URL` 指向你的远程节点（如 `https://alex.telagent.org:9528`），并提供 `TELAGENT_CLAWNET_API_KEY`
-- **本地自动发现**：保持 `TELAGENT_CLAWNET_AUTO_DISCOVER=true`，TelAgent 会在 localhost 上查找运行中的 ClawNet 节点
-- **跳过 ClawNet**（仅调试非 ClawNet 功能）：设置 `TELAGENT_CLAWNET_AUTO_DISCOVER=false` 和 `TELAGENT_CLAWNET_AUTO_START=false`
+- **Connect to a cloud ClawNet node**: Set `TELAGENT_CLAWNET_NODE_URL` to your remote node (e.g. `https://alex.telagent.org:9528`) and provide `TELAGENT_CLAWNET_API_KEY`
+- **Local auto-discovery**: Keep `TELAGENT_CLAWNET_AUTO_DISCOVER=true`; TelAgent will look for a running ClawNet node on localhost
+- **Skip ClawNet** (debug non-ClawNet features only): Set `TELAGENT_CLAWNET_AUTO_DISCOVER=false` and `TELAGENT_CLAWNET_AUTO_START=false`
+- **Local debug**: If clawnetd crashed and left the port occupied, set `TELAGENT_CLAWNET_KILL_ON_START=true` to auto-clean up
 
-### 4.6 Owner 权限
+### 5.6 ClawNet Embedded Node Chain Configuration
 
-控制已认证用户通过 WebApp 对节点的操作权限。用户通过 passphrase 认证后，Owner 模式决定了该会话能执行哪些操作。切换 `TELAGENT_OWNER_MODE` 不需要用户重新认证——模式是服务端配置，会话令牌始终有效。
+When the following variables are set, the embedded ClawNet node connects to the on-chain network and automatically registers the node DID via `batchRegisterDID` on startup.
 
-| 变量 | 默认值 | 说明 |
-|------|--------|------|
-| `TELAGENT_OWNER_MODE` | `observer` | `observer`（只读）或 `intervener`（可操作） |
-| `TELAGENT_OWNER_SCOPES` | _(空)_ | `intervener` 模式下允许的操作，逗号分隔 |
-| `TELAGENT_OWNER_PRIVATE_CONVERSATIONS` | _(空)_ | 对 WebApp 隐藏的私密对话 ID |
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `CLAW_CHAIN_RPC_URL` | _(none)_ | ClawNet chain RPC endpoint |
+| `CLAW_CHAIN_ID` | `7625` | ClawNet chain ID |
+| `CLAW_CHAIN_IDENTITY_CONTRACT` | _(none)_ | ClawIdentity contract address |
+| `CLAW_SIGNER_TYPE` | `env` | Signer type |
+| `CLAW_SIGNER_ENV` | _(none)_ | Name of the environment variable holding the private key |
+| `CLAW_CHAIN_ARTIFACTS_DIR` | _(none)_ | Hardhat artifacts directory (contains contract ABIs) |
 
-可用的 scope 值：
+**Recommended local development configuration**:
 
-- `send_message` — 发送消息
-- `manage_contacts` — 管理联系人
-- `manage_groups` — 管理群组
-- `clawnet_transfer` — ClawNet 转账
-- `clawnet_escrow` — ClawNet 托管
-- `clawnet_market` — ClawNet 市场
-- `clawnet_reputation` — ClawNet 信誉
+```env
+CLAW_CHAIN_RPC_URL=https://rpc.clawnetd.com
+CLAW_CHAIN_ID=7625
+CLAW_CHAIN_IDENTITY_CONTRACT=0xee9B2D7eb0CD51e1d0a14278bCA32b02548D1149
+CLAW_SIGNER_TYPE=env
+CLAW_SIGNER_ENV=TELAGENT_PRIVATE_KEY
+CLAW_CHAIN_ARTIFACTS_DIR=../../packages/contracts/artifacts
+```
 
-**本地开发推荐**：
+> If you don't need on-chain DID registration (local debugging only), these variables can be left unconfigured.
+
+### 5.7 Owner Permissions
+
+Controls what authenticated users can do on the node via the WebApp. After a user authenticates with the passphrase, Owner mode determines which operations the session can perform. Switching `TELAGENT_OWNER_MODE` does not require re-authentication — the mode is a server-side setting and session tokens remain valid.
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `TELAGENT_OWNER_MODE` | `observer` | `observer` (read-only) or `intervener` (can take actions) |
+| `TELAGENT_OWNER_SCOPES` | _(empty)_ | Allowed operations in `intervener` mode, comma-separated |
+| `TELAGENT_OWNER_PRIVATE_CONVERSATIONS` | _(empty)_ | Private conversation IDs hidden from the WebApp |
+
+Available scope values:
+
+- `send_message` — Send messages
+- `manage_contacts` — Manage contacts
+- `manage_groups` — Manage groups
+- `clawnet_transfer` — ClawNet transfers
+- `clawnet_escrow` — ClawNet escrow
+- `clawnet_market` — ClawNet marketplace
+- `clawnet_reputation` — ClawNet reputation
+
+**Recommended for local development**:
 
 ```env
 TELAGENT_OWNER_MODE=observer
 ```
 
-如果需要通过 WebApp 发送消息等操作：
+If you need to send messages or perform other actions via the WebApp:
 
 ```env
 TELAGENT_OWNER_MODE=intervener
 TELAGENT_OWNER_SCOPES=send_message,manage_contacts,manage_groups
 ```
 
-### 4.7 邮箱存储
+### 5.8 Mailbox Storage
 
-| 变量 | 默认值 | 说明 |
-|------|--------|------|
-| `TELAGENT_MAILBOX_CLEANUP_INTERVAL_SEC` | `60` | 邮箱清理间隔（秒） |
-| `TELAGENT_MAILBOX_STORE_BACKEND` | `sqlite` | 存储后端：`sqlite` 或 `postgres` |
-| `TELAGENT_MAILBOX_SQLITE_PATH` | `~/.telagent/data/mailbox.sqlite` | SQLite 文件路径 |
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `TELAGENT_MAILBOX_CLEANUP_INTERVAL_SEC` | `60` | Mailbox cleanup interval (seconds) |
+| `TELAGENT_MAILBOX_STORE_BACKEND` | `sqlite` | Storage backend: `sqlite` or `postgres` |
+| `TELAGENT_MAILBOX_SQLITE_PATH` | `~/.telagent/data/mailbox.sqlite` | SQLite file path |
 
-**本地开发**：保持 `sqlite` 默认值即可。无需额外配置。
+**Local development**: Keep the `sqlite` default. No extra configuration needed.
 
-如果需要使用 PostgreSQL：
+If you need PostgreSQL:
 
 ```env
 TELAGENT_MAILBOX_STORE_BACKEND=postgres
@@ -301,102 +361,110 @@ TELAGENT_MAILBOX_PG_SSL=false
 TELAGENT_MAILBOX_PG_MAX_CONN=10
 ```
 
-### 4.8 监控阈值
+### 5.9 Monitoring Thresholds
 
-这些配置控制 `/api/v1/node/metrics` 端点的告警阈值，本地开发保持默认即可。
+These settings control the alert thresholds for the `/api/v1/node/metrics` endpoint. For local development, keep the defaults.
 
-| 变量 | 默认值 | 说明 |
-|------|--------|------|
-| `TELAGENT_MONITOR_ERROR_RATE_WARN_RATIO` | `0.02` | 错误率警告阈值 |
-| `TELAGENT_MONITOR_ERROR_RATE_CRITICAL_RATIO` | `0.05` | 错误率严重阈值 |
-| `TELAGENT_MONITOR_REQ_P95_WARN_MS` | `250` | P95 延迟警告阈值 |
-| `TELAGENT_MONITOR_REQ_P95_CRITICAL_MS` | `500` | P95 延迟严重阈值 |
-| `TELAGENT_MONITOR_MAINT_STALE_WARN_SEC` | `180` | 维护过期警告阈值 |
-| `TELAGENT_MONITOR_MAINT_STALE_CRITICAL_SEC` | `300` | 维护过期严重阈值 |
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `TELAGENT_MONITOR_ERROR_RATE_WARN_RATIO` | `0.02` | Error rate warning threshold |
+| `TELAGENT_MONITOR_ERROR_RATE_CRITICAL_RATIO` | `0.05` | Error rate critical threshold |
+| `TELAGENT_MONITOR_REQ_P95_WARN_MS` | `250` | P95 latency warning threshold |
+| `TELAGENT_MONITOR_REQ_P95_CRITICAL_MS` | `500` | P95 latency critical threshold |
+| `TELAGENT_MONITOR_MAINT_STALE_WARN_SEC` | `180` | Maintenance staleness warning threshold |
+| `TELAGENT_MONITOR_MAINT_STALE_CRITICAL_SEC` | `300` | Maintenance staleness critical threshold |
 
-### 4.9 TLS / HTTPS（本地开发）
+### 5.10 TLS / HTTPS (Local Development)
 
-本地开发时，TelAgent 使用 [mkcert](https://github.com/FiloSottile/mkcert) 自动生成被系统信任的本地 HTTPS 证书。
+For local development, TelAgent uses [mkcert](https://github.com/FiloSottile/mkcert) to automatically generate locally-trusted HTTPS certificates.
 
-| 变量 | 默认值 | 说明 |
-|------|--------|------|
-| `TELAGENT_TLS_CERT` | _(自动检测)_ | TLS 证书路径 |
-| `TELAGENT_TLS_KEY` | _(自动检测)_ | TLS 私钥路径 |
-| `TELAGENT_TLS_PORT` | `9443` | HTTPS 监听端口 |
-| `NODE_EXTRA_CA_CERTS` | _(自动设置)_ | mkcert 根 CA 路径（Node.js 不使用系统信任存储） |
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `TELAGENT_TLS_CERT` | _(auto-detect)_ | TLS certificate path |
+| `TELAGENT_TLS_KEY` | _(auto-detect)_ | TLS private key path |
+| `TELAGENT_TLS_PORT` | `9443` | HTTPS listen port |
+| `NODE_EXTRA_CA_CERTS` | _(auto-set)_ | mkcert root CA path (Node.js does not use the system trust store) |
 
-**工作原理**：
+**How it works**:
 
-1. `pnpm dev` 启动时自动运行 `scripts/ensure-local-certs.sh`
-2. 该脚本下载 mkcert（保存到 `~/.telagent/bin/mkcert`）
-3. 运行 `mkcert -install` 将本地 CA 安装到系统信任存储（macOS 会弹出 Keychain 密码提示）
-4. 生成 `~/.telagent/tls/cert.pem` 和 `key.pem`（如果已存在则跳过）
-5. 节点自动检测 `~/.telagent/tls/` 下的证书并启用 HTTPS
+1. `pnpm dev` automatically runs `scripts/ensure-local-certs.sh` on startup
+2. The script downloads mkcert (saved to `~/.telagent/bin/mkcert`)
+3. Runs `mkcert -install` to add the local CA to the system trust store (macOS will prompt for Keychain password)
+4. Generates `~/.telagent/tls/cert.pem` and `key.pem` (skipped if they already exist)
+5. The node auto-detects certificates under `~/.telagent/tls/` and enables HTTPS
 
-**手动操作**：
+**Manual operations**:
 
 ```bash
-# 生成/重新生成证书
+# Generate / regenerate certificates
 pnpm ensure-certs
 
-# 或手动运行 mkcert
+# Or run mkcert manually
 mkcert -install
 mkcert -cert-file ~/.telagent/tls/cert.pem -key-file ~/.telagent/tls/key.pem localhost 127.0.0.1 ::1
 ```
 
-**注意**：
-- 如果不想使用 HTTPS，设置环境变量 `MKCERT_SKIP=1` 即可跳过
-- CI 环境（`CI=true`）自动跳过证书生成
-- 云部署无需这些配置，Caddy 反向代理处理 TLS
+**Notes**:
+- To skip HTTPS, set the environment variable `MKCERT_SKIP=1`
+- CI environments (`CI=true`) automatically skip certificate generation
+- Cloud deployments don't need these settings — Caddy reverse proxy handles TLS
 
 ---
 
-## 5. 最小化本地 `.env` 示例
+## 6. Minimal Local `.env` Example
 
-以下是一个本地开发所需的最小配置。**需要修改 `TELAGENT_PRIVATE_KEY` 和 `TELAGENT_CLAWNET_PASSPHRASE` 两项**，其余保持默认：
+Below is the minimal configuration needed for local development. **You need to change `TELAGENT_PRIVATE_KEY` and `TELAGENT_CLAWNET_PASSPHRASE`**; keep the rest as defaults:
 
 ```env
 # ── API ──────────────────────────────────────────────
 TELAGENT_API_HOST=127.0.0.1
 TELAGENT_API_PORT=9529
 
-# ── 链配置 ────────────────────────────────────────────
+# ── Chain Configuration ──────────────────────────────
 TELAGENT_CHAIN_RPC_URL=https://rpc.clawnetd.com
 TELAGENT_CHAIN_ID=7625
-TELAGENT_GROUP_REGISTRY_CONTRACT=0x0000000000000000000000000000000000000000
+TELAGENT_GROUP_REGISTRY_CONTRACT=0xB7f8BC63BbcaD18155201308C8f3540b07f84F5e
 TELAGENT_FINALITY_DEPTH=12
 
-# ── 签名器 ────────────────────────────────────────────
+# ── Signer ───────────────────────────────────────────
 TELAGENT_SIGNER_TYPE=env
 TELAGENT_SIGNER_ENV=TELAGENT_PRIVATE_KEY
-TELAGENT_PRIVATE_KEY=0x你用上面的命令生成的私钥
+TELAGENT_PRIVATE_KEY=0xyour_private_key_generated_above
 
 # ── ClawNet ──────────────────────────────────────────
-TELAGENT_CLAWNET_PASSPHRASE=替换为你的安全口令
+TELAGENT_CLAWNET_PASSPHRASE=replace_with_your_secure_passphrase
 TELAGENT_CLAWNET_AUTO_DISCOVER=true
 TELAGENT_CLAWNET_AUTO_START=true
 TELAGENT_CLAWNET_TIMEOUT_MS=30000
 
+# ── ClawNet Embedded Node Chain (On-chain DID Registration) ──
+CLAW_CHAIN_RPC_URL=https://rpc.clawnetd.com
+CLAW_CHAIN_ID=7625
+CLAW_CHAIN_IDENTITY_CONTRACT=0xee9B2D7eb0CD51e1d0a14278bCA32b02548D1149
+CLAW_SIGNER_TYPE=env
+CLAW_SIGNER_ENV=TELAGENT_PRIVATE_KEY
+CLAW_CHAIN_ARTIFACTS_DIR=../../packages/contracts/artifacts
+
 # ── Owner ────────────────────────────────────────────
 TELAGENT_OWNER_MODE=observer
 
-# ── 邮箱 ─────────────────────────────────────────────
+# ── Mailbox ──────────────────────────────────────────
 TELAGENT_MAILBOX_STORE_BACKEND=sqlite
 TELAGENT_MAILBOX_CLEANUP_INTERVAL_SEC=60
 ```
 
 ---
 
-## 6. 启动节点
+## 7. Start the Node
 
 ```bash
-# 在仓库根目录
+# From the repo root
 pnpm dev
 ```
 
-这会先运行 `ensure-certs` 生成本地证书（如果还没有），然后启动节点。
+This first runs `ensure-certs` to generate local certificates (if not already present), then starts the node.
 
-成功后你会看到：
+On success you will see:
 
 ```
 telagent node started at https://127.0.0.1:9443
@@ -404,78 +472,84 @@ http://127.0.0.1:9529 → redirect to HTTPS
 chainId: 7625
 ```
 
-> 如果证书不存在且 mkcert 安装失败，节点会回退到 HTTP 模式（`http://127.0.0.1:9529`）。
+> If certificates don't exist and mkcert installation fails, the node falls back to HTTP mode (`http://127.0.0.1:9529`).
+
+> **Tip**: You can also use the one-click install (Section 1), which automatically installs and starts a system service — no need to manually run `pnpm dev`.
 
 ---
 
-## 7. 启动 WebApp
+## 8. Start the WebApp
 
-在另一个终端窗口：
+In another terminal window:
 
 ```bash
 pnpm --filter @telagent/webapp dev
 ```
 
-WebApp 会在 Vite 默认端口（通常 `5173`）启动。如果 `~/.telagent/tls/` 下存在 mkcert 证书，Vite 会自动以 HTTPS 启动（`https://localhost:5173`）。
+The WebApp starts on the Vite default port (usually `5173`). If mkcert certificates exist under `~/.telagent/tls/`, Vite will automatically start with HTTPS (`https://localhost:5173`).
 
-打开浏览器后：
+After opening the browser:
 
-- **Local 标签**：自动检测本地节点，检测到后输入 ClawNet passphrase 并点击 Connect
-- **Remote 标签**：输入远程节点 URL 和 ClawNet passphrase，点击 Connect
+- **Local tab**: Auto-detects the local node; once detected, enter the ClawNet passphrase and click Connect
+- **Remote tab**: Enter the remote node URL and ClawNet passphrase, then click Connect
 
-连接成功后，WebApp 持有服务器返回的会话令牌（`tses_*`），所有后续 API 请求自动携带该令牌。会话默认 30 分钟过期，最长 24 小时；过期后需重新输入 passphrase。
+On successful connection, the WebApp holds a session token (`tses_*`) returned by the server; all subsequent API requests automatically carry this token. Sessions expire after 30 minutes by default, with a maximum of 24 hours; after expiry, re-enter the passphrase.
 
-> **速率限制**：连续 5 次输入错误 passphrase 会触发 5 分钟锁定（指数退避：1s → 2s → 4s → 8s → 16s），按客户端 IP 隔离。
+> **Rate limiting**: 5 consecutive incorrect passphrase attempts trigger a 5-minute lockout (exponential backoff: 1s → 2s → 4s → 8s → 16s), isolated by client IP.
 
 ---
 
-## 8. 常见问题
+## 9. FAQ
 
-### Q: 启动报错 `TELAGENT_DATA_DIR is removed`
+### Q: Startup error `TELAGENT_DATA_DIR is removed`
 
-旧配置项已废弃。删除 `TELAGENT_DATA_DIR`，改用 `TELAGENT_HOME`（或不设置，使用默认的 `~/.telagent`）。
+This legacy config key has been deprecated. Remove `TELAGENT_DATA_DIR` and use `TELAGENT_HOME` instead (or leave it unset to use the default `~/.telagent`).
 
-同理，以下旧变量也已移除，如果存在请删除：
-- `TELAGENT_SELF_DID` — DID 现在从 ClawNet 节点自动获取
-- `TELAGENT_IDENTITY_CONTRACT` — Identity 通过 ClawNet SDK 解析
-- `TELAGENT_TOKEN_CONTRACT` — Token 余额通过 ClawNet SDK 查询
-- `TELAGENT_FEDERATION_*` — HTTP Federation 已被 ClawNet P2P 传输替代
-- `TELAGENT_DOMAIN_PROOF_*` — Domain Proof 已随 Federation 一起移除
+Similarly, the following legacy variables have been removed — delete them if present:
+- `TELAGENT_SELF_DID` — DID is now auto-fetched from the ClawNet node
+- `TELAGENT_IDENTITY_CONTRACT` — Identity is resolved via the ClawNet SDK
+- `TELAGENT_TOKEN_CONTRACT` — Token balances are queried via the ClawNet SDK
+- `TELAGENT_FEDERATION_*` — HTTP Federation has been replaced by ClawNet P2P transport
+- `TELAGENT_DOMAIN_PROOF_*` — Domain Proof was removed along with Federation
 
-### Q: 如何查看自己的 DID？
+### Q: How do I view my DID?
 
-启动节点后，DID 从 ClawNet 节点自动获取。你可以查询节点 API：
+After starting the node, the DID is auto-fetched from the ClawNet node. You can query the node API:
 
 ```bash
-curl http://127.0.0.1:9529/api/v1/node/info
+# HTTPS (default when mkcert is enabled)
+curl -s https://127.0.0.1:9443/api/v1/node/info
+
+# Or HTTP (when TLS is not enabled)
+curl -s http://127.0.0.1:9529/api/v1/node/info
 ```
 
-### Q: `better-sqlite3` 编译失败
+### Q: `better-sqlite3` build fails
 
-确保 Node.js 版本匹配（>=22 <25），然后：
+Make sure the Node.js version matches (>=22 <25), then:
 
 ```bash
 pnpm rebuild better-sqlite3
 ```
 
-### Q: 如何重置所有数据？
+### Q: How do I reset all data?
 
 ```bash
 rm -rf ~/.telagent
 ```
 
-重启节点会自动重新创建目录结构。
+Restarting the node will automatically recreate the directory structure.
 
-### Q: 节点间消息发不通
+### Q: Messages between nodes aren't delivered
 
-节点间通信完全通过 ClawNet P2P 进行。确保 `TELAGENT_CLAWNET_AUTO_DISCOVER=true`（或手动设置 `TELAGENT_CLAWNET_NODE_URL`），并且 ClawNet 节点正在运行。
+Inter-node communication is entirely via ClawNet P2P. Ensure `TELAGENT_CLAWNET_AUTO_DISCOVER=true` (or manually set `TELAGENT_CLAWNET_NODE_URL`), and that the ClawNet node is running.
 
-### Q: WebApp 连接被拒绝 / 返回 401
+### Q: WebApp connection refused / returns 401
 
-所有 API 请求（除少量白名单端点外）必须携带有效的 `tses_*` 会话令牌。如果会话过期或令牌无效，需要重新在连接页面输入 passphrase。如果连续输入错误 passphrase 触发了速率限制（429 Too Many Requests），请等待锁定时间结束（最多 5 分钟）后重试。
+All API requests (except a small whitelist of endpoints) must carry a valid `tses_*` session token. If the session has expired or the token is invalid, re-enter the passphrase on the connection page. If consecutive incorrect passphrase attempts triggered rate limiting (429 Too Many Requests), wait for the lockout period to end (up to 5 minutes) before retrying.
 
 ### Q: 如何查看当前会话信息？
 
 ```bash
-curl -H 'Authorization: Bearer tses_你的会话令牌' http://127.0.0.1:9529/api/v1/session
+curl -H 'Authorization: Bearer tses_你的会话令牌' https://127.0.0.1:9443/api/v1/session
 ```
