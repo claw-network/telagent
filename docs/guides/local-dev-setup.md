@@ -314,6 +314,41 @@ TELAGENT_MAILBOX_PG_MAX_CONN=10
 | `TELAGENT_MONITOR_MAINT_STALE_WARN_SEC` | `180` | 维护过期警告阈值 |
 | `TELAGENT_MONITOR_MAINT_STALE_CRITICAL_SEC` | `300` | 维护过期严重阈值 |
 
+### 4.9 TLS / HTTPS（本地开发）
+
+本地开发时，TelAgent 使用 [mkcert](https://github.com/FiloSottile/mkcert) 自动生成被系统信任的本地 HTTPS 证书。
+
+| 变量 | 默认值 | 说明 |
+|------|--------|------|
+| `TELAGENT_TLS_CERT` | _(自动检测)_ | TLS 证书路径 |
+| `TELAGENT_TLS_KEY` | _(自动检测)_ | TLS 私钥路径 |
+| `TELAGENT_TLS_PORT` | `9443` | HTTPS 监听端口 |
+| `NODE_EXTRA_CA_CERTS` | _(自动设置)_ | mkcert 根 CA 路径（Node.js 不使用系统信任存储） |
+
+**工作原理**：
+
+1. `pnpm dev` 启动时自动运行 `scripts/ensure-local-certs.sh`
+2. 该脚本下载 mkcert（保存到 `~/.telagent/bin/mkcert`）
+3. 运行 `mkcert -install` 将本地 CA 安装到系统信任存储（macOS 会弹出 Keychain 密码提示）
+4. 生成 `~/.telagent/tls/cert.pem` 和 `key.pem`（如果已存在则跳过）
+5. 节点自动检测 `~/.telagent/tls/` 下的证书并启用 HTTPS
+
+**手动操作**：
+
+```bash
+# 生成/重新生成证书
+pnpm ensure-certs
+
+# 或手动运行 mkcert
+mkcert -install
+mkcert -cert-file ~/.telagent/tls/cert.pem -key-file ~/.telagent/tls/key.pem localhost 127.0.0.1 ::1
+```
+
+**注意**：
+- 如果不想使用 HTTPS，设置环境变量 `MKCERT_SKIP=1` 即可跳过
+- CI 环境（`CI=true`）自动跳过证书生成
+- 云部署无需这些配置，Caddy 反向代理处理 TLS
+
 ---
 
 ## 5. 最小化本地 `.env` 示例
@@ -359,14 +394,17 @@ TELAGENT_MAILBOX_CLEANUP_INTERVAL_SEC=60
 pnpm dev
 ```
 
-这等同于 `pnpm --filter @telagent/node start`，会通过 `tsx --env-file=../../.env` 加载 `.env` 文件并启动节点。
+这会先运行 `ensure-certs` 生成本地证书（如果还没有），然后启动节点。
 
 成功后你会看到：
 
 ```
-telagent node started at http://127.0.0.1:9529
+telagent node started at https://127.0.0.1:9443
+http://127.0.0.1:9529 → redirect to HTTPS
 chainId: 7625
 ```
+
+> 如果证书不存在且 mkcert 安装失败，节点会回退到 HTTP 模式（`http://127.0.0.1:9529`）。
 
 ---
 
@@ -378,7 +416,7 @@ chainId: 7625
 pnpm --filter @telagent/webapp dev
 ```
 
-WebApp 会在 Vite 默认端口（通常 `5173`）启动。
+WebApp 会在 Vite 默认端口（通常 `5173`）启动。如果 `~/.telagent/tls/` 下存在 mkcert 证书，Vite 会自动以 HTTPS 启动（`https://localhost:5173`）。
 
 打开浏览器后：
 

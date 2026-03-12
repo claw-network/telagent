@@ -146,6 +146,34 @@ fi
   warn "The keyfile password and passphrase are in .env — do not commit it to git."
 }
 
+# ── Step 4b: Generate local TLS certificates (mkcert) ─────────────────
+info "Setting up local HTTPS certificates..."
+if bash "${INSTALL_DIR}/scripts/ensure-local-certs.sh"; then
+  CERT_DIR="${TELAGENT_HOME:-$HOME/.telagent}/tls"
+  MKCERT_BIN="${TELAGENT_HOME:-$HOME/.telagent}/bin/mkcert"
+  # Also check PATH
+  command -v mkcert &>/dev/null && MKCERT_BIN="$(command -v mkcert)"
+
+  if [ -f "${CERT_DIR}/cert.pem" ] && [ -f "${CERT_DIR}/key.pem" ]; then
+    # Enable TLS in .env
+    sed -i.bak "s|# TELAGENT_TLS_CERT=/path/to/cert.pem|TELAGENT_TLS_CERT=${CERT_DIR}/cert.pem|" .env
+    sed -i.bak "s|# TELAGENT_TLS_KEY=/path/to/key.pem|TELAGENT_TLS_KEY=${CERT_DIR}/key.pem|" .env
+    sed -i.bak "s|# TELAGENT_TLS_PORT=9443|TELAGENT_TLS_PORT=9443|" .env
+    rm -f .env.bak
+
+    # Set NODE_EXTRA_CA_CERTS so Node.js trusts the mkcert CA
+    CA_ROOT=$("$MKCERT_BIN" -CAROOT 2>/dev/null || true)
+    if [ -n "$CA_ROOT" ] && [ -f "${CA_ROOT}/rootCA.pem" ]; then
+      echo "" >> .env
+      echo "# mkcert root CA (so Node.js trusts locally-issued certs)" >> .env
+      echo "NODE_EXTRA_CA_CERTS=${CA_ROOT}/rootCA.pem" >> .env
+    fi
+    ok "TLS enabled: https://127.0.0.1:9443"
+  fi
+else
+  warn "Certificate setup failed — continuing without TLS (plain HTTP)"
+fi
+
 # ── Step 5: Build workspace packages ─────────────────────────────────
 info "Building workspace packages..."
 pnpm --filter @telagent/protocol build
@@ -372,8 +400,27 @@ esac
 # ── Wait for node to be ready ─────────────────────────────────────────
 info "Waiting for TelAgent node to start..."
 READY=false
+
+# Determine health check URL based on TLS config
+HEALTH_URL="http://127.0.0.1:9529/api/v1/node/"
+API_URL="http://127.0.0.1:9529"
+WEBAPP_URL="http://localhost:5173"
+CURL_OPTS="-fs"
+if grep -q '^TELAGENT_TLS_CERT=' .env 2>/dev/null; then
+  HEALTH_URL="https://127.0.0.1:9443/api/v1/node/"
+  API_URL="https://127.0.0.1:9443"
+  WEBAPP_URL="https://localhost:5173"
+  # Use --cacert if NODE_EXTRA_CA_CERTS is configured, otherwise --insecure
+  CA_PEM=$(grep '^NODE_EXTRA_CA_CERTS=' .env 2>/dev/null | cut -d= -f2)
+  if [ -n "$CA_PEM" ] && [ -f "$CA_PEM" ]; then
+    CURL_OPTS="-fs --cacert ${CA_PEM}"
+  else
+    CURL_OPTS="-fsk"
+  fi
+fi
+
 for i in $(seq 1 15); do
-  if curl -fs http://127.0.0.1:9529/api/v1/node/ &>/dev/null; then
+  if curl $CURL_OPTS "$HEALTH_URL" &>/dev/null; then
     READY=true
     break
   fi
@@ -384,17 +431,17 @@ echo ""
 if [ "$READY" = true ]; then
   printf "${GREEN}${BOLD}TelAgent is running!${RESET}\n"
   echo ""
-  NODE_INFO=$(curl -fs http://127.0.0.1:9529/api/v1/identities/self 2>/dev/null || echo '{}')
+  NODE_INFO=$(curl $CURL_OPTS "${API_URL}/api/v1/identities/self" 2>/dev/null || echo '{}')
   DID=$(echo "$NODE_INFO" | jq -r '.data.did // empty' 2>/dev/null || true)
   if [ -n "$DID" ]; then
     printf "  ${BOLD}Your DID:${RESET}  %s\n" "$DID"
   fi
   echo ""
-  echo "  Node API:  http://127.0.0.1:9529"
+  echo "  Node API:  ${API_URL}"
   echo ""
   echo "  Start the WebApp (optional):"
   echo "    cd ${INSTALL_DIR} && pnpm --filter @telagent/webapp dev"
-  echo "    Then open http://localhost:5173 and enter your passphrase to connect."
+  echo "    Then open ${WEBAPP_URL} and enter your passphrase to connect."
 else
   printf "${YELLOW}${BOLD}TelAgent installed but node may still be starting.${RESET}\n"
   echo ""
@@ -414,6 +461,6 @@ else
       ;;
   esac
   echo ""
-  echo "  Once running, the API is at http://127.0.0.1:9529"
+  echo "  Once running, the API is at ${API_URL}"
 fi
 echo ""

@@ -1,4 +1,6 @@
-import { accessSync, constants as fsConstants } from 'node:fs';
+import { accessSync, existsSync, constants as fsConstants } from 'node:fs';
+import { join } from 'node:path';
+import { homedir } from 'node:os';
 
 import { ChainConfigSchema, type ChainConfig } from './services/chain-config.js';
 import {
@@ -135,6 +137,18 @@ export function loadConfigFromEnv(): AppConfig {
     };
   } else if (tlsCert || tlsKey) {
     throw new Error('Both TELAGENT_TLS_CERT and TELAGENT_TLS_KEY must be set to enable TLS');
+  } else {
+    // Auto-detect mkcert certs at ~/.telagent/tls/
+    const autoDir = join(process.env.TELAGENT_HOME || join(homedir(), '.telagent'), 'tls');
+    const autoCert = join(autoDir, 'cert.pem');
+    const autoKey = join(autoDir, 'key.pem');
+    if (existsSync(autoCert) && existsSync(autoKey)) {
+      tls = {
+        certPath: autoCert,
+        keyPath: autoKey,
+        httpsPort: Number(process.env.TELAGENT_TLS_PORT || 9443),
+      };
+    }
   }
 
   const chain = ChainConfigSchema.parse({

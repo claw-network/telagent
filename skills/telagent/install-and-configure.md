@@ -18,13 +18,14 @@ This will:
 3. Install dependencies
 4. Generate an encrypted keyfile (`~/.telagent/secrets/signer-key.json`) and passphrase
 5. Create `.env` with generated credentials
-6. Build workspace packages
-7. Install and start TelAgent as a system service:
+6. Generate local HTTPS certificates via mkcert (`~/.telagent/tls/cert.pem` + `key.pem`)
+7. Build workspace packages
+8. Install and start TelAgent as a system service:
    - **Linux**: systemd user service (`~/.config/systemd/user/telagent.service`)
    - **macOS**: launchd agent (`~/Library/LaunchAgents/org.telagent.node.plist`)
    - **Windows**: NSSM Windows service (auto-downloads `nssm.exe` if needed)
 
-After installation, the node API is available at `http://127.0.0.1:9529`.
+After installation, the node API is available at `https://127.0.0.1:9443` (HTTPS with mkcert). HTTP on port 9529 redirects to HTTPS.
 
 ---
 
@@ -42,10 +43,13 @@ After installation, the node API is available at `http://127.0.0.1:9529`.
 
 ```bash
 # Node info (no auth required)
-curl http://127.0.0.1:9529/api/v1/node/info
+curl https://127.0.0.1:9443/api/v1/node/info
 
 # Your DID
-curl http://127.0.0.1:9529/api/v1/identities/self
+curl https://127.0.0.1:9443/api/v1/identities/self
+
+# If HTTPS is not available (cert generation was skipped):
+curl http://127.0.0.1:9529/api/v1/node/info
 ```
 
 ---
@@ -58,6 +62,10 @@ The installer generates `.env` automatically. To customize, edit `~/telagent/.en
 |----------|---------|-------------|
 | `TELAGENT_API_HOST` | `127.0.0.1` | HTTP listen address |
 | `TELAGENT_API_PORT` | `9529` | HTTP listen port |
+| `TELAGENT_TLS_CERT` | _(auto-detected)_ | TLS certificate path (auto: `~/.telagent/tls/cert.pem`) |
+| `TELAGENT_TLS_KEY` | _(auto-detected)_ | TLS private key path (auto: `~/.telagent/tls/key.pem`) |
+| `TELAGENT_TLS_PORT` | `9443` | HTTPS listen port |
+| `NODE_EXTRA_CA_CERTS` | _(auto-set)_ | mkcert root CA path (required for Node.js to trust local certs) |
 | `TELAGENT_HOME` | `~/.telagent` | Data root directory |
 | `TELAGENT_SIGNER_PATH` | `~/.telagent/secrets/signer-key.json` | Path to encrypted keyfile |
 | `TELAGENT_SIGNER_PASSWORD` | _(generated)_ | Keyfile decryption password |
