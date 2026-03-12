@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # =============================================================================
-# Deploy install assets (setup.sh + mkcert binaries) to the Alex server.
+# Deploy install assets (setup.sh, setup.ps1, setup.cmd + mkcert binaries)
+# to the Alex server.
 # Also verifies Caddy config for install.telagent.org static file serving.
 #
 # Usage:
@@ -52,10 +53,12 @@ fi
 ok "SSH key exists"
 
 # Check local files
-if [ ! -f "$PROJECT_ROOT/scripts/setup.sh" ]; then
-  fail "setup.sh not found at $PROJECT_ROOT/scripts/setup.sh"
-fi
-ok "setup.sh found"
+for script_file in setup.sh setup.ps1 setup.cmd; do
+  if [ ! -f "$PROJECT_ROOT/scripts/$script_file" ]; then
+    fail "$script_file not found at $PROJECT_ROOT/scripts/$script_file"
+  fi
+done
+ok "setup.sh, setup.ps1, setup.cmd found"
 
 MKCERT_FILES=$(find "$LOCAL_MKCERT_DIR" -name 'mkcert-v*' -type f 2>/dev/null | wc -l | tr -d ' ')
 if [ "$MKCERT_FILES" -eq 0 ]; then
@@ -114,18 +117,22 @@ info "Preparing remote directories..."
 ssh $SSH_OPTS "$REMOTE" "mkdir -p $REMOTE_MKCERT_DIR"
 ok "Remote directory ready: $REMOTE_MKCERT_DIR"
 
-# ── Step 4: Upload setup.sh ──────────────────────────────────────────
+# ── Step 4: Upload setup scripts ─────────────────────────────────────
 echo ""
-info "Uploading setup.sh..."
-scp $SSH_OPTS "$PROJECT_ROOT/scripts/setup.sh" "$REMOTE:$REMOTE_ROOT/setup.sh"
+info "Uploading setup scripts..."
+for script_file in setup.sh setup.ps1 setup.cmd; do
+  scp $SSH_OPTS "$PROJECT_ROOT/scripts/$script_file" "$REMOTE:$REMOTE_ROOT/$script_file"
+  ssh $SSH_OPTS "$REMOTE" "chmod 644 $REMOTE_ROOT/$script_file"
+  REMOTE_SIZE=$(ssh $SSH_OPTS "$REMOTE" "wc -c < $REMOTE_ROOT/$script_file")
+  LOCAL_SIZE=$(wc -c < "$PROJECT_ROOT/scripts/$script_file" | tr -d ' ')
+  if [ "$REMOTE_SIZE" != "$LOCAL_SIZE" ]; then
+    warn "$script_file size mismatch! Local: $LOCAL_SIZE bytes, Remote: $REMOTE_SIZE bytes"
+  else
+    ok "$script_file uploaded ($LOCAL_SIZE bytes)"
+  fi
+done
+# setup.sh needs execute permission for curl|bash
 ssh $SSH_OPTS "$REMOTE" "chmod 755 $REMOTE_ROOT/setup.sh"
-REMOTE_SIZE=$(ssh $SSH_OPTS "$REMOTE" "wc -c < $REMOTE_ROOT/setup.sh")
-LOCAL_SIZE=$(wc -c < "$PROJECT_ROOT/scripts/setup.sh" | tr -d ' ')
-if [ "$REMOTE_SIZE" != "$LOCAL_SIZE" ]; then
-  warn "Size mismatch! Local: $LOCAL_SIZE bytes, Remote: $REMOTE_SIZE bytes"
-else
-  ok "setup.sh uploaded ($LOCAL_SIZE bytes)"
-fi
 
 # ── Step 5: Upload mkcert binaries ───────────────────────────────────
 echo ""
@@ -148,14 +155,17 @@ done
 echo ""
 info "Verifying HTTPS downloads..."
 
-# Verify setup.sh
-HTTP_CODE=$(curl -s -o /dev/null -w '%{http_code}' "$DOMAIN/setup.sh")
-if [ "$HTTP_CODE" = "200" ]; then
-  CONTENT_TYPE=$(curl -sI "$DOMAIN/setup.sh" | grep -i 'content-type' | tr -d '\r')
-  ok "setup.sh → HTTP $HTTP_CODE ($CONTENT_TYPE)"
-else
-  warn "setup.sh → HTTP $HTTP_CODE (expected 200)"
-fi
+# Verify setup scripts
+for script_file in setup.sh setup.ps1 setup.cmd; do
+  HTTP_CODE=$(curl -s -o /dev/null -w '%{http_code}' "$DOMAIN/$script_file")
+  if [ "$HTTP_CODE" = "200" ]; then
+    CONTENT_TYPE=$(curl -sI "$DOMAIN/$script_file" | grep -i 'content-type' | tr -d '\r')
+    ok "$script_file → HTTP $HTTP_CODE ($CONTENT_TYPE)"
+  else
+    warn "$script_file → HTTP $HTTP_CODE (expected 200)"
+    ALL_OK=false
+  fi
+done
 
 # Verify each mkcert binary
 ALL_OK=true
@@ -181,9 +191,13 @@ fi
 echo ""
 echo "  URLs:"
 echo "    $DOMAIN/setup.sh"
+echo "    $DOMAIN/setup.ps1"
+echo "    $DOMAIN/setup.cmd"
 echo "    $DOMAIN/binaries/mkcert/"
 echo ""
 echo "  One-click install:"
-echo "    curl -fsSL $DOMAIN/setup.sh | bash"
+echo "    Linux/Mac:          curl -fsSL $DOMAIN/setup.sh | bash"
+echo "    Windows PowerShell: iwr -useb $DOMAIN/setup.ps1 | iex"
+echo "    Windows CMD:        curl -fsSL $DOMAIN/setup.cmd -o setup.cmd && setup.cmd && del setup.cmd"
 echo "════════════════════════════════════════════════════════════"
 echo ""

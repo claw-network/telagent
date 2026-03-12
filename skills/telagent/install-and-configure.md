@@ -6,11 +6,22 @@
 
 ## Install & Start
 
+**Linux / macOS:**
 ```bash
 curl -fsSL https://install.telagent.org/setup.sh | bash
 ```
 
-Set `TELAGENT_INSTALL_DIR` to customize the install directory (default: `~/telagent`).
+**Windows PowerShell:**
+```powershell
+iwr -useb https://install.telagent.org/setup.ps1 | iex
+```
+
+**Windows CMD:**
+```cmd
+curl -fsSL https://install.telagent.org/setup.cmd -o setup.cmd && setup.cmd && del setup.cmd
+```
+
+Set `TELAGENT_INSTALL_DIR` to customize the install directory (default: `~/telagent` or `%USERPROFILE%\telagent`).
 
 This will:
 1. Check prerequisites (Node.js >=22, pnpm >=10, git)

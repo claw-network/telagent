@@ -26,10 +26,21 @@ This skill teaches the agent how to install, configure, and operate a TelAgent n
 
 ## One-Click Install
 
-For a fresh machine with Node.js >= 22, run:
+For a fresh machine with Node.js >= 22:
 
+**Linux / macOS:**
 ```bash
 curl -fsSL https://install.telagent.org/setup.sh | bash
+```
+
+**Windows PowerShell:**
+```powershell
+iwr -useb https://install.telagent.org/setup.ps1 | iex
+```
+
+**Windows CMD:**
+```cmd
+curl -fsSL https://install.telagent.org/setup.cmd -o setup.cmd && setup.cmd && del setup.cmd
 ```
 
 This clones the repo, installs dependencies, generates a private key and passphrase, creates `.env`, and builds workspace packages. After completion, run `pnpm dev` to start the node.
