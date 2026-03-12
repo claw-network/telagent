@@ -548,8 +548,8 @@ Inter-node communication is entirely via ClawNet P2P. Ensure `TELAGENT_CLAWNET_A
 
 All API requests (except a small whitelist of endpoints) must carry a valid `tses_*` session token. If the session has expired or the token is invalid, re-enter the passphrase on the connection page. If consecutive incorrect passphrase attempts triggered rate limiting (429 Too Many Requests), wait for the lockout period to end (up to 5 minutes) before retrying.
 
-### Q: 如何查看当前会话信息？
+### Q: How do I view current session info?
 
 ```bash
-curl -H 'Authorization: Bearer tses_你的会话令牌' https://127.0.0.1:9443/api/v1/session
+curl -H 'Authorization: Bearer tses_your_session_token' https://127.0.0.1:9443/api/v1/session
 ```
