@@ -1,4 +1,4 @@
-import { BookUserIcon, MessageCircleIcon } from "lucide-react"
+import { BookUserIcon, MessageCircleIcon, WalletIcon, StoreIcon } from "lucide-react"
 import { useEffect } from "react"
 import { useTranslation } from "react-i18next"
 import { Link } from "react-router-dom"
@@ -6,6 +6,7 @@ import { Link } from "react-router-dom"
 import { DidAvatar } from "@/components/shared/DidAvatar"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { useIdentityStore } from "@/stores/identity"
+import { useLocation, useNavigate } from "react-router-dom"
 
 type SidebarTab = "conversations" | "contacts"
 
@@ -20,6 +21,13 @@ export function ServerRail({ activeTab, onTabChange, suppressActive }: ServerRai
   const selfDid = useIdentityStore((state) => state.self?.did ?? "")
   const selfProfile = useIdentityStore((state) => state.selfProfile)
   const loadSelfProfile = useIdentityStore((state) => state.loadSelfProfile)
+  const location = useLocation()
+  const navigate = useNavigate()
+
+  const links = [
+    { to: "/market", icon: <StoreIcon className="size-5" />, label: t("market.title") },
+    { to: "/wallet", icon: <WalletIcon className="size-5" />, label: t("wallet.title") },
+  ]
 
   useEffect(() => {
     void loadSelfProfile()
@@ -78,6 +86,35 @@ export function ServerRail({ activeTab, onTabChange, suppressActive }: ServerRai
                 </button>
               </TooltipTrigger>
               <TooltipContent side="right">{tab.label}</TooltipContent>
+            </Tooltip>
+          )
+        })}
+
+        <div className="h-px w-8 bg-white/10" />
+
+        {/* Page links (wallet, market) */}
+        {links.map((link) => {
+          const active = location.pathname.startsWith(link.to)
+          return (
+            <Tooltip key={link.to}>
+              <TooltipTrigger asChild>
+                <button
+                  type="button"
+                  aria-pressed={active}
+                  onClick={() => navigate(link.to)}
+                  className={`group relative flex size-10 items-center justify-center rounded-xl transition-all ${
+                    active
+                      ? "bg-[#404249] text-white"
+                      : "text-[#7d828a] hover:bg-[#35373c] hover:text-[#dcddde]"
+                  }`}
+                >
+                  {active && (
+                    <span className="absolute -left-3 top-1/2 h-5 w-1 -translate-y-1/2 rounded-r-full bg-white" />
+                  )}
+                  {link.icon}
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="right">{link.label}</TooltipContent>
             </Tooltip>
           )
         })}

@@ -15,7 +15,7 @@ export function MarketPage() {
   }, [refreshTasks])
 
   return (
-    <div className="mx-auto flex w-full max-w-6xl flex-col gap-4 p-4">
+    <div className="mx-auto flex h-full w-full max-w-6xl flex-col gap-4 overflow-auto p-4">
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-semibold">{t("market.title")}</h2>
       </div>

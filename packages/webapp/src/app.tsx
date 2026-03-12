@@ -15,6 +15,7 @@ import { MarketTaskPage } from "@/pages/market-task"
 import { SettingsPage } from "@/pages/settings"
 import { WalletPage } from "@/pages/wallet"
 import { WalletEscrowPage } from "@/pages/wallet-escrow"
+import { WalletTransferPage } from "@/pages/wallet-transfer"
 import { useConnectionStore } from "@/stores/connection"
 import { useIdentityStore } from "@/stores/identity"
 import { usePermissionStore } from "@/stores/permission"
@@ -96,6 +97,7 @@ export function App() {
             <Route path="/market" element={<MarketPage />} />
             <Route path="/market/tasks/:taskId" element={<MarketTaskPage />} />
             <Route path="/wallet" element={<WalletPage />} />
+            <Route path="/wallet/transfer" element={<WalletTransferPage />} />
             <Route path="/wallet/escrow/:escrowId" element={<WalletEscrowPage />} />
             <Route path="/settings" element={<SettingsPage />} />
           </Route>

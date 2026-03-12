@@ -22,7 +22,6 @@ import { DidAvatar } from "@/components/shared/DidAvatar"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { ScrollArea } from "@/components/ui/scroll-area"
 import { i18next } from "@/i18n"
 import { useConnectionStore } from "@/stores/connection"
 import { useIdentityStore } from "@/stores/identity"
@@ -37,9 +36,9 @@ type SettingsView = "main" | "profile" | "appearance" | "language" | "node"
 
 function SettingsShell({ children }: { children: ReactNode }) {
   return (
-    <ScrollArea className="h-full">
-      <div className="mx-auto w-full max-w-lg px-4 py-6">{children}</div>
-    </ScrollArea>
+    <div className="h-full overflow-y-auto">
+      <div className="mx-auto w-full max-w-lg px-3 py-6 sm:px-4">{children}</div>
+    </div>
   )
 }
 

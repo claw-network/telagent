@@ -53,7 +53,7 @@ export function ConversationList() {
           placeholder={t("chat.search")}
           onChange={(event) => setSearchQuery(event.target.value)}
         />
-        <ScrollArea className="h-full rounded-lg border bg-card/50">
+        <ScrollArea className="min-h-0 flex-1 rounded-lg border bg-card/50">
           <div className="space-y-1 p-2">
             {filtered.length === 0 ? (
               <EmptyState

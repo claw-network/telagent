@@ -29,7 +29,7 @@ export function DesktopLayout({ children }: DesktopLayoutProps) {
   const setSelectedConversationId = useConversationStore((state) => state.setSelectedConversationId)
   const location = useLocation()
   const navigate = useNavigate()
-  const isFullPage = location.pathname === "/settings"
+  const isFullPage = location.pathname === "/settings" || location.pathname.startsWith("/wallet") || location.pathname.startsWith("/market")
 
   const handleTabChange = (tab: SidebarTab) => {
     setSidebarTab(tab)
