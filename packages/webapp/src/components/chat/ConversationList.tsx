@@ -93,8 +93,8 @@ export function ConversationList() {
         </div>
       </div>
 
-      <ScrollArea className="min-h-0 flex-1 px-3 pt-3">
-        <div className="pb-4">
+      <ScrollArea className="min-h-0 flex-1">
+        <div className="overflow-hidden pb-4">
           {filtered.length === 0 ? (
             <p className="px-2 py-4 text-center text-xs text-[#7d828a]">
               {isSearching ? "没有匹配的会话" : "暂无会话"}
@@ -105,7 +105,7 @@ export function ConversationList() {
                 type="button"
                 key={conversation.conversationId}
                 onClick={() => handleSelect(conversation.conversationId)}
-                className={`mb-0.5 flex w-full items-center gap-3 rounded-lg px-2 py-2 text-left transition-colors ${
+                className={`mb-0.5 flex min-w-0 w-full items-center gap-3 overflow-hidden px-2 py-2 text-left transition-colors ${
                   conversation.conversationId === selectedConversationId
                     ? "bg-[#404249] text-[#f2f3f5]"
                     : "text-[#949ba4] hover:bg-[#35373c] hover:text-[#dbdee1]"
@@ -130,7 +130,7 @@ export function ConversationList() {
                       </span>
                     ) : null}
                   </div>
-                  <p className="truncate text-xs text-[#949ba4]">
+                  <p className="truncate text-xs text-[#949ba4]" style={{ maxWidth: 172 }}>
                     {conversation.private ? "••••••" : (conversation.lastMessagePreview ?? "")}
                   </p>
                 </div>
