@@ -74,13 +74,13 @@ export function MessageInput() {
   }
 
   return (
-    <div className="border-t border-black/25 bg-[#313338] px-4 py-4">
-      <div className="flex items-center gap-2 rounded-lg bg-[#383a40] px-3 py-2">
+    <div className="border-t border-border bg-background px-4 py-4">
+      <div className="flex items-center gap-2 rounded-lg bg-muted px-3 py-2">
         <Button
           type="button"
           variant="ghost"
           size="icon"
-          className="size-8 text-[#b5bac1] hover:bg-[#4a4d55]"
+          className="size-8 text-muted-foreground hover:bg-accent"
           disabled={!canSend || sending}
           onClick={() => fileRef.current?.click()}
         >
@@ -98,7 +98,7 @@ export function MessageInput() {
               void onSend()
             }
           }}
-          className="h-9 border-none bg-transparent text-[17px] text-[#dcddde] placeholder:text-[#72767d] focus-visible:ring-0"
+          className="h-9"
         />
         <input
           ref={fileRef}
@@ -113,25 +113,25 @@ export function MessageInput() {
           type="button"
           variant="ghost"
           size="icon-sm"
-          className="text-[#b5bac1] hover:bg-[#4a4d55]"
+          className="text-muted-foreground hover:bg-accent"
           disabled={!canSend || sending}
           onClick={() => fileRef.current?.click()}
         >
           <PaperclipIcon className="size-4" />
         </Button>
-        <Button type="button" variant="ghost" size="icon-sm" className="text-[#b5bac1] hover:bg-[#4a4d55]">
+        <Button type="button" variant="ghost" size="icon-sm" className="text-muted-foreground hover:bg-accent">
           <GiftIcon className="size-4" />
         </Button>
-        <Button type="button" variant="ghost" size="icon-sm" className="text-[#b5bac1] hover:bg-[#4a4d55]">
+        <Button type="button" variant="ghost" size="icon-sm" className="text-muted-foreground hover:bg-accent">
           <StickerIcon className="size-4" />
         </Button>
-        <Button type="button" variant="ghost" size="icon-sm" className="text-[#b5bac1] hover:bg-[#4a4d55]">
+        <Button type="button" variant="ghost" size="icon-sm" className="text-muted-foreground hover:bg-accent">
           <SmileIcon className="size-4" />
         </Button>
         <Button
           type="button"
           size="icon"
-          className="size-8 rounded-md bg-[#5865f2] text-white hover:bg-[#5b6cf9]"
+          className="size-8 rounded-md bg-primary text-primary-foreground hover:bg-primary/90"
           disabled={!canSend || sending || !text.trim()}
           onClick={() => void onSend()}
         >

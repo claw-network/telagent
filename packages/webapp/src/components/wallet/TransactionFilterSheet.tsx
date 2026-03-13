@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import {
   Sheet,
-  SheetBody,
   SheetClose,
   SheetContent,
   SheetHeader,
@@ -127,7 +126,7 @@ export function TransactionFilterSheet({ filters, onApply, activeCount }: Transa
           </button>
         </SheetHeader>
 
-        <SheetBody>
+        <div className="flex-1 overflow-y-auto px-4 pb-4">
           {/* Date Range */}
           <section className="mb-5">
             <h3 className="mb-2.5 text-sm font-semibold">{t("wallet.filter.dateRange")}</h3>
@@ -214,7 +213,7 @@ export function TransactionFilterSheet({ filters, onApply, activeCount }: Transa
           <Button className="w-full rounded-xl" size="lg" onClick={handleApply}>
             {t("wallet.filter.apply")}
           </Button>
-        </SheetBody>
+        </div>
       </SheetContent>
     </Sheet>
   )

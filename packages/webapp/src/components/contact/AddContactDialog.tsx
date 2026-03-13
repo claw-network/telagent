@@ -247,7 +247,7 @@ export function AddContactDialog({
               type="button"
               size="icon-xs"
               variant="ghost"
-              className="text-[#949ba4] hover:bg-[#35373c] hover:text-[#dbdee1]"
+              className="text-muted-foreground hover:bg-accent hover:text-foreground"
               disabled={!canExecute}
               aria-label={title}
             >

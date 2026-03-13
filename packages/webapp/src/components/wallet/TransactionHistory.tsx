@@ -218,7 +218,7 @@ export function TransactionHistory() {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder={t("wallet.searchHistory")}
-          className="h-9 rounded-xl bg-muted/50 pl-9 text-sm"
+          className="h-9 pl-9 text-sm"
         />
       </div>
 

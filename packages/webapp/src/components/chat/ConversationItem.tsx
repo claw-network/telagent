@@ -28,7 +28,7 @@ export function ConversationItem({ conversation, selected, onSelect }: Conversat
       onClick={() => onSelect(conversation.conversationId)}
       className={cn(
         "flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left transition-colors",
-        selected ? "bg-accent" : "hover:bg-accent/60",
+        selected ? "bg-accent" : "hover:bg-accent",
       )}
     >
       <DidAvatar did={conversation.peerDid ?? conversation.groupId ?? conversation.conversationId} avatarUrl={conversation.avatarUrl ?? undefined} />

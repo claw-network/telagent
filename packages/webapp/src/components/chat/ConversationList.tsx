@@ -77,18 +77,18 @@ export function ConversationList() {
   }
 
   return (
-    <div className="flex h-full flex-col text-[#b5bac1]">
-      <div className="border-b border-black/25 px-3 py-3 shadow-[0_1px_0_rgba(0,0,0,0.25)]">
+    <div className="flex h-full flex-col text-foreground">
+      <div className="border-b border-border px-3 py-3 shadow-sm">
         <div className="relative">
           <SearchIcon
-            className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-[#949ba4]"
+            className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
             strokeWidth={1.8}
           />
           <Input
             value={searchQuery}
             placeholder={t("chat.search")}
             onChange={(event) => setSearchQuery(event.target.value)}
-            className="h-9 border-none bg-[#1e1f22] pl-9 text-sm text-[#dcddde] placeholder:text-[#72767d] focus-visible:ring-0"
+            className="h-9 pl-9 text-sm"
           />
         </div>
       </div>
@@ -96,7 +96,7 @@ export function ConversationList() {
       <ScrollArea className="min-h-0 flex-1">
         <div className="overflow-hidden pb-4">
           {filtered.length === 0 ? (
-            <p className="px-2 py-4 text-center text-xs text-[#7d828a]">
+            <p className="px-2 py-4 text-center text-xs text-muted-foreground">
               {isSearching ? "没有匹配的会话" : "暂无会话"}
             </p>
           ) : (
@@ -107,8 +107,8 @@ export function ConversationList() {
                 onClick={() => handleSelect(conversation.conversationId)}
                 className={`mb-0.5 flex min-w-0 w-full items-center gap-3 overflow-hidden px-2 py-2 text-left transition-colors ${
                   conversation.conversationId === selectedConversationId
-                    ? "bg-[#404249] text-[#f2f3f5]"
-                    : "text-[#949ba4] hover:bg-[#35373c] hover:text-[#dbdee1]"
+                    ? "bg-accent text-foreground"
+                    : "text-muted-foreground hover:bg-accent hover:text-foreground"
                 }`}
               >
                 <DidAvatar
@@ -118,11 +118,11 @@ export function ConversationList() {
                 />
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center justify-between gap-2">
-                    <span className="truncate text-sm font-semibold text-[#f2f3f5]">
+                    <span className="truncate text-sm font-semibold text-foreground">
                       {conversation.displayName}
                     </span>
                     {conversation.lastMessageAtMs ? (
-                      <span className="shrink-0 text-[11px] text-[#949ba4]">
+                      <span className="shrink-0 text-[11px] text-muted-foreground">
                         {new Date(conversation.lastMessageAtMs).toLocaleTimeString([], {
                           hour: "2-digit",
                           minute: "2-digit",
@@ -130,7 +130,7 @@ export function ConversationList() {
                       </span>
                     ) : null}
                   </div>
-                  <p className="truncate text-xs text-[#949ba4]" style={{ maxWidth: 172 }}>
+                  <p className="truncate text-xs text-muted-foreground" style={{ maxWidth: 172 }}>
                     {conversation.private ? "••••••" : (conversation.lastMessagePreview ?? "")}
                   </p>
                 </div>

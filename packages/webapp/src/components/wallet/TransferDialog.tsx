@@ -14,8 +14,8 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
+import { Field, FieldGroup, FieldLabel } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import { useWalletStore } from "@/stores/wallet"
 
 interface TransferDialogProps {
@@ -82,9 +82,9 @@ export function TransferDialog({ onTransferred }: TransferDialogProps) {
           <DialogDescription>{t("wallet.transferDescription")}</DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-3 py-2">
-          <div className="space-y-2">
-            <Label htmlFor="transfer-to">{t("wallet.toDid")}</Label>
+        <FieldGroup className="py-2">
+          <Field>
+            <FieldLabel htmlFor="transfer-to">{t("wallet.toDid")}</FieldLabel>
             <Input
               id="transfer-to"
               value={toDid}
@@ -92,9 +92,9 @@ export function TransferDialog({ onTransferred }: TransferDialogProps) {
               placeholder="did:claw:..."
               disabled={submitting}
             />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="transfer-amount">{t("wallet.amount")}</Label>
+          </Field>
+          <Field>
+            <FieldLabel htmlFor="transfer-amount">{t("wallet.amount")}</FieldLabel>
             <Input
               id="transfer-amount"
               type="number"
@@ -103,17 +103,17 @@ export function TransferDialog({ onTransferred }: TransferDialogProps) {
               onChange={(event) => setAmount(event.target.value)}
               disabled={submitting}
             />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="transfer-memo">{t("wallet.memo")}</Label>
+          </Field>
+          <Field>
+            <FieldLabel htmlFor="transfer-memo">{t("wallet.memo")}</FieldLabel>
             <Input
               id="transfer-memo"
               value={memo}
               onChange={(event) => setMemo(event.target.value)}
               disabled={submitting}
             />
-          </div>
-        </div>
+          </Field>
+        </FieldGroup>
 
         <DialogFooter>
           <Button variant="outline" onClick={() => setOpen(false)} disabled={submitting}>

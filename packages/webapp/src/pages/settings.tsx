@@ -19,9 +19,29 @@ import {
 import { toast } from "sonner"
 
 import { DidAvatar } from "@/components/shared/DidAvatar"
+import { Badge } from "@/components/ui/badge"
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarProvider,
+} from "@/components/ui/sidebar"
+import { useIsMobile } from "@/hooks/use-mobile"
 import { i18next } from "@/i18n"
 import { useConnectionStore } from "@/stores/connection"
 import { useIdentityStore } from "@/stores/identity"
@@ -37,21 +57,23 @@ type SettingsView = "main" | "profile" | "appearance" | "language" | "node"
 function SettingsShell({ children }: { children: ReactNode }) {
   return (
     <div className="h-full overflow-y-auto">
-      <div className="mx-auto w-full max-w-lg px-3 py-6 sm:px-4">{children}</div>
+      <div className="mx-auto w-full max-w-lg px-3 py-6 sm:px-4 md:max-w-3xl md:px-8">{children}</div>
     </div>
   )
 }
 
-function SubHeader({ title, onBack }: { title: string; onBack: () => void }) {
+function SubHeader({ title, onBack }: { title: string; onBack?: () => void }) {
   return (
     <div className="mb-4 flex items-center gap-3">
-      <button
-        onClick={onBack}
-        className="flex size-8 items-center justify-center rounded-full text-muted-foreground transition hover:bg-muted"
-      >
-        <ArrowLeftIcon className="size-5" />
-      </button>
-      <h2 className="text-lg font-semibold">{title}</h2>
+      {onBack && (
+        <button
+          onClick={onBack}
+          className="flex size-8 items-center justify-center rounded-full text-muted-foreground transition hover:bg-muted md:hidden"
+        >
+          <ArrowLeftIcon className="size-5" />
+        </button>
+      )}
+      <h2 className="text-lg font-semibold md:hidden">{title}</h2>
     </div>
   )
 }
@@ -82,7 +104,7 @@ function MenuRow({
       >
         {icon}
       </span>
-      <span className={`flex-1 text-sm ${destructive ? "text-red-400" : ""}`}>{label}</span>
+      <span className={`flex-1 text-sm ${destructive ? "text-destructive" : ""}`}>{label}</span>
       {value && <span className="text-xs text-muted-foreground">{value}</span>}
       {!destructive && <ChevronRightIcon className="size-4 text-muted-foreground" />}
     </button>
@@ -119,7 +141,7 @@ function ProfileInfoRow({ label, value, mono }: { label: string; value: string; 
 
 /* ─── profile sub-view ─── */
 
-function ProfileView({ onBack }: { onBack: () => void }) {
+function ProfileView({ onBack }: { onBack?: () => void }) {
   const { t } = useTranslation()
   const nodeUrl = useConnectionStore((s) => s.nodeUrl)
   const selfIdentity = useIdentityStore((s) => s.self)
@@ -199,7 +221,7 @@ function ProfileView({ onBack }: { onBack: () => void }) {
           <DidAvatar did={selfDid} avatarUrl={resolvedAvatarUrl} className="size-24" />
           <button
             onClick={() => fileInputRef.current?.click()}
-            className="absolute bottom-0 right-0 flex size-8 items-center justify-center rounded-full bg-blue-500 text-white shadow transition hover:bg-blue-400"
+            className="absolute bottom-0 right-0 flex size-8 items-center justify-center rounded-full bg-primary text-primary-foreground shadow transition hover:bg-primary/90"
           >
             <CameraIcon className="size-4" />
           </button>
@@ -219,8 +241,8 @@ function ProfileView({ onBack }: { onBack: () => void }) {
           <span
             className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium ${
               selfIdentity.isActive
-                ? "bg-emerald-500/15 text-emerald-400"
-                : "bg-red-500/15 text-red-400"
+                ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"
+                : "bg-red-500/15 text-destructive"
             }`}
           >
             <ShieldCheckIcon className="size-3" />
@@ -252,7 +274,7 @@ function ProfileView({ onBack }: { onBack: () => void }) {
       {!editing ? (
         <button
           onClick={() => setEditing(true)}
-          className="flex w-full items-center justify-center gap-2 rounded-xl bg-muted/40 py-3 text-sm text-blue-400 transition hover:bg-muted/60"
+          className="flex w-full items-center justify-center gap-2 rounded-xl bg-muted/40 py-3 text-sm text-primary transition hover:bg-muted/60"
         >
           <PencilIcon className="size-4" />
           {t("settings.profile.editInfo")}
@@ -294,7 +316,7 @@ function ProfileView({ onBack }: { onBack: () => void }) {
 
 /* ─── appearance sub-view ─── */
 
-function AppearanceView({ onBack }: { onBack: () => void }) {
+function AppearanceView({ onBack }: { onBack?: () => void }) {
   const { t } = useTranslation()
   const theme = useUIStore((s) => s.theme)
   const setTheme = useUIStore((s) => s.setTheme)
@@ -313,12 +335,12 @@ function AppearanceView({ onBack }: { onBack: () => void }) {
             key={o.value}
             onClick={() => setTheme(o.value)}
             className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition ${
-              theme === o.value ? "bg-blue-600/20 text-blue-400" : "hover:bg-muted"
+              theme === o.value ? "bg-primary/15 text-primary" : "hover:bg-muted"
             }`}
           >
             {o.icon}
             <span className="flex-1 text-left">{o.label}</span>
-            {theme === o.value && <CheckIcon className="size-4 text-blue-400" />}
+            {theme === o.value && <CheckIcon className="size-4 text-primary" />}
           </button>
         ))}
       </div>
@@ -328,7 +350,7 @@ function AppearanceView({ onBack }: { onBack: () => void }) {
 
 /* ─── language sub-view ─── */
 
-function LanguageView({ onBack }: { onBack: () => void }) {
+function LanguageView({ onBack }: { onBack?: () => void }) {
   const { t } = useTranslation()
   const locale = useUIStore((s) => s.locale)
   const setLocale = useUIStore((s) => s.setLocale)
@@ -352,11 +374,11 @@ function LanguageView({ onBack }: { onBack: () => void }) {
             key={o.value}
             onClick={() => void onChange(o.value)}
             className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition ${
-              locale === o.value ? "bg-blue-600/20 text-blue-400" : "hover:bg-muted"
+              locale === o.value ? "bg-primary/15 text-primary" : "hover:bg-muted"
             }`}
           >
             <span className="flex-1 text-left">{o.label}</span>
-            {locale === o.value && <CheckIcon className="size-4 text-blue-400" />}
+            {locale === o.value && <CheckIcon className="size-4 text-primary" />}
           </button>
         ))}
       </div>
@@ -366,36 +388,104 @@ function LanguageView({ onBack }: { onBack: () => void }) {
 
 /* ─── node sub-view ─── */
 
-function NodeView({ onBack }: { onBack: () => void }) {
+function NodeView({ onBack }: { onBack?: () => void }) {
   const { t } = useTranslation()
   const nodeUrl = useConnectionStore((s) => s.nodeUrl)
+  const connectionStatus = useConnectionStore((s) => s.status)
+  const reconnectHintVisible = useConnectionStore((s) => s.reconnectHintVisible)
+  const reconnectFromStorage = useConnectionStore((s) => s.reconnectFromStorage)
+  const pollingState = useUIStore((s) => s.pollingState)
+
+  const connected = connectionStatus === "connected"
 
   return (
     <SettingsShell>
       <SubHeader title={t("settings.node")} onBack={onBack} />
+
+      {/* Node URL */}
       <div className="rounded-xl bg-muted/40 p-4">
         <p className="text-xs text-muted-foreground">{t("settings.node")}</p>
         <p className="mt-1 break-all text-sm">{nodeUrl || t("common.disconnected")}</p>
+      </div>
+
+      {/* Connection status */}
+      <div className="mt-4 space-y-3 rounded-xl bg-muted/40 p-4">
+        <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+          {t("status.title", "Status")}
+        </p>
+        <div className="flex items-center justify-between">
+          <span className="text-sm">{t("common.connected")}</span>
+          <Badge variant={connected ? "success" : "destructive"}>{connectionStatus}</Badge>
+        </div>
+        <div className="flex items-center justify-between">
+          <span className="text-sm">{t("status.polling")}</span>
+          <Badge variant="secondary">{pollingState}</Badge>
+        </div>
+        <div className="flex items-center justify-between">
+          <span className="text-sm">{t("status.sync")}</span>
+          <Badge variant={connected ? "outline" : "destructive"}>{connected ? "ok" : "down"}</Badge>
+        </div>
+        {nodeUrl && reconnectHintVisible && (
+          <Button size="sm" variant="destructive" className="w-full" onClick={() => void reconnectFromStorage()}>
+            {t("status.reconnectNow")}
+          </Button>
+        )}
       </div>
     </SettingsShell>
   )
 }
 
-/* ─── main settings page ─── */
+/* ─── navigation items ─── */
 
-export function SettingsPage() {
+const NAV_ITEMS: { view: SettingsView; icon: typeof UserIcon; labelKey: string }[] = [
+  { view: "profile", icon: UserIcon, labelKey: "settings.profile.title" },
+  { view: "appearance", icon: PaletteIcon, labelKey: "settings.theme" },
+  { view: "language", icon: GlobeIcon, labelKey: "settings.language" },
+  { view: "node", icon: ServerIcon, labelKey: "settings.node" },
+]
+
+/* ─── view label for breadcrumb ─── */
+
+function useViewLabel(view: SettingsView) {
   const { t } = useTranslation()
-  const [view, setView] = useState<SettingsView>("main")
+  const map: Record<SettingsView, string> = {
+    main: t("settings.title"),
+    profile: t("settings.profile.title"),
+    appearance: t("settings.theme"),
+    language: t("settings.language"),
+    node: t("settings.node"),
+  }
+  return map[view]
+}
 
+/* ─── settings content renderer ─── */
+
+function SettingsContent({ view, onBack }: { view: SettingsView; onBack?: () => void }) {
+  switch (view) {
+    case "profile":
+      return <ProfileView onBack={onBack} />
+    case "appearance":
+      return <AppearanceView onBack={onBack} />
+    case "language":
+      return <LanguageView onBack={onBack} />
+    case "node":
+      return <NodeView onBack={onBack} />
+    default:
+      return null
+  }
+}
+
+/* ─── mobile settings main menu ─── */
+
+function MobileSettingsMain({ onNavigate }: { onNavigate: (view: SettingsView) => void }) {
+  const { t } = useTranslation()
   const nodeUrl = useConnectionStore((s) => s.nodeUrl)
   const disconnect = useConnectionStore((s) => s.disconnect)
   const clearPermissions = usePermissionStore((s) => s.clear)
   const clearSession = useSessionStore((s) => s.clear)
-
   const selfDid = useIdentityStore((s) => s.self?.did ?? "")
   const selfProfile = useIdentityStore((s) => s.selfProfile)
   const loadSelfProfile = useIdentityStore((s) => s.loadSelfProfile)
-
   const theme = useUIStore((s) => s.theme)
   const locale = useUIStore((s) => s.locale)
 
@@ -414,18 +504,13 @@ export function SettingsPage() {
     return url.startsWith("/") ? `${nodeUrl?.replace(/\/$/, "")}${url}` : url
   })()
 
-  if (view === "profile") return <ProfileView onBack={() => setView("main")} />
-  if (view === "appearance") return <AppearanceView onBack={() => setView("main")} />
-  if (view === "language") return <LanguageView onBack={() => setView("main")} />
-  if (view === "node") return <NodeView onBack={() => setView("main")} />
-
   return (
     <SettingsShell>
       <h2 className="mb-5 text-lg font-semibold">{t("settings.title")}</h2>
 
       {/* profile hero */}
       <button
-        onClick={() => setView("profile")}
+        onClick={() => onNavigate("profile")}
         className="mb-5 flex w-full items-center gap-3 rounded-xl bg-muted/40 p-4 text-left transition hover:bg-muted/60"
       >
         <DidAvatar did={selfDid} avatarUrl={resolvedAvatarUrl} className="size-14" />
@@ -436,32 +521,30 @@ export function SettingsPage() {
         <ChevronRightIcon className="size-4 shrink-0 text-muted-foreground" />
       </button>
 
-      {/* menu rows */}
       <div className="space-y-1 rounded-xl bg-muted/40 p-2">
         <MenuRow
           icon={<PaletteIcon className="size-4" />}
           iconBg="#7c3aed"
           label={t("settings.theme")}
           value={t(`theme.${theme}`)}
-          onClick={() => setView("appearance")}
+          onClick={() => onNavigate("appearance")}
         />
         <MenuRow
           icon={<GlobeIcon className="size-4" />}
           iconBg="#2563eb"
           label={t("settings.language")}
           value={locale.toUpperCase()}
-          onClick={() => setView("language")}
+          onClick={() => onNavigate("language")}
         />
         <MenuRow
           icon={<ServerIcon className="size-4" />}
           iconBg="#059669"
           label={t("settings.node")}
           value={nodeUrl ? new URL(nodeUrl).host : ""}
-          onClick={() => setView("node")}
+          onClick={() => onNavigate("node")}
         />
       </div>
 
-      {/* disconnect */}
       <div className="mt-4 rounded-xl bg-muted/40 p-2">
         <MenuRow
           icon={<LogOutIcon className="size-4" />}
@@ -472,5 +555,85 @@ export function SettingsPage() {
         />
       </div>
     </SettingsShell>
+  )
+}
+
+/* ─── main settings page ─── */
+
+export function SettingsPage() {
+  const { t } = useTranslation()
+  const isMobile = useIsMobile()
+  const [view, setView] = useState<SettingsView>(isMobile ? "main" : "profile")
+
+  const disconnect = useConnectionStore((s) => s.disconnect)
+  const clearPermissions = usePermissionStore((s) => s.clear)
+  const clearSession = useSessionStore((s) => s.clear)
+  const viewLabel = useViewLabel(view)
+
+  const onDisconnect = () => {
+    disconnect()
+    clearPermissions()
+    clearSession()
+  }
+
+  /* ── mobile: stack-based navigation ── */
+  if (isMobile) {
+    if (view === "main") {
+      return <MobileSettingsMain onNavigate={setView} />
+    }
+    return <SettingsContent view={view} onBack={() => setView("main")} />
+  }
+
+  /* ── desktop: sidebar + content ── */
+  return (
+    <SidebarProvider className="!min-h-0 h-full flex-1">
+      <Sidebar collapsible="none" className="hidden border-r bg-sidebar md:flex">
+        <SidebarContent>
+          <SidebarGroup>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {NAV_ITEMS.map((item) => (
+                  <SidebarMenuItem key={item.view}>
+                    <SidebarMenuButton
+                      isActive={view === item.view}
+                      onClick={() => setView(item.view)}
+                    >
+                      <item.icon />
+                      <span>{t(item.labelKey)}</span>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+                <SidebarMenuItem>
+                  <SidebarMenuButton onClick={onDisconnect} className="text-destructive hover:text-destructive">
+                    <LogOutIcon />
+                    <span>{t("settings.disconnect")}</span>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        </SidebarContent>
+      </Sidebar>
+      <main className="flex min-h-0 flex-1 flex-col overflow-hidden bg-background">
+        <header className="flex h-12 shrink-0 items-center border-b px-4">
+          <Breadcrumb>
+            <BreadcrumbList>
+              <BreadcrumbItem>
+                <BreadcrumbLink href="#" onClick={(e) => { e.preventDefault(); setView("profile") }}>
+                  {t("settings.title")}
+                </BreadcrumbLink>
+              </BreadcrumbItem>
+              <BreadcrumbSeparator />
+              <BreadcrumbItem>
+                <BreadcrumbPage>{viewLabel}</BreadcrumbPage>
+              </BreadcrumbItem>
+            </BreadcrumbList>
+          </Breadcrumb>
+        </header>
+        <div className="flex-1 overflow-y-auto">
+          <SettingsContent view={view} />
+        </div>
+      </main>
+    </SidebarProvider>
   )
 }

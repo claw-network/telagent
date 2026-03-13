@@ -39,18 +39,18 @@ export function FileBubble({
         )}
       >
           <div className="flex items-center gap-2">
-            <FileIcon className="size-4 text-muted-foreground" />
+            <FileIcon className="size-4 opacity-60" />
             <span className="max-w-56 truncate text-sm">{filename}</span>
             <Button variant="ghost" size="icon-xs" onClick={onDownload}>
               <DownloadIcon className="size-3.5" />
             </Button>
           </div>
           {attachmentManifestHash ? (
-            <p className="mt-1 text-[10px] text-muted-foreground">
+            <p className="mt-1 text-[10px] opacity-60">
               attachment: {shortHash(attachmentManifestHash, 8)}
             </p>
           ) : null}
-          <p className="mt-1 text-[10px] text-muted-foreground">
+          <p className="mt-1 text-[10px] opacity-60">
             {new Date(timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
           </p>
       </div>

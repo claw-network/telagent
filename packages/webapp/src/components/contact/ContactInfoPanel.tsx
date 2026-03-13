@@ -60,12 +60,12 @@ function InfoRow({ label, value, mono, copyable }: InfoRowProps) {
   }
   return (
     <div
-      className={`flex items-center justify-between gap-4 px-4 py-3 ${copyable ? "cursor-pointer hover:bg-[#35373c]" : ""}`}
+      className={`flex items-center justify-between gap-4 px-4 py-3 ${copyable ? "cursor-pointer hover:bg-accent" : ""}`}
       onClick={copyable ? handleCopy : undefined}
     >
-      <span className="shrink-0 text-sm text-[#949ba4]">{label}</span>
+      <span className="shrink-0 text-sm text-muted-foreground">{label}</span>
       <span
-        className={`max-w-[60%] truncate text-right text-sm text-[#f2f3f5] ${mono ? "font-mono text-xs" : ""}`}
+        className={`max-w-[60%] truncate text-right text-sm text-foreground ${mono ? "font-mono text-xs" : ""}`}
         title={value}
       >
         {value}
@@ -82,7 +82,7 @@ interface ActionButtonProps {
   onClick?: () => void
 }
 
-function ActionButton({ icon, label, color = "bg-[#3a82f7]", disabled, onClick }: ActionButtonProps) {
+function ActionButton({ icon, label, color = "bg-primary", disabled, onClick }: ActionButtonProps) {
   return (
     <button
       type="button"
@@ -95,7 +95,7 @@ function ActionButton({ icon, label, color = "bg-[#3a82f7]", disabled, onClick }
       >
         {icon}
       </span>
-      <span className="text-[11px] text-[#949ba4]">{label}</span>
+      <span className="text-[11px] text-muted-foreground">{label}</span>
     </button>
   )
 }
@@ -183,13 +183,13 @@ export function ContactInfoPanel({ did, onOpenChat, onContactRemoved }: ContactI
   const activeKey = chainProfile?.identity?.activeKey ?? identity?.publicKey
 
   return (
-    <div className="flex h-full flex-col bg-[#313338]">
+    <div className="flex h-full flex-col bg-background">
       <ScrollArea className="min-h-0 flex-1">
         {/* Hero block */}
         <div className="flex flex-col items-center pt-14 pb-6">
           <DidAvatar did={did} avatarUrl={avatarUrl} className="size-24 text-3xl" />
-          <h1 className="mt-4 text-2xl font-bold text-[#f2f3f5]">{displayName}</h1>
-          <p className="mt-1 text-sm text-[#949ba4]">{shortDid}</p>
+          <h1 className="mt-4 text-2xl font-bold text-foreground">{displayName}</h1>
+          <p className="mt-1 text-sm text-muted-foreground">{shortDid}</p>
         </div>
 
         {/* Action buttons */}
@@ -197,36 +197,36 @@ export function ContactInfoPanel({ did, onOpenChat, onContactRemoved }: ContactI
           <ActionButton
             icon={<MessageCircleIcon className="size-6" />}
             label="消息"
-            color="bg-[#3a82f7]"
+            color="bg-primary"
             onClick={handleOpenChat}
           />
           <ActionButton
             icon={<PhoneIcon className="size-6" />}
             label="音频"
-            color="bg-[#3a82f7]"
+            color="bg-primary"
             disabled
           />
           <ActionButton
             icon={<VideoIcon className="size-6" />}
             label="视频"
-            color="bg-[#3a82f7]"
+            color="bg-primary"
             disabled
           />
           <ActionButton
             icon={<EllipsisIcon className="size-6" />}
             label="更多"
-            color="bg-[#3a3b3e]"
+            color="bg-muted"
             disabled
           />
         </div>
 
         {/* Info card */}
-        <div className="mx-4 mb-4 overflow-hidden rounded-xl bg-[#2b2d31] divide-y divide-[#3f4147]">
+        <div className="mx-4 mb-4 overflow-hidden rounded-xl bg-card divide-y divide-border">
           <InfoRow label="DID 地址" value={did} mono copyable />
           {peerProfile?.nodeUrl ? <InfoRow label="节点" value={peerProfile.nodeUrl} /> : null}
           {chainLoading || identityLoading ? (
             <div className="flex items-center justify-between px-4 py-3">
-              <span className="text-sm text-[#949ba4]">链上信息</span>
+              <span className="text-sm text-muted-foreground">链上信息</span>
               <Skeleton className="h-4 w-24" />
             </div>
           ) : (
@@ -234,9 +234,9 @@ export function ContactInfoPanel({ did, onOpenChat, onContactRemoved }: ContactI
               {address ? <InfoRow label="钱包地址" value={address} mono copyable /> : null}
               {activeKey ? <InfoRow label="公钥" value={activeKey} mono copyable /> : null}
               <div className="flex items-center justify-between px-4 py-3">
-                <span className="text-sm text-[#949ba4]">状态</span>
+                <span className="text-sm text-muted-foreground">状态</span>
                 {isActive == null ? (
-                  <span className="text-sm text-[#949ba4]">-</span>
+                  <span className="text-sm text-muted-foreground">-</span>
                 ) : (
                   <Badge variant={isActive ? "success" : "destructive"}>
                     {isActive ? "活跃" : "未激活"}
@@ -253,7 +253,7 @@ export function ContactInfoPanel({ did, onOpenChat, onContactRemoved }: ContactI
             type="button"
             disabled={removing}
             onClick={() => void handleRemove()}
-            className="w-full rounded-xl bg-[#2b2d31] px-4 py-3 text-center text-sm font-medium text-[#ff453a] transition-colors hover:bg-[#35373c] disabled:opacity-50"
+            className="w-full rounded-xl bg-card px-4 py-3 text-center text-sm font-medium text-destructive transition-colors hover:bg-accent disabled:opacity-50"
           >
             {removing ? "删除中…" : t("contact.remove")}
           </button>

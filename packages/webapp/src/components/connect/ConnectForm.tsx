@@ -10,6 +10,13 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { Separator } from "@/components/ui/separator"
 import { cn } from "@/lib/utils"
 import { useConnectionStore } from "@/stores/connection"
@@ -485,16 +492,16 @@ export function ConnectForm() {
                   <Label htmlFor="gateway" className="mb-2 block text-[13px]">
                     {t("connect.did.gateway")}
                   </Label>
-                  <select
-                    id="gateway"
-                    value={gatewayUrl}
-                    onChange={(e) => setGatewayUrl(e.target.value)}
-                    className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                  >
-                    {DEFAULT_GATEWAYS.map((gw) => (
-                      <option key={gw.value} value={gw.value}>{gw.label}</option>
-                    ))}
-                  </select>
+                  <Select value={gatewayUrl} onValueChange={setGatewayUrl}>
+                    <SelectTrigger id="gateway" className="w-full">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {DEFAULT_GATEWAYS.map((gw) => (
+                        <SelectItem key={gw.value} value={gw.value}>{gw.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
               )}
 

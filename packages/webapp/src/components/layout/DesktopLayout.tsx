@@ -9,7 +9,6 @@ import { ContactList } from "@/components/contact/ContactList"
 import { ReconnectBanner } from "@/components/layout/ReconnectBanner"
 import { ServerRail } from "@/components/layout/ServerRail"
 import { ConversationList } from "@/components/chat/ConversationList"
-import { StatusBar } from "@/components/layout/StatusBar"
 import { UnlockDialog } from "@/components/session/UnlockDialog"
 import { Button } from "@/components/ui/button"
 import { useUIStore } from "@/stores/ui"
@@ -51,7 +50,7 @@ export function DesktopLayout({ children }: DesktopLayoutProps) {
         <ServerRail activeTab={sidebarTab} onTabChange={handleTabChange} suppressActive={isFullPage} />
 
         {!isFullPage && (
-          <aside className="flex w-[240px] min-w-[200px] flex-col bg-[#2b2d31]">
+          <aside className="flex w-[240px] min-w-[200px] flex-col border-r border-border bg-card">
             {sidebarTab === "conversations" ? (
               <ConversationList />
             ) : (
@@ -76,7 +75,7 @@ export function DesktopLayout({ children }: DesktopLayoutProps) {
         </main>
 
         {!isFullPage && sidebarTab === "conversations" && detailPanelOpen ? (
-          <aside className="hidden w-[320px] min-w-[280px] max-w-[460px] resize-x overflow-auto border-l bg-card/35 p-4 lg:block">
+          <aside className="hidden w-[320px] min-w-[280px] max-w-[460px] resize-x overflow-auto border-l border-border bg-card p-4 lg:block">
             <div className="mb-3 flex items-center justify-between">
               <h2 className="text-sm font-semibold">Details</h2>
               <Button variant="ghost" size="icon-sm" onClick={() => setDetailPanelOpen(false)}>
@@ -88,7 +87,6 @@ export function DesktopLayout({ children }: DesktopLayoutProps) {
         ) : null}
       </div>
 
-      <StatusBar />
       <UnlockDialog />
     </div>
   )

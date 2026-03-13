@@ -41,14 +41,14 @@ export function ContactList({ selectedDid, onSelect }: ContactListProps) {
   }, [contacts, query, getEffectiveDisplayName, getEffectiveAvatarUrl])
 
   return (
-    <div className="flex h-full flex-col text-[#b5bac1]">
+    <div className="flex h-full flex-col text-foreground">
       {/* Header */}
-      <div className="flex items-center justify-between border-b border-black/25 px-4 py-3 shadow-[0_1px_0_rgba(0,0,0,0.25)]">
-        <h2 className="text-sm font-semibold text-[#f2f3f5]">{t("contact.title")}</h2>
+      <div className="flex items-center justify-between border-b border-border px-4 py-3 shadow-sm">
+        <h2 className="text-sm font-semibold text-foreground">{t("contact.title")}</h2>
         <Button
           size="icon-xs"
           variant="ghost"
-          className="text-[#949ba4] hover:text-[#f2f3f5]"
+          className="text-muted-foreground hover:text-foreground"
           onClick={() => setAddOpen(true)}
           aria-label={t("contact.add")}
         >
@@ -60,14 +60,14 @@ export function ContactList({ selectedDid, onSelect }: ContactListProps) {
       <div className="px-3 pt-3 pb-2">
         <div className="relative">
           <SearchIcon
-            className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-[#949ba4]"
+            className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
             strokeWidth={1.8}
           />
           <Input
             value={query}
             placeholder={t("chat.search")}
             onChange={(e) => setQuery(e.target.value)}
-            className="h-8 border-none bg-[#1e1f22] pl-9 text-sm text-[#dcddde] placeholder:text-[#72767d] focus-visible:ring-0"
+            className="h-8 pl-9 text-sm"
           />
         </div>
       </div>
@@ -76,7 +76,7 @@ export function ContactList({ selectedDid, onSelect }: ContactListProps) {
       <ScrollArea className="min-h-0 flex-1 px-3">
         <div className="pb-4">
           {sorted.length === 0 ? (
-            <p className="px-2 py-4 text-center text-xs text-[#7d828a]">
+            <p className="px-2 py-4 text-center text-xs text-muted-foreground">
               {query ? "没有搜索结果" : "暂无联系人"}
             </p>
           ) : (
@@ -87,8 +87,8 @@ export function ContactList({ selectedDid, onSelect }: ContactListProps) {
                 onClick={() => onSelect(contact.did)}
                 className={`mb-0.5 flex w-full items-center gap-3 rounded-lg px-2 py-2 text-left transition-colors ${
                   selectedDid === contact.did
-                    ? "bg-[#404249] text-[#f2f3f5]"
-                    : "text-[#949ba4] hover:bg-[#35373c] hover:text-[#dbdee1]"
+                    ? "bg-accent text-foreground"
+                    : "text-muted-foreground hover:bg-accent hover:text-foreground"
                 }`}
               >
                 <DidAvatar
@@ -96,7 +96,7 @@ export function ContactList({ selectedDid, onSelect }: ContactListProps) {
                   avatarUrl={contact.avatarUrl}
                   className="size-9 shrink-0"
                 />
-                <span className="truncate text-sm font-semibold text-[#f2f3f5]">
+                <span className="truncate text-sm font-semibold text-foreground">
                   {contact.displayName}
                 </span>
               </button>

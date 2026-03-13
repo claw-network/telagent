@@ -82,21 +82,21 @@ export function MemberPresencePanel() {
   const offline = members.filter((item) => item.state === "offline")
 
   return (
-    <aside className="hidden w-[240px] border-l border-black/30 bg-[#2b2d31] text-[#b5bac1] xl:block">
+    <aside className="hidden w-[240px] border-l border-border bg-card text-foreground xl:block">
       <div className="h-full overflow-y-auto px-3 py-5">
         <section>
-          <h3 className="mb-2 px-1 text-xs font-semibold uppercase tracking-wide text-[#949ba4]">
+          <h3 className="mb-2 px-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
             Online - {online.length}
           </h3>
           <div className="space-y-2">
             {online.map((member) => (
-              <div key={member.did} className="flex items-center gap-2 rounded px-2 py-1.5 hover:bg-[#35373c]">
+              <div key={member.did} className="flex items-center gap-2 rounded px-2 py-1.5 hover:bg-accent">
                 <div className="relative">
                   <DidAvatar did={member.did} className="size-8" />
-                  <span className="absolute right-0 bottom-0 size-3 rounded-full border-2 border-[#2b2d31] bg-emerald-400" />
+                  <span className="absolute right-0 bottom-0 size-3 rounded-full border-2 border-card bg-emerald-400" />
                 </div>
                 <div className="min-w-0">
-                  <p className="truncate text-sm font-medium text-[#dbdee1]">
+                  <p className="truncate text-sm font-medium text-foreground">
                     {member.displayName}
                     <CrownIcon className="ml-1 inline size-3 text-amber-400" />
                   </p>
@@ -107,15 +107,15 @@ export function MemberPresencePanel() {
         </section>
 
         <section className="mt-6">
-          <h3 className="mb-2 px-1 text-xs font-semibold uppercase tracking-wide text-[#949ba4]">
+          <h3 className="mb-2 px-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
             Offline - {offline.length}
           </h3>
           <div className="space-y-2">
             {offline.length === 0 ? (
-              <p className="px-2 text-xs text-[#7d828a]">No offline members</p>
+              <p className="px-2 text-xs text-muted-foreground">No offline members</p>
             ) : (
               offline.map((member) => (
-                <div key={member.did} className="flex items-center gap-2 rounded-md px-2 py-1.5 opacity-70 hover:bg-[#35373c]">
+                <div key={member.did} className="flex items-center gap-2 rounded-md px-2 py-1.5 opacity-70 hover:bg-accent">
                   <DidAvatar did={member.did} className="size-8 grayscale" />
                   <p className="truncate text-sm">{member.displayName}</p>
                 </div>

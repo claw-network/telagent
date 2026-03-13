@@ -8,7 +8,7 @@ export function ModeBadge() {
 
   if (mode === "intervener") {
     return (
-      <Badge variant="secondary" className="gap-1 border border-blue-300/30 bg-blue-500/20 text-blue-200">
+      <Badge variant="secondary" className="gap-1 border border-primary/30 bg-primary/20 text-primary">
         <ShieldCheckIcon className="size-3.5" />
         Intervener
       </Badge>

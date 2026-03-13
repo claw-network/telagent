@@ -6,7 +6,15 @@ import { toast } from "sonner"
 
 import { DidAvatar } from "@/components/shared/DidAvatar"
 import { Button } from "@/components/ui/button"
+import { Field, FieldGroup, FieldLabel } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
+import {
+  InputGroup,
+  InputGroupInput,
+  InputGroupAddon,
+  InputGroupText,
+} from "@/components/ui/input-group"
+import { Textarea } from "@/components/ui/textarea"
 import { useGuardedAction } from "@/hooks/use-guarded-action"
 import { useSessionGuard } from "@/hooks/use-session-guard"
 import { useContactStore } from "@/stores/contact"
@@ -133,20 +141,21 @@ export function WalletTransferPage() {
   const HOLD_DURATION = 3000 // 3 seconds
 
   const tokenBalance = balance?.token ?? "0"
-  const maxAmount = Number.parseFloat(tokenBalance) || 0
+  const maxAmount = Math.floor(Number.parseFloat(tokenBalance)) || 0
 
   const isValid = (() => {
-    const parsedAmount = Number.parseFloat(amount)
+    const parsedAmount = Number.parseInt(amount, 10)
     return (
       toDid.trim().length > 0 &&
       Number.isFinite(parsedAmount) &&
       parsedAmount > 0 &&
-      parsedAmount <= maxAmount
+      parsedAmount <= maxAmount &&
+      String(parsedAmount) === amount.trim()
     )
   })()
 
   const handleSubmit = useCallback(async () => {
-    const parsedAmount = Number.parseFloat(amount)
+    const parsedAmount = Number.parseInt(amount, 10)
     if (!toDid.trim() || !Number.isFinite(parsedAmount) || parsedAmount <= 0) {
       toast.error(t("wallet.transferValidation"))
       return
@@ -252,96 +261,102 @@ export function WalletTransferPage() {
           </div>
 
           {/* To / Amount / Memo card */}
-          <div className="space-y-4 rounded-2xl border bg-card/60 p-4">
-            {/* Receiver DID */}
-            <div>
-              <p className="text-xs font-medium text-muted-foreground">{t("wallet.toDid")}</p>
-              <Input
-                className="mt-2 border-0 bg-transparent p-0 text-sm shadow-none placeholder:text-muted-foreground/60 focus-visible:ring-0"
-                value={toDid}
-                onChange={(e) => setToDid(e.target.value)}
-                placeholder="did:claw:..."
-                disabled={submitting}
-              />
+          <div className="rounded-2xl border bg-card/60 p-4">
+            <FieldGroup>
+              {/* Receiver DID */}
+              <Field>
+                <FieldLabel>{t("wallet.toDid")}</FieldLabel>
+                <InputGroup>
+                  <InputGroupAddon>
+                    <InputGroupText>did:claw:</InputGroupText>
+                  </InputGroupAddon>
+                  <InputGroupInput
+                    value={toDid.replace(/^did:claw:/, "")}
+                    onChange={(e) => setToDid(`did:claw:${e.target.value}`)}
+                    placeholder="address"
+                    disabled={submitting}
+                  />
+                </InputGroup>
 
-              {/* Recipient preview */}
-              {previewState !== "idle" && (
-                <div className="mt-3 flex items-center gap-3 rounded-xl bg-muted/50 px-3 py-2.5">
-                  {previewState === "loading" && (
-                    <>
-                      <LoaderIcon className="size-4 animate-spin text-muted-foreground" />
-                      <span className="text-sm text-muted-foreground">{t("contact.lookingUp")}</span>
-                    </>
-                  )}
-                  {previewState === "found" && (
-                    <>
-                      <DidAvatar did={toDid.trim()} avatarUrl={previewAvatar} className="size-9" />
-                      <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm font-medium">
-                          {previewNickname || compactDid(toDid.trim())}
-                        </p>
-                        {chainVerified ? (
-                          <p className="flex items-center gap-1 text-xs text-emerald-400">
-                            <CheckCircleIcon className="size-3" />
-                            {t("contact.identityFound")}
+                {/* Recipient preview */}
+                {previewState !== "idle" && (
+                  <div className="mt-1 flex items-center gap-3 rounded-xl bg-muted/50 px-3 py-2.5">
+                    {previewState === "loading" && (
+                      <>
+                        <LoaderIcon className="size-4 animate-spin text-muted-foreground" />
+                        <span className="text-sm text-muted-foreground">{t("contact.lookingUp")}</span>
+                      </>
+                    )}
+                    {previewState === "found" && (
+                      <>
+                        <DidAvatar did={toDid.trim()} avatarUrl={previewAvatar} className="size-9" />
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-sm font-medium">
+                            {previewNickname || compactDid(toDid.trim())}
                           </p>
-                        ) : (
-                          <p className="flex items-center gap-1 text-xs text-yellow-400">
-                            <AlertCircleIcon className="size-3" />
-                            {t("contact.identityNotFound")}
-                          </p>
-                        )}
-                      </div>
-                    </>
-                  )}
+                          {chainVerified ? (
+                            <p className="flex items-center gap-1 text-xs text-emerald-600 dark:text-emerald-400">
+                              <CheckCircleIcon className="size-3" />
+                              {t("contact.identityFound")}
+                            </p>
+                          ) : (
+                            <p className="flex items-center gap-1 text-xs text-amber-600 dark:text-yellow-400">
+                              <AlertCircleIcon className="size-3" />
+                              {t("contact.identityNotFound")}
+                            </p>
+                          )}
+                        </div>
+                      </>
+                    )}
+                  </div>
+                )}
+              </Field>
+
+              <hr className="border-border/50" />
+
+              {/* Amount */}
+              <Field data-invalid={!!(amount && Number.parseInt(amount, 10) > maxAmount)}>
+                <div className="flex items-center justify-between">
+                  <FieldLabel>{t("wallet.amount")}</FieldLabel>
+                  <button
+                    type="button"
+                    className="rounded-md bg-primary/10 px-2 py-0.5 text-[11px] font-semibold text-primary transition hover:bg-primary/20"
+                    onClick={() => setAmount(String(Math.floor(maxAmount)))}
+                    disabled={submitting}
+                  >
+                    MAX
+                  </button>
                 </div>
-              )}
-            </div>
-
-            <hr className="border-border/50" />
-
-            {/* Amount */}
-            <div>
-              <div className="flex items-center justify-between">
-                <p className="text-xs font-medium text-muted-foreground">{t("wallet.amount")}</p>
-                <button
-                  type="button"
-                  className="rounded-md bg-primary/10 px-2 py-0.5 text-[11px] font-semibold text-primary transition hover:bg-primary/20"
-                  onClick={() => setAmount(String(maxAmount))}
+                <Input
+                  type="number"
+                  min={1}
+                  max={maxAmount}
+                  step={1}
+                  value={amount}
+                  onChange={(e) => setAmount(e.target.value.replace(/[^0-9]/g, ""))}
+                  placeholder="0"
+                  aria-invalid={!!(amount && Number.parseInt(amount, 10) > maxAmount)}
                   disabled={submitting}
-                >
-                  MAX
-                </button>
-              </div>
-              <Input
-                className="mt-2 border-0 bg-transparent p-0 text-2xl font-bold shadow-none placeholder:text-muted-foreground/40 focus-visible:ring-0"
-                type="number"
-                min={0}
-                max={maxAmount}
-                step="any"
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-                placeholder="0.00"
-                disabled={submitting}
-              />
-              {amount && Number.parseFloat(amount) > maxAmount && (
-                <p className="mt-1 text-xs text-destructive">{t("wallet.transferValidation")}</p>
-              )}
-            </div>
+                />
+                {amount && Number.parseInt(amount, 10) > maxAmount && (
+                  <p className="text-xs text-destructive">{t("wallet.transferValidation")}</p>
+                )}
+              </Field>
 
-            <hr className="border-border/50" />
+              <hr className="border-border/50" />
 
-            {/* Memo */}
-            <div>
-              <p className="text-xs font-medium text-muted-foreground">{t("wallet.memo")}</p>
-              <Input
-                className="mt-2 border-0 bg-transparent p-0 text-sm shadow-none placeholder:text-muted-foreground/60 focus-visible:ring-0"
-                value={memo}
-                onChange={(e) => setMemo(e.target.value)}
-                placeholder={t("wallet.memo")}
-                disabled={submitting}
-              />
-            </div>
+              {/* Memo */}
+              <Field>
+                <FieldLabel>{t("wallet.memo")}</FieldLabel>
+                <Textarea
+                  value={memo}
+                  onChange={(e) => setMemo(e.target.value)}
+                  placeholder={t("wallet.memo")}
+                  disabled={submitting}
+                  className="resize-none"
+                />
+              </Field>
+            </FieldGroup>
           </div>
         </div>
 
