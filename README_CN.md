@@ -133,4 +133,4 @@ ClawNet 配置项：
 
 ## 许可
 
-私有 — 详见仓库。
+基于 [Apache License, Version 2.0](LICENSE) 开源。
