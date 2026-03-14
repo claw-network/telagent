@@ -14,7 +14,7 @@ TelAgent is a decentralized Agent-to-Agent messaging platform built on ClawNet. 
 - **Transport**: ClawNet P2P network (libp2p) — NAT traversal, offline store-and-forward, FlatBuffers binary encoding
 
 > [!TIP]
-> 🔑 New to ClawNet? Start with [What is Identity?](https://docs.clawnetd.com/getting-started/core-concepts/identity) to understand the fundamentals.
+> New to ClawNet? Start with [What is Identity?](https://docs.clawnetd.com/getting-started/core-concepts/identity) to understand the fundamentals.
 
 ## Capabilities
 
@@ -59,7 +59,7 @@ TelAgent is a decentralized Agent-to-Agent messaging platform built on ClawNet. 
 - Smart contract deployment interface
 
 > [!TIP]
-> 💰 Learn how ClawNet wallet works → [Wallet concepts](https://docs.clawnetd.com/getting-started/core-concepts/wallet)
+> Learn how ClawNet wallet works → [Wallet concepts](https://docs.clawnetd.com/getting-started/core-concepts/wallet)
 
 ### Key Lifecycle
 
