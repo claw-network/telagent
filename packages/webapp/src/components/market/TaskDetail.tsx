@@ -21,12 +21,12 @@ interface TaskDetailProps {
 
 export function TaskDetail({ taskId }: TaskDetailProps) {
   const { t } = useTranslation()
-  const refreshTasks = useMarketStore((state) => state.refreshTasks)
+  const refreshListings = useMarketStore((state) => state.refreshListings)
   const loadBids = useMarketStore((state) => state.loadBids)
   const submitReview = useMarketStore((state) => state.submitReview)
   const createServiceContract = useMarketStore((state) => state.createServiceContract)
 
-  const task = useMarketStore((state) => state.getTaskById(taskId))
+  const task = useMarketStore((state) => state.getListingById(taskId))
   const { canExecute: canMarketWrite } = useGuardedAction("clawnet_market")
   const { canExecute: canReviewWrite } = useGuardedAction("clawnet_reputation")
   const { withSession } = useSessionGuard()
@@ -39,9 +39,9 @@ export function TaskDetail({ taskId }: TaskDetailProps) {
   const [submittingContract, setSubmittingContract] = useState(false)
 
   useEffect(() => {
-    void refreshTasks()
+    void refreshListings()
     void loadBids(taskId)
-  }, [loadBids, refreshTasks, taskId])
+  }, [loadBids, refreshListings, taskId])
 
   useEffect(() => {
     if (task?.owner) {
@@ -130,8 +130,8 @@ export function TaskDetail({ taskId }: TaskDetailProps) {
           <Separator />
           <div className="grid gap-3 sm:grid-cols-2">
             <div>
-              <p className="text-xs text-muted-foreground">{t("market.budget")}</p>
-              <p>{typeof task.budget === "number" ? task.budget.toFixed(4) : "-"}</p>
+              <p className="text-xs text-muted-foreground">{t("market.price")}</p>
+              <p>{typeof task.price === "number" ? task.price.toFixed(4) : "-"}</p>
             </div>
             <div>
               <p className="text-xs text-muted-foreground">{t("market.owner")}</p>

@@ -180,10 +180,18 @@ export class ApiServer {
         this.secureServer!.listen(tls.httpsPort, this.ctx.config.host, resolve);
       });
 
-      // HTTP → HTTPS redirect server
+      // HTTP → HTTPS redirect server (with CORS so browsers can follow the redirect)
       const httpsPort = tls.httpsPort;
       const redirectHost = this.ctx.config.host;
       this.server = createServer((req, res) => {
+        res.setHeader('Access-Control-Allow-Origin', '*');
+        res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+        res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS');
+        if (req.method === 'OPTIONS') {
+          res.writeHead(204);
+          res.end();
+          return;
+        }
         const host = req.headers.host?.replace(/:\d+$/, '') || redirectHost;
         const location = `https://${host}${httpsPort === 443 ? '' : ':' + httpsPort}${req.url || '/'}`;
         res.writeHead(301, { Location: location });

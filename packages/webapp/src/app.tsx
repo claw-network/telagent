@@ -11,7 +11,7 @@ import { ChatInfoPage } from "@/pages/chat-info"
 import { ChatViewPage } from "@/pages/chat-view"
 import { ConnectPage } from "@/pages/connect"
 import { MarketPage } from "@/pages/market"
-import { MarketTaskPage } from "@/pages/market-task"
+import { MarketDetailPage } from "@/pages/market-detail"
 import { SettingsPage } from "@/pages/settings"
 import { WalletPage } from "@/pages/wallet"
 import { WalletEscrowPage } from "@/pages/wallet-escrow"
@@ -95,7 +95,7 @@ export function App() {
             <Route path="/chat/:conversationId" element={<ChatViewPage />} />
             <Route path="/chat/:conversationId/info" element={<ChatInfoPage />} />
             <Route path="/market" element={<MarketPage />} />
-            <Route path="/market/tasks/:taskId" element={<MarketTaskPage />} />
+            <Route path="/market/:type/:id" element={<MarketDetailPage />} />
             <Route path="/wallet" element={<WalletPage />} />
             <Route path="/wallet/transfer" element={<WalletTransferPage />} />
             <Route path="/wallet/escrow/:escrowId" element={<WalletEscrowPage />} />

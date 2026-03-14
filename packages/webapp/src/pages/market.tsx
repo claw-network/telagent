@@ -1,18 +1,18 @@
 import { useEffect } from "react"
 import { useTranslation } from "react-i18next"
 
-import { TaskList } from "@/components/market/TaskList"
+import { ListingList } from "@/components/market/ListingList"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { useMarketStore } from "@/stores/market"
 
 export function MarketPage() {
   const { t } = useTranslation()
-  const refreshTasks = useMarketStore((state) => state.refreshTasks)
+  const refreshListings = useMarketStore((state) => state.refreshListings)
   const error = useMarketStore((state) => state.error)
 
   useEffect(() => {
-    void refreshTasks()
-  }, [refreshTasks])
+    void refreshListings()
+  }, [refreshListings])
 
   return (
     <div className="mx-auto flex h-full w-full max-w-6xl flex-col gap-4 overflow-auto p-4">
@@ -23,13 +23,13 @@ export function MarketPage() {
       {error ? <p className="text-sm text-destructive">{error}</p> : null}
 
       <div className="grid gap-4 xl:grid-cols-[1fr_1fr]">
-        <TaskList />
+        <ListingList />
         <Card>
           <CardHeader>
-            <CardTitle>{t("market.taskDetail")}</CardTitle>
+            <CardTitle>{t("market.listingDetail")}</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-sm text-muted-foreground">{t("market.selectTask")}</p>
+            <p className="text-sm text-muted-foreground">{t("market.selectListing")}</p>
           </CardContent>
         </Card>
       </div>

@@ -27,16 +27,19 @@ function initialsFromDid(did: string): string {
 interface DidAvatarProps {
   did: string
   avatarUrl?: string
+  /** Override base URL for resolving relative avatar paths (used before connection is established) */
+  baseUrl?: string
   className?: string
 }
 
-export function DidAvatar({ did, avatarUrl, className }: DidAvatarProps) {
+export function DidAvatar({ did, avatarUrl, baseUrl, className }: DidAvatarProps) {
   const nodeUrl = useConnectionStore((state) => state.nodeUrl)
 
   // Resolve relative paths (e.g. /api/v1/profile/avatar) against the node URL
+  const base = baseUrl || nodeUrl
   const resolvedUrl =
-    avatarUrl && avatarUrl.startsWith("/") && nodeUrl
-      ? `${nodeUrl.replace(/\/$/, "")}${avatarUrl}`
+    avatarUrl && avatarUrl.startsWith("/") && base
+      ? `${base.replace(/\/$/, "")}${avatarUrl}`
       : avatarUrl
 
   return (

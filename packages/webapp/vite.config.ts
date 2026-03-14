@@ -15,6 +15,9 @@ const httpsConfig = existsSync(certPath) && existsSync(keyPath)
   ? { cert: readFileSync(certPath), key: readFileSync(keyPath) }
   : undefined
 
+const tlsPort = process.env.TELAGENT_TLS_PORT || "9443"
+const apiPort = process.env.TELAGENT_API_PORT || "9529"
+
 export default defineConfig({
   plugins: [react(), tailwindcss()],
   resolve: {
@@ -23,6 +26,11 @@ export default defineConfig({
       "@telagent/sdk": path.resolve(dirname, "../sdk/src/index.ts"),
       "@telagent/protocol": path.resolve(dirname, "../protocol/src/index.ts"),
     },
+  },
+  define: {
+    __TELAGENT_TLS__: JSON.stringify(!!httpsConfig),
+    __TELAGENT_TLS_PORT__: JSON.stringify(tlsPort),
+    __TELAGENT_API_PORT__: JSON.stringify(apiPort),
   },
   server: {
     https: httpsConfig,

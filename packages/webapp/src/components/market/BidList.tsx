@@ -18,6 +18,8 @@ export function BidList({ taskId }: BidListProps) {
   const loading = useMarketStore((state) => state.loadingBids)
   const loadBids = useMarketStore((state) => state.loadBids)
   const acceptBid = useMarketStore((state) => state.acceptBid)
+  const rejectBid = useMarketStore((state) => state.rejectBid)
+  const withdrawBid = useMarketStore((state) => state.withdrawBid)
 
   const { canExecute } = useGuardedAction("clawnet_market")
   const { withSession } = useSessionGuard()
@@ -32,6 +34,32 @@ export function BidList({ taskId }: BidListProps) {
       await loadBids(taskId)
     } catch (error) {
       toast.error(error instanceof Error ? error.message : t("market.acceptBidFailed"))
+    }
+  }
+
+  const onRejectBid = async (bidId: string) => {
+    try {
+      await withSession(
+        async (sessionToken) => rejectBid(sessionToken, taskId, bidId),
+        { requiredScope: ["market"] },
+      )
+      toast.success(t("market.rejectBidSuccess"))
+      await loadBids(taskId)
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : t("market.rejectBidFailed"))
+    }
+  }
+
+  const onWithdrawBid = async (bidId: string) => {
+    try {
+      await withSession(
+        async (sessionToken) => withdrawBid(sessionToken, taskId, bidId),
+        { requiredScope: ["market"] },
+      )
+      toast.success(t("market.withdrawBidSuccess"))
+      await loadBids(taskId)
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : t("market.withdrawBidFailed"))
     }
   }
 
@@ -58,9 +86,15 @@ export function BidList({ taskId }: BidListProps) {
               <p className="text-xs text-muted-foreground">{t("market.bidder")}: {bid.bidder ?? "-"}</p>
               {bid.proposal ? <p className="mt-1 text-xs text-muted-foreground">{bid.proposal}</p> : null}
               {canExecute ? (
-                <div className="mt-2">
+                <div className="mt-2 flex flex-wrap gap-2">
                   <Button size="sm" variant="secondary" onClick={() => void onAcceptBid(bid.id)}>
                     {t("market.acceptBid")}
+                  </Button>
+                  <Button size="sm" variant="outline" onClick={() => void onRejectBid(bid.id)}>
+                    {t("market.rejectBid")}
+                  </Button>
+                  <Button size="sm" variant="ghost" onClick={() => void onWithdrawBid(bid.id)}>
+                    {t("market.withdrawBid")}
                   </Button>
                 </div>
               ) : null}

@@ -293,6 +293,352 @@ export function clawnetRoutes(ctx: RuntimeContext): Router {
     }
   });
 
+  // ── Info Market ───────────────────────────────────────────────────────────
+
+  router.get('/market/info', async ({ res, query, url }) => {
+    try {
+      const filters: Record<string, unknown> = {};
+      for (const [key, value] of query.entries()) {
+        filters[key] = value;
+      }
+      const listings = await ctx.clawnetGateway.listInfoListings(filters);
+      ok(res, listings, { self: '/api/v1/clawnet/market/info' });
+    } catch (error) {
+      handleError(res, error, url.pathname);
+    }
+  });
+
+  router.get('/market/info/:id', async ({ res, params, url }) => {
+    try {
+      const listing = await ctx.clawnetGateway.getInfoListing(params.id);
+      ok(res, listing, { self: `/api/v1/clawnet/market/info/${encodeURIComponent(params.id)}` });
+    } catch (error) {
+      handleError(res, error, url.pathname);
+    }
+  });
+
+  router.post('/market/info', async ({ req, res, body, url }) => {
+    try {
+      requireScope(req.headers, ctx, 'clawnet_market');
+      const token = requireSessionToken(req.headers);
+      const payload = (body ?? {}) as { title?: string; description?: string; price?: number; tags?: string[] };
+      if (!payload.title || !payload.description || typeof payload.price !== 'number') {
+        throw new TelagentError(ErrorCodes.VALIDATION, 'title, description, price are required');
+      }
+      const result = await ctx.clawnetGateway.publishInfo(token, {
+        title: payload.title,
+        description: payload.description,
+        price: payload.price,
+        tags: payload.tags,
+      });
+      ok(res, result, { self: '/api/v1/clawnet/market/info' });
+    } catch (error) {
+      handleError(res, error, url.pathname);
+    }
+  });
+
+  router.post('/market/info/:id/purchase', async ({ req, res, params, url }) => {
+    try {
+      requireScope(req.headers, ctx, 'clawnet_market');
+      const token = requireSessionToken(req.headers);
+      const result = await ctx.clawnetGateway.purchaseInfo(token, params.id);
+      ok(res, result, { self: `/api/v1/clawnet/market/info/${encodeURIComponent(params.id)}/purchase` });
+    } catch (error) {
+      handleError(res, error, url.pathname);
+    }
+  });
+
+  router.post('/market/info/:id/deliver', async ({ req, res, params, body, url }) => {
+    try {
+      requireScope(req.headers, ctx, 'clawnet_market');
+      const token = requireSessionToken(req.headers);
+      const payload = (body ?? {}) as Record<string, unknown>;
+      const result = await ctx.clawnetGateway.deliverInfo(token, params.id, payload);
+      ok(res, result, { self: `/api/v1/clawnet/market/info/${encodeURIComponent(params.id)}/deliver` });
+    } catch (error) {
+      handleError(res, error, url.pathname);
+    }
+  });
+
+  router.post('/market/info/:id/confirm', async ({ req, res, params, url }) => {
+    try {
+      requireScope(req.headers, ctx, 'clawnet_market');
+      const token = requireSessionToken(req.headers);
+      const result = await ctx.clawnetGateway.confirmInfo(token, params.id);
+      ok(res, result, { self: `/api/v1/clawnet/market/info/${encodeURIComponent(params.id)}/confirm` });
+    } catch (error) {
+      handleError(res, error, url.pathname);
+    }
+  });
+
+  router.post('/market/info/:id/subscribe', async ({ req, res, params, url }) => {
+    try {
+      requireScope(req.headers, ctx, 'clawnet_market');
+      const token = requireSessionToken(req.headers);
+      const result = await ctx.clawnetGateway.subscribeInfo(token, params.id);
+      ok(res, result, { self: `/api/v1/clawnet/market/info/${encodeURIComponent(params.id)}/subscribe` });
+    } catch (error) {
+      handleError(res, error, url.pathname);
+    }
+  });
+
+  router.post('/market/info/:id/unsubscribe', async ({ req, res, params, url }) => {
+    try {
+      requireScope(req.headers, ctx, 'clawnet_market');
+      const token = requireSessionToken(req.headers);
+      const result = await ctx.clawnetGateway.unsubscribeInfo(token, params.id);
+      ok(res, result, { self: `/api/v1/clawnet/market/info/${encodeURIComponent(params.id)}/unsubscribe` });
+    } catch (error) {
+      handleError(res, error, url.pathname);
+    }
+  });
+
+  // ── Capability Market ─────────────────────────────────────────────────────
+
+  router.get('/market/capabilities', async ({ res, query, url }) => {
+    try {
+      const filters: Record<string, unknown> = {};
+      for (const [key, value] of query.entries()) {
+        filters[key] = value;
+      }
+      const capabilities = await ctx.clawnetGateway.listCapabilities(filters);
+      ok(res, capabilities, { self: '/api/v1/clawnet/market/capabilities' });
+    } catch (error) {
+      handleError(res, error, url.pathname);
+    }
+  });
+
+  router.get('/market/capabilities/:id', async ({ res, params, url }) => {
+    try {
+      const capability = await ctx.clawnetGateway.getCapability(params.id);
+      ok(res, capability, { self: `/api/v1/clawnet/market/capabilities/${encodeURIComponent(params.id)}` });
+    } catch (error) {
+      handleError(res, error, url.pathname);
+    }
+  });
+
+  router.post('/market/capabilities', async ({ req, res, body, url }) => {
+    try {
+      requireScope(req.headers, ctx, 'clawnet_market');
+      const token = requireSessionToken(req.headers);
+      const payload = (body ?? {}) as { title?: string; description?: string; pricePerInvocation?: number; maxConcurrentLeases?: number; tags?: string[] };
+      if (!payload.title || !payload.description || typeof payload.pricePerInvocation !== 'number') {
+        throw new TelagentError(ErrorCodes.VALIDATION, 'title, description, pricePerInvocation are required');
+      }
+      const result = await ctx.clawnetGateway.publishCapability(token, {
+        title: payload.title,
+        description: payload.description,
+        pricePerInvocation: payload.pricePerInvocation,
+        maxConcurrentLeases: payload.maxConcurrentLeases,
+        tags: payload.tags,
+      });
+      ok(res, result, { self: '/api/v1/clawnet/market/capabilities' });
+    } catch (error) {
+      handleError(res, error, url.pathname);
+    }
+  });
+
+  router.post('/market/capabilities/:id/lease', async ({ req, res, params, body, url }) => {
+    try {
+      requireScope(req.headers, ctx, 'clawnet_market');
+      const token = requireSessionToken(req.headers);
+      const payload = (body ?? {}) as { maxInvocations?: number; durationSeconds?: number };
+      const result = await ctx.clawnetGateway.leaseCapability(token, params.id, payload);
+      ok(res, result, { self: `/api/v1/clawnet/market/capabilities/${encodeURIComponent(params.id)}/lease` });
+    } catch (error) {
+      handleError(res, error, url.pathname);
+    }
+  });
+
+  router.post('/market/capabilities/:id/invoke', async ({ req, res, params, body, url }) => {
+    try {
+      requireScope(req.headers, ctx, 'clawnet_market');
+      const token = requireSessionToken(req.headers);
+      const payload = (body ?? {}) as { payload?: Record<string, unknown> };
+      if (!payload.payload) {
+        throw new TelagentError(ErrorCodes.VALIDATION, 'payload is required');
+      }
+      const result = await ctx.clawnetGateway.invokeCapability(token, params.id, { payload: payload.payload });
+      ok(res, result, { self: `/api/v1/clawnet/market/capabilities/${encodeURIComponent(params.id)}/invoke` });
+    } catch (error) {
+      handleError(res, error, url.pathname);
+    }
+  });
+
+  router.post('/market/capabilities/:id/pause', async ({ req, res, params, url }) => {
+    try {
+      requireScope(req.headers, ctx, 'clawnet_market');
+      const token = requireSessionToken(req.headers);
+      const result = await ctx.clawnetGateway.pauseLease(token, params.id);
+      ok(res, result, { self: `/api/v1/clawnet/market/capabilities/${encodeURIComponent(params.id)}/pause` });
+    } catch (error) {
+      handleError(res, error, url.pathname);
+    }
+  });
+
+  router.post('/market/capabilities/:id/resume', async ({ req, res, params, url }) => {
+    try {
+      requireScope(req.headers, ctx, 'clawnet_market');
+      const token = requireSessionToken(req.headers);
+      const result = await ctx.clawnetGateway.resumeLease(token, params.id);
+      ok(res, result, { self: `/api/v1/clawnet/market/capabilities/${encodeURIComponent(params.id)}/resume` });
+    } catch (error) {
+      handleError(res, error, url.pathname);
+    }
+  });
+
+  router.post('/market/capabilities/:id/terminate', async ({ req, res, params, url }) => {
+    try {
+      requireScope(req.headers, ctx, 'clawnet_market');
+      const token = requireSessionToken(req.headers);
+      const result = await ctx.clawnetGateway.terminateLease(token, params.id);
+      ok(res, result, { self: `/api/v1/clawnet/market/capabilities/${encodeURIComponent(params.id)}/terminate` });
+    } catch (error) {
+      handleError(res, error, url.pathname);
+    }
+  });
+
+  // ── Task Market (missing ops) ─────────────────────────────────────────────
+
+  router.post('/market/tasks/:taskId/reject-bid', async ({ req, res, params, body, url }) => {
+    try {
+      requireScope(req.headers, ctx, 'clawnet_market');
+      const token = requireSessionToken(req.headers);
+      const payload = (body ?? {}) as { bidId?: string };
+      if (!payload.bidId) {
+        throw new TelagentError(ErrorCodes.VALIDATION, 'bidId is required');
+      }
+      const result = await ctx.clawnetGateway.rejectBid(token, {
+        taskId: params.taskId,
+        bidId: payload.bidId,
+      });
+      ok(res, result, { self: `/api/v1/clawnet/market/tasks/${encodeURIComponent(params.taskId)}/reject-bid` });
+    } catch (error) {
+      handleError(res, error, url.pathname);
+    }
+  });
+
+  router.post('/market/tasks/:taskId/withdraw-bid', async ({ req, res, params, body, url }) => {
+    try {
+      requireScope(req.headers, ctx, 'clawnet_market');
+      const token = requireSessionToken(req.headers);
+      const payload = (body ?? {}) as { bidId?: string };
+      if (!payload.bidId) {
+        throw new TelagentError(ErrorCodes.VALIDATION, 'bidId is required');
+      }
+      const result = await ctx.clawnetGateway.withdrawBid(token, {
+        taskId: params.taskId,
+        bidId: payload.bidId,
+      });
+      ok(res, result, { self: `/api/v1/clawnet/market/tasks/${encodeURIComponent(params.taskId)}/withdraw-bid` });
+    } catch (error) {
+      handleError(res, error, url.pathname);
+    }
+  });
+
+  router.post('/market/tasks/:taskId/deliver', async ({ req, res, params, body, url }) => {
+    try {
+      requireScope(req.headers, ctx, 'clawnet_market');
+      const token = requireSessionToken(req.headers);
+      const payload = (body ?? {}) as Record<string, unknown>;
+      const result = await ctx.clawnetGateway.deliverTask(token, params.taskId, payload);
+      ok(res, result, { self: `/api/v1/clawnet/market/tasks/${encodeURIComponent(params.taskId)}/deliver` });
+    } catch (error) {
+      handleError(res, error, url.pathname);
+    }
+  });
+
+  router.post('/market/tasks/:taskId/confirm', async ({ req, res, params, url }) => {
+    try {
+      requireScope(req.headers, ctx, 'clawnet_market');
+      const token = requireSessionToken(req.headers);
+      const result = await ctx.clawnetGateway.confirmTask(token, params.taskId);
+      ok(res, result, { self: `/api/v1/clawnet/market/tasks/${encodeURIComponent(params.taskId)}/confirm` });
+    } catch (error) {
+      handleError(res, error, url.pathname);
+    }
+  });
+
+  // ── Disputes ──────────────────────────────────────────────────────────────
+
+  router.get('/market/disputes', async ({ res, query, url }) => {
+    try {
+      const filters: Record<string, unknown> = {};
+      for (const [key, value] of query.entries()) {
+        filters[key] = value;
+      }
+      const disputes = await ctx.clawnetGateway.listDisputes(filters);
+      ok(res, disputes, { self: '/api/v1/clawnet/market/disputes' });
+    } catch (error) {
+      handleError(res, error, url.pathname);
+    }
+  });
+
+  router.get('/market/disputes/:id', async ({ res, params, url }) => {
+    try {
+      const dispute = await ctx.clawnetGateway.getDispute(params.id);
+      ok(res, dispute, { self: `/api/v1/clawnet/market/disputes/${encodeURIComponent(params.id)}` });
+    } catch (error) {
+      handleError(res, error, url.pathname);
+    }
+  });
+
+  router.post('/market/disputes', async ({ req, res, body, url }) => {
+    try {
+      requireScope(req.headers, ctx, 'clawnet_market');
+      const token = requireSessionToken(req.headers);
+      const payload = (body ?? {}) as { orderId?: string; reason?: string; evidence?: string };
+      if (!payload.orderId || !payload.reason) {
+        throw new TelagentError(ErrorCodes.VALIDATION, 'orderId and reason are required');
+      }
+      const result = await ctx.clawnetGateway.openDispute(token, {
+        orderId: payload.orderId,
+        reason: payload.reason,
+        evidence: payload.evidence,
+      });
+      ok(res, result, { self: '/api/v1/clawnet/market/disputes' });
+    } catch (error) {
+      handleError(res, error, url.pathname);
+    }
+  });
+
+  router.post('/market/disputes/:id/respond', async ({ req, res, params, body, url }) => {
+    try {
+      requireScope(req.headers, ctx, 'clawnet_market');
+      const token = requireSessionToken(req.headers);
+      const payload = (body ?? {}) as { response?: string; evidence?: string };
+      if (!payload.response) {
+        throw new TelagentError(ErrorCodes.VALIDATION, 'response is required');
+      }
+      const result = await ctx.clawnetGateway.respondDispute(token, params.id, {
+        response: payload.response,
+        evidence: payload.evidence,
+      });
+      ok(res, result, { self: `/api/v1/clawnet/market/disputes/${encodeURIComponent(params.id)}/respond` });
+    } catch (error) {
+      handleError(res, error, url.pathname);
+    }
+  });
+
+  router.post('/market/disputes/:id/resolve', async ({ req, res, params, body, url }) => {
+    try {
+      requireScope(req.headers, ctx, 'clawnet_market');
+      const token = requireSessionToken(req.headers);
+      const payload = (body ?? {}) as { outcome?: string; splitRatio?: number; reason?: string };
+      if (!payload.outcome || !['refund', 'release', 'split'].includes(payload.outcome)) {
+        throw new TelagentError(ErrorCodes.VALIDATION, 'outcome must be one of: refund, release, split');
+      }
+      const result = await ctx.clawnetGateway.resolveDispute(token, params.id, {
+        outcome: payload.outcome as 'refund' | 'release' | 'split',
+        splitRatio: payload.splitRatio,
+        reason: payload.reason,
+      });
+      ok(res, result, { self: `/api/v1/clawnet/market/disputes/${encodeURIComponent(params.id)}/resolve` });
+    } catch (error) {
+      handleError(res, error, url.pathname);
+    }
+  });
+
   return router;
 }
 

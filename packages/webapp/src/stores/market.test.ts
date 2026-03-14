@@ -6,36 +6,42 @@ import { useMarketStore } from "@/stores/market"
 describe("useMarketStore", () => {
   beforeEach(() => {
     useMarketStore.setState({
-      tasks: [],
+      listings: [],
       searchResults: [],
       bidsByTask: {},
-      loadingTasks: false,
+      disputes: [],
+      activeFilter: "all",
+      loadingListings: false,
       loadingBids: false,
+      loadingDisputes: false,
       error: undefined,
     })
   })
 
-  it("refreshTasks normalizes and sorts task list", async () => {
+  it("refreshListings normalizes and sorts listing list", async () => {
     useConnectionStore.setState({
       sdk: {
         listTasks: async () => [
           { id: "task-1", title: "First", budget: 20 },
           { id: "task-2", title: "Second", budget: 50 },
         ],
+        listInfoListings: async () => [],
+        listCapabilities: async () => [],
       } as never,
     })
 
-    await useMarketStore.getState().refreshTasks()
+    await useMarketStore.getState().refreshListings()
 
-    const tasks = useMarketStore.getState().tasks
-    expect(tasks.map((item) => item.id)).toEqual(["task-2", "task-1"])
+    const listings = useMarketStore.getState().listings
+    expect(listings.map((item: { id: string }) => item.id)).toEqual(["task-2", "task-1"])
   })
 
-  it("getTaskById checks task list then search results", () => {
+  it("getListingById checks listings then search results", () => {
     useMarketStore.setState({
-      tasks: [
+      listings: [
         {
           id: "task-main",
+          type: "task",
           title: "Main",
           status: "open",
           raw: {},
@@ -44,6 +50,7 @@ describe("useMarketStore", () => {
       searchResults: [
         {
           id: "task-search",
+          type: "task",
           title: "Search",
           status: "open",
           raw: {},
@@ -51,10 +58,10 @@ describe("useMarketStore", () => {
       ],
     })
 
-    const fromTasks = useMarketStore.getState().getTaskById("task-main")
-    const fromSearch = useMarketStore.getState().getTaskById("task-search")
+    const fromListings = useMarketStore.getState().getListingById("task-main")
+    const fromSearch = useMarketStore.getState().getListingById("task-search")
 
-    expect(fromTasks?.title).toBe("Main")
+    expect(fromListings?.title).toBe("Main")
     expect(fromSearch?.title).toBe("Search")
   })
 })

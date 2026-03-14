@@ -23,7 +23,15 @@ import { useConnectionStore } from "@/stores/connection"
 import { useIdentityStore } from "@/stores/identity"
 import { usePermissionStore } from "@/stores/permission"
 
-const LOCAL_NODE_URL = "http://127.0.0.1:9529"
+declare const __TELAGENT_TLS__: boolean
+declare const __TELAGENT_TLS_PORT__: string
+declare const __TELAGENT_API_PORT__: string
+
+const LOCAL_NODE_URL = typeof __TELAGENT_TLS__ !== "undefined" && __TELAGENT_TLS__
+  ? `https://127.0.0.1:${__TELAGENT_TLS_PORT__}`
+  : location.protocol === "https:"
+    ? `https://127.0.0.1:${typeof __TELAGENT_TLS_PORT__ !== "undefined" ? __TELAGENT_TLS_PORT__ : "9443"}`
+    : `http://127.0.0.1:${typeof __TELAGENT_API_PORT__ !== "undefined" ? __TELAGENT_API_PORT__ : "9529"}`
 const DID_REGEX = /^did:claw:z[A-Za-z0-9]{32,}$/
 
 const DEFAULT_GATEWAYS = [
@@ -65,6 +73,8 @@ interface NodeInfo {
   did: string
   didHash: string
   version: string
+  nickname?: string
+  avatarUrl?: string
 }
 
 type ProbeStatus = "probing" | "found" | "not-found"
@@ -97,10 +107,28 @@ function useNodeProbe(targetUrl: string) {
         const selfBody = await selfRes.json()
         const self = selfBody.data ?? selfBody
 
+        // Profile is public — fetch nickname & avatar
+        let nickname: string | undefined
+        let avatarUrl: string | undefined
+        try {
+          const profRes = await fetch(new URL("/api/v1/profile", targetUrl).toString(), {
+            signal: controller.signal,
+            headers: { accept: "application/json" },
+          })
+          if (profRes.ok) {
+            const profBody = await profRes.json()
+            const prof = profBody.data ?? profBody
+            nickname = prof.nickname || undefined
+            avatarUrl = prof.avatarUrl || undefined
+          }
+        } catch { /* profile fetch is best-effort */ }
+
         setInfo({
           did: self.did ?? "",
           didHash: self.didHash ?? "",
           version: node.version ?? "unknown",
+          nickname,
+          avatarUrl,
         })
         setStatus("found")
       } catch {
@@ -195,7 +223,7 @@ function useDidProbe(did: string, gatewayUrl: string) {
 /*  Avatar probe display                                              */
 /* ------------------------------------------------------------------ */
 
-function NodeAvatar({ status, info, isLocal }: { status: ProbeStatus; info: NodeInfo | null; isLocal: boolean }) {
+function NodeAvatar({ status, info, isLocal, targetUrl }: { status: ProbeStatus; info: NodeInfo | null; isLocal: boolean; targetUrl?: string }) {
   const { t } = useTranslation()
 
   const isFound = status === "found" && info
@@ -225,7 +253,7 @@ function NodeAvatar({ status, info, isLocal }: { status: ProbeStatus; info: Node
 
         {/* Avatar */}
         {isFound ? (
-          <DidAvatar did={info.did} className="relative size-[72px] text-2xl" />
+          <DidAvatar did={info.did} avatarUrl={info.avatarUrl} baseUrl={targetUrl} className="relative size-[72px] text-2xl" />
         ) : (
           <Avatar className="relative size-[72px]">
             <AvatarFallback
@@ -255,6 +283,11 @@ function NodeAvatar({ status, info, isLocal }: { status: ProbeStatus; info: Node
                 v{info.version}
               </Badge>
             </div>
+            {info.nickname && (
+              <p className="text-sm font-medium text-foreground">
+                {info.nickname}
+              </p>
+            )}
             <p className="max-w-[300px] truncate font-mono text-[11px] leading-none text-muted-foreground/70">
               {info.did}
             </p>
@@ -299,12 +332,14 @@ function LocalNodeCard({
     >
       <div className="relative shrink-0">
         <div className="absolute inset-[-3px] rounded-full border-[2px] border-primary/20" />
-        <DidAvatar did={info.did} className="relative size-9 text-sm" />
+        <DidAvatar did={info.did} avatarUrl={info.avatarUrl} baseUrl={LOCAL_NODE_URL} className="relative size-9 text-sm" />
       </div>
       <div className="flex min-w-0 flex-1 flex-col">
         <div className="flex items-center gap-1.5">
           <span className="size-1.5 rounded-full bg-emerald-500" />
-          <span className="text-[13px] font-medium">{t("connect.local.found")}</span>
+          <span className="text-[13px] font-medium">
+            {info.nickname || t("connect.local.found")}
+          </span>
           <Badge variant="secondary" className="px-1.5 py-0 text-[9px] font-normal">
             v{info.version}
           </Badge>
@@ -424,6 +459,12 @@ export function ConnectForm() {
       ? (isLocalUrl(nodeInput.trim()) ? localProbeInfo : remoteProbeInfo)
       : null
 
+  const effectiveTargetUrl = isDid
+    ? gatewayUrl
+    : isUrlMode
+      ? (isLocalUrl(nodeInput.trim()) ? LOCAL_NODE_URL : remoteProbeTarget)
+      : LOCAL_NODE_URL
+
   const showAvatarSection = isDid
     ? didProbeStatus !== "idle"
     : showUrlAvatar
@@ -448,6 +489,7 @@ export function ConnectForm() {
                   status={effectiveProbeStatus}
                   info={effectiveInfo}
                   isLocal={isUrlMode && isLocalUrl(nodeInput.trim())}
+                  targetUrl={effectiveTargetUrl}
                 />
                 {isDid && latencyMs > 0 && (
                   <div className="flex justify-center -mt-2 mb-2">

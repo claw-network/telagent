@@ -70,6 +70,48 @@ export interface ReputationInfo {
   reviewCount: number;
 }
 
+export interface InfoListingInfo {
+  id: string;
+  title: string;
+  description: string;
+  price: number;
+  status: string;
+  owner: string;
+  tags?: string[];
+  [key: string]: unknown;
+}
+
+export interface CapabilityInfo {
+  id: string;
+  title: string;
+  description: string;
+  pricePerInvocation: number;
+  maxConcurrentLeases?: number;
+  status: string;
+  owner: string;
+  tags?: string[];
+  [key: string]: unknown;
+}
+
+export interface LeaseInfo {
+  id: string;
+  capabilityId: string;
+  status: string;
+  consumer: string;
+  invocationsUsed: number;
+  maxInvocations?: number;
+  [key: string]: unknown;
+}
+
+export interface DisputeInfo {
+  id: string;
+  orderId: string;
+  status: string;
+  reason: string;
+  evidence?: string;
+  [key: string]: unknown;
+}
+
 export class ClawNetGatewayService {
   public readonly client: ClawNetClient;
   private readonly unsafeClient: any;
@@ -194,6 +236,201 @@ export class ClawNetGatewayService {
   async searchMarkets(params?: { q?: string; type?: string }): Promise<unknown[]> {
     const result = await this.unsafeClient.markets.search(params as any);
     return result as unknown[];
+  }
+
+  // ── Info Market ───────────────────────────────────────────────────────────
+
+  async listInfoListings(filters?: Record<string, unknown>): Promise<InfoListingInfo[]> {
+    const result = await this.unsafeClient.markets.info.list(filters);
+    return result as InfoListingInfo[];
+  }
+
+  async getInfoListing(id: string): Promise<InfoListingInfo> {
+    const result = await this.unsafeClient.markets.info.get(id);
+    return result as InfoListingInfo;
+  }
+
+  async publishInfo(
+    sessionToken: string,
+    params: { title: string; description: string; price: number; tags?: string[] },
+  ): Promise<InfoListingInfo> {
+    return this.executeWithNonceRetry(sessionToken, 'market', 1,
+      (did, passphrase, nonce) => this.unsafeClient.markets.info.publish({ did, passphrase, nonce, ...params }),
+    );
+  }
+
+  async purchaseInfo(sessionToken: string, id: string): Promise<unknown> {
+    return this.executeWithNonceRetry(sessionToken, 'market', 1,
+      (did, passphrase, nonce) => this.unsafeClient.markets.info.purchase(id, { did, passphrase, nonce }),
+    );
+  }
+
+  async deliverInfo(
+    sessionToken: string,
+    id: string,
+    deliverable: Record<string, unknown>,
+  ): Promise<unknown> {
+    return this.executeWithNonceRetry(sessionToken, 'market', 1,
+      (did, passphrase, nonce) => this.unsafeClient.markets.info.deliver(id, { did, passphrase, nonce, ...deliverable }),
+    );
+  }
+
+  async confirmInfo(sessionToken: string, id: string): Promise<unknown> {
+    return this.executeWithNonceRetry(sessionToken, 'market', 1,
+      (did, passphrase, nonce) => this.unsafeClient.markets.info.confirm(id, { did, passphrase, nonce }),
+    );
+  }
+
+  async subscribeInfo(sessionToken: string, id: string): Promise<unknown> {
+    return this.executeWithNonceRetry(sessionToken, 'market', 1,
+      (did, passphrase, nonce) => this.unsafeClient.markets.info.subscribe(id, { did, passphrase, nonce }),
+    );
+  }
+
+  async unsubscribeInfo(sessionToken: string, id: string): Promise<unknown> {
+    return this.executeWithNonceRetry(sessionToken, 'market', 1,
+      (did, passphrase, nonce) => this.unsafeClient.markets.info.unsubscribe(id, { did, passphrase, nonce }),
+    );
+  }
+
+  // ── Capability Market ─────────────────────────────────────────────────────
+
+  async listCapabilities(filters?: Record<string, unknown>): Promise<CapabilityInfo[]> {
+    const result = await this.unsafeClient.markets.capabilities.list(filters);
+    return result as CapabilityInfo[];
+  }
+
+  async getCapability(id: string): Promise<CapabilityInfo> {
+    const result = await this.unsafeClient.markets.capabilities.get(id);
+    return result as CapabilityInfo;
+  }
+
+  async publishCapability(
+    sessionToken: string,
+    params: { title: string; description: string; pricePerInvocation: number; maxConcurrentLeases?: number; tags?: string[] },
+  ): Promise<CapabilityInfo> {
+    return this.executeWithNonceRetry(sessionToken, 'market', 1,
+      (did, passphrase, nonce) => this.unsafeClient.markets.capabilities.publish({ did, passphrase, nonce, ...params }),
+    );
+  }
+
+  async leaseCapability(
+    sessionToken: string,
+    id: string,
+    params: { maxInvocations?: number; durationSeconds?: number },
+  ): Promise<LeaseInfo> {
+    return this.executeWithNonceRetry(sessionToken, 'market', 1,
+      (did, passphrase, nonce) => this.unsafeClient.markets.capabilities.lease(id, { did, passphrase, nonce, ...params }),
+    );
+  }
+
+  async invokeCapability(
+    sessionToken: string,
+    leaseId: string,
+    params: { payload: Record<string, unknown> },
+  ): Promise<unknown> {
+    return this.executeWithNonceRetry(sessionToken, 'market', 1,
+      (did, passphrase, nonce) => this.unsafeClient.markets.capabilities.invoke(leaseId, { did, passphrase, nonce, ...params }),
+    );
+  }
+
+  async pauseLease(sessionToken: string, leaseId: string): Promise<unknown> {
+    return this.executeWithNonceRetry(sessionToken, 'market', 1,
+      (did, passphrase, nonce) => this.unsafeClient.markets.capabilities.pause(leaseId, { did, passphrase, nonce }),
+    );
+  }
+
+  async resumeLease(sessionToken: string, leaseId: string): Promise<unknown> {
+    return this.executeWithNonceRetry(sessionToken, 'market', 1,
+      (did, passphrase, nonce) => this.unsafeClient.markets.capabilities.resume(leaseId, { did, passphrase, nonce }),
+    );
+  }
+
+  async terminateLease(sessionToken: string, leaseId: string): Promise<unknown> {
+    return this.executeWithNonceRetry(sessionToken, 'market', 1,
+      (did, passphrase, nonce) => this.unsafeClient.markets.capabilities.terminate(leaseId, { did, passphrase, nonce }),
+    );
+  }
+
+  // ── Task Market (missing ops) ─────────────────────────────────────────────
+
+  async rejectBid(
+    sessionToken: string,
+    params: { taskId: string; bidId: string },
+  ): Promise<unknown> {
+    return this.executeWithNonceRetry(sessionToken, 'market', 1,
+      (did, passphrase, nonce) => this.unsafeClient.markets.tasks.rejectBid(params.taskId, {
+        did, passphrase, nonce, bidId: params.bidId,
+      }),
+    );
+  }
+
+  async withdrawBid(
+    sessionToken: string,
+    params: { taskId: string; bidId: string },
+  ): Promise<unknown> {
+    return this.executeWithNonceRetry(sessionToken, 'market', 1,
+      (did, passphrase, nonce) => this.unsafeClient.markets.tasks.withdrawBid(params.taskId, {
+        did, passphrase, nonce, bidId: params.bidId,
+      }),
+    );
+  }
+
+  async deliverTask(
+    sessionToken: string,
+    taskId: string,
+    deliverable: Record<string, unknown>,
+  ): Promise<unknown> {
+    return this.executeWithNonceRetry(sessionToken, 'market', 1,
+      (did, passphrase, nonce) => this.unsafeClient.markets.tasks.deliver(taskId, { did, passphrase, nonce, ...deliverable }),
+    );
+  }
+
+  async confirmTask(sessionToken: string, taskId: string): Promise<unknown> {
+    return this.executeWithNonceRetry(sessionToken, 'market', 1,
+      (did, passphrase, nonce) => this.unsafeClient.markets.tasks.confirm(taskId, { did, passphrase, nonce }),
+    );
+  }
+
+  // ── Disputes ──────────────────────────────────────────────────────────────
+
+  async listDisputes(filters?: Record<string, unknown>): Promise<DisputeInfo[]> {
+    const result = await this.unsafeClient.markets.disputes.list(filters);
+    return result as DisputeInfo[];
+  }
+
+  async getDispute(id: string): Promise<DisputeInfo> {
+    const result = await this.unsafeClient.markets.disputes.get(id);
+    return result as DisputeInfo;
+  }
+
+  async openDispute(
+    sessionToken: string,
+    params: { orderId: string; reason: string; evidence?: string },
+  ): Promise<DisputeInfo> {
+    return this.executeWithNonceRetry(sessionToken, 'market', 1,
+      (did, passphrase, nonce) => this.unsafeClient.markets.disputes.open({ did, passphrase, nonce, ...params }),
+    );
+  }
+
+  async respondDispute(
+    sessionToken: string,
+    disputeId: string,
+    params: { response: string; evidence?: string },
+  ): Promise<unknown> {
+    return this.executeWithNonceRetry(sessionToken, 'market', 1,
+      (did, passphrase, nonce) => this.unsafeClient.markets.disputes.respond(disputeId, { did, passphrase, nonce, ...params }),
+    );
+  }
+
+  async resolveDispute(
+    sessionToken: string,
+    disputeId: string,
+    params: { outcome: 'refund' | 'release' | 'split'; splitRatio?: number; reason?: string },
+  ): Promise<unknown> {
+    return this.executeWithNonceRetry(sessionToken, 'market', 1,
+      (did, passphrase, nonce) => this.unsafeClient.markets.disputes.resolve(disputeId, { did, passphrase, nonce, ...params }),
+    );
   }
 
   private wrapClawNetError(error: unknown, context?: string): TelagentError {

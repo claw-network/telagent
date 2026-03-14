@@ -179,6 +179,60 @@ export interface ReviewInput {
   orderId?: string;
 }
 
+// ── Info Market ─────────────────────────────────────────────────────────────
+
+export interface PublishInfoInput {
+  title: string;
+  description: string;
+  price: number;
+  tags?: string[];
+}
+
+export interface DeliverInput {
+  content?: string;
+  contentHash?: string;
+  contentType?: string;
+  metadata?: Record<string, unknown>;
+}
+
+// ── Capability Market ───────────────────────────────────────────────────────
+
+export interface PublishCapabilityInput {
+  title: string;
+  description: string;
+  pricePerInvocation: number;
+  maxConcurrentLeases?: number;
+  tags?: string[];
+}
+
+export interface LeaseCapabilityInput {
+  maxInvocations?: number;
+  durationSeconds?: number;
+}
+
+export interface InvokeCapabilityInput {
+  payload: Record<string, unknown>;
+}
+
+// ── Disputes ────────────────────────────────────────────────────────────────
+
+export interface OpenDisputeInput {
+  orderId: string;
+  reason: string;
+  evidence?: string;
+}
+
+export interface RespondDisputeInput {
+  response: string;
+  evidence?: string;
+}
+
+export interface ResolveDisputeInput {
+  outcome: 'refund' | 'release' | 'split';
+  splitRatio?: number;
+  reason?: string;
+}
+
 export interface TransferInput {
   to: AgentDID;
   amount: number;
@@ -666,6 +720,277 @@ export class TelagentSdk {
     const envelope = await this.requestData<unknown>('POST', '/api/v1/clawnet/contracts', payload, undefined, {
       authToken: sessionToken,
     });
+    return envelope.data;
+  }
+
+  // ── Info Market ───────────────────────────────────────────────────────────
+
+  async listInfoListings(filters?: Record<string, QueryValue>): Promise<unknown[]> {
+    const envelope = await this.requestData<unknown[]>('GET', '/api/v1/clawnet/market/info', undefined, filters);
+    return envelope.data;
+  }
+
+  async getInfoListing(id: string): Promise<unknown> {
+    const envelope = await this.requestData<unknown>('GET', `/api/v1/clawnet/market/info/${encodeURIComponent(id)}`);
+    return envelope.data;
+  }
+
+  async publishInfo(sessionToken: string, input: PublishInfoInput): Promise<unknown> {
+    const envelope = await this.requestData<unknown>('POST', '/api/v1/clawnet/market/info', input, undefined, {
+      authToken: sessionToken,
+    });
+    return envelope.data;
+  }
+
+  async purchaseInfo(sessionToken: string, id: string): Promise<unknown> {
+    const normalizedId = id.trim();
+    if (!normalizedId) throw new Error('id is required');
+    const envelope = await this.requestData<unknown>(
+      'POST',
+      `/api/v1/clawnet/market/info/${encodeURIComponent(normalizedId)}/purchase`,
+      undefined,
+      undefined,
+      { authToken: sessionToken },
+    );
+    return envelope.data;
+  }
+
+  async deliverInfo(sessionToken: string, id: string, input: DeliverInput): Promise<unknown> {
+    const normalizedId = id.trim();
+    if (!normalizedId) throw new Error('id is required');
+    const envelope = await this.requestData<unknown>(
+      'POST',
+      `/api/v1/clawnet/market/info/${encodeURIComponent(normalizedId)}/deliver`,
+      input,
+      undefined,
+      { authToken: sessionToken },
+    );
+    return envelope.data;
+  }
+
+  async confirmInfo(sessionToken: string, id: string): Promise<unknown> {
+    const normalizedId = id.trim();
+    if (!normalizedId) throw new Error('id is required');
+    const envelope = await this.requestData<unknown>(
+      'POST',
+      `/api/v1/clawnet/market/info/${encodeURIComponent(normalizedId)}/confirm`,
+      undefined,
+      undefined,
+      { authToken: sessionToken },
+    );
+    return envelope.data;
+  }
+
+  async subscribeInfo(sessionToken: string, id: string): Promise<unknown> {
+    const normalizedId = id.trim();
+    if (!normalizedId) throw new Error('id is required');
+    const envelope = await this.requestData<unknown>(
+      'POST',
+      `/api/v1/clawnet/market/info/${encodeURIComponent(normalizedId)}/subscribe`,
+      undefined,
+      undefined,
+      { authToken: sessionToken },
+    );
+    return envelope.data;
+  }
+
+  async unsubscribeInfo(sessionToken: string, id: string): Promise<unknown> {
+    const normalizedId = id.trim();
+    if (!normalizedId) throw new Error('id is required');
+    const envelope = await this.requestData<unknown>(
+      'POST',
+      `/api/v1/clawnet/market/info/${encodeURIComponent(normalizedId)}/unsubscribe`,
+      undefined,
+      undefined,
+      { authToken: sessionToken },
+    );
+    return envelope.data;
+  }
+
+  // ── Capability Market ─────────────────────────────────────────────────────
+
+  async listCapabilities(filters?: Record<string, QueryValue>): Promise<unknown[]> {
+    const envelope = await this.requestData<unknown[]>('GET', '/api/v1/clawnet/market/capabilities', undefined, filters);
+    return envelope.data;
+  }
+
+  async getCapability(id: string): Promise<unknown> {
+    const envelope = await this.requestData<unknown>('GET', `/api/v1/clawnet/market/capabilities/${encodeURIComponent(id)}`);
+    return envelope.data;
+  }
+
+  async publishCapability(sessionToken: string, input: PublishCapabilityInput): Promise<unknown> {
+    const envelope = await this.requestData<unknown>('POST', '/api/v1/clawnet/market/capabilities', input, undefined, {
+      authToken: sessionToken,
+    });
+    return envelope.data;
+  }
+
+  async leaseCapability(sessionToken: string, id: string, input: LeaseCapabilityInput = {}): Promise<unknown> {
+    const normalizedId = id.trim();
+    if (!normalizedId) throw new Error('id is required');
+    const envelope = await this.requestData<unknown>(
+      'POST',
+      `/api/v1/clawnet/market/capabilities/${encodeURIComponent(normalizedId)}/lease`,
+      input,
+      undefined,
+      { authToken: sessionToken },
+    );
+    return envelope.data;
+  }
+
+  async invokeCapability(sessionToken: string, leaseId: string, input: InvokeCapabilityInput): Promise<unknown> {
+    const normalizedId = leaseId.trim();
+    if (!normalizedId) throw new Error('leaseId is required');
+    const envelope = await this.requestData<unknown>(
+      'POST',
+      `/api/v1/clawnet/market/capabilities/${encodeURIComponent(normalizedId)}/invoke`,
+      input,
+      undefined,
+      { authToken: sessionToken },
+    );
+    return envelope.data;
+  }
+
+  async pauseLease(sessionToken: string, leaseId: string): Promise<unknown> {
+    const normalizedId = leaseId.trim();
+    if (!normalizedId) throw new Error('leaseId is required');
+    const envelope = await this.requestData<unknown>(
+      'POST',
+      `/api/v1/clawnet/market/capabilities/${encodeURIComponent(normalizedId)}/pause`,
+      undefined,
+      undefined,
+      { authToken: sessionToken },
+    );
+    return envelope.data;
+  }
+
+  async resumeLease(sessionToken: string, leaseId: string): Promise<unknown> {
+    const normalizedId = leaseId.trim();
+    if (!normalizedId) throw new Error('leaseId is required');
+    const envelope = await this.requestData<unknown>(
+      'POST',
+      `/api/v1/clawnet/market/capabilities/${encodeURIComponent(normalizedId)}/resume`,
+      undefined,
+      undefined,
+      { authToken: sessionToken },
+    );
+    return envelope.data;
+  }
+
+  async terminateLease(sessionToken: string, leaseId: string): Promise<unknown> {
+    const normalizedId = leaseId.trim();
+    if (!normalizedId) throw new Error('leaseId is required');
+    const envelope = await this.requestData<unknown>(
+      'POST',
+      `/api/v1/clawnet/market/capabilities/${encodeURIComponent(normalizedId)}/terminate`,
+      undefined,
+      undefined,
+      { authToken: sessionToken },
+    );
+    return envelope.data;
+  }
+
+  // ── Task Market (missing ops) ─────────────────────────────────────────────
+
+  async rejectBid(sessionToken: string, taskId: string, bidId: string): Promise<unknown> {
+    const normalizedTaskId = taskId.trim();
+    const normalizedBidId = bidId.trim();
+    if (!normalizedTaskId) throw new Error('taskId is required');
+    if (!normalizedBidId) throw new Error('bidId is required');
+    const envelope = await this.requestData<unknown>(
+      'POST',
+      `/api/v1/clawnet/market/tasks/${encodeURIComponent(normalizedTaskId)}/reject-bid`,
+      { bidId: normalizedBidId },
+      undefined,
+      { authToken: sessionToken },
+    );
+    return envelope.data;
+  }
+
+  async withdrawBid(sessionToken: string, taskId: string, bidId: string): Promise<unknown> {
+    const normalizedTaskId = taskId.trim();
+    const normalizedBidId = bidId.trim();
+    if (!normalizedTaskId) throw new Error('taskId is required');
+    if (!normalizedBidId) throw new Error('bidId is required');
+    const envelope = await this.requestData<unknown>(
+      'POST',
+      `/api/v1/clawnet/market/tasks/${encodeURIComponent(normalizedTaskId)}/withdraw-bid`,
+      { bidId: normalizedBidId },
+      undefined,
+      { authToken: sessionToken },
+    );
+    return envelope.data;
+  }
+
+  async deliverTask(sessionToken: string, taskId: string, input: DeliverInput): Promise<unknown> {
+    const normalizedTaskId = taskId.trim();
+    if (!normalizedTaskId) throw new Error('taskId is required');
+    const envelope = await this.requestData<unknown>(
+      'POST',
+      `/api/v1/clawnet/market/tasks/${encodeURIComponent(normalizedTaskId)}/deliver`,
+      input,
+      undefined,
+      { authToken: sessionToken },
+    );
+    return envelope.data;
+  }
+
+  async confirmTask(sessionToken: string, taskId: string): Promise<unknown> {
+    const normalizedTaskId = taskId.trim();
+    if (!normalizedTaskId) throw new Error('taskId is required');
+    const envelope = await this.requestData<unknown>(
+      'POST',
+      `/api/v1/clawnet/market/tasks/${encodeURIComponent(normalizedTaskId)}/confirm`,
+      undefined,
+      undefined,
+      { authToken: sessionToken },
+    );
+    return envelope.data;
+  }
+
+  // ── Disputes ──────────────────────────────────────────────────────────────
+
+  async listDisputes(filters?: Record<string, QueryValue>): Promise<unknown[]> {
+    const envelope = await this.requestData<unknown[]>('GET', '/api/v1/clawnet/market/disputes', undefined, filters);
+    return envelope.data;
+  }
+
+  async getDispute(disputeId: string): Promise<unknown> {
+    const envelope = await this.requestData<unknown>('GET', `/api/v1/clawnet/market/disputes/${encodeURIComponent(disputeId)}`);
+    return envelope.data;
+  }
+
+  async openDispute(sessionToken: string, input: OpenDisputeInput): Promise<unknown> {
+    const envelope = await this.requestData<unknown>('POST', '/api/v1/clawnet/market/disputes', input, undefined, {
+      authToken: sessionToken,
+    });
+    return envelope.data;
+  }
+
+  async respondDispute(sessionToken: string, disputeId: string, input: RespondDisputeInput): Promise<unknown> {
+    const normalizedId = disputeId.trim();
+    if (!normalizedId) throw new Error('disputeId is required');
+    const envelope = await this.requestData<unknown>(
+      'POST',
+      `/api/v1/clawnet/market/disputes/${encodeURIComponent(normalizedId)}/respond`,
+      input,
+      undefined,
+      { authToken: sessionToken },
+    );
+    return envelope.data;
+  }
+
+  async resolveDispute(sessionToken: string, disputeId: string, input: ResolveDisputeInput): Promise<unknown> {
+    const normalizedId = disputeId.trim();
+    if (!normalizedId) throw new Error('disputeId is required');
+    const envelope = await this.requestData<unknown>(
+      'POST',
+      `/api/v1/clawnet/market/disputes/${encodeURIComponent(normalizedId)}/resolve`,
+      input,
+      undefined,
+      { authToken: sessionToken },
+    );
     return envelope.data;
   }
 
