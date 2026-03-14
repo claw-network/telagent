@@ -1,4 +1,5 @@
 import { createHash } from 'node:crypto';
+import { createRequire } from 'node:module';
 
 import { ErrorCodes, TelagentError, isDidClaw } from '@telagent/protocol';
 
@@ -7,16 +8,34 @@ import { created, ok } from '../response.js';
 import { handleError } from '../route-utils.js';
 import type { RuntimeContext } from '../types.js';
 
+const require = createRequire(import.meta.url);
+const { version: PKG_VERSION } = require('../../package.json') as { version: string };
+
+const startedAt = Date.now();
+
 export function nodeRoutes(ctx: RuntimeContext): Router {
   const router = new Router();
 
-  router.get('/', ({ res }) => {
+  router.get('/', async ({ res }) => {
+    const self = ctx.identityService.getSelfDid();
+    let profile: { nickname?: string; avatarUrl?: string } = {};
+    try {
+      profile = await ctx.selfProfileStore.loadPublic();
+    } catch { /* best-effort */ }
+
     ok(res, {
       service: 'telagent-node',
-      version: '0.1.0',
+      version: PKG_VERSION,
+      did: self,
+      nickname: profile.nickname ?? undefined,
+      avatarUrl: profile.avatarUrl ?? undefined,
+      publicUrl: ctx.config.publicUrl ?? undefined,
+      tls: !!ctx.config.tls,
+      uptime: Math.floor((Date.now() - startedAt) / 1000),
       now: new Date().toISOString(),
       links: {
         metrics: '/api/v1/node/metrics',
+        profile: '/api/v1/profile',
       },
     }, { self: '/api/v1/node' });
   });
