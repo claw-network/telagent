@@ -207,41 +207,27 @@ export class IdentityAdapterService {
   private static readonly MIN_GAS_BALANCE = ethers.parseEther('0.001');
 
   /**
-   * Ensure the wallet has enough gas. If balance is below threshold and
-   * CLAW_CHAIN_FAUCET_URL is set, requests a drip from the faucet.
+   * Ensure the wallet has enough gas. If balance is below threshold,
+   * claims tokens from the ClawNet public faucet via the ClawNet node SDK.
+   * The ClawNet node handles Ed25519 signing internally.
    */
   private async ensureGas(wallet: ethers.Wallet, provider: ethers.JsonRpcProvider): Promise<void> {
     const balance = await provider.getBalance(wallet.address);
     if (balance >= IdentityAdapterService.MIN_GAS_BALANCE) return;
 
-    const faucetUrl = process.env.CLAW_CHAIN_FAUCET_URL;
-    if (!faucetUrl) {
+    logger.info('[telagent] Wallet %s has %s ETH — requesting tokens from faucet via ClawNet node',
+      wallet.address, ethers.formatEther(balance));
+
+    try {
+      const result = await this.gateway.claimFaucet();
+      logger.info('[telagent] Faucet claim succeeded: did=%s amount=%s tx=%s',
+        result.did, result.amount, result.txHash);
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : String(error);
       throw new Error(
         `Wallet ${wallet.address} has insufficient gas (${ethers.formatEther(balance)} ETH) ` +
-        'and CLAW_CHAIN_FAUCET_URL is not set. Fund the wallet manually or configure a faucet.',
+        `and faucet claim failed: ${msg}. Fund the wallet manually.`,
       );
-    }
-
-    logger.info('[telagent] Wallet %s has %s ETH — requesting gas from faucet %s',
-      wallet.address, ethers.formatEther(balance), faucetUrl);
-
-    const url = faucetUrl.replace(/\/+$/, '') + '/drip';
-    const resp = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ address: wallet.address }),
-    });
-
-    if (!resp.ok) {
-      const text = await resp.text().catch(() => '');
-      throw new Error(`Faucet request failed (${resp.status}): ${text}`);
-    }
-
-    const data = await resp.json() as { txHash?: string; amount?: string; error?: string };
-    if (data.txHash) {
-      logger.info('[telagent] Faucet drip received: tx=%s amount=%s', data.txHash, data.amount);
-    } else {
-      logger.info('[telagent] Faucet response: %s', JSON.stringify(data));
     }
   }
 

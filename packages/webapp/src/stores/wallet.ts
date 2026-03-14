@@ -58,6 +58,7 @@ interface WalletStore {
   transfer: (sessionToken: string, input: TransferInput) => Promise<unknown>
   createEscrow: (sessionToken: string, input: CreateEscrowInput) => Promise<WalletEscrowView | null>
   releaseEscrow: (sessionToken: string, escrowId: string) => Promise<unknown>
+  claimFaucet: (sessionToken: string) => Promise<{ amount: number; txHash: string | null }>
   setHistoryPage: (page: number) => Promise<void>
   upsertEscrow: (escrow: WalletEscrowView) => void
   clear: () => void
@@ -351,6 +352,16 @@ export const useWalletStore = create<WalletStore>((set, get) => ({
     const result = await sdk.releaseEscrow(sessionToken, escrowId)
     await Promise.all([get().refreshBalance(), get().refreshHistory(), get().loadEscrow(escrowId)])
     return result
+  },
+  claimFaucet: async (sessionToken) => {
+    const sdk = useConnectionStore.getState().sdk
+    if (!sdk) {
+      throw new Error("SDK not connected")
+    }
+
+    const result = await sdk.claimFaucet(sessionToken)
+    await get().refreshBalance()
+    return { amount: result.amount, txHash: result.txHash }
   },
   setHistoryPage: async (page) => {
     const targetPage = page < 1 ? 1 : page

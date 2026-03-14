@@ -1,8 +1,10 @@
-import { ArrowDownLeftIcon, ArrowUpRightIcon, EyeIcon, EyeOffIcon, RefreshCwIcon } from "lucide-react"
+import { ArrowDownLeftIcon, ArrowUpRightIcon, CoinsIcon, EyeIcon, EyeOffIcon, RefreshCwIcon } from "lucide-react"
 import { useMemo, useState } from "react"
 import { useTranslation } from "react-i18next"
+import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
+import { useSessionGuard } from "@/hooks/use-session-guard"
 import { useWalletStore } from "@/stores/wallet"
 
 interface BalanceCardProps {
@@ -14,7 +16,32 @@ export function BalanceCard({ onRefresh }: BalanceCardProps) {
   const balance = useWalletStore((state) => state.balance)
   const history = useWalletStore((state) => state.history)
   const loading = useWalletStore((state) => state.loading)
+  const claimFaucet = useWalletStore((state) => state.claimFaucet)
+  const { withSession } = useSessionGuard()
   const [visible, setVisible] = useState(true)
+  const [claiming, setClaiming] = useState(false)
+
+  const onClaim = async () => {
+    setClaiming(true)
+    try {
+      await withSession(
+        async (sessionToken) => {
+          const result = await claimFaucet(sessionToken)
+          toast.success(t("wallet.faucet.success", { amount: result.amount }))
+        },
+        { requiredScope: ["transfer"] },
+      )
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : t("wallet.faucet.failed")
+      if (msg.includes("already") || msg.includes("claimed")) {
+        toast.info(t("wallet.faucet.alreadyClaimed"))
+      } else {
+        toast.error(msg)
+      }
+    } finally {
+      setClaiming(false)
+    }
+  }
 
   const { totalSent, totalReceived } = useMemo(() => {
     let sent = 0
@@ -39,9 +66,14 @@ export function BalanceCard({ onRefresh }: BalanceCardProps) {
       <div className="rounded-2xl border bg-card/60 p-4">
         <div className="flex items-center justify-between">
           <p className="text-xs text-muted-foreground">{t("wallet.totalBalance")}</p>
-          <Button variant="ghost" size="icon-sm" onClick={() => void onRefresh()} disabled={loading}>
-            <RefreshCwIcon className="size-3.5" />
-          </Button>
+          <div className="flex items-center gap-1">
+            <Button variant="ghost" size="icon-sm" onClick={() => void onClaim()} disabled={claiming || loading} title={t("wallet.faucet.claim")}>
+              <CoinsIcon className="size-3.5" />
+            </Button>
+            <Button variant="ghost" size="icon-sm" onClick={() => void onRefresh()} disabled={loading}>
+              <RefreshCwIcon className="size-3.5" />
+            </Button>
+          </div>
         </div>
         <div className="mt-1 flex items-center gap-2">
           <p className="text-3xl font-bold tracking-tight">

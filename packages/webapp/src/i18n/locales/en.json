@@ -255,7 +255,13 @@
     "refresh": "Refresh",
     "rawPayload": "Raw payload",
     "submitting": "Submitting...",
-    "holdToSend": "Hold to Send"
+    "holdToSend": "Hold to Send",
+    "faucet": {
+      "claim": "Claim Tokens",
+      "success": "Claimed {{amount}} tokens!",
+      "failed": "Faucet claim failed.",
+      "alreadyClaimed": "Tokens already claimed for this DID."
+    }
   },
   "market": {
     "title": "Market",

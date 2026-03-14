@@ -274,6 +274,11 @@ function NodeAvatar({ status, info, isLocal, targetUrl }: { status: ProbeStatus;
       <div className="flex flex-col items-center gap-2">
         {isFound && (
           <>
+            {info.nickname && (
+              <p className="text-sm font-medium text-foreground">
+                {info.nickname}
+              </p>
+            )}
             <div className="flex items-center gap-2">
               <span className="size-2 rounded-full bg-emerald-500" />
               <span className="text-sm font-medium text-foreground">
@@ -283,11 +288,6 @@ function NodeAvatar({ status, info, isLocal, targetUrl }: { status: ProbeStatus;
                 v{info.version}
               </Badge>
             </div>
-            {info.nickname && (
-              <p className="text-sm font-medium text-foreground">
-                {info.nickname}
-              </p>
-            )}
             <p className="max-w-[300px] truncate font-mono text-[11px] leading-none text-muted-foreground/70">
               {info.did}
             </p>

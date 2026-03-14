@@ -639,6 +639,18 @@ export function clawnetRoutes(ctx: RuntimeContext): Router {
     }
   });
 
+  // ── Faucet ──────────────────────────────────────────────────────────
+
+  router.post('/faucet/claim', async ({ req, res, url }) => {
+    try {
+      requireScope(req.headers as Record<string, string | string[] | undefined>, ctx, 'clawnet_transfer');
+      const result = await ctx.clawnetGateway.claimFaucet();
+      ok(res, result, { self: '/api/v1/clawnet/faucet/claim' });
+    } catch (error) {
+      handleError(res, error, url.pathname);
+    }
+  });
+
   return router;
 }
 

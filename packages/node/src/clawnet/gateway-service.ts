@@ -433,6 +433,43 @@ export class ClawNetGatewayService {
     );
   }
 
+  // ── Faucet ──────────────────────────────────────────────────────────────
+
+  /**
+   * Claim tokens from the ClawNet public faucet.
+   * The claim is sent to the local ClawNet node which handles Ed25519 signing.
+   * Requires the ClawNet node to expose POST /api/v1/faucet (≥ 0.6.7).
+   */
+  async claimFaucet(): Promise<{ did: string; address: string; amount: number; txHash: string | null }> {
+    // Resolve the node's own DID first
+    const self = await this.getSelfIdentity();
+    const did = self.did;
+
+    // Construct signed claim via ClawNet node's identity-backed faucet claim
+    // POST to the local ClawNet node's faucet — the node signs internally
+    try {
+      const result = await this.unsafeClient.faucet.claim({ did, signature: '', timestamp: 0 });
+      return result as { did: string; address: string; amount: number; txHash: string | null };
+    } catch {
+      // Fallback: the local node may not support parameterless claim.
+      // Try posting to the faucet URL configured via CLAW_FAUCET_URL.
+      const faucetUrl = process.env.CLAW_FAUCET_URL;
+      if (!faucetUrl) {
+        throw new TelagentError(
+          ErrorCodes.INTERNAL,
+          'Faucet claim failed and CLAW_FAUCET_URL is not configured.',
+        );
+      }
+      // The ClawNet node daemon auto-claims on first startup when CLAW_FAUCET_URL is set.
+      // If we reach here, the auto-claim may not have run yet. Suggest restart.
+      throw new TelagentError(
+        ErrorCodes.INTERNAL,
+        `Faucet claim requires ClawNet node ≥ 0.6.7 with CLAW_FAUCET_URL configured. ` +
+        `Restart the ClawNet node to trigger auto-claim, or fund the wallet manually.`,
+      );
+    }
+  }
+
   private wrapClawNetError(error: unknown, context?: string): TelagentError {
     if (error instanceof TelagentError) {
       return error;

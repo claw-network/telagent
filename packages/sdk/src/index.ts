@@ -994,6 +994,19 @@ export class TelagentSdk {
     return envelope.data;
   }
 
+  // ── Faucet ──────────────────────────────────────────────────────────────
+
+  async claimFaucet(sessionToken: string): Promise<{ did: string; address: string; amount: number; txHash: string | null }> {
+    const envelope = await this.requestData<{ did: string; address: string; amount: number; txHash: string | null }>(
+      'POST',
+      '/api/v1/clawnet/faucet/claim',
+      undefined,
+      undefined,
+      { authToken: sessionToken },
+    );
+    return envelope.data;
+  }
+
   private async requestData<T>(
     method: 'GET' | 'POST' | 'PUT' | 'DELETE',
     path: string,

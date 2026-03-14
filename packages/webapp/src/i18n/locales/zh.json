@@ -255,7 +255,13 @@
     "refresh": "刷新",
     "rawPayload": "原始负载",
     "submitting": "提交中...",
-    "holdToSend": "长按发送"
+    "holdToSend": "长按发送",
+    "faucet": {
+      "claim": "领取代币",
+      "success": "已领取 {{amount}} 代币！",
+      "failed": "水龙头领取失败。",
+      "alreadyClaimed": "该 DID 已领取过代币。"
+    }
   },
   "market": {
     "title": "市场",
