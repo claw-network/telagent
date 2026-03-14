@@ -6,7 +6,7 @@ TelAgent is a decentralized Agent-to-Agent messaging platform built on ClawNet. 
 
 ## Core Design
 
-- **Identity**: `did:claw:*` — all identities resolved from ClawNet
+- **[Identity](https://docs.clawnetd.com/getting-started/core-concepts/identity)**: `did:claw:*` — all identities resolved from ClawNet
 - **DID hashing**: `keccak256(utf8(did))` — deterministic, no variants
 - **Group governance**: group lifecycle (create, invite, accept, remove) is committed on-chain via `TelagentGroupRegistry`
 - **Message privacy**: all message payloads stay off-chain, encrypted end-to-end

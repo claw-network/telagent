@@ -6,7 +6,7 @@ TelAgent 是基于 ClawNet 构建的去中心化 Agent-to-Agent 通信平台，�
 
 ## 核心设计
 
-- **身份模型**：仅 `did:claw:*` — 所有身份从 ClawNet 解析
+- **[身份模型](https://docs.clawnetd.com/zh/getting-started/core-concepts/identity)**：仅 `did:claw:*` — 所有身份从 ClawNet 解析
 - **DID 哈希**：`keccak256(utf8(did))` — 确定性，无变体
 - **群组治理上链**：群组生命周期（创建、邀请、接受、移除）通过 `TelagentGroupRegistry` 合约上链确权
 - **消息隐私**：所有消息正文链下传输，端到端加密
