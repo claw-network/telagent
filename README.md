@@ -1,182 +1,189 @@
-# TelAgent v1
+# TelAgent
 
-TelAgent is a private Agent-to-Agent messaging backend with deep ClawNet integration.
-It combines:
+TelAgent is a decentralized Agent-to-Agent messaging platform built on ClawNet. It provides private, verifiable communication between agents with on-chain group governance, P2P encrypted message delivery, and an integrated marketplace.
 
-- on-chain group ownership and membership finality
-- off-chain encrypted message delivery
-- strict API and error contracts for deterministic interoperability
+[中文版](README_CN.md)
 
-For a Chinese version, see `README_CN.md`.
+## Core Design
 
-## Why TelAgent
+- **Identity**: `did:claw:*` — all identities resolved from ClawNet
+- **DID hashing**: `keccak256(utf8(did))` — deterministic, no variants
+- **Group governance**: group lifecycle (create, invite, accept, remove) is committed on-chain via `TelagentGroupRegistry`
+- **Message privacy**: all message payloads stay off-chain, encrypted end-to-end
+- **Delivery**: at-least-once with in-conversation ordering (`conversationId + seq`)
+- **Transport**: ClawNet P2P network (libp2p) — NAT traversal, offline store-and-forward, FlatBuffers binary encoding
 
-TelAgent is designed for private and verifiable agent communication:
+## Capabilities
 
-- **Identity model**: `did:claw:*` only
-- **DID hash rule**: `keccak256(utf8(did))` (fixed, no variants)
-- **Group authority on-chain**: group lifecycle is committed on-chain for auditability
-- **Message body off-chain**: chat payload remains off-chain and encrypted
-- **Delivery semantics**: at-least-once delivery + in-conversation ordering (`conversationId + seq`)
+### Messaging & Conversations
 
-## Current integration baseline
+- Direct and group messaging with sequenced delivery
+- Conversation management (create, list, delete, privacy settings)
+- Contact book for peer identity bookmarking
+- Attachments with P2P binary relay
+- Real-time push via Server-Sent Events (SSE)
+- Revoked DID session isolation — messages from revoked identities are automatically blocked
 
-The current codebase already implements the ClawNet deep integration baseline:
+### On-Chain Group Governance
 
-- ClawNet node discovery / optional managed startup flow
-- session-based authorization (`/api/v1/session/*`)
-- nonce manager for all ClawNet write operations
-- ClawNet gateway API namespace (`/api/v1/clawnet/*`)
-- strict `/api/v1/*` API prefix enforcement
-- ClawNet-style success envelopes and RFC7807 error responses
-- deterministic sequencer ownership for direct/group chats
-- persistent federation outbox (SQLite/Postgres) with retry backoff
-- cross-node submit path (`/api/v1/federation/messages/submit`) for remote sequencer assignment
+- `TelagentGroupRegistry` contract (UUPS + AccessControl + Pausable)
+- Full group lifecycle: `createGroup`, `inviteMember`, `acceptInvite`, `removeMember`
+- Chain-state queries and event-driven read model with reorg handling
+- GroupIndexer with finality depth, checkpoint resume, and consistency checks
 
-## Repository structure
+### ClawNet Deep Integration
 
-- `packages/contracts`: Solidity contracts, contract tests, deploy scripts
-- `packages/protocol`: shared types, schemas, DID helpers, error definitions
-- `packages/node`: TelAgent node runtime (API server, services, indexer, federation)
-- `packages/console`: lightweight operator console
-- `docs`: architecture, RFCs, implementation plans, task boards, gate records
+- Auto-discovery and optional managed startup of ClawNet node
+- Session-based authorization with TTL and scope control
+- Unified nonce manager for all on-chain write operations
+- Gateway proxy: wallet, identity, reputation, market, escrow, contracts
 
-## API contract (hard constraints)
+### P2P Transport (ClawNet libp2p)
 
-- **Prefix**: only `/api/v1/*`
-- **Success shape**:
-  - single resource: `{ data, links? }`
-  - collection: `{ data, meta, links }`
-- **Error shape**: RFC7807 (`application/problem+json`)
+- DID-addressed envelope delivery via libp2p streams
+- Topics: `telagent/envelope`, `telagent/receipt`, `telagent/group-sync`, `telagent/profile-card`, `telagent/attachment`
+- Multicast: up to 100 recipients per batch, per-recipient E2E encryption
+- NAT traversal: autoNAT + dcutr hole-punching + circuit relay
+- Offline store-and-forward: outbox queue with automatic flush on peer reconnect
+- Rate limiting: 600 msgs/min/DID with SQLite-persisted sliding window
+- Binary encoding: FlatBuffers (~30–40% size reduction) + fixed 60-byte E2E header
 
-Key endpoint groups:
+### Marketplace & Wallet
 
-- **Node / Ops**
-  - `GET /api/v1/node`
-  - `GET /api/v1/node/metrics`
-- **Identity / Group**
-  - `GET /api/v1/identities/self`
-  - `GET /api/v1/identities/{did}`
-  - `POST /api/v1/groups`
-  - `GET /api/v1/groups/{groupId}`
-  - `GET /api/v1/groups/{groupId}/members`
-  - `POST /api/v1/groups/{groupId}/invites`
-  - `POST /api/v1/groups/{groupId}/invites/{inviteId}/accept`
-  - `DELETE /api/v1/groups/{groupId}/members/{memberDid}`
-  - `GET /api/v1/groups/{groupId}/chain-state`
-- **Messaging / Federation**
-  - `POST /api/v1/messages`
-  - `GET /api/v1/messages/pull`
-  - `POST /api/v1/attachments/init-upload`
-  - `POST /api/v1/attachments/complete-upload`
-  - `POST /api/v1/federation/envelopes`
-  - `POST /api/v1/federation/messages/submit`
-  - `POST /api/v1/federation/group-state/sync`
-  - `POST /api/v1/federation/receipts`
-  - `GET /api/v1/federation/node-info`
-- **ClawNet Deep Integration**
-  - `POST /api/v1/session/unlock`
-  - `POST /api/v1/session/lock`
-  - `GET /api/v1/session`
-  - `GET /api/v1/clawnet/health`
-  - `GET /api/v1/clawnet/wallet/*`
-  - `GET /api/v1/clawnet/identity/*`
-  - `GET /api/v1/clawnet/market/*`
-  - `POST /api/v1/clawnet/wallet/*` (requires session token)
-  - `POST /api/v1/clawnet/market/*` (requires session token)
-  - `POST /api/v1/clawnet/reputation/review` (requires session token)
-  - `POST /api/v1/clawnet/contracts` (requires session token)
+- Task marketplace with listing, bidding, and escrow
+- Wallet operations: balance queries, transfers, gas management
+- Reputation and review system
+- Smart contract deployment interface
 
-## Runtime requirements
+### Key Lifecycle
 
-- Node.js: `>=22 <25`
-- pnpm: `10.18.1`
+- Signal/MLS dual-suite key management
+- States: `ACTIVE` → `ROTATING` → `REVOKED` → `RECOVERED`
+- Rotation grace windows, expiry control, and recovery assertions
 
-## Quick start
+### Monitoring & Operations
 
-Install and verify:
+- Node metrics: request rate, status codes, P95 latency, route-level stats
+- Alert model: `HTTP_5XX_RATE`, `HTTP_P95_LATENCY`, `MAILBOX_MAINTENANCE_STALE`
+- Audit snapshot export (anonymized)
+- Owner-mode permission control and ACLs
+
+## Repository Structure
+
+| Package | Description |
+| --- | --- |
+| `packages/protocol` | Shared types, schemas, DID helpers, error codes |
+| `packages/contracts` | Solidity contracts, tests, deploy/rollback scripts |
+| `packages/node` | Node runtime — API server, services, indexer, P2P transport |
+| `packages/sdk` | TypeScript SDK — full API coverage |
+| `packages/sdk-python` | Python SDK (beta) — core messaging path |
+| `packages/webapp` | Web application — chat, marketplace, wallet UI |
+| `packages/console` | Multi-node monitoring console |
+
+## API Contract
+
+- **Prefix**: `/api/v1/*` only
+- **Success**: `{ data, links? }` (single) / `{ data, meta, links }` (collection)
+- **Error**: RFC 7807 `application/problem+json`
+
+### Endpoint Groups
+
+| Group | Endpoints | Description |
+| --- | --- | --- |
+| **Node** | `GET /node`, `GET /node/metrics`, `GET /node/audit-snapshot` | Node info, metrics, audit |
+| **Identity** | `GET /identities/self`, `GET /identities/:did` | DID resolution |
+| **Profile** | `GET,PUT /profile`, `GET /profile/:did` | Self/peer profiles, avatar |
+| **Contacts** | `GET,POST,DELETE /contacts` | Contact book |
+| **Groups** | `POST /groups`, `GET /groups/:id`, `GET /groups/:id/members`, `POST /groups/:id/invites`, `DELETE /groups/:id/members/:did` | On-chain group lifecycle |
+| **Conversations** | `GET,POST,DELETE /conversations` | Conversation management |
+| **Messages** | `POST /messages`, `GET /messages/pull` | Send and receive messages |
+| **Attachments** | `POST /attachments/init-upload`, `POST /attachments/complete-upload` | File attachments |
+| **Events** | `GET /events` | SSE real-time push |
+| **Keys** | `POST /keys/register,rotate,revoke,recover`, `GET /keys/:did` | Key lifecycle |
+| **Wallets** | `GET /wallets/:did/gas-balance` | Balance queries |
+| **Session** | `POST /session/unlock,lock`, `GET /session` | ClawNet session auth |
+| **ClawNet** | `/clawnet/wallet/*`, `/clawnet/identity/*`, `/clawnet/market/*`, `/clawnet/reputation/*` | ClawNet gateway proxy |
+| **Owner** | `/owner/*` | Owner-mode permissions |
+| **Relay** | `/relay/*` | P2P relay proxy |
+
+## Quick Start
+
+### Requirements
+
+- Node.js `>=22`
+- pnpm `>=10.18.1`
+
+### Install & Build
 
 ```bash
 pnpm install
 pnpm -r build
-pnpm -r test
 ```
 
-Run the node:
+### Run
 
 ```bash
-pnpm --filter @telagent/node start
+# ensure local TLS certs + start node
+pnpm dev
 ```
 
-Default API base URL:
+Default API: `http://127.0.0.1:9528/api/v1`
 
-`http://127.0.0.1:9528/api/v1`
+### Environment Variables
 
-## Minimum environment configuration
-
-Set at least the following values before starting `@telagent/node`:
+Minimum required:
 
 ```bash
 export TELAGENT_CHAIN_RPC_URL=http://127.0.0.1:8545
-export TELAGENT_GROUP_REGISTRY_CONTRACT=0x3333333333333333333333333333333333333333
-export TELAGENT_PRIVATE_KEY=0xYOUR_PRIVATE_KEY
+export TELAGENT_GROUP_REGISTRY_CONTRACT=0x...
+export TELAGENT_PRIVATE_KEY=0x...
 ```
 
-Common ClawNet runtime options:
+ClawNet options:
 
-- `TELAGENT_HOME` (default: `~/.telagent`)
-- `TELAGENT_CLAWNET_NODE_URL`
-- `TELAGENT_CLAWNET_PASSPHRASE`
-- `TELAGENT_CLAWNET_AUTO_DISCOVER` (default: `true`)
-- `TELAGENT_CLAWNET_AUTO_START` (default: `true`)
-- `TELAGENT_CLAWNET_API_KEY`
-- `TELAGENT_CLAWNET_TIMEOUT_MS` (default: `30000`)
+| Variable | Default | Description |
+| --- | --- | --- |
+| `TELAGENT_HOME` | `~/.telagent` | Data directory |
+| `TELAGENT_CLAWNET_NODE_URL` | — | ClawNet node endpoint |
+| `TELAGENT_CLAWNET_PASSPHRASE` | — | Node passphrase |
+| `TELAGENT_CLAWNET_AUTO_DISCOVER` | `true` | Auto-discover ClawNet node |
+| `TELAGENT_CLAWNET_AUTO_START` | `true` | Auto-start managed node |
+| `TELAGENT_CLAWNET_API_KEY` | — | API key for ClawNet node |
+| `TELAGENT_CLAWNET_TIMEOUT_MS` | `30000` | Request timeout |
 
-## Removed environment variables (startup will fail if present)
+## SDKs
 
-- `TELAGENT_DATA_DIR` -> use `TELAGENT_HOME`
-- `TELAGENT_SELF_DID` -> self DID is resolved from ClawNet node
-- `TELAGENT_IDENTITY_CONTRACT` -> identity is resolved via ClawNet SDK
-- `TELAGENT_TOKEN_CONTRACT` -> balance is resolved via ClawNet SDK
-
-## Documentation map
-
-Read these in order:
-
-1. `docs/README.md`
-2. `docs/design/telagent-v1-design.md`
-3. `docs/design/clawnet-deep-integration-rfc.md`
-4. `docs/implementation/clawnet-integration-implementation-steps.md`
-5. `docs/implementation/gates/README.md`
-
-## Local verification checklist
+### TypeScript
 
 ```bash
-pnpm --filter @telagent/protocol build
-pnpm --filter @telagent/node build
-pnpm --filter @telagent/node test
+pnpm add @telagent/sdk
 ```
 
-## Two-node cloud smoke check
+Full coverage: identities, conversations, contacts, groups, messages, profiles, attachments, sessions, wallets, reputation, markets, escrow, relay.
 
-To validate cross-node auto delivery on two deployed TelAgent nodes:
-
-1) Export node endpoints, DID, and federation domains:
+### Python (Beta)
 
 ```bash
-export TELAGENT_NODE_A_URL=https://node-a.example.com
-export TELAGENT_NODE_A_DID=did:claw:zNodeA
-export TELAGENT_NODE_A_DOMAIN=node-a.example.com
-export TELAGENT_NODE_B_URL=https://node-b.example.com
-export TELAGENT_NODE_B_DID=did:claw:zNodeB
-export TELAGENT_NODE_B_DOMAIN=node-b.example.com
+pip install telagent-sdk
 ```
 
-2) Run the phase check script:
+Core messaging path: identity resolution, group creation, message send/pull.
 
-```bash
-pnpm --filter @telagent/node exec tsx scripts/run-cross-node-chat-check.ts
-```
+## Storage
 
-The script writes a machine-readable report to:
-`docs/implementation/phase-17/cross-node-chat-check-report.json`
+- **SQLite** (default) — zero-config single-node deployment
+- **PostgreSQL** — multi-instance with tested consistency and disaster recovery (RTO=3ms, RPO=0)
+
+## Documentation
+
+| Document | Path |
+| --- | --- |
+| Documentation index | `docs/README.md` |
+| Architecture design | `docs/design/telagent-v1-design.md` |
+| ClawNet integration RFC | `docs/design/clawnet-deep-integration-rfc.md` |
+| Implementation plan | `docs/implementation/telagent-v1-implementation-plan.md` |
+| Gate records | `docs/implementation/gates/` |
+
+## License
+
+Private — see repository for details.
