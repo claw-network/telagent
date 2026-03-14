@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs';
+
 import { ErrorCodes, TelagentError, hashDid, isDidClaw, type AgentDID } from '@telagent/protocol';
 import { publicKeyFromDid, bytesToHex } from '@claw-network/core';
 import { ethers } from 'ethers';
@@ -13,7 +15,7 @@ const logger = getGlobalLogger();
 const IDENTITY_ABI = [
   'function getController(bytes32 didHash) view returns (address)',
   'function isActive(bytes32 didHash) view returns (bool)',
-  'function batchRegisterDID(bytes32[] didHashes, bytes[] publicKeys, uint8[] purposes, address[] controllers)',
+  'function selfRegisterDID(bytes32 didHash, bytes publicKey, uint8 purpose)',
 ];
 
 export interface ResolvedIdentity {
@@ -144,24 +146,122 @@ export class IdentityAdapterService {
   }
 
   /**
+   * Resolve a wallet for chain operations using CLAW_SIGNER_* / TELAGENT_SIGNER_* env vars.
+   * Supports: env (raw private key), keyfile (plain JSON or encrypted keystore), mnemonic.
+   */
+  private async resolveChainWallet(provider: ethers.JsonRpcProvider): Promise<ethers.Wallet> {
+    const signerType = process.env.CLAW_SIGNER_TYPE || process.env.TELAGENT_SIGNER_TYPE || 'env';
+
+    if (signerType === 'keyfile') {
+      const keyPath = process.env.CLAW_SIGNER_PATH || process.env.TELAGENT_SIGNER_PATH;
+      if (!keyPath) {
+        throw new Error('Signer type is keyfile but no path set (CLAW_SIGNER_PATH / TELAGENT_SIGNER_PATH)');
+      }
+      const raw = readFileSync(keyPath, 'utf8').trim();
+      let parsed: Record<string, unknown>;
+      try {
+        parsed = JSON.parse(raw) as Record<string, unknown>;
+      } catch {
+        // Raw private key string
+        return new ethers.Wallet(raw, provider);
+      }
+      // Plain JSON keyfile with { privateKey: "0x..." }
+      if (typeof parsed.privateKey === 'string') {
+        return new ethers.Wallet(parsed.privateKey, provider);
+      }
+      // Encrypted keystore (ethers v3 format — has "crypto" or "Crypto" field)
+      if (parsed.crypto || parsed.Crypto) {
+        const password = process.env.CLAW_SIGNER_PASSWORD || process.env.TELAGENT_SIGNER_PASSWORD;
+        if (!password) {
+          throw new Error('Encrypted keystore found but no password set (CLAW_SIGNER_PASSWORD / TELAGENT_SIGNER_PASSWORD)');
+        }
+        const wallet = await ethers.Wallet.fromEncryptedJson(raw, password);
+        return wallet.connect(provider) as ethers.Wallet;
+      }
+      throw new Error(`Keyfile at ${keyPath} has unrecognized format`);
+    }
+
+    if (signerType === 'mnemonic') {
+      const envVar = process.env.CLAW_SIGNER_ENV || process.env.TELAGENT_SIGNER_ENV || 'TELAGENT_MNEMONIC';
+      const mnemonic = process.env[envVar];
+      if (!mnemonic) throw new Error(`Mnemonic env var ${envVar} is not set`);
+      const index = parseInt(process.env.TELAGENT_SIGNER_INDEX || '0', 10);
+      const path = `m/44'/60'/0'/0/${index}`;
+      const hdWallet = ethers.HDNodeWallet.fromPhrase(mnemonic, undefined, path);
+      return new ethers.Wallet(hdWallet.privateKey, provider);
+    }
+
+    // Default: env type — read raw private key from env var
+    const envVar = process.env.CLAW_SIGNER_ENV || 'CLAW_PRIVATE_KEY';
+    const privateKey = process.env[envVar];
+    if (!privateKey) {
+      throw new Error(
+        `Signer env var ${envVar} is not set. ` +
+        'Set CLAW_SIGNER_ENV to the env var name containing the private key, or use keyfile/mnemonic signer.',
+      );
+    }
+    return new ethers.Wallet(privateKey, provider);
+  }
+
+  /** Minimum balance required to send a chain tx (0.001 ETH) */
+  private static readonly MIN_GAS_BALANCE = ethers.parseEther('0.001');
+
+  /**
+   * Ensure the wallet has enough gas. If balance is below threshold and
+   * CLAW_CHAIN_FAUCET_URL is set, requests a drip from the faucet.
+   */
+  private async ensureGas(wallet: ethers.Wallet, provider: ethers.JsonRpcProvider): Promise<void> {
+    const balance = await provider.getBalance(wallet.address);
+    if (balance >= IdentityAdapterService.MIN_GAS_BALANCE) return;
+
+    const faucetUrl = process.env.CLAW_CHAIN_FAUCET_URL;
+    if (!faucetUrl) {
+      throw new Error(
+        `Wallet ${wallet.address} has insufficient gas (${ethers.formatEther(balance)} ETH) ` +
+        'and CLAW_CHAIN_FAUCET_URL is not set. Fund the wallet manually or configure a faucet.',
+      );
+    }
+
+    logger.info('[telagent] Wallet %s has %s ETH — requesting gas from faucet %s',
+      wallet.address, ethers.formatEther(balance), faucetUrl);
+
+    const url = faucetUrl.replace(/\/+$/, '') + '/drip';
+    const resp = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ address: wallet.address }),
+    });
+
+    if (!resp.ok) {
+      const text = await resp.text().catch(() => '');
+      throw new Error(`Faucet request failed (${resp.status}): ${text}`);
+    }
+
+    const data = await resp.json() as { txHash?: string; amount?: string; error?: string };
+    if (data.txHash) {
+      logger.info('[telagent] Faucet drip received: tx=%s amount=%s', data.txHash, data.amount);
+    } else {
+      logger.info('[telagent] Faucet response: %s', JSON.stringify(data));
+    }
+  }
+
+  /**
    * Register DID on-chain directly using ethers.js and CLAW_CHAIN_* env vars.
    * Used as fallback when no managed ClawNet node is available.
    */
   private async registerOnChainDirect(did: string, publicKeyHex: string): Promise<void> {
     const rpcUrl = process.env.CLAW_CHAIN_RPC_URL;
     const identityAddr = process.env.CLAW_CHAIN_IDENTITY_CONTRACT;
-    const signerEnv = process.env.CLAW_SIGNER_ENV || 'CLAW_PRIVATE_KEY';
-    const privateKey = process.env[signerEnv];
 
-    if (!rpcUrl || !identityAddr || !privateKey) {
+    if (!rpcUrl || !identityAddr) {
       throw new Error(
         'Missing chain config for direct registration. ' +
-        'Set CLAW_CHAIN_RPC_URL, CLAW_CHAIN_IDENTITY_CONTRACT, and CLAW_SIGNER_ENV/private key.',
+        'Set CLAW_CHAIN_RPC_URL and CLAW_CHAIN_IDENTITY_CONTRACT.',
       );
     }
 
     const provider = new ethers.JsonRpcProvider(rpcUrl);
-    const wallet = new ethers.Wallet(privateKey, provider);
+    const wallet = await this.resolveChainWallet(provider);
     const contract = new ethers.Contract(identityAddr, IDENTITY_ABI, wallet);
     const didHash = ethers.keccak256(ethers.toUtf8Bytes(did));
 
@@ -176,13 +276,15 @@ export class IdentityAdapterService {
       // getController reverts when DID not found — proceed to register
     }
 
-    // Register via batchRegisterDID (REGISTRAR_ROLE, no ECDSA sig needed)
+    // Ensure the wallet has gas for the transaction
+    await this.ensureGas(wallet, provider);
+
+    // Register via selfRegisterDID — permissionless, controller = msg.sender
     logger.info('[telagent] Direct chain registration: %s → controller %s', did, wallet.address);
-    const tx = await contract.batchRegisterDID(
-      [didHash],
-      [publicKeyHex],
-      [0], // authentication purpose
-      [wallet.address],
+    const tx = await contract.selfRegisterDID(
+      didHash,
+      publicKeyHex,
+      0, // authentication purpose
     );
     await tx.wait();
     logger.info('[telagent] DID registered on-chain successfully: %s', did);

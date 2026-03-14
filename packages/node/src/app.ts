@@ -213,7 +213,7 @@ export class TelagentNode {
     }
 
     logger.info('[telagent] [startup] creating ContractProvider + repos...');
-    this.contracts = new ContractProvider(this.config.chain);
+    this.contracts = await ContractProvider.create(this.config.chain);
     this.repo = new GroupRepository(this.paths.groupIndexerDb);
     this.mailboxStore = this.createMailboxStore(this.config);
 

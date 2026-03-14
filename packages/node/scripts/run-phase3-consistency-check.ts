@@ -185,7 +185,7 @@ async function main() {
     finalityDepth: 12,
   };
 
-  const contracts = new ContractProvider(chainConfig);
+  const contracts = await ContractProvider.create(chainConfig);
   const dbDir = await fs.mkdtemp(path.join(os.tmpdir(), 'telagent-p3-consistency-'));
   const repoPath = process.env.P3_CONSISTENCY_DB_PATH ?? path.join(dbDir, 'group-indexer.sqlite');
   const repo = new GroupRepository(repoPath);

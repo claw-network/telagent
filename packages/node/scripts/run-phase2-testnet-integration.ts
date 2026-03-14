@@ -118,7 +118,7 @@ async function main() {
   const dataDir = await fs.mkdtemp(path.join(os.tmpdir(), 'telagent-p2-int-'));
   const repoPath = path.join(dataDir, 'group-indexer.sqlite');
 
-  const contracts = new ContractProvider(chainConfig);
+  const contracts = await ContractProvider.create(chainConfig);
   const repo = new GroupRepository(repoPath);
   const identityAdapter = new IdentityAdapterService(contracts);
   const gasService = new GasService(contracts);
