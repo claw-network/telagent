@@ -1,5 +1,7 @@
 import { createHash } from 'node:crypto';
-import { createRequire } from 'node:module';
+import { readFileSync } from 'node:fs';
+import { dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 import { ErrorCodes, TelagentError, isDidClaw } from '@telagent/protocol';
 
@@ -8,8 +10,9 @@ import { created, ok } from '../response.js';
 import { handleError } from '../route-utils.js';
 import type { RuntimeContext } from '../types.js';
 
-const require = createRequire(import.meta.url);
-const { version: PKG_VERSION } = require('../../package.json') as { version: string };
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const pkgPath = resolve(__dirname, '..', '..', '..', 'package.json');
+const { version: PKG_VERSION } = JSON.parse(readFileSync(pkgPath, 'utf8')) as { version: string };
 
 const startedAt = Date.now();
 
