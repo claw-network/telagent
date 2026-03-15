@@ -9,7 +9,14 @@
 //   5. 只读操作直接透传，不需要 session
 // ============================================================
 
+import { homedir } from 'node:os';
+import { resolve } from 'node:path';
+
 import { ClawNetClient, ClawNetError } from '@claw-network/sdk';
+import {
+  signBytes, utf8ToBytes, bytesToHex,
+  resolveStoragePaths, listKeyRecords, decryptKeyRecord,
+} from '@claw-network/core';
 import { ErrorCodes, TelagentError } from '@telagent/protocol';
 import type { SessionManager, OperationScope } from './session-manager.js';
 import type { NonceManager } from './nonce-manager.js';
@@ -18,6 +25,10 @@ export interface ClawNetGatewayConfig {
   baseUrl: string;
   apiKey?: string;
   timeoutMs?: number;
+  /** ClawNet data directory (for keystore access). Defaults to $CLAWNET_HOME or ~/.clawnet */
+  clawnetDataDir?: string;
+  /** ClawNet passphrase (for decrypting the Ed25519 keystore). */
+  passphrase?: string;
 }
 
 export interface IdentityInfo {
@@ -437,37 +448,44 @@ export class ClawNetGatewayService {
 
   /**
    * Claim tokens from the ClawNet public faucet.
-   * The claim is sent to the local ClawNet node which handles Ed25519 signing.
-   * Requires the ClawNet node to expose POST /api/v1/faucet (≥ 0.6.7).
+   * Signs the claim message with the node's Ed25519 private key (decrypted from keystore)
+   * and POSTs to the local ClawNet node's POST /api/v1/faucet endpoint.
+   * Requires @claw-network/* ≥ 0.6.7.
    */
   async claimFaucet(): Promise<{ did: string; address: string; amount: number; txHash: string | null }> {
-    // Resolve the node's own DID first
     const self = await this.getSelfIdentity();
     const did = self.did;
 
-    // Construct signed claim via ClawNet node's identity-backed faucet claim
-    // POST to the local ClawNet node's faucet — the node signs internally
-    try {
-      const result = await this.unsafeClient.faucet.claim({ did, signature: '', timestamp: 0 });
-      return result as { did: string; address: string; amount: number; txHash: string | null };
-    } catch {
-      // Fallback: the local node may not support parameterless claim.
-      // Try posting to the faucet URL configured via CLAW_FAUCET_URL.
-      const faucetUrl = process.env.CLAW_FAUCET_URL;
-      if (!faucetUrl) {
-        throw new TelagentError(
-          ErrorCodes.INTERNAL,
-          'Faucet claim failed and CLAW_FAUCET_URL is not configured.',
-        );
-      }
-      // The ClawNet node daemon auto-claims on first startup when CLAW_FAUCET_URL is set.
-      // If we reach here, the auto-claim may not have run yet. Suggest restart.
+    // Resolve passphrase — from config or env var
+    const passphrase = this.config.passphrase || process.env.TELAGENT_CLAWNET_PASSPHRASE;
+    if (!passphrase) {
       throw new TelagentError(
         ErrorCodes.INTERNAL,
-        `Faucet claim requires ClawNet node ≥ 0.6.7 with CLAW_FAUCET_URL configured. ` +
-        `Restart the ClawNet node to trigger auto-claim, or fund the wallet manually.`,
+        'Cannot sign faucet claim: no passphrase available. Set TELAGENT_CLAWNET_PASSPHRASE.',
       );
     }
+
+    // Resolve ClawNet data dir and load keystore
+    const dataDir = this.config.clawnetDataDir
+      || process.env.CLAWNET_HOME
+      || resolve(homedir(), '.clawnet');
+    const paths = resolveStoragePaths(dataDir);
+    const records = await listKeyRecords(paths);
+    if (records.length === 0) {
+      throw new TelagentError(ErrorCodes.INTERNAL, 'No key records found in ClawNet keystore.');
+    }
+
+    // Decrypt the first (primary) key record to get the Ed25519 private key
+    const privateKey = await decryptKeyRecord(records[0], passphrase);
+
+    // Construct and sign the claim message per PUBLIC_FAUCET.md spec
+    const timestamp = Date.now();
+    const message = utf8ToBytes(`faucet:claim:${did}:${timestamp}`);
+    const sigBytes = await signBytes(message, privateKey);
+    const signature = bytesToHex(sigBytes);
+
+    const result = await this.unsafeClient.faucet.claim({ did, signature, timestamp });
+    return result as { did: string; address: string; amount: number; txHash: string | null };
   }
 
   private wrapClawNetError(error: unknown, context?: string): TelagentError {
