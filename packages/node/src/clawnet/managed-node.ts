@@ -170,22 +170,6 @@ export class ManagedClawNetNode {
     return this.node?.eventStore;
   }
 
-  /**
-   * Call the embedded ClawNet node's identityService.ensureRegistered()
-   * directly — bypasses HTTP and uses batchRegisterDID (REGISTRAR_ROLE).
-   */
-  async ensureRegisteredOnChain(did: string, publicKey: string): Promise<string | null> {
-    const svc = this.node?.identityService;
-    if (!svc) {
-      logger.warn('[telagent] Embedded node identityService unavailable — cannot auto-register on-chain');
-      return null;
-    }
-    logger.info('[telagent] Calling embedded identityService.ensureRegistered for %s', did);
-    const controller = await svc.ensureRegistered(did, publicKey);
-    logger.info('[telagent] ensureRegistered returned controller: %s', controller);
-    return controller;
-  }
-
   isRunning(): boolean {
     return this.node !== null;
   }

@@ -5,7 +5,6 @@ import { publicKeyFromDid, bytesToHex } from '@claw-network/core';
 import { ethers } from 'ethers';
 
 import type { ClawNetGatewayService, IdentityInfo } from '../clawnet/gateway-service.js';
-import type { ManagedClawNetNode } from '../clawnet/managed-node.js';
 import type { IdentityCache } from '../storage/identity-cache.js';
 import { getGlobalLogger } from '../logger.js';
 
@@ -43,14 +42,12 @@ export class IdentityAdapterService {
   private selfAddressCache: string | null = null;
   private readonly revocationListeners = new Set<DidRevocationListener>();
   private identityCache?: IdentityCache;
-  private managedNode?: ManagedClawNetNode;
 
   constructor(
     private readonly gateway: ClawNetGatewayService,
-    options?: { identityCache?: IdentityCache; managedNode?: ManagedClawNetNode },
+    options?: { identityCache?: IdentityCache },
   ) {
     this.identityCache = options?.identityCache;
-    this.managedNode = options?.managedNode;
   }
 
   subscribeDidRevocations(listener: DidRevocationListener): () => void {
@@ -131,16 +128,8 @@ export class IdentityAdapterService {
     const rawBytes = publicKeyFromDid(self.did);
     const hexKey = `0x${bytesToHex(rawBytes)}`;
 
-    if (this.managedNode) {
-      // Path A: embedded managed node (local dev)
-      const controller = await this.managedNode.ensureRegisteredOnChain(self.did, hexKey);
-      if (!controller) {
-        throw new Error('Chain identity service unavailable on embedded node');
-      }
-    } else {
-      // Path B: direct ethers.js call (cloud with standalone ClawNet node)
-      await this.registerOnChainDirect(self.did, hexKey);
-    }
+    // Direct ethers.js call — uses selfRegisterDID (permissionless, controller = msg.sender)
+    await this.registerOnChainDirect(self.did, hexKey);
     // Refresh self identity to pick up chain data
     await this.getSelf();
   }
@@ -212,6 +201,10 @@ export class IdentityAdapterService {
    * The ClawNet node handles Ed25519 signing internally.
    */
   private async ensureGas(wallet: ethers.Wallet, provider: ethers.JsonRpcProvider): Promise<void> {
+    // Zero-gas chains (gasPrice == 0) don't require balance — skip check
+    const feeData = await provider.getFeeData();
+    if (feeData.gasPrice !== null && feeData.gasPrice === 0n) return;
+
     const balance = await provider.getBalance(wallet.address);
     if (balance >= IdentityAdapterService.MIN_GAS_BALANCE) return;
 

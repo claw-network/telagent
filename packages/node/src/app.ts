@@ -167,7 +167,6 @@ export class TelagentNode {
     await identityCache.load();
     this.identityService = new IdentityAdapterService(this.clawnetGateway, {
       identityCache,
-      managedNode: this.managedClawNet,
     });
     await this.identityService.init();
     logger.info('[telagent] Identity: %s', this.identityService.getSelfDid());
