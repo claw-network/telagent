@@ -213,7 +213,7 @@ export function WalletTransferPage() {
   if (!canExecute) {
     return (
       <div className="flex h-full items-center justify-center">
-        <p className="text-sm text-muted-foreground">{t("wallet.transferFailed")}</p>
+        <p className="text-sm text-muted-foreground">{t("chat.observerHint")}</p>
       </div>
     )
   }

@@ -260,7 +260,8 @@
       "claim": "Claim Tokens",
       "success": "Claimed {{amount}} tokens!",
       "failed": "Faucet claim failed.",
-      "alreadyClaimed": "Tokens already claimed for this DID."
+      "alreadyClaimed": "Tokens already claimed for this DID.",
+      "unavailable": "Faucet not available on this network."
     }
   },
   "market": {

@@ -1,6 +1,7 @@
 import { resolve } from 'node:path';
 import { homedir } from 'node:os';
 import { readFileSync, existsSync } from 'node:fs';
+import { getGlobalLogger } from '../logger.js';
 
 export interface ClawNetDiscoveryResult {
   found: boolean;
@@ -15,7 +16,7 @@ export interface ClawNetDiscoveryResult {
   managedNode?: any;  // ClawNetNode instance or null
 }
 
-const logger = console;  // 替换为项目实际 logger
+const logger = getGlobalLogger();
 
 /**
  * ClawNet Node 发现 + 自动启动

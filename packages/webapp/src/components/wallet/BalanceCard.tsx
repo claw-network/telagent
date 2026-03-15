@@ -27,7 +27,11 @@ export function BalanceCard({ onRefresh }: BalanceCardProps) {
       await withSession(
         async (sessionToken) => {
           const result = await claimFaucet(sessionToken)
-          toast.success(t("wallet.faucet.success", { amount: result.amount }))
+          if (result.amount === 0) {
+            toast.info(t("wallet.faucet.unavailable"))
+          } else {
+            toast.success(t("wallet.faucet.success", { amount: result.amount }))
+          }
         },
         { requiredScope: ["transfer"] },
       )

@@ -260,7 +260,8 @@
       "claim": "领取代币",
       "success": "已领取 {{amount}} 代币！",
       "failed": "水龙头领取失败。",
-      "alreadyClaimed": "该 DID 已领取过代币。"
+      "alreadyClaimed": "该 DID 已领取过代币。",
+      "unavailable": "该网络暂不支持水龙头。"
     }
   },
   "market": {

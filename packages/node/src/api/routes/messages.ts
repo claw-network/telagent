@@ -129,7 +129,7 @@ export function messageRoutes(ctx: RuntimeContext): Router {
       return;
     }
 
-    const envelopeIds = body?.envelopeIds;
+    const envelopeIds = (body as Record<string, unknown>)?.envelopeIds;
     if (!Array.isArray(envelopeIds) || envelopeIds.length === 0 || !envelopeIds.every((id: unknown) => typeof id === 'string')) {
       handleError(res, new TelagentError(ErrorCodes.VALIDATION, 'envelopeIds must be a non-empty array of strings'), url.pathname);
       return;

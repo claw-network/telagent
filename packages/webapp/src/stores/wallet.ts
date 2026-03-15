@@ -235,8 +235,9 @@ export const useWalletStore = create<WalletStore>((set, get) => ({
 
     const nextLimit = typeof limit === "number" && limit > 0 ? limit : get().historyLimit
     const nextOffset = typeof offset === "number" && offset >= 0 ? offset : get().historyOffset
-    const rawItems = await sdk.getWalletHistory({ limit: nextLimit, offset: nextOffset })
-    const history = rawItems.map((item, index) => parseHistoryItem(item, index))
+    const raw = await sdk.getWalletHistory({ limit: nextLimit, offset: nextOffset })
+    const rawItems = Array.isArray(raw) ? raw : Array.isArray((raw as any)?.items) ? (raw as any).items : []
+    const history = rawItems.map((item: unknown, index: number) => parseHistoryItem(item, index))
 
     set({
       history,

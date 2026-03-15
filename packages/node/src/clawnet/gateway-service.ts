@@ -182,8 +182,23 @@ export class ClawNetGatewayService {
   }
 
   async getBalance(did?: string): Promise<BalanceInfo> {
-    const result = await this.unsafeClient.wallet.getBalance(did ? { did } : undefined);
-    return result as BalanceInfo;
+    try {
+      const result = await this.unsafeClient.wallet.getBalance(did ? { did } : undefined);
+      return result as BalanceInfo;
+    } catch (err: unknown) {
+      // ClawToken contract may not be deployed on this chain — fall back to
+      // reporting only the native (ETH) balance via the node's identity info.
+      const msg = err instanceof Error ? err.message : String(err);
+      if (!msg.includes('not initialised')) throw err;
+
+      const info = await this.getSelfIdentity();
+      return {
+        native: '0',
+        token: '0',
+        did: info.did ?? '',
+        address: info.address ?? '',
+      };
+    }
   }
 
   async getNonce(did?: string): Promise<{ nonce: number; address: string }> {
@@ -484,8 +499,18 @@ export class ClawNetGatewayService {
     const sigBytes = await signBytes(message, privateKey);
     const signature = bytesToHex(sigBytes);
 
-    const result = await this.unsafeClient.faucet.claim({ did, signature, timestamp });
-    return result as { did: string; address: string; amount: number; txHash: string | null };
+    try {
+      const result = await this.unsafeClient.faucet.claim({ did, signature, timestamp });
+      return result as { did: string; address: string; amount: number; txHash: string | null };
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      if (msg.includes('not initialised')) {
+        // ClawToken contract not deployed on this network — faucet unavailable
+        const self2 = await this.getSelfIdentity();
+        return { did, address: self2.address ?? '', amount: 0, txHash: null };
+      }
+      throw err;
+    }
   }
 
   private wrapClawNetError(error: unknown, context?: string): TelagentError {

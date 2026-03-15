@@ -1,5 +1,7 @@
-import { readFileSync } from 'node:fs';
+import { readFileSync, createWriteStream, mkdirSync } from 'node:fs';
 import { resolve } from 'node:path';
+import { format } from 'node:util';
+import type { WriteStream } from 'node:fs';
 import { getGlobalLogger } from '../logger.js';
 
 const logger = getGlobalLogger();
@@ -13,6 +15,14 @@ const logger = getGlobalLogger();
 export class ManagedClawNetNode {
   private node: any = null;  // ClawNetNode 实例
   private readonly killClawnetdOnStart: boolean;
+  private logStream: WriteStream | undefined;
+  // Stash original console methods so we can restore them on stop
+  private readonly origConsole = {
+    log: console.log.bind(console),
+    info: console.info.bind(console),
+    warn: console.warn.bind(console),
+    error: console.error.bind(console),
+  };
 
   constructor(
     private readonly dataDir: string,
@@ -21,6 +31,40 @@ export class ManagedClawNetNode {
     options?: { killClawnetdOnStart?: boolean },
   ) {
     this.killClawnetdOnStart = options?.killClawnetdOnStart ?? false;
+  }
+
+  /**
+   * Open a write stream to <dataDir>/logs/clawnet.log and intercept all
+   * console.* calls so that the embedded ClawNetNode's output (which goes
+   * directly to console) is also persisted to file.
+   */
+  private startLogFile(): void {
+    const logsDir = resolve(this.dataDir, 'logs');
+    mkdirSync(logsDir, { recursive: true });
+    const logFilePath = resolve(logsDir, 'clawnet.log');
+    this.logStream = createWriteStream(logFilePath, { flags: 'a' });
+
+    const stream = this.logStream;
+    const write = (level: string, args: unknown[]): void => {
+      const ts = new Date().toISOString();
+      const msg = format(...(args as Parameters<typeof format>));
+      stream.write(`${ts} [${level}] ${msg}\n`);
+    };
+
+    console.log   = (...a) => { this.origConsole.log(...a);   write('INFO',  a); };
+    console.info  = (...a) => { this.origConsole.info(...a);  write('INFO',  a); };
+    console.warn  = (...a) => { this.origConsole.warn(...a);  write('WARN',  a); };
+    console.error = (...a) => { this.origConsole.error(...a); write('ERROR', a); };
+  }
+
+  private stopLogFile(): void {
+    // Restore original console methods
+    console.log   = this.origConsole.log;
+    console.info  = this.origConsole.info;
+    console.warn  = this.origConsole.warn;
+    console.error = this.origConsole.error;
+    this.logStream?.end();
+    this.logStream = undefined;
   }
 
   /**
@@ -102,6 +146,7 @@ export class ManagedClawNetNode {
    * 如果指定端口被占用，自动尝试 +1 端口（最多 5 次）（RFC §7 风险表）
    */
   async start(): Promise<void> {
+    this.startLogFile();
     const { killClawnetdOnPort } = await import('./clawnetd-process.js');
     const { ClawNetNode } = await import('@claw-network/node');
     const chainConfig = this.resolveChainConfig();
@@ -159,6 +204,7 @@ export class ManagedClawNetNode {
       await this.node.stop();
       this.node = null;
     }
+    this.stopLogFile();
   }
 
   getDid(): string | null {
