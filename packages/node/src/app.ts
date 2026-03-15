@@ -146,7 +146,7 @@ export class TelagentNode {
         apiKey: this.config.clawnet.apiKey,
         timeoutMs: this.config.clawnet.timeoutMs,
         passphrase: passphrase ?? undefined,
-        clawnetDataDir: process.env.CLAWNET_HOME,
+        clawnetDataDir: discovery.clawnetHome,
       },
       this.sessionManager,
       this.nonceManager,
