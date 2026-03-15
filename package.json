@@ -1,0 +1,29 @@
+{
+  "name": "telagent",
+  "private": true,
+  "version": "0.2.8",
+  "packageManager": "pnpm@10.30.3+sha512.c961d1e0a2d8e354ecaa5166b822516668b7f44cb5bd95122d590dd81922f606f5473b6d23ec4a5be05e7fcd18e8488d47d978bbe981872f1145d06e9a740017",
+  "scripts": {
+    "check:runtime": "node scripts/check-runtime.mjs",
+    "ensure-certs": "bash scripts/ensure-local-certs.sh",
+    "dev": "pnpm ensure-certs && pnpm --filter @telagent/node start",
+    "build": "pnpm -r build",
+    "test": "pnpm -r test",
+    "typecheck": "pnpm -r typecheck",
+    "version:patch": "node scripts/bump-version.mjs patch",
+    "version:minor": "node scripts/bump-version.mjs minor",
+    "version:major": "node scripts/bump-version.mjs major"
+  },
+  "engines": {
+    "node": ">=22",
+    "pnpm": ">=10.18.1 <11"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "better-sqlite3"
+    ]
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3"
+  }
+}

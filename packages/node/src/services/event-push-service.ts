@@ -1,0 +1,450 @@
+import type { ServerResponse } from 'node:http';
+import type { EventNotification, EventSubscribeResponse } from '@telagent/protocol';
+import type { ClawNetGatewayService } from '../clawnet/gateway-service.js';
+import type { ApiProxyService } from './api-proxy-service.js';
+import { getGlobalLogger } from '../logger.js';
+
+const logger = getGlobalLogger();
+const DEFAULT_DELEGATION_TTL_SEC = 3600;
+const DELEGATION_TOPICS = ['telagent/envelope', 'telagent/receipt', 'telagent/group-sync'];
+const HEARTBEAT_INTERVAL_MS = 30_000;
+const RECONNECT_DELAY_MS = 3_000;
+
+// ── SSE client management ────────────────────────────────
+
+interface SseClient {
+  id: string;
+  res: ServerResponse;
+  heartbeatTimer: ReturnType<typeof setInterval>;
+}
+
+// ── Delegation WS state (gateway role) ───────────────────
+
+interface DelegationWsState {
+  delegationId: string;
+  targetDid: string;
+  ws: WebSocket | null;
+  lastSeq: number;
+  stopping: boolean;
+  sseClients: Set<string>;
+  reconnectTimer?: ReturnType<typeof setTimeout>;
+}
+
+/**
+ * EventPushService handles two responsibilities:
+ *
+ * 1. **Local SSE** (any node):   Pushes EventNotification to directly-connected Webapp clients.
+ * 2. **Gateway delegation** (gateway role): Manages ClawNet delegation WS connections and
+ *    forwards delegated-message events as SSE to DID-mode Webapp clients.
+ */
+export class EventPushService {
+  /** Local SSE clients: Webapp directly connected to this node. */
+  private readonly localClients = new Map<string, SseClient>();
+
+  /** Gateway-side: delegation WS connections keyed by targetDid. */
+  private readonly delegationConnections = new Map<string, DelegationWsState>();
+
+  /** Gateway SSE clients: keyed by client id, mapped to targetDid. */
+  private readonly gatewayClients = new Map<string, { sseClient: SseClient; targetDid: string }>();
+
+  private clientIdCounter = 0;
+
+  constructor(
+    private readonly clawnetGateway: ClawNetGatewayService,
+    private readonly apiProxyService: ApiProxyService | undefined,
+  ) {}
+
+  // ── Local SSE ──────────────────────────────────────────
+
+  /**
+   * Register a local SSE client. Called when Webapp opens GET /api/v1/events.
+   */
+  addLocalClient(res: ServerResponse): string {
+    const id = `local-${++this.clientIdCounter}`;
+    this.initSseResponse(res);
+    const heartbeatTimer = setInterval(() => {
+      this.sendSseComment(res, 'heartbeat');
+    }, HEARTBEAT_INTERVAL_MS);
+    this.localClients.set(id, { id, res, heartbeatTimer });
+    res.on('close', () => this.removeLocalClient(id));
+    logger.info('[event-push] Local SSE client connected: %s (total: %d)', id, this.localClients.size);
+    return id;
+  }
+
+  removeLocalClient(id: string): void {
+    const client = this.localClients.get(id);
+    if (!client) return;
+    clearInterval(client.heartbeatTimer);
+    this.localClients.delete(id);
+    if (!client.res.writableEnded) {
+      client.res.end();
+    }
+    logger.info('[event-push] Local SSE client disconnected: %s (remaining: %d)', id, this.localClients.size);
+  }
+
+  /**
+   * Emit an event to all local SSE clients.
+   * Called by the node's message processing pipeline.
+   */
+  emitLocal(event: EventNotification): void {
+    if (this.localClients.size === 0) return;
+    const data = JSON.stringify(event);
+    for (const client of this.localClients.values()) {
+      this.sendSseEvent(client.res, event.type, data);
+    }
+  }
+
+  // ── Target role: create/revoke delegation ──────────────
+
+  /**
+   * Create a ClawNet subscription delegation for a gateway.
+   * Called when gateway sends POST /api/v1/events/subscribe via API Proxy.
+   */
+  async createDelegation(gatewayDid: string): Promise<EventSubscribeResponse> {
+    const result = await this.clawnetGateway.client.messaging.createSubscriptionDelegation({
+      delegateDid: gatewayDid,
+      topics: DELEGATION_TOPICS,
+      expiresInSec: DEFAULT_DELEGATION_TTL_SEC,
+      metadataOnly: true,
+    });
+    logger.info('[event-push] Created delegation %s for gateway %s', result.delegationId, gatewayDid);
+    return {
+      delegationId: result.delegationId,
+      expiresAtMs: result.expiresAtMs,
+    };
+  }
+
+  /**
+   * Revoke a ClawNet subscription delegation.
+   */
+  async revokeDelegation(delegationId: string): Promise<void> {
+    try {
+      await this.clawnetGateway.client.messaging.revokeSubscriptionDelegation(delegationId);
+      logger.info('[event-push] Revoked delegation %s', delegationId);
+    } catch (err) {
+      logger.warn('[event-push] Failed to revoke delegation %s: %s', delegationId, (err as Error).message);
+    }
+  }
+
+  // ── Gateway role: delegation WS + SSE relay ────────────
+
+  /**
+   * Register a gateway SSE client for a DID-mode Webapp.
+   * This will:
+   *  1. Send POST /api/v1/events/subscribe to target via API Proxy
+   *  2. Connect to ClawNet WS subscribe-delegated endpoint
+   *  3. Pipe delegated-message events as SSE to the Webapp
+   */
+  async addGatewayClient(
+    res: ServerResponse,
+    targetDid: string,
+  ): Promise<string> {
+    if (!this.apiProxyService) {
+      throw new Error('API Proxy service not available');
+    }
+
+    const clientId = `gateway-${++this.clientIdCounter}`;
+    this.initSseResponse(res);
+    const heartbeatTimer = setInterval(() => {
+      this.sendSseComment(res, 'heartbeat');
+    }, HEARTBEAT_INTERVAL_MS);
+
+    const sseClient: SseClient = { id: clientId, res, heartbeatTimer };
+
+    // Check if we already have a delegation connection for this targetDid
+    let conn = this.delegationConnections.get(targetDid);
+
+    if (!conn) {
+      // Create new delegation via API Proxy → Target → ClawNet
+      const proxyResponse = await this.apiProxyService.proxyRequest(
+        targetDid,
+        'POST',
+        '/api/v1/events/subscribe',
+        { 'content-type': 'application/json' },
+        JSON.stringify({
+          gatewayDid: (this.clawnetGateway as any).client?.identity?.did
+            ?? await this.clawnetGateway.getSelfIdentity().then(i => i.did),
+          topics: DELEGATION_TOPICS,
+          expiresInSec: DEFAULT_DELEGATION_TTL_SEC,
+        }),
+      );
+
+      if (proxyResponse.status !== 200 && proxyResponse.status !== 201) {
+        const errText = proxyResponse.bodyBytes ? new TextDecoder().decode(proxyResponse.bodyBytes) : '';
+        throw new Error(`Target refused event subscription: ${proxyResponse.status} ${errText}`);
+      }
+
+      const body = JSON.parse(proxyResponse.bodyBytes ? new TextDecoder().decode(proxyResponse.bodyBytes) : '{}');
+      const delegationId = body.data?.delegationId as string;
+      if (!delegationId) {
+        throw new Error('Target did not return delegation ID');
+      }
+
+      conn = {
+        delegationId,
+        targetDid,
+        ws: null,
+        lastSeq: 0,
+        stopping: false,
+        sseClients: new Set(),
+      };
+      this.delegationConnections.set(targetDid, conn);
+      this.connectDelegationWs(conn);
+    }
+
+    conn.sseClients.add(clientId);
+    this.gatewayClients.set(clientId, { sseClient, targetDid });
+
+    res.on('close', () => this.removeGatewayClient(clientId));
+    logger.info('[event-push] Gateway SSE client %s connected for target %s (delegation: %s)',
+      clientId, targetDid, conn.delegationId);
+    return clientId;
+  }
+
+  removeGatewayClient(clientId: string): void {
+    const entry = this.gatewayClients.get(clientId);
+    if (!entry) return;
+    clearInterval(entry.sseClient.heartbeatTimer);
+    if (!entry.sseClient.res.writableEnded) {
+      entry.sseClient.res.end();
+    }
+    this.gatewayClients.delete(clientId);
+
+    // Remove from delegation connection
+    const conn = this.delegationConnections.get(entry.targetDid);
+    if (conn) {
+      conn.sseClients.delete(clientId);
+      // If no more SSE clients for this target, tear down delegation
+      if (conn.sseClients.size === 0) {
+        this.teardownDelegation(conn);
+      }
+    }
+    logger.info('[event-push] Gateway SSE client %s disconnected', clientId);
+  }
+
+  // ── Delegation WS connection ───────────────────────────
+
+  private connectDelegationWs(conn: DelegationWsState): void {
+    if (conn.stopping) return;
+
+    const baseUrl = this.clawnetGateway.baseUrl;
+    let wsUrl = baseUrl.replace(/^http/, 'ws')
+      + '/api/v1/messaging/subscribe-delegated';
+    const params = new URLSearchParams();
+    params.set('delegationId', conn.delegationId);
+    if (conn.lastSeq > 0) {
+      params.set('sinceSeq', String(conn.lastSeq));
+    }
+    const apiKey = (this.clawnetGateway as any).config?.apiKey;
+    if (apiKey) {
+      params.set('apiKey', apiKey);
+    }
+    wsUrl += `?${params.toString()}`;
+
+    const ws = new WebSocket(wsUrl);
+    conn.ws = ws;
+
+    ws.addEventListener('open', () => {
+      logger.info('[event-push] Delegation WS connected for target %s (delegationId: %s)',
+        conn.targetDid, conn.delegationId);
+    });
+
+    ws.addEventListener('message', (event: MessageEvent) => {
+      this.handleDelegationFrame(conn, String(event.data));
+    });
+
+    ws.addEventListener('close', () => {
+      if (!conn.stopping) {
+        logger.warn('[event-push] Delegation WS closed for %s, reconnecting in %dms...',
+          conn.targetDid, RECONNECT_DELAY_MS);
+        conn.reconnectTimer = setTimeout(() => this.connectDelegationWs(conn), RECONNECT_DELAY_MS);
+      }
+    });
+
+    ws.addEventListener('error', (event: Event) => {
+      logger.error('[event-push] Delegation WS error for %s: %s',
+        conn.targetDid, (event as ErrorEvent).message ?? 'unknown');
+    });
+  }
+
+  private handleDelegationFrame(conn: DelegationWsState, raw: string): void {
+    try {
+      const frame = JSON.parse(raw) as {
+        type: string;
+        seq?: number;
+        lastSeq?: number;
+        delegationId?: string;
+        data?: {
+          type: string;
+          delegationId: string;
+          originalTargetDid: string;
+          sourceDid: string;
+          topic: string;
+          seq: number;
+          receivedAtMs: number;
+          metadata?: {
+            messageId: string;
+            payloadSizeBytes: number;
+          };
+        };
+      };
+
+      switch (frame.type) {
+        case 'connected':
+          if (frame.seq && conn.lastSeq === 0) {
+            conn.lastSeq = frame.seq;
+          }
+          logger.info('[event-push] Delegation WS subscribed (delegationId=%s, seq=%d)',
+            frame.delegationId, frame.seq);
+          break;
+
+        case 'delegated-message':
+          if (frame.data) {
+            const notification = this.delegatedMessageToNotification(frame.data);
+            if (notification) {
+              this.pushToGatewayClients(conn, notification);
+            }
+            if (frame.data.seq > conn.lastSeq) {
+              conn.lastSeq = frame.data.seq;
+            }
+          }
+          break;
+
+        case 'replay_done':
+          if (frame.lastSeq && frame.lastSeq > conn.lastSeq) {
+            conn.lastSeq = frame.lastSeq;
+          }
+          logger.info('[event-push] Delegation replay done for %s (lastSeq=%d)',
+            conn.targetDid, frame.lastSeq);
+          break;
+      }
+    } catch (err) {
+      logger.error('[event-push] Failed to process delegation frame: %s', (err as Error).message);
+    }
+  }
+
+  private delegatedMessageToNotification(
+    data: NonNullable<{
+      topic: string;
+      sourceDid: string;
+      receivedAtMs: number;
+      metadata?: { messageId: string };
+    }>,
+  ): EventNotification | null {
+    switch (data.topic) {
+      case 'telagent/envelope':
+        return {
+          type: 'new-envelope',
+          sourceDid: data.sourceDid,
+          envelopeId: data.metadata?.messageId,
+          atMs: data.receivedAtMs,
+        };
+      case 'telagent/receipt':
+        return {
+          type: 'receipt',
+          sourceDid: data.sourceDid,
+          atMs: data.receivedAtMs,
+        };
+      case 'telagent/group-sync':
+        return {
+          type: 'conversation-update',
+          sourceDid: data.sourceDid,
+          atMs: data.receivedAtMs,
+        };
+      default:
+        return null;
+    }
+  }
+
+  private pushToGatewayClients(conn: DelegationWsState, event: EventNotification): void {
+    const data = JSON.stringify(event);
+    for (const clientId of conn.sseClients) {
+      const entry = this.gatewayClients.get(clientId);
+      if (entry) {
+        this.sendSseEvent(entry.sseClient.res, event.type, data);
+      }
+    }
+  }
+
+  private async teardownDelegation(conn: DelegationWsState): Promise<void> {
+    conn.stopping = true;
+    if (conn.reconnectTimer) {
+      clearTimeout(conn.reconnectTimer);
+    }
+    if (conn.ws) {
+      conn.ws.close();
+      conn.ws = null;
+    }
+    this.delegationConnections.delete(conn.targetDid);
+
+    // Revoke delegation on target via API Proxy
+    if (this.apiProxyService) {
+      try {
+        await this.apiProxyService.proxyRequest(
+          conn.targetDid,
+          'POST',
+          '/api/v1/events/unsubscribe',
+          { 'content-type': 'application/json' },
+          JSON.stringify({ delegationId: conn.delegationId }),
+        );
+      } catch (err) {
+        logger.warn('[event-push] Failed to revoke delegation on target %s: %s',
+          conn.targetDid, (err as Error).message);
+      }
+    }
+    logger.info('[event-push] Delegation teardown complete for target %s', conn.targetDid);
+  }
+
+  // ── SSE helpers ────────────────────────────────────────
+
+  private initSseResponse(res: ServerResponse): void {
+    res.writeHead(200, {
+      'Content-Type': 'text/event-stream',
+      'Cache-Control': 'no-cache',
+      'Connection': 'keep-alive',
+      'X-Accel-Buffering': 'no',
+    });
+    // Send initial comment to flush headers
+    res.write(':ok\n\n');
+  }
+
+  private sendSseEvent(res: ServerResponse, eventType: string, data: string): void {
+    if (res.writableEnded) return;
+    res.write(`event: ${eventType}\ndata: ${data}\n\n`);
+  }
+
+  private sendSseComment(res: ServerResponse, comment: string): void {
+    if (res.writableEnded) return;
+    res.write(`:${comment}\n\n`);
+  }
+
+  // ── Cleanup ────────────────────────────────────────────
+
+  dispose(): void {
+    // Close all local clients
+    for (const client of this.localClients.values()) {
+      clearInterval(client.heartbeatTimer);
+      if (!client.res.writableEnded) {
+        client.res.end();
+      }
+    }
+    this.localClients.clear();
+
+    // Close all gateway clients
+    for (const entry of this.gatewayClients.values()) {
+      clearInterval(entry.sseClient.heartbeatTimer);
+      if (!entry.sseClient.res.writableEnded) {
+        entry.sseClient.res.end();
+      }
+    }
+    this.gatewayClients.clear();
+
+    // Teardown all delegation connections (synchronously close WS, skip API revoke)
+    for (const conn of this.delegationConnections.values()) {
+      conn.stopping = true;
+      if (conn.reconnectTimer) clearTimeout(conn.reconnectTimer);
+      if (conn.ws) conn.ws.close();
+    }
+    this.delegationConnections.clear();
+  }
+}

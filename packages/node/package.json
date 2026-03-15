@@ -1,0 +1,33 @@
+{
+  "name": "@telagent/node",
+  "version": "0.2.8",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "clean": "rm -rf dist",
+    "prebuild": "pnpm clean",
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "node --test dist/*.test.js dist/**/*.test.js",
+    "pretest": "pnpm build",
+    "start": "NODE_EXTRA_CA_CERTS=${NODE_EXTRA_CA_CERTS:-$(mkcert -CAROOT 2>/dev/null || echo /dev/null)/rootCA.pem} tsx --env-file=../../.env src/daemon.ts"
+  },
+  "dependencies": {
+    "@claw-network/core": "^0.6.11",
+    "@claw-network/node": "^0.6.11",
+    "@claw-network/sdk": "^0.6.11",
+    "@telagent/protocol": "workspace:*",
+    "better-sqlite3": "^12.2.0",
+    "ethers": "^6.15.0",
+    "pg": "^8.16.3",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.13",
+    "@types/node": "^22.19.0",
+    "@types/pg": "^8.15.5",
+    "tsx": "^4.20.6",
+    "typescript": "^5.9.3"
+  }
+}
