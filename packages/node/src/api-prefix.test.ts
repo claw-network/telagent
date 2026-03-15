@@ -8,6 +8,10 @@ import { NodeMonitoringService } from './services/node-monitoring-service.js';
 const AUTH_HEADERS = { authorization: 'Bearer tses_test_token' };
 
 class FakeIdentityService {
+  getSelfDid(): string {
+    return 'did:claw:zSelf';
+  }
+
   async getSelf() {
     return {
       did: 'did:claw:zSelf',

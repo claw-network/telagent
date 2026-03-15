@@ -14,6 +14,10 @@ function digest(value: string): string {
 }
 
 class FakeIdentityService {
+  getSelfDid(): string {
+    return 'did:claw:zSelf';
+  }
+
   private readonly revokedDidHashes = new Set<string>();
   private readonly revocationSubscribers = new Set<
     (event: { did: string; didHash: string; revokedAtMs: number; source: string }) => void
