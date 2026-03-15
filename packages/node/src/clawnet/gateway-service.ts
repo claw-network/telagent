@@ -505,9 +505,14 @@ export class ClawNetGatewayService {
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
       if (msg.includes('not initialised')) {
-        // ClawToken contract not deployed on this network — faucet unavailable
+        // ClawToken contract not deployed / ABI missing on this network — faucet unavailable
         const self2 = await this.getSelfIdentity();
         return { did, address: self2.address ?? '', amount: 0, txHash: null };
+      }
+      // Map ClawNet 409 Conflict → TelagentError(CONFLICT) so the TelAgent API
+      // returns proper 409 status instead of 500.
+      if (err instanceof ClawNetError && err.status === 409) {
+        throw new TelagentError(ErrorCodes.CONFLICT, err.message);
       }
       throw err;
     }
