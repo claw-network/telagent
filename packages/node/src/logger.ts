@@ -1,4 +1,4 @@
-import { createWriteStream, type WriteStream } from 'node:fs';
+import { createWriteStream, mkdirSync, type WriteStream } from 'node:fs';
 import { resolve } from 'node:path';
 import { format } from 'node:util';
 
@@ -63,6 +63,7 @@ export function createLogger(levelOrOptions: LogLevel | LoggerOptions = 'info'):
 
   let fileStream: WriteStream | undefined;
   if (opts.logDir) {
+    mkdirSync(opts.logDir, { recursive: true });
     const logFile = resolve(opts.logDir, 'telagent.log');
     fileStream = createWriteStream(logFile, { flags: 'a' });
   }
