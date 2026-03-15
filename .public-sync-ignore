@@ -1,0 +1,31 @@
+# Paths excluded from public repository sync.
+# Used by .github/workflows/sync-public.yml to filter private content.
+# This file is informational — the workflow uses explicit rm commands.
+#
+# Private repo : claw-network/telagent-dev  (daily development)
+# Public repo  : claw-network/telagent      (open-source release)
+
+# Implementation docs (contain server IPs, SSH commands, internal decisions)
+docs/design
+docs/implementation/
+docs/issues/
+docs/reply/
+docs/telagent-v1-complete-functional-summary-2026-03-03.md
+
+# Operational skills (server IPs, SSH key paths, deploy procedures)
+skills/
+
+# Deploy scripts with hard-coded server IPs/SSH keys
+scripts/deploy-node.sh
+scripts/deploy-install-assets.sh
+scripts/redeploy.sh
+
+# Local dev infrastructure (gitignored locally, excluded as extra safety)
+localdev/
+temp/
+
+# This file itself
+.public-sync-ignore
+
+# Private copilot instructions (replaced with public version on sync)
+.github/copilot-instructions.md

@@ -1,0 +1,138 @@
+name: Sync to Public Repo
+
+on:
+  push:
+    branches: [main]
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Prepare public content
+        run: |
+          set -euo pipefail
+
+          # ── 1. Preserve public subdirs inside docs/ before wiping it ──
+          mkdir -p /tmp/preserve/docs
+          cp -r docs/design  /tmp/preserve/docs/design
+          cp -r docs/guides  /tmp/preserve/docs/guides
+          cp    docs/README.md /tmp/preserve/docs/README.md
+
+          # ── 2. Remove private directories and files ──
+          # Implementation docs (contain server IPs, SSH details, internal decisions)
+          rm -rf docs
+
+          # Operational skills (server IPs, SSH key paths, deploy procedures)
+          rm -rf skills
+
+          # Deploy scripts with hard-coded server IPs / SSH keys
+          rm -f scripts/deploy-node.sh
+          rm -f scripts/deploy-install-assets.sh
+          rm -f scripts/redeploy.sh
+
+          # Informational files used only in private repo
+          rm -f .public-sync-ignore
+
+          # Local dev directories (gitignored locally, excluded as safety net)
+          rm -rf localdev temp
+
+          # Private copilot instructions (replaced below with public version)
+          rm -f .github/copilot-instructions.md
+
+          # This sync workflow itself (public repo has no need for it)
+          rm -f .github/workflows/sync-public.yml
+
+          # ── 3. Restore the public subdirs of docs/ ──
+          mkdir -p docs
+          cp -r /tmp/preserve/docs/design docs/design
+          cp -r /tmp/preserve/docs/guides docs/guides
+          cp    /tmp/preserve/docs/README.md docs/README.md
+          rm -rf /tmp/preserve
+
+          # ── 4. Replace copilot instructions with the public (sanitised) version ──
+          mv .github/copilot-instructions.public.md .github/copilot-instructions.md
+
+          echo "=== Public content prepared ==="
+          find . -maxdepth 2 -not -path './.git/*' | sort
+
+      - name: Verify no secrets leaked
+        run: |
+          set -euo pipefail
+          LEAKED=0
+
+          # Known sensitive fragments — unique substrings of real values
+          # (fragments only; full values never appear in this file)
+          for pattern in \
+            "173\.249\.46" \
+            "167\.86\.93" \
+            "id_ed25519_clawnet" \
+            "VLwttmy" \
+            "alex\.telagent\.org.*173\|bess\.telagent\.org.*167" \
+            "root@173\|root@167"; do
+            if grep -rqP "$pattern" . \
+              --include='*.md' --include='*.yml' --include='*.yaml' \
+              --include='*.json' --include='*.ts' --include='*.js' \
+              --include='*.sh' --include='*.env' \
+              --exclude-dir='.git' 2>/dev/null; then
+              echo "LEAK DETECTED: pattern '$pattern' found in:"
+              grep -rlP "$pattern" . \
+                --include='*.md' --include='*.yml' --include='*.yaml' \
+                --include='*.json' --include='*.ts' --include='*.js' \
+                --include='*.sh' --include='*.env' \
+                --exclude-dir='.git' 2>/dev/null
+              LEAKED=1
+            fi
+          done
+
+          if [[ $LEAKED -eq 1 ]]; then
+            echo "::error::Secret leak detected! Aborting sync."
+            exit 1
+          fi
+          echo "✅ No secrets detected in public content."
+
+      - name: Configure Git
+        run: |
+          git config --global user.name "Sync Bot"
+          git config --global user.email "bot@claw-network.github.com"
+
+      - name: Push to public repo
+        env:
+          PUBLIC_REPO_PAT: ${{ secrets.PUBLIC_REPO_PAT }}
+        run: |
+          set -euo pipefail
+
+          PUBLIC_REPO="https://x-access-token:${PUBLIC_REPO_PAT}@github.com/claw-network/telagent.git"
+
+          # Capture commit info before erasing .git
+          ORIG_MSG="$(git log -1 --format='%s' 2>/dev/null || echo 'initial sync')"
+          ORIG_SHA="$(git log -1 --format='%h' 2>/dev/null || echo 'unknown')"
+
+          # Create a brand-new single commit — no git history in public repo
+          rm -rf .git
+          git init -b main
+          git add -A
+          git commit -m "sync: ${ORIG_SHA} ${ORIG_MSG}"
+
+          # Force-push to public repo (single commit, no history)
+          git remote add public "$PUBLIC_REPO"
+          git push public main --force
+
+          # If triggered by a tag, sync the tag too
+          if [[ "${GITHUB_REF:-}" == refs/tags/* ]]; then
+            TAG="${GITHUB_REF#refs/tags/}"
+            git tag "$TAG"
+            git push public "$TAG" --force
+          fi
+
+          echo "✅ Successfully synced to claw-network/telagent"
