@@ -499,16 +499,14 @@ export class ClawNetGatewayService {
     const sigBytes = await signBytes(message, privateKey);
     const signature = bytesToHex(sigBytes);
 
+    // POST to the public faucet (NOT the local node) — per ClawNet team guidance:
+    // local embedded nodes don't hold MINTER_ROLE and cannot serve /api/v1/faucet.
+    const faucetBaseUrl = process.env.CLAW_FAUCET_URL ?? 'https://api.clawnetd.com';
+    const faucetClient = new ClawNetClient({ baseUrl: faucetBaseUrl }) as any;
     try {
-      const result = await this.unsafeClient.faucet.claim({ did, signature, timestamp });
+      const result = await faucetClient.faucet.claim({ did, signature, timestamp });
       return result as { did: string; address: string; amount: number; txHash: string | null };
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : String(err);
-      if (msg.includes('not initialised')) {
-        // ClawToken contract not deployed / ABI missing on this network — faucet unavailable
-        const self2 = await this.getSelfIdentity();
-        return { did, address: self2.address ?? '', amount: 0, txHash: null };
-      }
       // Map ClawNet 409 Conflict → TelagentError(CONFLICT) so the TelAgent API
       // returns proper 409 status instead of 500.
       if (err instanceof ClawNetError && err.status === 409) {

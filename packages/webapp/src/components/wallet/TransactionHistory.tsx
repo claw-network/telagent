@@ -2,10 +2,15 @@ import { ArrowDownLeftIcon, ArrowUpRightIcon, LockKeyholeIcon, SearchIcon, Walle
 import { useMemo, useState } from "react"
 import { useTranslation } from "react-i18next"
 
+import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
+import { Separator } from "@/components/ui/separator"
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet"
 import { TransactionFilterSheet, DEFAULT_FILTERS } from "@/components/wallet/TransactionFilterSheet"
 import type { TransactionFilters, DateRange, TxCategory } from "@/components/wallet/TransactionFilterSheet"
+import { useIsMobile } from "@/hooks/use-mobile"
 import { useWalletStore } from "@/stores/wallet"
 import type { WalletHistoryItem } from "@/stores/wallet"
 
@@ -93,6 +98,87 @@ function matchesFilter(item: WalletHistoryItem, filter: HistoryFilter): boolean 
   return true
 }
 
+interface TxDetailBodyProps {
+  item: WalletHistoryItem
+  t: (key: string) => string
+}
+
+function TxDetailBody({ item, t }: TxDetailBodyProps) {
+  return (
+    <div className="space-y-3 text-sm">
+      <div className="flex items-center justify-between">
+        <span className="text-muted-foreground">{t("wallet.type")}</span>
+        <Badge variant="outline">{item.type}</Badge>
+      </div>
+      {item.status && (
+        <>
+          <Separator />
+          <div className="flex items-center justify-between">
+            <span className="text-muted-foreground">{t("wallet.status")}</span>
+            <Badge variant="outline">{item.status}</Badge>
+          </div>
+        </>
+      )}
+      {item.amount != null && (
+        <>
+          <Separator />
+          <div className="flex items-center justify-between">
+            <span className="text-muted-foreground">{t("wallet.amount")}</span>
+            <span className={`font-semibold tabular-nums ${txAmountColor(item.type)}`}>
+              {txAmountPrefix(item.type)}{item.amount}
+            </span>
+          </div>
+        </>
+      )}
+      {item.timestampMs != null && (
+        <>
+          <Separator />
+          <div className="flex items-center justify-between">
+            <span className="text-muted-foreground">{t("wallet.time")}</span>
+            <span className="tabular-nums">{new Date(item.timestampMs).toLocaleString()}</span>
+          </div>
+        </>
+      )}
+      {item.from && (
+        <>
+          <Separator />
+          <div>
+            <p className="text-muted-foreground">{t("wallet.txFrom")}</p>
+            <p className="mt-0.5 break-all font-mono text-xs">{item.from}</p>
+          </div>
+        </>
+      )}
+      {item.to && (
+        <>
+          <Separator />
+          <div>
+            <p className="text-muted-foreground">{t("wallet.txTo")}</p>
+            <p className="mt-0.5 break-all font-mono text-xs">{item.to}</p>
+          </div>
+        </>
+      )}
+      {item.txHash && (
+        <>
+          <Separator />
+          <div>
+            <p className="text-muted-foreground">{t("wallet.txHash")}</p>
+            <p className="mt-0.5 break-all font-mono text-xs">{item.txHash}</p>
+          </div>
+        </>
+      )}
+      {item.escrowId && (
+        <>
+          <Separator />
+          <div className="flex items-center justify-between">
+            <span className="text-muted-foreground">{t("wallet.escrowId")}</span>
+            <span className="font-mono text-xs">{item.escrowId}</span>
+          </div>
+        </>
+      )}
+    </div>
+  )
+}
+
 export function TransactionHistory() {
   const { t } = useTranslation()
   const history = useWalletStore((state) => state.history)
@@ -104,6 +190,8 @@ export function TransactionHistory() {
   const [filter, setFilter] = useState<HistoryFilter>("all")
   const [search, setSearch] = useState("")
   const [advFilters, setAdvFilters] = useState<TransactionFilters>(DEFAULT_FILTERS)
+  const [selectedTx, setSelectedTx] = useState<WalletHistoryItem | null>(null)
+  const isMobile = useIsMobile()
 
   const activeFilterCount = useMemo(() => {
     let count = 0
@@ -233,7 +321,11 @@ export function TransactionHistory() {
               {group.items.map((item) => (
                 <div
                   key={item.id}
-                  className="flex items-center gap-3 rounded-xl px-2 py-2.5 transition hover:bg-muted/40"
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => setSelectedTx(item)}
+                  onKeyDown={(e) => e.key === "Enter" && setSelectedTx(item)}
+                  className="flex cursor-pointer items-center gap-3 rounded-xl px-2 py-2.5 transition hover:bg-muted/40"
                 >
                   {txIcon(item.type)}
                   <div className="min-w-0 flex-1">
@@ -280,6 +372,27 @@ export function TransactionHistory() {
             {t("details.next")}
           </Button>
         </div>
+      )}
+
+      {/* Transaction detail — Sheet on mobile, Dialog on tablet/desktop */}
+      {isMobile ? (
+        <Sheet open={selectedTx !== null} onOpenChange={(open) => { if (!open) setSelectedTx(null) }}>
+          <SheetContent side="bottom" className="max-h-[80vh] overflow-y-auto rounded-t-2xl px-4 pb-8">
+            <SheetHeader className="mb-4">
+              <SheetTitle>{t("wallet.txDetail")}</SheetTitle>
+            </SheetHeader>
+            {selectedTx && <TxDetailBody item={selectedTx} t={t} />}
+          </SheetContent>
+        </Sheet>
+      ) : (
+        <Dialog open={selectedTx !== null} onOpenChange={(open) => { if (!open) setSelectedTx(null) }}>
+          <DialogContent className="max-w-md">
+            <DialogHeader className="mb-2">
+              <DialogTitle>{t("wallet.txDetail")}</DialogTitle>
+            </DialogHeader>
+            {selectedTx && <TxDetailBody item={selectedTx} t={t} />}
+          </DialogContent>
+        </Dialog>
       )}
     </div>
   )

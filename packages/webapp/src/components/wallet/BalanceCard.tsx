@@ -4,6 +4,8 @@ import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
+import { Item, ItemContent, ItemMedia, ItemTitle } from "@/components/ui/item"
+import { Spinner } from "@/components/ui/spinner"
 import { useSessionGuard } from "@/hooks/use-session-guard"
 import { useWalletStore } from "@/stores/wallet"
 
@@ -95,6 +97,21 @@ export function BalanceCard({ onRefresh }: BalanceCardProps) {
           {t("wallet.native")}: {visible ? (balance?.native ?? "0") : mask}
         </p>
       </div>
+
+      {/* Faucet claiming in-progress view */}
+      {claiming && (
+        <Item variant="muted">
+          <ItemMedia>
+            <Spinner />
+          </ItemMedia>
+          <ItemContent>
+            <ItemTitle className="line-clamp-1">{t("wallet.faucet.claiming")}</ItemTitle>
+          </ItemContent>
+          <ItemContent className="flex-none justify-end">
+            <span className="text-sm tabular-nums text-muted-foreground">100 CLAW</span>
+          </ItemContent>
+        </Item>
+      )}
 
       {/* Sent / Received summary */}
       <div className="grid grid-cols-2 gap-3">

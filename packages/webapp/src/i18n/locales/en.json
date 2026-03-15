@@ -228,6 +228,9 @@
     "status": "Status",
     "txHash": "Tx hash",
     "noHistory": "No transactions found.",
+    "txDetail": "Transaction Detail",
+    "txFrom": "From",
+    "txTo": "To",
     "transfer": "Transfer",
     "transferDescription": "Send token to another DID.",
     "transferValidation": "Please input receiver DID and amount.",
@@ -258,6 +261,7 @@
     "holdToSend": "Hold to Send",
     "faucet": {
       "claim": "Claim Tokens",
+      "claiming": "Claiming tokens...",
       "success": "Claimed {{amount}} tokens!",
       "failed": "Faucet claim failed.",
       "alreadyClaimed": "Tokens already claimed for this DID.",

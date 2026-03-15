@@ -96,12 +96,13 @@ function pickNumber(source: Record<string, unknown>, keys: string[]): number | u
 
 function parseTimestamp(value: unknown): number | undefined {
   if (typeof value === "number" && Number.isFinite(value)) {
-    return value
+    // Values < 1e11 are seconds-based Unix timestamps (year < 5138); convert to ms
+    return value < 1e11 ? value * 1000 : value
   }
   if (typeof value === "string" && value.trim()) {
     const numeric = Number(value)
     if (Number.isFinite(numeric)) {
-      return numeric
+      return numeric < 1e11 ? numeric * 1000 : numeric
     }
     const parsed = Date.parse(value)
     if (Number.isFinite(parsed)) {
