@@ -54,7 +54,6 @@ jobs:
 
           # ── 3. Restore the public subdirs of docs/ ──
           mkdir -p docs
-          cp -r /tmp/preserve/docs/design docs/design
           cp -r /tmp/preserve/docs/guides docs/guides
           cp    /tmp/preserve/docs/README.md docs/README.md
           rm -rf /tmp/preserve
