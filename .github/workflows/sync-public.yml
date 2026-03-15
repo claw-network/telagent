@@ -25,7 +25,6 @@ jobs:
 
           # ── 1. Preserve public subdirs inside docs/ before wiping it ──
           mkdir -p /tmp/preserve/docs
-          cp -r docs/design  /tmp/preserve/docs/design
           cp -r docs/guides  /tmp/preserve/docs/guides
           cp    docs/README.md /tmp/preserve/docs/README.md
 
