@@ -11,8 +11,8 @@ Deploy or redeploy TelAgent nodes to remote cloud servers.
 
 | Node | Domain | IP | DID | User |
 |------|--------|----|-----|------|
-| Node A | `alex.telagent.org` | `173.249.46.252` | `did:claw:z6tor6XFy7EYf6GJrqknsgjvEHZxoZbC1KQQkLBvmNyXn` | root |
-| Node B | `bess.telagent.org` | `167.86.93.216` | `did:claw:z7ToozkCFGsnkJB5HDub6J7cN5EKAxcr4CHfPiazcLkFw` | root |
+| Node A | `alex.telagent.org` | `173.249.46.252` | `did:claw:z8MifVfD6GGBeNE4ThZfM3R8tK1daNvrEHWSjRzQuELPA` | root |
+| Node B | `bess.telagent.org` | `167.86.93.216` | `did:claw:z8SQN6QoC3LdE5tg4gRwfdDhY9J6Gpbwe1Vej7KFuqtQA` | root |
 
 ## SSH Access
 
