@@ -1,6 +1,6 @@
 {
   "name": "@telagent/node",
-  "version": "0.2.9",
+  "version": "0.2.10",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -14,9 +14,9 @@
     "start": "NODE_EXTRA_CA_CERTS=${NODE_EXTRA_CA_CERTS:-$(mkcert -CAROOT 2>/dev/null || echo /dev/null)/rootCA.pem} tsx --env-file=../../.env src/daemon.ts"
   },
   "dependencies": {
-    "@claw-network/core": "^0.6.13",
-    "@claw-network/node": "^0.6.13",
-    "@claw-network/sdk": "^0.6.13",
+    "@claw-network/core": "^0.6.14",
+    "@claw-network/node": "^0.6.14",
+    "@claw-network/sdk": "^0.6.14",
     "@telagent/protocol": "workspace:*",
     "better-sqlite3": "^12.2.0",
     "ethers": "^6.15.0",

@@ -21,27 +21,6 @@ export interface ClawNetDiscoveryResult {
 const logger = getGlobalLogger();
 
 /**
- * Create an API key on a ClawNet Node via the localhost admin endpoint.
- * Returns the key string, or undefined if the node doesn't require one
- * (pre-0.6.13) or the call fails.
- */
-async function provisionApiKey(nodeUrl: string): Promise<string | undefined> {
-  try {
-    const resp = await fetch(`${nodeUrl}/api/v1/admin/api-keys`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ label: 'telagent-auto' }),
-      signal: AbortSignal.timeout(5000),
-    });
-    if (!resp.ok) return undefined;
-    const body = await resp.json() as { data?: { key?: string } };
-    return body?.data?.key;
-  } catch {
-    return undefined;
-  }
-}
-
-/**
  * ClawNet Node 发现 + 自动启动
  *
  * 优先级（RFC §5.1）：
@@ -131,13 +110,15 @@ export async function discoverOrStartClawNet(
   const did = managedNode.getDid();
   logger.info('[telagent] Embedded ClawNet Node started — DID: %s', did);
 
-  // v0.6.13+: zero-key nodes reject all requests. Auto-provision an API key
-  // from localhost so the SDK can authenticate.
+  // v0.6.14+: zero-key nodes reject all requests. Create an API key
+  // via the public ClawNetNode.createApiKey() method.
   const apiPort = managedNode.getApiPort();
   const nodeUrl = `http://127.0.0.1:${apiPort}`;
-  const apiKey = await provisionApiKey(nodeUrl);
+  const apiKey = managedNode.createApiKey('telagent-auto');
   if (apiKey) {
     logger.info('[telagent] Auto-provisioned ClawNet API key for embedded node');
+  } else {
+    logger.warn('[telagent] Could not provision ClawNet API key — SDK calls may fail with 401');
   }
 
   return {

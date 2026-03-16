@@ -217,6 +217,20 @@ export class ManagedClawNetNode {
     return this.node?.eventStore;
   }
 
+  /**
+   * Create an API key via ClawNetNode's public API (v0.6.14+).
+   * Used to bootstrap auth for the embedded node.
+   */
+  createApiKey(label: string): string | undefined {
+    if (!this.node?.createApiKey) return undefined;
+    try {
+      const result = this.node.createApiKey(label);
+      return result?.key;
+    } catch {
+      return undefined;
+    }
+  }
+
   isRunning(): boolean {
     return this.node !== null;
   }
