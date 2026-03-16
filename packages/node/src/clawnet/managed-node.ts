@@ -149,6 +149,9 @@ export class ManagedClawNetNode {
     this.startLogFile();
     const { killClawnetdOnPort } = await import('./clawnetd-process.js');
     const { ClawNetNode } = await import('@claw-network/node');
+    // Import the default bootstrap peer so persistent config.yaml with an empty
+    // bootstrap list doesn't leave the node isolated on the network.
+    const { DEFAULT_P2P_CONFIG } = await import('@claw-network/core');
     const chainConfig = this.resolveChainConfig();
     if (chainConfig) {
       logger.info('[telagent] ClawNet embedded chain config resolved — identity service will be available');
@@ -162,6 +165,7 @@ export class ManagedClawNetNode {
           dataDir: this.dataDir,
           passphrase: this.passphrase,
           api: { host: '127.0.0.1', port, enabled: true },
+          p2p: { bootstrap: DEFAULT_P2P_CONFIG.bootstrap },
           chain: chainConfig as any,
           faucetUrl: process.env.CLAW_FAUCET_URL ?? 'https://api.clawnetd.com',
         });
