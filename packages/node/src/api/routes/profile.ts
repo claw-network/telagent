@@ -7,7 +7,7 @@ import { Router } from '../router.js';
 import { handleError } from '../route-utils.js';
 import { ok } from '../response.js';
 import type { RuntimeContext } from '../types.js';
-import { resolvePeerAvatarUrl, localPeerAvatarUrl } from '../../utils/avatar-url.js';
+import { resolvePeerAvatarUrl, localPeerAvatarUrl, isSelfOrigin } from '../../utils/avatar-url.js';
 import { pushOwnProfileCard } from '../../utils/push-profile-card.js';
 
 const ALLOWED_MIME_TYPES = new Set([
@@ -166,8 +166,10 @@ export function profileRoutes(ctx: RuntimeContext): Router {
       }
 
       // 2. Try direct HTTP to the peer's node.
+      //    Skip when the stored URL points to our own API (common when the peer
+      //    advertised 127.0.0.1 because TELAGENT_PUBLIC_URL was not configured).
       const remoteUrl = resolvePeerAvatarUrl(profile.avatarUrl, profile.nodeUrl);
-      if (remoteUrl && !remoteUrl.startsWith('/')) {
+      if (remoteUrl && !remoteUrl.startsWith('/') && !isSelfOrigin(remoteUrl, ctx.config)) {
         try {
           const response = await fetch(remoteUrl, { signal: AbortSignal.timeout(5000) });
           if (response.ok) {
@@ -218,9 +220,13 @@ export function profileRoutes(ctx: RuntimeContext): Router {
       }
       const profile = ctx.peerProfileRepository.get(did);
       if (!profile) {
-        // Fire-and-forget: request the peer's profile card so we can cache it
+        // Fire-and-forget: send our own profile card so the peer replies with
+        // theirs (reciprocal exchange).  Return 200 with null data instead of
+        // 404 so the browser console stays clean — the SDK treats null as
+        // "not yet available".
         void pushOwnProfileCard(ctx, did).catch(() => {});
-        throw new TelagentError(ErrorCodes.NOT_FOUND, `No cached profile for did: ${did}`);
+        ok(res, null, { self: `/api/v1/profile/${encodeURIComponent(did)}` });
+        return;
       }
       const normalizedProfile = {
         ...profile,

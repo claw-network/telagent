@@ -4,7 +4,7 @@ import type { IdentityAdapterService } from '../services/identity-adapter-servic
 import { getEffectiveNodeUrl } from './avatar-url.js';
 
 interface ProfileCardContext {
-  config: { host: string; port: number; publicUrl?: string };
+  config: { host: string; port: number; publicUrl?: string; tls?: { httpsPort: number } };
   selfProfileStore: SelfProfileStore;
   identityService: IdentityAdapterService;
   clawnetTransportService: ClawNetTransportService;
@@ -12,12 +12,11 @@ interface ProfileCardContext {
 
 /**
  * Push our own profile card to a peer so they learn our nickname/avatar.
- * Silently skips if no nickname is configured.
- * Returns a promise that resolves when the card has been sent (or skipped).
+ * Always sends a card — even when nickname is unset — so the peer
+ * can reply with its own profile card (reciprocal exchange).
  */
 export async function pushOwnProfileCard(ctx: ProfileCardContext, targetDid: string): Promise<void> {
   const profile = await ctx.selfProfileStore.loadPublic();
-  if (!profile.nickname) return;
 
   const selfDid = ctx.identityService.getSelfDid();
   const effectiveNodeUrl = getEffectiveNodeUrl(ctx.config);

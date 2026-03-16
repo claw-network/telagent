@@ -202,7 +202,15 @@ export class ClawNetGatewayService {
   }
 
   async getNonce(did?: string): Promise<{ nonce: number; address: string }> {
-    return this.unsafeClient.wallet.getNonce(did ? { did } : undefined) as Promise<{ nonce: number; address: string }>;
+    try {
+      return await (this.unsafeClient.wallet.getNonce(did ? { did } : undefined) as Promise<{ nonce: number; address: string }>);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      if (!msg.includes('not initialised')) throw err;
+
+      const info = await this.getSelfIdentity();
+      return { nonce: 0, address: info.address ?? '' };
+    }
   }
 
   async getEscrow(escrowId: string): Promise<EscrowInfo> {
