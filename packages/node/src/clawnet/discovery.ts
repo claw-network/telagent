@@ -14,9 +14,32 @@ export interface ClawNetDiscoveryResult {
     | 'auto-initialized';
   clawnetHome?: string;
   managedNode?: any;  // ClawNetNode instance or null
+  /** API key auto-provisioned for the managed node (v0.6.13+). */
+  apiKey?: string;
 }
 
 const logger = getGlobalLogger();
+
+/**
+ * Create an API key on a ClawNet Node via the localhost admin endpoint.
+ * Returns the key string, or undefined if the node doesn't require one
+ * (pre-0.6.13) or the call fails.
+ */
+async function provisionApiKey(nodeUrl: string): Promise<string | undefined> {
+  try {
+    const resp = await fetch(`${nodeUrl}/api/v1/admin/api-keys`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ label: 'telagent-auto' }),
+      signal: AbortSignal.timeout(5000),
+    });
+    if (!resp.ok) return undefined;
+    const body = await resp.json() as { data?: { key?: string } };
+    return body?.data?.key;
+  } catch {
+    return undefined;
+  }
+}
 
 /**
  * ClawNet Node 发现 + 自动启动
@@ -108,24 +131,39 @@ export async function discoverOrStartClawNet(
   const did = managedNode.getDid();
   logger.info('[telagent] Embedded ClawNet Node started — DID: %s', did);
 
+  // v0.6.13+: zero-key nodes reject all requests. Auto-provision an API key
+  // from localhost so the SDK can authenticate.
+  const apiPort = managedNode.getApiPort();
+  const nodeUrl = `http://127.0.0.1:${apiPort}`;
+  const apiKey = await provisionApiKey(nodeUrl);
+  if (apiKey) {
+    logger.info('[telagent] Auto-provisioned ClawNet API key for embedded node');
+  }
+
   return {
     found: true,
-    nodeUrl: defaultUrl,
+    nodeUrl,
     source: alreadyInitialized ? 'auto-started' : 'auto-initialized',
     clawnetHome,
     managedNode,
+    apiKey,
   };
 }
 
 /**
  * 检测 ClawNet Node 健康状态
  * 超时 3 秒
+ *
+ * @claw-network/node >= 0.6.13: zero-key nodes return 401 on all networks,
+ * so a 401 response still indicates the node is alive and reachable.
  */
 export async function probeNodeHealth(url: string): Promise<boolean> {
   try {
     const resp = await fetch(`${url}/api/v1/node`, {
       signal: AbortSignal.timeout(3000),
     });
+    // 401 means the node is running but requires auth (v0.6.13+)
+    if (resp.status === 401) return true;
     if (!resp.ok) return false;
     const body = await resp.json() as { data?: { did?: string } };
     return typeof body?.data?.did === 'string';

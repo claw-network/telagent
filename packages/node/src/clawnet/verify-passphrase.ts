@@ -12,11 +12,14 @@
 export async function verifyPassphrase(
   nodeUrl: string,
   passphrase: string,
+  apiKey?: string,
 ): Promise<{ valid: boolean; did?: string; error?: string }> {
   try {
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+    if (apiKey) headers['x-api-key'] = apiKey;
     const resp = await fetch(`${nodeUrl}/api/v1/auth/verify-passphrase`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers,
       body: JSON.stringify({ passphrase }),
       signal: AbortSignal.timeout(5000),
     });

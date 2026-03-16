@@ -88,6 +88,8 @@ export class TelagentNode {
       },
     );
     this.managedClawNet = discovery.managedNode;
+    // Prefer explicit config; fall back to auto-provisioned key from managed node
+    const clawnetApiKey = this.config.clawnet.apiKey || discovery.apiKey;
     logger.info('[telagent] ClawNet: %s -> %s', discovery.source, discovery.nodeUrl);
 
     if (discovery.nodeUrl) {
@@ -110,14 +112,14 @@ export class TelagentNode {
 
     if (passphrase) {
       const wasJustStarted = discovery.source === 'auto-started' || discovery.source === 'auto-initialized';
-      let check = await verifyPassphrase(discovery.nodeUrl, passphrase);
+      let check = await verifyPassphrase(discovery.nodeUrl, passphrase, clawnetApiKey);
 
       // When we just auto-started ClawNet, its auth layer may not be fully
       // initialized yet — retry once with a short delay before treating a
       // mismatch as fatal.
       if (!check.valid && wasJustStarted) {
         await new Promise((resolve) => setTimeout(resolve, 2000));
-        check = await verifyPassphrase(discovery.nodeUrl, passphrase);
+        check = await verifyPassphrase(discovery.nodeUrl, passphrase, clawnetApiKey);
       }
 
       if (!check.valid) {
@@ -143,7 +145,7 @@ export class TelagentNode {
     this.clawnetGateway = new ClawNetGatewayService(
       {
         baseUrl: discovery.nodeUrl,
-        apiKey: this.config.clawnet.apiKey,
+        apiKey: clawnetApiKey,
         timeoutMs: this.config.clawnet.timeoutMs,
         passphrase: passphrase ?? undefined,
         clawnetDataDir: discovery.clawnetHome,
@@ -244,7 +246,7 @@ export class TelagentNode {
     this.attachmentService = new AttachmentService({ storageDir: this.paths.attachmentsDir });
     this.clawnetTransportService = new ClawNetTransportService(
       this.clawnetGateway,
-      { baseUrl: discovery.nodeUrl, apiKey: this.config.clawnet.apiKey },
+      { baseUrl: discovery.nodeUrl, apiKey: clawnetApiKey },
     );
 
     // API Proxy Service (DID-based remote access)

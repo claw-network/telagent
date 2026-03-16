@@ -103,14 +103,14 @@ importers:
   packages/node:
     dependencies:
       '@claw-network/core':
-        specifier: ^0.6.11
-        version: 0.6.11
+        specifier: ^0.6.13
+        version: 0.6.13
       '@claw-network/node':
-        specifier: ^0.6.11
-        version: 0.6.11
+        specifier: ^0.6.13
+        version: 0.6.13
       '@claw-network/sdk':
-        specifier: ^0.6.11
-        version: 0.6.11
+        specifier: ^0.6.13
+        version: 0.6.13
       '@telagent/protocol':
         specifier: workspace:*
         version: link:../protocol
@@ -517,18 +517,18 @@ packages:
   '@chainsafe/netmask@2.0.0':
     resolution: {integrity: sha512-I3Z+6SWUoaljh3TBzCnCxjlUyN8tA+NAk5L6m9IxvCf1BENQTePzPMis97CoN/iMW1St3WN+AWCCRp+TTBRiDg==}
 
-  '@claw-network/core@0.6.11':
-    resolution: {integrity: sha512-7Y4ONrW3AoAD7Prbf2OzVhSGaBTCe4SJ6vpQmx6QRtdD4VOXLe9Zla1OvmsNfWkz687iKZpGzO1+pJE5ylUWLA==}
+  '@claw-network/core@0.6.13':
+    resolution: {integrity: sha512-JIFcsE4AInOEJgASD1ehGNn1mWqSve/iCFs1Dp9rbdyTtmq3950svqiOCECtMctoFAFB4NFo27Jjio4V6IF6jg==}
 
-  '@claw-network/node@0.6.11':
-    resolution: {integrity: sha512-b4Ol0PjTHLebd/5MvEX74VjGAKyVJ6Xj2eUUj7Zd9P1k1tHWqYoYJgby3ROgyAh/ywnaX0pD6hTBKGHGbRf+fw==}
+  '@claw-network/node@0.6.13':
+    resolution: {integrity: sha512-P150qTk9QSy325z2+QKQ0AQW8rzXClvxGv+dJnbid6QR833TLPF2FQy5f0bQI8N1lJY/qElUhfR6Zm7yG75s8g==}
     hasBin: true
 
-  '@claw-network/protocol@0.6.11':
-    resolution: {integrity: sha512-3ISfwr9kr0MihIwiUPKB9exqKmFadc5nfHnOf/lcpev9b73tI+aBrOV/15aGy4hJmxPVvJkWKO8XWuw7A9MQEw==}
+  '@claw-network/protocol@0.6.13':
+    resolution: {integrity: sha512-gGtCS0AW8wCtMmQg2t6AZOr44plh9GNfrWuOH9awcCN8mesjTHegdkCkhn6O6hInXKVGQMNVyjqMclGJoMpd4A==}
 
-  '@claw-network/sdk@0.6.11':
-    resolution: {integrity: sha512-6jqKFpBlcpmKImN23A6OD253bfHBSvqZFdGzU+9vgAm79/P+BdsSIpHu4g4HU73CdMcF/0FVLDyxy05zrJT3IA==}
+  '@claw-network/sdk@0.6.13':
+    resolution: {integrity: sha512-tgcaub4uD/1VLJ12H5yoOF9dAdRIthLG2lqC5eiuZXwb6ki2IHyl1sm0UENtNyzNCgFezJ3KbX9glPbUT1Q1WA==}
 
   '@colors/colors@1.5.0':
     resolution: {integrity: sha512-ooWCrlZP11i8GImSjTHYHLkvFDP48nS4+204nGb1RiX/WXYHmJA2III9/e2DWVabCESdW7hBAEzHRqUn9OUVvQ==}
@@ -4161,6 +4161,9 @@ packages:
     resolution: {integrity: sha512-D2FR03Vir7FIu45XBY20mTb+/ZSWB00sjU9jdQXt83gDrI4Ztz5Fs7/yy74g2N5SVQY4xY1qDr4rNddwYRVX0g==}
     engines: {node: '>=0.10.0'}
 
+  otpauth@9.5.0:
+    resolution: {integrity: sha512-Ldhc6UYl4baR5toGr8nfKC+L/b8/RgHKoIixAebgoNGzUUCET02g04rMEZ2ZsPfeVQhMHcuaOgb28nwMr81zCA==}
+
   ox@0.14.0:
     resolution: {integrity: sha512-WLOB7IKnmI3Ol6RAqY7CJdZKl8QaI44LN91OGF1061YIeN6bL5IsFcdp7+oQShRyamE/8fW/CBRWhJAOzI35Dw==}
     peerDependencies:
@@ -5898,7 +5901,7 @@ snapshots:
     dependencies:
       '@chainsafe/is-ip': 2.1.0
 
-  '@claw-network/core@0.6.11':
+  '@claw-network/core@0.6.13':
     dependencies:
       '@chainsafe/libp2p-gossipsub': 14.1.2
       '@chainsafe/libp2p-noise': 17.0.0
@@ -5924,14 +5927,15 @@ snapshots:
       multiformats: 13.4.2
       yaml: 2.8.2
 
-  '@claw-network/node@0.6.11':
+  '@claw-network/node@0.6.13':
     dependencies:
-      '@claw-network/core': 0.6.11
-      '@claw-network/protocol': 0.6.11
+      '@claw-network/core': 0.6.13
+      '@claw-network/protocol': 0.6.13
       '@libp2p/crypto': 5.1.13
       '@libp2p/peer-id-factory': 4.2.4
       better-sqlite3: 12.6.2
       ethers: 6.16.0
+      otpauth: 9.5.0
       prom-client: 15.1.3
       ws: 8.19.0
       yaml: 2.8.2
@@ -5940,12 +5944,12 @@ snapshots:
       - bufferutil
       - utf-8-validate
 
-  '@claw-network/protocol@0.6.11':
+  '@claw-network/protocol@0.6.13':
     dependencies:
-      '@claw-network/core': 0.6.11
+      '@claw-network/core': 0.6.13
       flatbuffers: 24.12.23
 
-  '@claw-network/sdk@0.6.11': {}
+  '@claw-network/sdk@0.6.13': {}
 
   '@colors/colors@1.5.0':
     optional: true
@@ -10200,6 +10204,10 @@ snapshots:
   ordinal@1.0.3: {}
 
   os-tmpdir@1.0.2: {}
+
+  otpauth@9.5.0:
+    dependencies:
+      '@noble/hashes': 2.0.1
 
   ox@0.14.0(typescript@5.9.3)(zod@4.3.6):
     dependencies:
