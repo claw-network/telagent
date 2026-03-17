@@ -136,7 +136,8 @@ jobs:
             "dfcfdf221c2c7e28" \
             "9b6a26bab67a3b8e" \
             "alex\.telagent\.org.*173\|bess\.telagent\.org.*167" \
-            "root@173\|root@167"; do
+            "root@173\|root@167" \
+            "telagent-dev"; do
             if grep -rqP "$pattern" . \
               --include='*.md' --include='*.yml' --include='*.yaml' \
               --include='*.json' --include='*.ts' --include='*.js' \
