@@ -1,6 +1,6 @@
 {
   "name": "@telagent/protocol",
-  "version": "2026.1.3",
+  "version": "2026.1.4",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
