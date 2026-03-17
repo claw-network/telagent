@@ -99,8 +99,12 @@ jobs:
 
           # Sync docs/guides/ and docs/README.md separately (only public parts of docs/)
           mkdir -p /tmp/public-repo/docs
-          rsync -a --delete docs/guides/ /tmp/public-repo/docs/guides/
-          cp docs/README.md /tmp/public-repo/docs/README.md
+          if [ -d docs/guides ]; then
+            rsync -a --delete docs/guides/ /tmp/public-repo/docs/guides/
+          else
+            rm -rf /tmp/public-repo/docs/guides
+          fi
+          [ -f docs/README.md ] && cp docs/README.md /tmp/public-repo/docs/README.md || true
 
           # Replace copilot instructions with sanitized public version
           cp .github/copilot-instructions.public.md /tmp/public-repo/.github/copilot-instructions.md
