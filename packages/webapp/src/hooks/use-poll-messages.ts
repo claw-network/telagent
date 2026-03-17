@@ -6,6 +6,7 @@ import type { EventNotification } from "@telagent/protocol"
 import { formatApiError, isLikelyNetworkError } from "@/lib/api-error"
 import { useConnectionStore } from "@/stores/connection"
 import { useConversationStore } from "@/stores/conversation"
+import { useContactStore } from "@/stores/contact"
 import { useMessageStore } from "@/stores/message"
 import { useUIStore } from "@/stores/ui"
 import { useEventSource } from "./use-event-source"
@@ -39,8 +40,8 @@ export function usePollMessages() {
   const lastErrorRef = useRef<{ key: string; at: number }>({ key: "", at: 0 })
   const sseActiveRef = useRef(false)
   // Refs for imperative poll triggers from SSE events
-  const pollActiveRef = useRef<() => void>()
-  const pollGlobalRef = useRef<() => void>()
+  const pollActiveRef = useRef<(() => void) | undefined>(undefined)
+  const pollGlobalRef = useRef<(() => void) | undefined>(undefined)
 
   // ── SSE event handler ─────────────────────────────────
   const handleSseEvent = useCallback((event: EventNotification) => {
@@ -57,6 +58,18 @@ export function usePollMessages() {
         break
       case "retraction":
         pollGlobalRef.current?.()
+        break
+      case "profile-update":
+        // A peer's profile card arrived — clear cached entry and re-fetch
+        // so any open AddContactDialog or contact list picks up the update.
+        if (event.sourceDid) {
+          useContactStore.setState((s) => {
+            const copy = { ...s.peerProfiles }
+            delete copy[event.sourceDid!]
+            return { peerProfiles: copy }
+          })
+          void useContactStore.getState().fetchPeerProfile(event.sourceDid).catch(() => null)
+        }
         break
     }
   }, [])

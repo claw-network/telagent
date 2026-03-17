@@ -246,7 +246,7 @@ export class TelagentNode {
     this.attachmentService = new AttachmentService({ storageDir: this.paths.attachmentsDir });
     this.clawnetTransportService = new ClawNetTransportService(
       this.clawnetGateway,
-      { baseUrl: discovery.nodeUrl, apiKey: clawnetApiKey },
+      { baseUrl: discovery.nodeUrl, apiKey: clawnetApiKey, seqStatePath: this.paths.clawnetSeqFile },
     );
 
     // API Proxy Service (DID-based remote access)
@@ -369,6 +369,8 @@ export class TelagentNode {
           } catch {
             // non-critical — contact may not exist yet
           }
+          // Notify local SSE clients that a peer's profile is now available.
+          this.eventPushService?.emitLocal({ type: 'profile-update', sourceDid, atMs: Date.now() });
           // Reciprocal exchange: reply with our own profile the first time we hear from a peer.
           // This ensures both sides get each other's nickname/avatar without requiring
           // both nodes to independently create a conversation.

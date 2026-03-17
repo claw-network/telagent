@@ -1,3 +1,4 @@
+import { readFileSync, writeFileSync } from 'node:fs';
 import type { Envelope, ApiProxyRequest, ApiProxyResponse } from '@telagent/protocol';
 import type { ProfileCardPayload } from '@telagent/protocol';
 import type { ClawNetGatewayService } from '../clawnet/gateway-service.js';
@@ -54,17 +55,47 @@ export type TopicCallbacks = {
 export class ClawNetTransportService {
   private readonly baseUrl: string;
   private readonly apiKey: string | undefined;
+  private readonly seqStatePath: string | undefined;
   private ws?: WebSocket;
   private lastSeq = 0;
   private stopping = false;
   private callbacks: TopicCallbacks = {};
+  private seqFlushTimer?: ReturnType<typeof setTimeout>;
 
   constructor(
     private readonly gateway: ClawNetGatewayService,
-    opts: { baseUrl: string; apiKey?: string },
+    opts: { baseUrl: string; apiKey?: string; seqStatePath?: string },
   ) {
     this.baseUrl = opts.baseUrl;
     this.apiKey = opts.apiKey;
+    this.seqStatePath = opts.seqStatePath;
+    // Load persisted lastSeq so reconnects replay missed queued messages
+    if (opts.seqStatePath) {
+      try {
+        const saved = JSON.parse(readFileSync(opts.seqStatePath, 'utf8')) as { seq?: number };
+        if (typeof saved.seq === 'number' && saved.seq > 0) {
+          this.lastSeq = saved.seq;
+          logger.info('[p2p-transport] Restored lastSeq=%d from %s', this.lastSeq, opts.seqStatePath);
+        }
+      } catch {
+        // File doesn't exist yet or is corrupt — start from the beginning
+        this.lastSeq = 1;
+      }
+    }
+  }
+
+  /** Persist the current lastSeq (debounced, fire-and-forget). */
+  private flushSeq(): void {
+    if (!this.seqStatePath) return;
+    if (this.seqFlushTimer) return; // already pending
+    this.seqFlushTimer = setTimeout(() => {
+      this.seqFlushTimer = undefined;
+      try {
+        writeFileSync(this.seqStatePath!, JSON.stringify({ seq: this.lastSeq }), 'utf8');
+      } catch (err) {
+        logger.warn('[p2p-transport] Failed to persist seq: %s', (err as Error).message);
+      }
+    }, 2000);
   }
 
   // ── outbound ──────────────────────────────────────────────
@@ -198,9 +229,9 @@ export class ClawNetTransportService {
     if (this.apiKey) {
       params.set('apiKey', this.apiKey);
     }
-    if (this.lastSeq > 0) {
-      params.set('sinceSeq', String(this.lastSeq));
-    }
+    // Always send sinceSeq so ClawNet replays messages queued during offline
+    // periods (store-and-forward). Default to 1 if this is the first start.
+    params.set('sinceSeq', String(this.lastSeq > 0 ? this.lastSeq : 1));
     const qs = params.toString();
     if (qs) wsUrl += `?${qs}`;
 
@@ -248,10 +279,10 @@ export class ClawNetTransportService {
 
       switch (frame.type) {
         case 'connected':
-          if (frame.seq && this.lastSeq === 0) {
-            this.lastSeq = frame.seq;
-          }
-          logger.info('[p2p-transport] Subscribed topic=%s seq=%d', frame.topicFilter, frame.seq);
+          // When lastSeq is 0 (no known state), do NOT skip to current —
+          // always start from seq=1 so queued messages (e.g. profile card
+          // replies that arrived while the node was offline) are delivered.
+          logger.info('[p2p-transport] Subscribed topic=%s seq=%d (sinceSeq=%d)', frame.topicFilter, frame.seq, this.lastSeq);
           break;
 
         case 'message':
@@ -259,6 +290,7 @@ export class ClawNetTransportService {
             await this.routeMessage(frame.data);
             if (frame.data.seq > this.lastSeq) {
               this.lastSeq = frame.data.seq;
+              this.flushSeq();
             }
             await this.gateway.client.messaging.ack(frame.data.messageId);
           }
@@ -267,6 +299,7 @@ export class ClawNetTransportService {
         case 'replay_done':
           if (frame.lastSeq && frame.lastSeq > this.lastSeq) {
             this.lastSeq = frame.lastSeq;
+            this.flushSeq();
           }
           logger.info('[p2p-transport] Replay done, caught up to seq %d', frame.lastSeq);
           break;

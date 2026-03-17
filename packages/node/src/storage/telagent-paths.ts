@@ -25,6 +25,7 @@ export interface TelagentStoragePaths {
   avatarFile: string;        // ~/.telagent/data/profile-avatar.bin
   attachmentsDir: string;    // ~/.telagent/data/attachments/
   peerAvatarsDir: string;    // ~/.telagent/data/peer-avatars/
+  clawnetSeqFile: string;    // ~/.telagent/data/clawnet-seq.json
 }
 
 export function defaultTelagentHome(): string {
@@ -53,6 +54,7 @@ export function resolveTelagentPaths(root?: string): TelagentStoragePaths {
     avatarFile: resolve(r, 'data', 'profile-avatar.bin'),
     attachmentsDir: resolve(r, 'data', 'attachments'),
     peerAvatarsDir: resolve(r, 'data', 'peer-avatars'),
+    clawnetSeqFile: resolve(r, 'data', 'clawnet-seq.json'),
   };
 }
 

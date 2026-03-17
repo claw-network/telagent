@@ -71,6 +71,29 @@ export function AddContactDialog({
   const [chainVerified, setChainVerified] = useState(false)
   const lookupRef = useRef(0) // debounce guard
 
+  // React to SSE-driven profile-update: when the store gets a new profile
+  // for the DID currently shown in the dialog, update the preview immediately.
+  const normalizedDid = did.trim()
+  const storedProfile = useContactStore((state) =>
+    DID_PATTERN.test(normalizedDid) ? state.peerProfiles[normalizedDid] : undefined,
+  )
+  useEffect(() => {
+    if (!storedProfile || previewState === "idle" || previewState === "loading") return
+    if (!previewNickname && !previewAvatar) {
+      // We were waiting for the profile — populate preview now
+      setPreviewNickname(storedProfile.nickname)
+      setPreviewAvatar(
+        storedProfile.avatarUrl
+          ? `/api/v1/profile/${encodeURIComponent(normalizedDid)}/avatar`
+          : undefined,
+      )
+      if (storedProfile.nickname && !displayName) {
+        setDisplayName(storedProfile.nickname)
+      }
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [storedProfile])
+
   const lookupDid = useCallback(
     async (rawDid: string) => {
       const normalizedDid = rawDid.trim()
