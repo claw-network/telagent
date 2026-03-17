@@ -51,7 +51,7 @@ ok "Packages built"
 log "Step 6: Restart clawnetd"
 systemctl restart clawnetd || true
 
-# Wait up to 30s for it to leave deactivating state
+# Wait up to 30s for systemd state to become active
 for i in $(seq 1 6); do
     STATE=$(systemctl is-active clawnetd 2>/dev/null || true)
     if [[ "$STATE" == "active" ]]; then
@@ -76,13 +76,36 @@ if [[ "$STATE" != "active" ]]; then
     ok "clawnetd is active (after force restart)"
 fi
 
+# Wait for ClawNet API to actually be reachable (systemd active ≠ API ready)
+log "Step 6b: Waiting for ClawNet API on :9528..."
+for i in $(seq 1 30); do
+    if curl -sf --max-time 2 http://127.0.0.1:9528/api/v1/node > /dev/null 2>&1; then
+        ok "ClawNet API is ready"
+        break
+    fi
+    if [[ $i -eq 30 ]]; then
+        fail "ClawNet API not reachable after 60s"
+    fi
+    sleep 2
+done
+
 # ── Step 7: Restart telagent-node ────────────────────────────────────────────
 log "Step 7: Restart telagent-node"
 systemctl restart telagent-node
-sleep 5
-STATE=$(systemctl is-active telagent-node 2>/dev/null || true)
-[[ "$STATE" == "active" ]] || fail "telagent-node failed to start (state=$STATE)"
-ok "telagent-node is active"
+
+# Wait up to 30s for telagent-node to become active (may need chain sync)
+for i in $(seq 1 6); do
+    sleep 5
+    STATE=$(systemctl is-active telagent-node 2>/dev/null || true)
+    if [[ "$STATE" == "active" ]]; then
+        ok "telagent-node is active"
+        break
+    fi
+    if [[ $i -eq 6 ]]; then
+        fail "telagent-node failed to start (state=$STATE)"
+    fi
+    log "  telagent-node state=$STATE, waiting... ($i/6)"
+done
 
 # ── Step 8: Quick health check ───────────────────────────────────────────────
 log "Step 8: Health check"
