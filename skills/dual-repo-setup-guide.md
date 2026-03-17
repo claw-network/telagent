@@ -1,7 +1,7 @@
 # 双仓库架构实施指南：Private → Public 自动同步
 
-> **来源项目**: ClawNet
-> **日期**: 2026-03-15
+> **来源项目**: ClawNet / TelAgent
+> **日期**: 2026-03-17
 > **目标读者**: 其他项目组的 agent，用于在新项目中实施相同的双仓库架构
 > **前置条件**: GitHub 组织已创建，项目代码在一个私有仓库中
 
@@ -24,13 +24,14 @@
 │  org/project-dev         │  sync    │  org/project             │
 │  (PRIVATE)               │ ──────▶  │  (PUBLIC)                │
 │  日常开发仓库            │  GitHub  │  开源仓库                │
-│  完整内容 + 完整历史     │  Action  │  过滤后内容 · 单 commit  │
+│  完整内容 + 完整历史     │  Action  │  过滤后内容 · 增量同步   │
 └──────────────────────────┘          └──────────────────────────┘
 ```
 
 **关键特性**：
-- 公开仓库 **没有 git 历史**（每次 force push 单 commit），历史中的敏感信息不会泄露
-- push 到 `main` 或打 tag 时自动触发同步
+- **rsync 增量同步**：仅同步变更文件，公开仓库保留完整 git 历史
+- **时间门控**：白天（08:00-19:00 CST）push 不触发同步，减少意外暴露窗口；19:00 后自动同步累积变更
+- push 到 `main`（非工作时间）或打 tag 时自动触发同步；手动 `workflow_dispatch` 始终放行
 - 同步前自动运行 secret scan，检测到泄露立即中止
 - copilot-instructions 自动替换为脱敏版本
 
@@ -97,9 +98,12 @@ gh repo create org/project --public --description "项目描述"
 ```
 # Paths excluded from public repository sync.
 # Used by .github/workflows/sync-public.yml to filter private content.
-# This file is informational — the workflow uses explicit rm commands.
+# This file is informational — the workflow uses rsync --exclude + defensive rm.
+#
+# Sync mode   : rsync incremental (preserves public repo git history)
+# Time gate   : 08:00-19:00 CST skipped; manual dispatch + tag push always sync
 
-# Internal documentation (except public API spec)
+# Internal documentation (except public API spec / developer guides)
 docs/*
 
 # Production infrastructure
@@ -118,9 +122,13 @@ temp/
 
 # Private copilot instructions (replaced with public version)
 .github/copilot-instructions.md
+.github/copilot-instructions.public.md
+
+# Sync workflow itself
+.github/workflows/sync-public.yml
 ```
 
-> 注意：这个文件是**信息性**的（给人类和 agent 看），实际过滤由 workflow 中的 `rm` 命令执行。这样做比用 `.gitignore` 语法更可靠，避免 glob 解析差异。
+> 注意：这个文件是**信息性**的（给人类和 agent 看），实际过滤由 workflow 中的 rsync `--exclude` + 防御性 `rm` 双重保障。这样做比用 `.gitignore` 语法更可靠，避免 glob 解析差异。
 
 ### 阶段 E：创建公开版 Copilot 指令
 
@@ -153,45 +161,110 @@ jobs:
   sync:
     runs-on: ubuntu-latest
     steps:
+      - name: Check sync window
+        id: timecheck
+        run: |
+          set -euo pipefail
+
+          # Always sync: manual dispatch, tag push
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            echo "Manual dispatch — syncing regardless of time."
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          if [[ "$GITHUB_REF" == refs/tags/* ]]; then
+            echo "Tag push — syncing regardless of time."
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # Time gate: skip during 08:00-18:59 CST (Asia/Shanghai)
+          HOUR=$(TZ='Asia/Shanghai' date +%H)
+          echo "Current hour (Asia/Shanghai): $HOUR"
+          if [[ "$HOUR" -ge 8 && "$HOUR" -lt 19 ]]; then
+            echo "Daytime (08:00-19:00 CST) — skipping sync."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "After hours — proceeding with sync."
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Checkout
+        if: steps.timecheck.outputs.skip != 'true'
         uses: actions/checkout@v4
         with:
           fetch-depth: 1
 
-      - name: Prepare public content
+      - name: Save commit message
+        if: steps.timecheck.outputs.skip != 'true'
+        id: commitmsg
+        run: |
+          MSG="$(git log -1 --format='%s' 2>/dev/null || echo 'update')"
+          echo "msg=$MSG" >> "$GITHUB_OUTPUT"
+
+      - name: Configure Git
+        if: steps.timecheck.outputs.skip != 'true'
+        run: |
+          git config --global user.name "Sync Bot"
+          git config --global user.email "bot@example.com"
+
+      - name: Clone public repo
+        if: steps.timecheck.outputs.skip != 'true'
+        env:
+          PUBLIC_REPO_PAT: ${{ secrets.PUBLIC_REPO_PAT }}
+        run: |
+          set -euo pipefail
+          PUBLIC_REPO="https://x-access-token:${PUBLIC_REPO_PAT}@github.com/org/project.git"
+
+          if ! git clone --depth 1 "$PUBLIC_REPO" /tmp/public-repo 2>/dev/null; then
+            echo "Public repo empty or unreachable — initializing fresh."
+            mkdir -p /tmp/public-repo
+            cd /tmp/public-repo
+            git init -b main
+          fi
+
+      - name: Incremental sync via rsync
+        if: steps.timecheck.outputs.skip != 'true'
         run: |
           set -euo pipefail
 
-          # ── 1. 保留需要公开的子目录 ──
-          # 如果某个被排除的父目录下有需要保留的子目录，先复制出来
-          mkdir -p /tmp/preserve
-          # 例：排除 docs/* 但保留 docs/api/
-          cp -r docs/api /tmp/preserve/docs_api
+          # Main rsync: sync everything except private paths
+          rsync -a --delete \
+            --exclude='.git' \
+            --exclude='docs' \
+            --exclude='skills' \
+            --exclude='issues' \
+            --exclude='temp' \
+            --exclude='infra/prod' \
+            --exclude='infra/staging' \
+            --exclude='.public-sync-ignore' \
+            --exclude='.github/copilot-instructions.md' \
+            --exclude='.github/copilot-instructions.public.md' \
+            --exclude='.github/workflows/sync-public.yml' \
+            ./ /tmp/public-repo/
 
-          # ── 2. 删除私有目录和文件 ──
-          # ⚠️ 每个路径显式列出，不用 glob，确保可审计
-          rm -rf docs skills issues temp
+          # Sync docs/api/ separately (only public part of docs/)
+          mkdir -p /tmp/public-repo/docs
+          rsync -a --delete docs/api/ /tmp/public-repo/docs/api/
+
+          # Replace copilot instructions with sanitized public version
+          cp .github/copilot-instructions.public.md /tmp/public-repo/.github/copilot-instructions.md
+
+          # Defensive cleanup: ensure no private paths leaked into public repo
+          cd /tmp/public-repo
+          rm -rf skills issues temp .public-sync-ignore
           rm -rf infra/prod infra/staging
-          rm -f .public-sync-ignore
-          rm -f .github/copilot-instructions.md
-
-          # ── 3. 还原保留的公开子目录 ──
-          mkdir -p docs
-          cp -r /tmp/preserve/docs_api docs/api
-          rm -rf /tmp/preserve
-
-          # ── 4. 替换 copilot 指令为公开版 ──
-          mv .github/copilot-instructions.public.md .github/copilot-instructions.md
-
-          # ── 5. 删除同步 workflow 本身（公开仓库不需要） ──
+          rm -f .github/copilot-instructions.public.md
           rm -f .github/workflows/sync-public.yml
 
-          echo "=== Public content prepared ==="
+          echo "=== Incremental sync complete ==="
           ls -d */ .github/ 2>/dev/null || true
 
       - name: Verify no secrets leaked
+        if: steps.timecheck.outputs.skip != 'true'
         run: |
           set -euo pipefail
+          cd /tmp/public-repo
           LEAKED=0
 
           # 检查已知敏感模式（每个值的唯一片段）
@@ -199,15 +272,17 @@ jobs:
             "YOUR_SECRET_FRAGMENT_1" \
             "YOUR_SECRET_FRAGMENT_2" \
             "YOUR_SECRET_FRAGMENT_3"; do
-            if grep -rq "$pattern" . \
+            if grep -rqP "$pattern" . \
               --include='*.md' --include='*.yml' --include='*.yaml' \
               --include='*.json' --include='*.ts' --include='*.js' \
-              --include='*.sh' --include='*.env' 2>/dev/null; then
-              echo "LEAK DETECTED: pattern '$pattern' found!"
-              grep -rl "$pattern" . \
+              --include='*.sh' --include='*.env' \
+              --exclude-dir='.git' 2>/dev/null; then
+              echo "LEAK DETECTED: pattern '$pattern' found in:"
+              grep -rlP "$pattern" . \
                 --include='*.md' --include='*.yml' --include='*.yaml' \
                 --include='*.json' --include='*.ts' --include='*.js' \
-                --include='*.sh' --include='*.env' 2>/dev/null
+                --include='*.sh' --include='*.env' \
+                --exclude-dir='.git' 2>/dev/null
               LEAKED=1
             fi
           done
@@ -218,38 +293,36 @@ jobs:
           fi
           echo "✅ No secrets detected in public content."
 
-      - name: Configure Git
-        run: |
-          git config --global user.name "Sync Bot"
-          git config --global user.email "bot@example.com"
-
-      - name: Push to public repo
+      - name: Commit and push
+        if: steps.timecheck.outputs.skip != 'true'
         env:
           PUBLIC_REPO_PAT: ${{ secrets.PUBLIC_REPO_PAT }}
         run: |
           set -euo pipefail
+          cd /tmp/public-repo
 
           PUBLIC_REPO="https://x-access-token:${PUBLIC_REPO_PAT}@github.com/org/project.git"
 
-          # 保存原始 commit 信息
-          ORIG_MSG="$(git log -1 --format='%s' 2>/dev/null || echo 'initial sync')"
-          ORIG_SHA="$(git log -1 --format='%h' 2>/dev/null || echo 'unknown')"
-
-          # 创建全新 commit（清除所有历史）
-          rm -rf .git
-          git init -b main
           git add -A
-          git commit -m "sync: ${ORIG_SHA} ${ORIG_MSG}"
 
-          # Force push 到公开仓库
-          git remote add public "$PUBLIC_REPO"
-          git push public main --force
+          # Skip if nothing changed
+          if git diff --staged --quiet; then
+            echo "✅ No changes to sync."
+            exit 0
+          fi
 
-          # 如果是 tag push，同步 tag
+          ORIG_MSG="${{ steps.commitmsg.outputs.msg }}"
+          git commit -m "$ORIG_MSG"
+
+          # Ensure remote URL is set (for fresh init case)
+          git remote set-url origin "$PUBLIC_REPO" 2>/dev/null || git remote add origin "$PUBLIC_REPO"
+          git push origin main
+
+          # Sync tag if this is a tag push
           if [[ "$GITHUB_REF" == refs/tags/* ]]; then
             TAG="${GITHUB_REF#refs/tags/}"
             git tag "$TAG"
-            git push public "$TAG" --force
+            git push origin "$TAG" --force
           fi
 
           echo "✅ Synced to public repo"
@@ -350,9 +423,11 @@ const vectorsDir = join(__dirname, 'vectors');
 ### 新增排除路径
 
 1. 在 `.public-sync-ignore` 中添加记录（信息性）
-2. 在 `sync-public.yml` 的 "Prepare public content" step 中添加 `rm` 命令
+2. 在 `sync-public.yml` 的 "Incremental sync via rsync" step 中：
+   - 在 rsync `--exclude` 列表中添加路径
+   - 在防御性清理部分也添加对应 `rm` 命令
 3. 如果该路径可能包含敏感信息，在 "Verify no secrets leaked" step 添加检测模式
-4. commit + push，自动触发同步
+4. commit + push（19:00 后），自动触发同步
 
 ### 手动触发同步
 
@@ -381,7 +456,7 @@ PAT 过期时：
 
 ### 坑 1：`.public-sync-ignore` 不是真正的 ignore 文件
 
-最初考虑过让 workflow 解析 `.public-sync-ignore`（类似 `.gitignore`），但 glob 解析在不同 shell 和工具中行为不一致（特别是 `!` 否定语法）。最终选择在 workflow 中用显式 `rm` 命令——虽然冗余，但 100% 可靠可审计。
+最初考虑过让 workflow 解析 `.public-sync-ignore`（类似 `.gitignore`），但 glob 解析在不同 shell 和工具中行为不一致（特别是 `!` 否定语法）。最终选择 rsync `--exclude` + 防御性 `rm` 双重保障——rsync 负责主过滤，`rm` 作为安全兜底，100% 可靠可审计。
 
 ### 坑 2：PAT 命令格式
 
@@ -414,6 +489,25 @@ grep -rn "docs/implementation" packages/ scripts/ --include='*.ts' --include='*.
 
 用户 `npm install project@0.6.12` 需要公开仓库有对应的 `v0.6.12` tag。workflow 中需要处理 tag push 事件并同步 tag 到公开仓库。
 
+### 坑 7：从 force-push 切换到增量同步
+
+如果公开仓库之前用的是 force-push 单 commit 模式（只有一个 `sync: xxx` commit），切换到 rsync 增量模式时第一次 push 可能遇到 "unrelated histories" 问题。解决方案：
+
+1. 首次切换时手动清空公开仓库（删除 main 分支后重新 init），让第一次增量同步成为新的起点
+2. 或在 workflow 中加一个一次性的 `--force` push 做过渡，之后改回普通 push
+
+### 坑 8：rsync 排除整个父目录后需要单独同步子目录
+
+如果用 `--exclude='docs'` 排除了整个 `docs/` 目录，但其中 `docs/api/` 或 `docs/guides/` 需要公开，必须在 rsync 之后用单独命令同步这些子目录：
+
+```bash
+# docs 整体排除后，单独同步公开部分
+mkdir -p /tmp/public-repo/docs
+rsync -a --delete docs/api/ /tmp/public-repo/docs/api/
+```
+
+不能用 rsync 的 `--include` + `--exclude` 组合来实现（语法复杂且容易出错）。
+
 ---
 
 ## 6. 文件清单
@@ -437,12 +531,14 @@ grep -rn "docs/implementation" packages/ scripts/ --include='*.ts' --include='*.
 
 ## 7. 安全检查清单
 
-- [ ] 公开仓库无 git 历史（单 commit）
+- [ ] 公开仓库保留增量 git 历史（commit message 不含敏感信息）
 - [ ] 所有生产凭据已从代码中移除或已在排除列表中
 - [ ] secret scan 中包含所有已知敏感值的唯一片段
 - [ ] `.github/copilot-instructions.md` 公开版不含任何凭据/服务器信息
-- [ ] `infra/devnet/` 中的私钥均为标准开发账号（公开安全）
+- [ ] 开发用私钥均为标准开发账号（公开安全），生产私钥仅在 .env.cloud（不在 git 中）
 - [ ] 如果仓库曾经是 public，所有暴露过的凭据已轮换
 - [ ] PAT 权限最小化（仅 Contents + Workflows，仅限公开仓库）
-- [ ] 同步 workflow 在 push to main 时自动触发
+- [ ] 同步 workflow 在 push to main（非工作时间）时自动触发
+- [ ] 时间门控正常工作（08:00-19:00 CST 跳过，手动 dispatch 始终放行）
 - [ ] tag 同步正常工作（`v*` 触发器）
+- [ ] rsync 排除列表 + 防御性 `rm` 双重保障无遗漏
