@@ -12,7 +12,7 @@ Deploy or redeploy TelAgent nodes to remote cloud servers.
 | Node | Domain | IP | DID | User |
 |------|--------|----|-----|------|
 | Node A | `alex.telagent.org` | `173.249.46.252` | `did:claw:z8MifVfD6GGBeNE4ThZfM3R8tK1daNvrEHWSjRzQuELPA` | root |
-| Node B | `bess.telagent.org` | `167.86.93.216` | `did:claw:z8SQN6QoC3LdE5tg4gRwfdDhY9J6Gpbwe1Vej7KFuqtQA` | root |
+| Node B | `bess.telagent.org` | `167.86.93.216` | `did:claw:z4MnGwHRz2TXHfqZFuWNEfwXikMAWdK5yxzerWSf1paWs` | root |
 
 ## SSH Access
 
@@ -79,13 +79,43 @@ ssh -i "$SSH_KEY" root@<IP> "cd /opt/telagent && pnpm --filter @telagent/protoco
 - The `--env-file=../../.env` in `packages/node/package.json` start script is for local dev only. On the server, systemd provides env vars via `EnvironmentFile=/opt/telagent/.env.cloud`, so the flag must be removed.
 - `@telagent/protocol` and `@telagent/sdk` must be built before starting, as their `dist/` directories are not committed to git.
 
-### 5. Rebuild ClawNet native modules (if Node.js was upgraded)
+### 5. Rebuild ClawNet (required after git clone/pull)
+
+ClawNet's `daemon.js` is a build artifact — it must be rebuilt whenever the code is updated. Without this, the old binary may lack critical P2P fixes.
+
+```bash
+# Full rebuild (includes native modules)
+ssh -t -i "$SSH_KEY" root@<IP> "export COREPACK_ENABLE_DOWNLOAD_PROMPT=0 && cd /opt/clawnet && pnpm install && pnpm build 2>&1 | tail -20"
+
+# Verify binary matches across nodes
+ssh -i "$SSH_KEY" root@<IP> "sha256sum /opt/clawnet/packages/node/dist/daemon.js"
+```
+
+If only Node.js was upgraded (no code change), rebuild native modules only:
 
 ```bash
 ssh -t -i "$SSH_KEY" root@<IP> "export COREPACK_ENABLE_DOWNLOAD_PROMPT=0 && cd /opt/clawnet && rm -rf node_modules/.pnpm/better-sqlite3* && pnpm install"
 ```
 
-### 6. Restart services
+### 6. Create ClawNet API key (standalone mode)
+
+When running ClawNet as a standalone daemon (not embedded), TelAgent needs an API key to authenticate with the ClawNet API.
+
+```bash
+# Start ClawNet first
+ssh -i "$SSH_KEY" root@<IP> "systemctl start clawnetd && sleep 5"
+
+# Create API key
+ssh -i "$SSH_KEY" root@<IP> "curl -s -X POST http://127.0.0.1:9528/api/v1/admin/api-keys -H 'Content-Type: application/json' -d '{\"label\":\"telagent\"}'"
+# Returns: {"data":{"key":"<api_key>","label":"telagent",...}}
+
+# Add to .env.cloud
+ssh -i "$SSH_KEY" root@<IP> "sed -i 's/TELAGENT_CLAWNET_API_KEY=.*/TELAGENT_CLAWNET_API_KEY=<api_key>/' /opt/telagent/.env.cloud"
+```
+
+> **Note**: API keys are stored in ClawNet's SQLite DB. If you wipe `/opt/clawnet/node-data`, you must re-create the key and update `.env.cloud`.
+
+### 7. Restart services
 
 ```bash
 # Restart ClawNet first (telagent-node depends on it)
@@ -95,9 +125,9 @@ ssh -t -i "$SSH_KEY" root@<IP> "systemctl restart clawnetd && sleep 5 && systemc
 ssh -t -i "$SSH_KEY" root@<IP> "systemctl restart telagent-node && sleep 5 && systemctl is-active telagent-node"
 ```
 
-### 7. Verify `.env.cloud` configuration
+### 8. Verify `.env.cloud` configuration
 
-#### 7a. Passphrase
+#### 8a. Passphrase
 
 Ensure `TELAGENT_CLAWNET_PASSPHRASE` is set in `.env.cloud`. This is the unified auth credential — WebApp users must enter this passphrase to unlock a session. Without it, all authenticated API requests will fail with 401.
 
@@ -112,7 +142,7 @@ ssh -i "$SSH_KEY" root@<IP> "echo 'TELAGENT_CLAWNET_PASSPHRASE=<value_from_above
 ssh -i "$SSH_KEY" root@<IP> "systemctl restart telagent-node"
 ```
 
-#### 7b. Chain config (on-chain DID auto-registration)
+#### 8b. Chain config (on-chain DID auto-registration)
 
 The node's DID must be registered on-chain so other nodes can resolve it. At startup, the node calls `batchRegisterDID` automatically — but only if:
 1. The `CLAW_CHAIN_*` env vars are configured
@@ -157,7 +187,7 @@ ssh -i "$SSH_KEY" root@<IP> "systemctl restart telagent-node"
 - The registration is **idempotent**: if the DID is already on-chain, the node skips re-registration.
 - On success, the startup log shows: `[info] Identity on-chain registration verified`
 
-### 8. Health check
+### 9. Health check
 
 ```bash
 # Node info — whitelisted, no auth required
@@ -182,7 +212,7 @@ curl -s -X POST https://<domain>/api/v1/session/unlock \
 
 > **Auth model**: All API endpoints except `/node/*`, `/identities/self`, and `POST /session/unlock` require a valid `tses_*` session token via `Authorization: Bearer <token>`. WebApp handles this automatically after the user enters the passphrase on the connect page.
 
-### 9. Update localdev deployment docs
+### 10. Update localdev deployment docs
 
 After each node is deployed successfully, update the corresponding localdev doc with the latest deployment info:
 
@@ -232,8 +262,13 @@ Each localdev doc must contain the following sections (in order):
 ## .env.cloud
 <!-- 完整 .env.cloud 内容（从服务器 cat 获取），包含 TELAGENT_PRIVATE_KEY 和 TELAGENT_CLAWNET_PASSPHRASE -->
 
+## ClawNet 节点
+<!-- Table: 版本, PeerId, Network, P2P peers, API port, API key, data dir -->
+<!-- 从 curl http://127.0.0.1:9528/api/v1/node 获取 -->
+<!-- API key 从 /api/v1/admin/api-keys 创建，写入 .env.cloud 的 TELAGENT_CLAWNET_API_KEY -->
+
 ## 服务端口
-<!-- Table: TelAgent API, ClawNet Node, Geth, Caddy 端口 -->
+<!-- Table: TelAgent API (9529), ClawNet API (9528), ClawNet P2P (9527), Geth (8545/30303), Caddy (443) -->
 
 ## Systemd 服务
 <!-- Table: telagent-node / clawnetd / caddy 状态 -->
@@ -242,11 +277,21 @@ Each localdev doc must contain the following sections (in order):
 <!-- 服务器关键路径列表 -->
 
 ## 部署信息
-<!-- Table: 部署方式, Git Remote, commit, 时间 -->
+<!-- Table: 部署方式, Git Remote, TelAgent commit, ClawNet commit, 时间 -->
 ### 部署步骤
 <!-- 部署命令记录 -->
 ### 注意事项
-<!-- env-file patch, workspace build, DB schema migration -->
+<!-- env-file patch, workspace build, ClawNet pnpm build, DB schema migration -->
+```
+
+#### Key lesson: ClawNet must be rebuilt after git pull
+
+ClawNet's `packages/node/dist/daemon.js` is a build artifact (gitignored). After `git clone` or `git pull` on `/opt/clawnet`, you **must** run `pnpm build` to produce the current binary. Without this, the old daemon.js may lack critical fixes (e.g. dynamic PeerId resolution in 0.6.16), causing silent P2P bootstrap failure (`aggressive phase complete — 0 peer connection(s)`).
+
+```bash
+ssh -i "$SSH_KEY" root@<IP> "cd /opt/clawnet && pnpm build 2>&1 | tail -20"
+# Verify: sha256sum should match across nodes
+ssh -i "$SSH_KEY" root@<IP> "sha256sum /opt/clawnet/packages/node/dist/daemon.js"
 ```
 
 ## Key Configuration Constraints
@@ -343,6 +388,37 @@ systemctl restart clawnetd && journalctl -u clawnetd -n 20
 ### `FATAL: No passphrase configured`
 ClawNet requires `CLAW_PASSPHRASE` in `/opt/clawnet/node.env`.
 
+### ClawNet P2P: `aggressive phase complete — 0 peer connection(s)`
+Bootstrap failed silently. Common causes:
+1. **Stale daemon.js** — Code was updated via `git pull` but `pnpm build` was not run. The old binary lacks fixes (e.g. dynamic PeerId resolution). Fix: `cd /opt/clawnet && pnpm build`
+2. **Stale `config.yaml`** — Old config has `bootstrap: []` or hardcoded PeerId. Fix: delete `node-data/config.yaml` and restart (0.6.16+ auto-generates correct bootstrap)
+3. **Network mismatch** — Node is on `devnet` but bootstrap server is on `testnet` (or vice versa). Check `network` field in both
+
+Verify binary matches across nodes:
+```bash
+sha256sum /opt/clawnet/packages/node/dist/daemon.js
+```
+
+### ClawNet daemon stuck in `deactivating (stop-sigterm)`
+The daemon's graceful shutdown is very slow (30–90s). To force restart:
+```bash
+systemctl kill -s SIGKILL clawnetd; sleep 2; systemctl start clawnetd
+```
+
+### ClawNet data wipe (clean restart)
+If config is corrupted or you need a fresh identity:
+```bash
+systemctl stop clawnetd telagent-node
+pkill -9 -f daemon.js 2>/dev/null
+rm -rf /opt/clawnet/node-data
+mkdir -p /opt/clawnet/node-data
+# Init data dir (creates config.yaml + keystore)
+cd /opt/clawnet && CLAW_PASSPHRASE=<passphrase> timeout 15 node packages/node/dist/daemon.js --api-host 0.0.0.0 --api-port 9528 --data-dir /opt/clawnet/node-data
+# Start service, create API key, update .env.cloud (see steps 6–7)
+systemctl start clawnetd
+```
+> **Warning**: This generates a new DID and PeerId. Update Node Inventory and `.env.cloud` API key.
+
 ### WebApp returns 401 on all requests
 `TELAGENT_CLAWNET_PASSPHRASE` is missing or empty in `.env.cloud`. Get the value from ClawNet config and add it:
 ```bash
@@ -353,7 +429,7 @@ systemctl restart telagent-node
 
 ### DID not registered on-chain (other nodes can't resolve this DID)
 Startup log shows `Failed to ensure on-chain identity registration`. Common causes:
-1. `CLAW_CHAIN_*` env vars missing from `.env.cloud` → add per step 7b
+1. `CLAW_CHAIN_*` env vars missing from `.env.cloud` → add per step 8b
 2. Node wallet lacks `REGISTRAR_ROLE` → log shows `AccessControlUnauthorizedAccount`. Grant the role using the deployer key (see constraint #8)
 3. Chain RPC unreachable → check `CLAW_CHAIN_RPC_URL` connectivity
 
