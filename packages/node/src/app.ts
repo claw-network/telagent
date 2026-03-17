@@ -342,6 +342,7 @@ export class TelagentNode {
       },
       onProfileCard: async (payload, sourceDid) => {
         try {
+          logger.info('[profile-card] Received profile card from %s (nickname=%s)', sourceDid, payload.nickname ?? '(none)');
           const peerNodeUrl = typeof payload.nodeUrl === 'string' ? payload.nodeUrl : undefined;
           const peerAvatarUrl = resolvePeerAvatarUrl(
             typeof payload.avatarUrl === 'string' ? payload.avatarUrl : undefined,

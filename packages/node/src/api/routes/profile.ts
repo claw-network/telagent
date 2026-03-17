@@ -224,7 +224,8 @@ export function profileRoutes(ctx: RuntimeContext): Router {
         // theirs (reciprocal exchange).  Return 200 with null data instead of
         // 404 so the browser console stays clean — the SDK treats null as
         // "not yet available".
-        void pushOwnProfileCard(ctx, did).catch(() => {});
+        void pushOwnProfileCard(ctx, did).catch((err: Error) =>
+          console.warn('[profile-card] Failed to push profile card to %s: %s', did, err.message),\n        );
         ok(res, null, { self: `/api/v1/profile/${encodeURIComponent(did)}` });
         return;
       }

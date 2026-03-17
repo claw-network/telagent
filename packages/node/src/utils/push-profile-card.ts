@@ -3,6 +3,8 @@ import type { ClawNetTransportService } from '../services/clawnet-transport-serv
 import type { IdentityAdapterService } from '../services/identity-adapter-service.js';
 import { getEffectiveNodeUrl } from './avatar-url.js';
 
+const logger = console;
+
 interface ProfileCardContext {
   config: { host: string; port: number; publicUrl?: string; tls?: { httpsPort: number } };
   selfProfileStore: SelfProfileStore;
@@ -25,10 +27,12 @@ export async function pushOwnProfileCard(ctx: ProfileCardContext, targetDid: str
     avatarUrl = `${effectiveNodeUrl}${avatarUrl}`;
   }
 
+  logger.info('[profile-card] Pushing own profile card to %s (nickname=%s, nodeUrl=%s)', targetDid, profile.nickname ?? '(none)', effectiveNodeUrl);
   await ctx.clawnetTransportService.sendProfileCard(targetDid, {
     did: selfDid,
     nickname: profile.nickname,
     avatarUrl,
     nodeUrl: effectiveNodeUrl,
   });
+  logger.info('[profile-card] Profile card sent to %s', targetDid);
 }

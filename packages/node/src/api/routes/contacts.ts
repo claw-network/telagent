@@ -71,7 +71,9 @@ export function contactRoutes(ctx: RuntimeContext): Router {
 
       // Fire-and-forget: push our profile card to the new contact so they know us,
       // and trigger a reciprocal profile-card reply so we learn their nickname/avatar.
-      void pushOwnProfileCard(ctx, did).catch(() => {});
+      void pushOwnProfileCard(ctx, did).catch((err: Error) =>
+        console.warn('[profile-card] Failed to push profile card to %s: %s', did, err.message),
+      );
 
       created(res, contact, { self: `/api/v1/contacts/${encodeURIComponent(did)}` });
     } catch (error) {

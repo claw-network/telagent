@@ -135,7 +135,8 @@ export class ClawNetTransportService {
   }
 
   async sendProfileCard(targetDid: string, payload: ProfileCardPayload): Promise<void> {
-    await this.gateway.client.messaging.send({
+    logger.info('[transport] sendProfileCard → %s (topic=%s)', targetDid, TOPIC_PROFILE_CARD);
+    const result = await this.gateway.client.messaging.send({
       targetDid,
       topic: TOPIC_PROFILE_CARD,
       payload: JSON.stringify(payload),
@@ -144,6 +145,7 @@ export class ClawNetTransportService {
       compress: false,
       idempotencyKey: `profile-card:${payload.did}:${Date.now()}`,
     });
+    logger.info('[transport] sendProfileCard result: %s', JSON.stringify(result));
   }
   /**
    * Relay an attachment to a target DID via ClawNet P2P using raw binary.
