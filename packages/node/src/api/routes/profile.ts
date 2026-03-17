@@ -225,7 +225,8 @@ export function profileRoutes(ctx: RuntimeContext): Router {
         // 404 so the browser console stays clean — the SDK treats null as
         // "not yet available".
         void pushOwnProfileCard(ctx, did).catch((err: Error) =>
-          console.warn('[profile-card] Failed to push profile card to %s: %s', did, err.message),\n        );
+          console.warn('[profile-card] Failed to push profile card to %s: %s', did, err.message),
+        );
         ok(res, null, { self: `/api/v1/profile/${encodeURIComponent(did)}` });
         return;
       }
