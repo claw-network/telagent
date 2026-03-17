@@ -14,59 +14,115 @@ jobs:
   sync:
     runs-on: ubuntu-latest
     steps:
+      - name: Check sync window
+        id: timecheck
+        run: |
+          set -euo pipefail
+
+          # Always sync: manual dispatch, tag push
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            echo "Manual dispatch — syncing regardless of time."
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          if [[ "$GITHUB_REF" == refs/tags/* ]]; then
+            echo "Tag push — syncing regardless of time."
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # Time gate: skip during 08:00-18:59 CST (Asia/Shanghai)
+          HOUR=$(TZ='Asia/Shanghai' date +%H)
+          echo "Current hour (Asia/Shanghai): $HOUR"
+          if [[ "$HOUR" -ge 8 && "$HOUR" -lt 19 ]]; then
+            echo "Daytime (08:00-19:00 CST) — skipping sync."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "After hours — proceeding with sync."
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Checkout
+        if: steps.timecheck.outputs.skip != 'true'
         uses: actions/checkout@v4
         with:
           fetch-depth: 1
 
-      - name: Prepare public content
+      - name: Save commit message
+        if: steps.timecheck.outputs.skip != 'true'
+        id: commitmsg
+        run: |
+          MSG="$(git log -1 --format='%s' 2>/dev/null || echo 'update')"
+          echo "msg=$MSG" >> "$GITHUB_OUTPUT"
+
+      - name: Configure Git
+        if: steps.timecheck.outputs.skip != 'true'
+        run: |
+          git config --global user.name "Sync Bot"
+          git config --global user.email "bot@claw-network.github.com"
+
+      - name: Clone public repo
+        if: steps.timecheck.outputs.skip != 'true'
+        env:
+          PUBLIC_REPO_PAT: ${{ secrets.PUBLIC_REPO_PAT }}
+        run: |
+          set -euo pipefail
+          PUBLIC_REPO="https://x-access-token:${PUBLIC_REPO_PAT}@github.com/claw-network/telagent.git"
+
+          if ! git clone --depth 1 "$PUBLIC_REPO" /tmp/public-repo 2>/dev/null; then
+            echo "Public repo empty or unreachable — initializing fresh."
+            mkdir -p /tmp/public-repo
+            cd /tmp/public-repo
+            git init -b main
+          fi
+
+      - name: Incremental sync via rsync
+        if: steps.timecheck.outputs.skip != 'true'
         run: |
           set -euo pipefail
 
-          # ── 1. Preserve public subdirs inside docs/ before wiping it ──
-          mkdir -p /tmp/preserve/docs
-          cp -r docs/guides  /tmp/preserve/docs/guides
-          cp    docs/README.md /tmp/preserve/docs/README.md
+          # Main rsync: sync everything except private paths
+          rsync -a --delete \
+            --exclude='.git' \
+            --exclude='docs' \
+            --exclude='skills' \
+            --exclude='localdev' \
+            --exclude='temp' \
+            --exclude='scripts/deploy-node.sh' \
+            --exclude='scripts/deploy-install-assets.sh' \
+            --exclude='scripts/redeploy.sh' \
+            --exclude='.public-sync-ignore' \
+            --exclude='.github/copilot-instructions.md' \
+            --exclude='.github/copilot-instructions.public.md' \
+            --exclude='.github/workflows/sync-public.yml' \
+            ./ /tmp/public-repo/
 
-          # ── 2. Remove private directories and files ──
-          # Implementation docs (contain server IPs, SSH details, internal decisions)
-          rm -rf docs
+          # Sync docs/guides/ and docs/README.md separately (only public parts of docs/)
+          mkdir -p /tmp/public-repo/docs
+          rsync -a --delete docs/guides/ /tmp/public-repo/docs/guides/
+          cp docs/README.md /tmp/public-repo/docs/README.md
 
-          # Operational skills (server IPs, SSH key paths, deploy procedures)
-          rm -rf skills
+          # Replace copilot instructions with sanitized public version
+          cp .github/copilot-instructions.public.md /tmp/public-repo/.github/copilot-instructions.md
 
-          # Deploy scripts with hard-coded server IPs / SSH keys
-          rm -f scripts/deploy-node.sh
-          rm -f scripts/deploy-install-assets.sh
-          rm -f scripts/redeploy.sh
-
-          # Informational files used only in private repo
-          rm -f .public-sync-ignore
-
-          # Local dev directories (gitignored locally, excluded as safety net)
-          rm -rf localdev temp
-
-          # Private copilot instructions (replaced below with public version)
-          rm -f .github/copilot-instructions.md
-
-          # This sync workflow itself (public repo has no need for it)
+          # Defensive cleanup: ensure no private paths leaked into public repo
+          cd /tmp/public-repo
+          rm -rf skills localdev temp .public-sync-ignore
+          rm -rf docs/design docs/implementation docs/issues docs/reply
+          rm -f docs/telagent-v1-complete-functional-summary-2026-03-03.md
+          rm -f scripts/deploy-node.sh scripts/deploy-install-assets.sh scripts/redeploy.sh
+          rm -f .github/copilot-instructions.public.md
+          rm -f .github/copilot-instructions.md.bak
           rm -f .github/workflows/sync-public.yml
 
-          # ── 3. Restore the public subdirs of docs/ ──
-          mkdir -p docs
-          cp -r /tmp/preserve/docs/guides docs/guides
-          cp    /tmp/preserve/docs/README.md docs/README.md
-          rm -rf /tmp/preserve
-
-          # ── 4. Replace copilot instructions with the public (sanitised) version ──
-          mv .github/copilot-instructions.public.md .github/copilot-instructions.md
-
-          echo "=== Public content prepared ==="
-          find . -maxdepth 2 -not -path './.git/*' | sort
+          echo "=== Incremental sync complete ==="
+          ls -d */ .github/ 2>/dev/null || true
 
       - name: Verify no secrets leaked
+        if: steps.timecheck.outputs.skip != 'true'
         run: |
           set -euo pipefail
+          cd /tmp/public-repo
           LEAKED=0
 
           # Known sensitive fragments — unique substrings of real values
@@ -76,6 +132,9 @@ jobs:
             "167\.86\.93" \
             "id_ed25519_clawnet" \
             "VLwttmy" \
+            "f9be7d917b43f437" \
+            "dfcfdf221c2c7e28" \
+            "9b6a26bab67a3b8e" \
             "alex\.telagent\.org.*173\|bess\.telagent\.org.*167" \
             "root@173\|root@167"; do
             if grep -rqP "$pattern" . \
@@ -99,38 +158,36 @@ jobs:
           fi
           echo "✅ No secrets detected in public content."
 
-      - name: Configure Git
-        run: |
-          git config --global user.name "Sync Bot"
-          git config --global user.email "bot@claw-network.github.com"
-
-      - name: Push to public repo
+      - name: Commit and push
+        if: steps.timecheck.outputs.skip != 'true'
         env:
           PUBLIC_REPO_PAT: ${{ secrets.PUBLIC_REPO_PAT }}
         run: |
           set -euo pipefail
+          cd /tmp/public-repo
 
           PUBLIC_REPO="https://x-access-token:${PUBLIC_REPO_PAT}@github.com/claw-network/telagent.git"
 
-          # Capture commit info before erasing .git
-          ORIG_MSG="$(git log -1 --format='%s' 2>/dev/null || echo 'initial sync')"
-          ORIG_SHA="$(git log -1 --format='%h' 2>/dev/null || echo 'unknown')"
-
-          # Create a brand-new single commit — no git history in public repo
-          rm -rf .git
-          git init -b main
           git add -A
-          git commit -m "sync: ${ORIG_SHA} ${ORIG_MSG}"
 
-          # Force-push to public repo (single commit, no history)
-          git remote add public "$PUBLIC_REPO"
-          git push public main --force
-
-          # If triggered by a tag, sync the tag too
-          if [[ "${GITHUB_REF:-}" == refs/tags/* ]]; then
-            TAG="${GITHUB_REF#refs/tags/}"
-            git tag "$TAG"
-            git push public "$TAG" --force
+          # Skip if nothing changed
+          if git diff --staged --quiet; then
+            echo "✅ No changes to sync."
+            exit 0
           fi
 
-          echo "✅ Successfully synced to claw-network/telagent"
+          ORIG_MSG="${{ steps.commitmsg.outputs.msg }}"
+          git commit -m "$ORIG_MSG"
+
+          # Ensure remote URL is set (for fresh init case)
+          git remote set-url origin "$PUBLIC_REPO" 2>/dev/null || git remote add origin "$PUBLIC_REPO"
+          git push origin main
+
+          # Sync tag if this is a tag push
+          if [[ "$GITHUB_REF" == refs/tags/* ]]; then
+            TAG="${GITHUB_REF#refs/tags/}"
+            git tag "$TAG"
+            git push origin "$TAG" --force
+          fi
+
+          echo "✅ Synced to public repo"
