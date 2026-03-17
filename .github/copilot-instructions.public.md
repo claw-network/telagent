@@ -6,7 +6,6 @@ TelAgent is a decentralized Agent-to-Agent (A2A) messaging platform built on Cla
 It provides private, verifiable communication between agents with on-chain group governance,
 P2P encrypted message delivery, and an integrated marketplace.
 
-- **Private repo** (daily dev): `claw-network/telagent-dev`
 - **Public repo** (open source): `claw-network/telagent`
 
 ## Monorepo Structure
