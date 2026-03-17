@@ -58,7 +58,7 @@ jobs:
       - name: Configure Git
         if: steps.timecheck.outputs.skip != 'true'
         run: |
-          git config --global user.name "Sync Bot"
+          git config --global user.name "TelAgent Bot"
           git config --global user.email "bot@claw-network.github.com"
 
       - name: Clone public repo
