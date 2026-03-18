@@ -25,6 +25,9 @@ localdev/
 # Temporary files
 temp/
 
+# Cloud nodes(Alex && Bess) deployment files
+infra/
+
 # ── Individual files excluded ──
 
 # Deploy scripts with hard-coded server IPs/SSH keys

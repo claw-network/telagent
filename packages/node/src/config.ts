@@ -84,8 +84,6 @@ export interface AppConfig {
   owner: OwnerConfig;
   monitoring: MonitoringConfig;
   apiProxy: ApiProxyConfig;
-  /** Known TelAgent node URLs for HTTP-based peer profile discovery. */
-  seedNodes: string[];
 }
 
 export function loadConfigFromEnv(): AppConfig {
@@ -212,11 +210,6 @@ export function loadConfigFromEnv(): AppConfig {
 
   const publicUrl = process.env.TELAGENT_PUBLIC_URL?.trim() || undefined;
 
-  const seedNodes = (process.env.TELAGENT_SEED_NODES || '')
-    .split(',')
-    .map((s) => s.trim())
-    .filter((s) => s.length > 0 && (s.startsWith('http://') || s.startsWith('https://')));
-
   const apiProxy: ApiProxyConfig = {
     enabled: parseBoolean(process.env.TELAGENT_API_PROXY_ENABLED, true),
     gatewayEnabled: parseBoolean(process.env.TELAGENT_API_PROXY_GATEWAY_ENABLED, true),
@@ -245,7 +238,6 @@ export function loadConfigFromEnv(): AppConfig {
       maintenanceStaleCriticalSec: Number(process.env.TELAGENT_MONITOR_MAINT_STALE_CRITICAL_SEC || 300),
     },
     apiProxy,
-    seedNodes,
   };
 }
 
