@@ -163,7 +163,7 @@ test('TA-P11-008 SDK quickstart covers create-group and send/pull message flow',
   t.after(close);
 
   const sdk = new TelagentSdk({ baseUrl });
-  const group = await sdk.createGroup({
+  const group = await sdk.groups.create({
     creatorDid: 'did:claw:zAlice',
     groupId: `0x${'1'.repeat(64)}`,
     groupDomain: 'alpha.tel',
@@ -172,7 +172,7 @@ test('TA-P11-008 SDK quickstart covers create-group and send/pull message flow',
   });
   assert.equal(group.group.groupId, `0x${'1'.repeat(64)}`);
 
-  const envelope = await sdk.sendMessage({
+  const envelope = await sdk.messages.send({
     envelopeId: 'env-1',
     senderDid: 'did:claw:zAlice',
     conversationId: 'direct:alice-bob',
@@ -187,7 +187,7 @@ test('TA-P11-008 SDK quickstart covers create-group and send/pull message flow',
   });
   assert.equal(envelope.seq, 1n);
 
-  const mailbox = await sdk.pullMessages({
+  const mailbox = await sdk.messages.pull({
     conversationId: 'direct:alice-bob',
     limit: 20,
   });
@@ -277,22 +277,22 @@ test('SDK supports owner permissions and conversation listing envelopes', async 
   t.after(close);
 
   const sdk = new TelagentSdk({ baseUrl });
-  const conversations = await sdk.listConversations({ page: 1, perPage: 20 });
+  const conversations = await sdk.conversations.list({ page: 1, perPage: 20 });
   assert.equal(conversations.data.length, 1);
   assert.equal(conversations.data[0].conversationId, 'direct:did:claw:zAlice:did:claw:zBob');
   assert.equal(conversations.data[0].private, false);
   assert.equal(conversations.data[0].lastMessagePreview, 'hello');
   assert.equal(conversations.meta.pagination.total, 1);
 
-  const privacy = await sdk.setConversationPrivacy('direct:did:claw:zAlice:did:claw:zBob', true);
+  const privacy = await sdk.conversations.setPrivacy('direct:did:claw:zAlice:did:claw:zBob', true);
   assert.equal(privacy.private, true);
   assert.equal(privacy.updatedAtMs, 1_234);
 
-  const permissions = await sdk.getOwnerPermissions();
+  const permissions = await sdk.identity.getOwnerPermissions();
   assert.equal(permissions.mode, 'intervener');
   assert.deepEqual(permissions.privateConversations, ['direct:did:claw:zAlice:did:claw:zBob']);
 
-  const conversationsAfterPrivacy = await sdk.listConversations({ page: 1, perPage: 20 });
+  const conversationsAfterPrivacy = await sdk.conversations.list({ page: 1, perPage: 20 });
   assert.equal(conversationsAfterPrivacy.data[0].private, true);
   assert.equal(conversationsAfterPrivacy.data[0].lastMessagePreview, null);
 });
@@ -389,7 +389,7 @@ test('SDK wraps session and clawnet routes with proper auth headers', async (t) 
     accessToken: 'owner_access_token',
   });
 
-  const unlocked = await sdk.unlockSession({
+  const unlocked = await sdk.session.unlock({
     passphrase: 'secret',
     ttlSeconds: 120,
     scope: ['transfer', 'market'],
@@ -397,59 +397,59 @@ test('SDK wraps session and clawnet routes with proper auth headers', async (t) 
   });
   assert.equal(unlocked.sessionToken, 'tses_unlock');
 
-  const sessionInfo = await sdk.getSessionInfo('tses_unlock');
+  const sessionInfo = await sdk.session.getInfo('tses_unlock');
   assert.equal(sessionInfo.active, true);
-  await sdk.lockSession('tses_unlock');
+  await sdk.session.lock('tses_unlock');
 
-  await sdk.getWalletBalance();
-  await sdk.getWalletBalance('did:claw:zBob');
-  await sdk.getWalletNonce();
-  await sdk.getWalletNonce('did:claw:zBob');
-  const ownHistory = await sdk.getWalletHistory({ limit: 10, offset: 5 });
+  await sdk.wallet.getBalance();
+  await sdk.wallet.getBalance('did:claw:zBob');
+  await sdk.wallet.getNonce();
+  await sdk.wallet.getNonce('did:claw:zBob');
+  const ownHistory = await sdk.wallet.getHistory({ limit: 10, offset: 5 });
   assert.equal(ownHistory.length, 1);
-  const didHistory = await sdk.getWalletHistory({ did: 'did:claw:zBob', limit: 1 });
+  const didHistory = await sdk.wallet.getHistory({ did: 'did:claw:zBob', limit: 1 });
   assert.equal(didHistory.length, 1);
-  await sdk.getClawnetSelfIdentity();
-  await sdk.getClawnetIdentity('did:claw:zBob');
-  await sdk.getAgentProfile('did:claw:zBob');
-  await sdk.getReputation('did:claw:zBob');
-  await sdk.getClawnetHealth();
-  await sdk.getEscrow('escrow-1');
-  const tasks = await sdk.listTasks({ status: 'open' });
+  await sdk.clawnet.getSelfIdentity();
+  await sdk.clawnet.getIdentity('did:claw:zBob');
+  await sdk.clawnet.getAgentProfile('did:claw:zBob');
+  await sdk.clawnet.getReputation('did:claw:zBob');
+  await sdk.clawnet.getHealth();
+  await sdk.clawnet.getEscrow('escrow-1');
+  const tasks = await sdk.marketplace.listTasks({ status: 'open' });
   assert.equal(tasks.length, 1);
-  const searchResults = await sdk.searchMarkets({ q: 'design' });
+  const searchResults = await sdk.marketplace.search({ q: 'design' });
   assert.equal(searchResults.length, 1);
-  const bids = await sdk.listTaskBids('task-1');
+  const bids = await sdk.marketplace.listTaskBids('task-1');
   assert.equal(bids.length, 1);
 
-  await sdk.transfer('tses_unlock', {
+  await sdk.wallet.transfer('tses_unlock', {
     to: 'did:claw:zBob',
     amount: 10,
     memo: 'hello',
   });
-  await sdk.createEscrow('tses_unlock', {
+  await sdk.wallet.createEscrow('tses_unlock', {
     beneficiary: 'did:claw:zBob',
     amount: 20,
   });
-  await sdk.releaseEscrow('tses_unlock', 'escrow-1');
-  await sdk.publishTask('tses_unlock', {
+  await sdk.wallet.releaseEscrow('tses_unlock', 'escrow-1');
+  await sdk.marketplace.publishTask('tses_unlock', {
     title: 'Task',
     description: 'Desc',
     budget: 99,
     tags: ['a'],
   });
-  await sdk.bid('tses_unlock', 'task-1', {
+  await sdk.marketplace.bid('tses_unlock', 'task-1', {
     amount: 12,
     proposal: 'proposal',
   });
-  await sdk.acceptBid('tses_unlock', 'task-1', 'bid-1');
-  await sdk.submitReview('tses_unlock', {
+  await sdk.marketplace.acceptBid('tses_unlock', 'task-1', 'bid-1');
+  await sdk.marketplace.submitReview('tses_unlock', {
     targetDid: 'did:claw:zBob',
     score: 5,
     comment: 'great',
     orderId: 'ord-1',
   });
-  await sdk.createServiceContract('tses_unlock', {
+  await sdk.marketplace.createServiceContract('tses_unlock', {
     title: 'Contract',
   });
 
@@ -477,7 +477,7 @@ test('TA-P11-008 SDK maps RFC7807 errors to TelagentSdkError', async (t) => {
   const sdk = new TelagentSdk({ baseUrl });
   await assert.rejects(
     async () =>
-      sdk.sendMessage({
+      sdk.messages.send({
         senderDid: 'did:claw:zAlice',
         conversationId: 'direct:alice-bob',
         conversationType: 'direct',
@@ -517,7 +517,7 @@ test('TA-P14-005 SDK getIdentity encodes DID path segment', async (t) => {
   t.after(close);
 
   const sdk = new TelagentSdk({ baseUrl });
-  await sdk.getIdentity('did:claw:zAlice/with-slash');
+  await sdk.identity.getIdentity('did:claw:zAlice/with-slash');
   assert.equal(observedPath, '/api/v1/identities/did%3Aclaw%3AzAlice%2Fwith-slash');
 });
 
@@ -537,7 +537,7 @@ test('TA-P14-005 SDK maps direct ACL FORBIDDEN RFC7807 to TelagentSdkError', asy
   const sdk = new TelagentSdk({ baseUrl });
   await assert.rejects(
     async () =>
-      sdk.sendMessage({
+      sdk.messages.send({
         senderDid: 'did:claw:zCarol',
         conversationId: 'direct:acl-case',
         conversationType: 'direct',
@@ -612,7 +612,7 @@ test('SDK call path does not rely on method-bound fetch this context', async () 
     fetchImpl,
   });
 
-  const self = await sdk.getSelfIdentity();
+  const self = await sdk.identity.getSelfIdentity();
   assert.equal(self.did, 'did:claw:zAlice');
   assert.equal(observedThisValues.length, 1);
   assert.equal(observedThisValues[0], undefined);
