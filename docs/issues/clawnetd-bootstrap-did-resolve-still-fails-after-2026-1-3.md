@@ -159,3 +159,44 @@ Bess didPeerMap:
 ## TelAgent 侧后续计划（并行）
 
 在等待 ClawNet 进一步修复期间，我们将并行评估 HTTP fallback 以恢复联系人资料可用性，避免用户侧功能长期不可用。
+
+---
+
+## 修复进度（2026-03-19）
+
+### 根因确认
+ClawNet 2026.1.3 修复了 `readStream()` 超时问题，但 NAT 穿透场景下 DID announce 消息在连接完全建立前被发送，导致 bootstrap 的 `handleDidAnnounce` 读到空数据。
+
+### 修复方案（2026.1.4）
+新增 `/clawnet/1.0.0/did-query` 协议 — Bootstrap 主动查询每个连接的 peer 的 DID，而不是被动等待 announce。
+
+### TelAgent 升级操作
+
+1. **依赖升级**：`@claw-network/*` 从 `2026.1.3` 升级到 `2026.1.4`
+2. **执行时间**：2026-03-19
+
+```bash
+# packages/node/package.json 已更新
+"@claw-network/core": "^2026.1.4"
+"@claw-network/node": "^2026.1.4"
+"@claw-network/sdk": "^2026.1.4"
+
+# 已完成 pnpm install && pnpm -r build
+```
+
+### 待验证
+重启 Alex/Bess/Local 节点后，执行验证步骤：
+```bash
+# 1. 确认版本
+curl http://127.0.0.1:9528/api/v1/node | grep version
+# → "version": "2026.1.4"
+
+# 2. 确认 bootstrap 上的 didPeerMap
+curl http://127.0.0.1:9528/api/v1/messaging/peers
+# 应包含 bootstrap、Alex、Bess 三个 DID
+
+# 3. 协议级测试
+POST /api/v1/messaging/send
+targetDid = did:claw:z8MifVfD6GGBeNE4ThZfM3R8tK1daNvrEHWSjRzQuELPA
+# 预期 delivered = true
+```
