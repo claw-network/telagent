@@ -164,6 +164,7 @@ export class ManagedClawNetNode {
           api: { host: '127.0.0.1', port, enabled: true },
           chain: chainConfig as any,
           faucetUrl: process.env.CLAW_FAUCET_URL ?? 'https://api.clawnetd.com',
+          network: (process.env.CLAW_NETWORK as 'mainnet' | 'testnet' | 'devnet') ?? 'testnet',
         });
         await this.node.start();
         if (port !== this.apiPort) {
