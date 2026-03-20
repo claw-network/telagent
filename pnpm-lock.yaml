@@ -103,8 +103,8 @@ importers:
   packages/node:
     dependencies:
       '@claw-network/core':
-        specifier: ^2026.1.4
-        version: 2026.1.4
+        specifier: ^2026.1.7
+        version: 2026.1.7
       '@claw-network/node':
         specifier: ^2026.1.7
         version: 2026.1.7
@@ -516,9 +516,6 @@ packages:
 
   '@chainsafe/netmask@2.0.0':
     resolution: {integrity: sha512-I3Z+6SWUoaljh3TBzCnCxjlUyN8tA+NAk5L6m9IxvCf1BENQTePzPMis97CoN/iMW1St3WN+AWCCRp+TTBRiDg==}
-
-  '@claw-network/core@2026.1.4':
-    resolution: {integrity: sha512-4y9VBS4f4UCir+G3EnkUHDhhKokV3clQ8KlEygb5vSfWKpntx7i4pi3RGS6kXkqagdnWWz+xBrkteFXeork1sg==}
 
   '@claw-network/core@2026.1.7':
     resolution: {integrity: sha512-E/uJ1a42ZWcDmSRRWkggkQZZaPgzFdUdKpkhJuQxBW2WL2CqfFiEzxNPZ9Jnoxhc1OV39XcY8whe+6sf9LWaUg==}
@@ -5904,32 +5901,6 @@ snapshots:
     dependencies:
       '@chainsafe/is-ip': 2.1.0
 
-  '@claw-network/core@2026.1.4':
-    dependencies:
-      '@chainsafe/libp2p-gossipsub': 14.1.2
-      '@chainsafe/libp2p-noise': 17.0.0
-      '@chainsafe/libp2p-yamux': 8.0.1
-      '@libp2p/autonat': 3.0.13
-      '@libp2p/bootstrap': 12.0.14
-      '@libp2p/circuit-relay-v2': 4.1.6
-      '@libp2p/dcutr': 3.0.13
-      '@libp2p/identify': 4.0.13
-      '@libp2p/kad-dht': 16.1.6
-      '@libp2p/mdns': 12.0.14
-      '@libp2p/ping': 3.0.13
-      '@libp2p/tcp': 11.0.13
-      '@multiformats/multiaddr': 13.0.1
-      '@noble/curves': 1.9.7
-      '@noble/ed25519': 2.3.0
-      '@noble/hashes': 1.8.0
-      '@scure/base': 1.2.6
-      '@scure/bip39': 1.6.0
-      canonicalize: 2.1.0
-      level: 9.0.0
-      libp2p: 3.1.6
-      multiformats: 13.4.2
-      yaml: 2.8.2
-
   '@claw-network/core@2026.1.7':
     dependencies:
       '@chainsafe/libp2p-gossipsub': 14.1.2
@@ -7847,7 +7818,7 @@ snapshots:
 
   '@scure/bip32@1.7.0':
     dependencies:
-      '@noble/curves': 1.9.1
+      '@noble/curves': 1.9.7
       '@noble/hashes': 1.8.0
       '@scure/base': 1.2.6
 
