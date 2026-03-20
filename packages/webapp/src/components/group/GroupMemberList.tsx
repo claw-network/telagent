@@ -132,7 +132,7 @@ export function GroupMemberList({ groupId }: GroupMemberListProps) {
                             return
                           }
                           void sdk
-                            .acceptInvite(groupId, member.inviteId!, {
+                            .groups.acceptInvite(groupId, member.inviteId!, {
                               inviteeDid: selfDid,
                               mlsWelcomeHash: randomBytes32Hex(),
                             })
@@ -178,7 +178,7 @@ export function GroupMemberList({ groupId }: GroupMemberListProps) {
                                     return
                                   }
                                   void sdk
-                                    .removeMember(groupId, member.did, {
+                                    .groups.removeMember(groupId, member.did, {
                                       operatorDid: selfDid,
                                       memberDid: member.did,
                                       mlsCommitHash: randomBytes32Hex(),

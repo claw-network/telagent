@@ -216,7 +216,7 @@ export const useWalletStore = create<WalletStore>((set, get) => ({
       return
     }
 
-    const balanceRaw = await sdk.getWalletBalance()
+    const balanceRaw = await sdk.wallet.getBalance()
     set({ balance: parseBalance(balanceRaw) })
   },
   refreshNonce: async () => {
@@ -225,7 +225,7 @@ export const useWalletStore = create<WalletStore>((set, get) => ({
       return
     }
 
-    const nonceRaw = await sdk.getWalletNonce()
+    const nonceRaw = await sdk.wallet.getNonce()
     set({ nonce: parseNonce(nonceRaw) })
   },
   refreshHistory: async (limit, offset) => {
@@ -236,7 +236,7 @@ export const useWalletStore = create<WalletStore>((set, get) => ({
 
     const nextLimit = typeof limit === "number" && limit > 0 ? limit : get().historyLimit
     const nextOffset = typeof offset === "number" && offset >= 0 ? offset : get().historyOffset
-    const raw = await sdk.getWalletHistory({ limit: nextLimit, offset: nextOffset })
+    const raw = await sdk.wallet.getHistory({ limit: nextLimit, offset: nextOffset })
     const rawItems = Array.isArray(raw) ? raw : Array.isArray((raw as any)?.items) ? (raw as any).items : []
     const history = rawItems.map((item: unknown, index: number) => parseHistoryItem(item, index))
 
@@ -267,7 +267,7 @@ export const useWalletStore = create<WalletStore>((set, get) => ({
     try {
       const updates = await Promise.all(
         [...ids].map(async (escrowId) => {
-          const raw = await sdk.getEscrow(escrowId)
+          const raw = await sdk.clawnet.getEscrow(escrowId)
           return parseEscrow(raw)
         }),
       )
@@ -303,7 +303,7 @@ export const useWalletStore = create<WalletStore>((set, get) => ({
       return null
     }
 
-    const raw = await sdk.getEscrow(normalizedEscrowId)
+    const raw = await sdk.clawnet.getEscrow(normalizedEscrowId)
     const escrow = parseEscrow(raw)
     if (!escrow) {
       return null
@@ -320,7 +320,7 @@ export const useWalletStore = create<WalletStore>((set, get) => ({
       throw new Error("SDK not connected")
     }
 
-    const result = await sdk.transfer(sessionToken, input)
+    const result = await sdk.wallet.transfer(sessionToken, input)
     await Promise.all([get().refreshBalance(), get().refreshHistory()])
     return result
   },
@@ -330,7 +330,7 @@ export const useWalletStore = create<WalletStore>((set, get) => ({
       throw new Error("SDK not connected")
     }
 
-    const result = await sdk.createEscrow(sessionToken, input)
+    const result = await sdk.wallet.createEscrow(sessionToken, input)
     const escrow = parseEscrow(result)
     if (escrow) {
       set((state) => ({
@@ -351,7 +351,7 @@ export const useWalletStore = create<WalletStore>((set, get) => ({
       throw new Error("SDK not connected")
     }
 
-    const result = await sdk.releaseEscrow(sessionToken, escrowId)
+    const result = await sdk.wallet.releaseEscrow(sessionToken, escrowId)
     await Promise.all([get().refreshBalance(), get().refreshHistory(), get().loadEscrow(escrowId)])
     return result
   },
@@ -361,7 +361,7 @@ export const useWalletStore = create<WalletStore>((set, get) => ({
       throw new Error("SDK not connected")
     }
 
-    const result = await sdk.claimFaucet(sessionToken)
+    const result = await sdk.faucet.claim(sessionToken)
     await get().refreshBalance()
     return { amount: result.amount, txHash: result.txHash }
   },

@@ -75,7 +75,7 @@ export const useConnectionStore = create<ConnectionStore>()(
 
           // 2. Create temp SDK for unlock (no accessToken needed; endpoint is whitelisted)
           const tempSdk = new TelagentSdk({ baseUrl: nodeUrl })
-          const result = await tempSdk.unlockSession({ passphrase })
+          const result = await tempSdk.session.unlock({ passphrase })
 
           // 3. Create authenticated SDK with session token.
           //    Wrap fetch to detect 401 responses and auto-disconnect so

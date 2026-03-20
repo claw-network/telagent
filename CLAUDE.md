@@ -51,6 +51,7 @@ Key environment variables:
 - `TELAGENT_HOME` — Data directory (default: `~/.telagent`)
 - `TELAGENT_CLAWNET_NODE_URL` — ClawNet node endpoint
 - `TELAGENT_CLAWNET_AUTO_START` — Auto-start managed ClawNet node (default: `true`)
+- `CLAW_NETWORK` — ClawNet network type (default: `mainnet`) — set to `testnet` for test deployments
 
 ## Architecture Notes
 
@@ -58,3 +59,24 @@ Key environment variables:
 - **Message delivery**: at-least-once with in-conversation ordering (`conversationId + seq`)
 - **Rate limiting**: 600 msgs/min/DID with SQLite-persisted sliding window
 - **Multicast**: up to 100 recipients per batch, per-recipient E2E encryption
+
+## Known Issues & Fixes
+
+### Bootstrap DID Resolution (Fixed in 2026.1.4) — 2026-03-19
+
+**Problem**: NAT nodes connecting through bootstrap could not resolve other peers' DIDs, causing `peer_unknown` errors even when bootstrap was reachable.
+
+**Root Cause**: In NAT traversal (Circuit Relay v2) scenarios, the DID announce message could be consumed by the relay handshake before `handleDidAnnounce` could process it, leaving the bootstrap with an empty DID map.
+
+**Fix**: Bootstrap upgraded to **2026.1.4**, which implements the `/clawnet/1.0.0/did-query` protocol — bootstrap now actively queries each connected peer for its DID instead of passively waiting for announce messages. TelAgent dependencies also updated to `2026.1.4`.
+
+**Verification**:
+```bash
+curl http://127.0.0.1:9528/api/v1/node | python3 -m json.tool | grep version
+# → "version": "2026.1.4"
+
+curl http://127.0.0.1:9528/api/v1/messaging/peers
+# → should list all connected peers with their DIDs
+```
+
+See [docs/issues/reply/clawnetd-bootstrap-did-resolve-still-fails-after-2026-1-3.md](docs/issues/reply/clawnetd-bootstrap-did-resolve-still-fails-after-2026-1-3.md) for the full ClawNet team response.

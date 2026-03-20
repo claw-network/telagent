@@ -220,14 +220,20 @@ export class ManagedClawNetNode {
 
   /**
    * Create an API key via ClawNetNode's public API (v0.6.14+).
-   * Used to bootstrap auth for the embedded node.
+   * Creates a fresh key each call — the SDK's ApiKeyStore manages persistence.
    */
   createApiKey(label: string): string | undefined {
-    if (!this.node?.createApiKey) return undefined;
+    if (!this.node?.createApiKey) {
+      logger.warn('[telagent] createApiKey: node.createApiKey not available');
+      return undefined;
+    }
     try {
       const result = this.node.createApiKey(label);
+      logger.info('[telagent] createApiKey("%s") => id=%d label="%s" key="%s..."',
+        label, result?.id, result?.label, result?.key?.slice(0, 8));
       return result?.key;
-    } catch {
+    } catch (err) {
+      logger.warn('[telagent] createApiKey failed: %s', (err as Error)?.message ?? String(err));
       return undefined;
     }
   }

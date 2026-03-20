@@ -70,7 +70,7 @@ export const useGroupStore = create<GroupStore>((set, get) => ({
     }))
 
     try {
-      const group = await sdk.getGroup(normalizedGroupId)
+      const group = await sdk.groups.get(normalizedGroupId)
       set((state) => ({
         groupsById: {
           ...state.groupsById,
@@ -113,7 +113,7 @@ export const useGroupStore = create<GroupStore>((set, get) => ({
     }
 
     try {
-      const chainState = await sdk.getGroupChainState(normalizedGroupId)
+      const chainState = await sdk.groups.getChainState(normalizedGroupId)
       set((state) => ({
         chainStateByGroupId: {
           ...state.chainStateByGroupId,
@@ -147,7 +147,7 @@ export const useGroupStore = create<GroupStore>((set, get) => ({
     const view = options?.view ?? "all"
 
     try {
-      const envelope = await sdk.listGroupMembers(normalizedGroupId, {
+      const envelope = await sdk.groups.listMembers(normalizedGroupId, {
         page,
         perPage,
         view,

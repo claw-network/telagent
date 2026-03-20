@@ -162,7 +162,7 @@ export function useMessageSender() {
     upsertLocalMessage(params.conversationId, localEnvelope)
 
     try {
-      const saved = await sdk.sendMessage({
+      const saved = await sdk.messages.send({
         envelopeId,
         senderDid: selfDid,
         conversationId: params.conversationId,
@@ -231,7 +231,7 @@ export function useMessageSender() {
 
     const fileBuffer = await input.file.arrayBuffer()
     const checksum = await sha256Hex(fileBuffer)
-    const initialized = await sdk.initAttachmentUpload({
+    const initialized = await sdk.attachments.initUpload({
       filename: input.file.name,
       contentType: input.file.type || "application/octet-stream",
       sizeBytes: input.file.size,
@@ -247,7 +247,7 @@ export function useMessageSender() {
       body: new Uint8Array(fileBuffer),
     })
 
-    const completed = await sdk.completeAttachmentUpload({
+    const completed = await sdk.attachments.completeUpload({
       objectKey: initialized.objectKey,
       manifestHash: checksum,
       checksum,
@@ -291,7 +291,7 @@ export function useMessageSender() {
 
     markPending(message.conversationId, message.envelopeId)
     try {
-      const saved = await sdk.sendMessage({
+      const saved = await sdk.messages.send({
         envelopeId: message.envelopeId,
         senderDid: selfDid,
         conversationId: message.conversationId,

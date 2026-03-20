@@ -90,7 +90,7 @@ export class TelagentNode {
     this.managedClawNet = discovery.managedNode;
     // Prefer explicit config; fall back to auto-provisioned key from managed node
     const clawnetApiKey = this.config.clawnet.apiKey || discovery.apiKey;
-    logger.info('[telagent] ClawNet: %s -> %s', discovery.source, discovery.nodeUrl);
+    logger.info('[telagent] ClawNet: %s -> %s key=%s...', discovery.source, discovery.nodeUrl, clawnetApiKey?.slice(0, 8) ?? 'null');
 
     if (discovery.nodeUrl) {
       try {

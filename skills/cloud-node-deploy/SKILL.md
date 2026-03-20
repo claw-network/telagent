@@ -1,6 +1,6 @@
 ---
 name: cloud-node-deploy
-description: "Deploy or redeploy TelAgent nodes to cloud servers. Handles Node.js upgrade, code sync via git clone, workspace package build, systemd service management, ClawNet daemon, and Caddy reverse proxy. USE FOR: fresh deploy, redeploy after code changes, node upgrade, service restart, health check. SSH key: ~/.ssh/id_ed25519_clawnet"
+description: "Deploy or redeploy TelAgent nodes to cloud servers. Handles Node.js upgrade, code sync via git clone, workspace package build, systemd service management, ClawNet daemon, and Caddy reverse proxy. USE FOR: fresh deploy, redeploy after code changes, node upgrade, service restart, health check. UPDATE ALEX AND BESS: update Alex/Bess nodes, upgrade Alex/Bess to new version, redeploy Alex/Bess, restart Alex/Bess. SSH key: ~/.ssh/id_ed25519_clawnet"
 ---
 
 # Cloud Node Deploy

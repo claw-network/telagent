@@ -34,7 +34,7 @@ export const useContactStore = create<ContactStore>((set, get) => ({
     const sdk = useConnectionStore.getState().sdk
     if (!sdk) return
     try {
-      const list = await sdk.listContacts()
+      const list = await sdk.contacts.list()
       set({ contacts: list })
     } catch {
       // keep existing contacts on error
@@ -43,7 +43,7 @@ export const useContactStore = create<ContactStore>((set, get) => ({
   addContact: async (did, displayName) => {
     const sdk = useConnectionStore.getState().sdk
     if (!sdk) return null
-    const contact = await sdk.addContact({ did, displayName })
+    const contact = await sdk.contacts.add({ did, displayName })
     set((state) => ({
       contacts: [contact, ...state.contacts.filter((c) => c.did !== did)],
     }))
@@ -52,7 +52,7 @@ export const useContactStore = create<ContactStore>((set, get) => ({
   removeContact: async (did) => {
     const sdk = useConnectionStore.getState().sdk
     if (!sdk) return
-    await sdk.removeContact(did)
+    await sdk.contacts.remove(did)
     set((state) => ({
       contacts: state.contacts.filter((c) => c.did !== did),
     }))
@@ -69,7 +69,7 @@ export const useContactStore = create<ContactStore>((set, get) => ({
     if (!sdk) return null
 
     try {
-      const profile = await sdk.getPeerProfile(normalizedDid)
+      const profile = await sdk.profile.getPeer(normalizedDid)
       if (profile) {
         set((state) => ({
           peerProfiles: { ...state.peerProfiles, [normalizedDid]: profile },
@@ -137,7 +137,7 @@ export const useContactStore = create<ContactStore>((set, get) => ({
     }))
 
     try {
-      const identity = await sdk.getIdentity(normalizedDid)
+      const identity = await sdk.identity.getIdentity(normalizedDid)
       set((state) => ({
         identitiesByDid: {
           ...state.identitiesByDid,

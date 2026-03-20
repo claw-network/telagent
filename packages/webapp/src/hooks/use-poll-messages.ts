@@ -108,7 +108,7 @@ export function usePollMessages() {
       setPollingState("active")
       try {
         const cursor = useMessageStore.getState().cursorsByConversation[selectedConversationId]
-        const result = await sdk.pullMessages({
+        const result = await sdk.messages.pull({
           conversationId: selectedConversationId,
           cursor: cursor ?? undefined,
           limit: 100,
@@ -134,7 +134,7 @@ export function usePollMessages() {
       try {
         await refreshConversations()
         const currentGlobalCursor = useMessageStore.getState().globalCursor
-        const result = await sdk.pullMessages({
+        const result = await sdk.messages.pull({
           cursor: currentGlobalCursor ?? undefined,
           limit: 200,
         })

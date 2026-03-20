@@ -283,21 +283,21 @@ export const useMarketStore = create<MarketStore>((set, get) => ({
       const fetchers: Promise<void>[] = []
       if (actualFilter === "all" || actualFilter === "task") {
         fetchers.push(
-          sdk.listTasks()
+          sdk.marketplace.listTasks()
             .then((raw) => { batches.push(...raw.map((t, i) => parseTask(t, i))) })
             .catch(() => {}),
         )
       }
       if (actualFilter === "all" || actualFilter === "info") {
         fetchers.push(
-          sdk.listInfoListings()
+          sdk.marketplace.listInfoListings()
             .then((raw) => { batches.push(...raw.map((t, i) => parseInfoListing(t, i))) })
             .catch(() => {}),
         )
       }
       if (actualFilter === "all" || actualFilter === "capability") {
         fetchers.push(
-          sdk.listCapabilities()
+          sdk.marketplace.listCapabilities()
             .then((raw) => { batches.push(...raw.map((t, i) => parseCapability(t, i))) })
             .catch(() => {}),
         )
@@ -318,7 +318,7 @@ export const useMarketStore = create<MarketStore>((set, get) => ({
 
     set({ loadingListings: true, error: undefined })
     try {
-      const rawResults = await sdk.searchMarkets({ q, type })
+      const rawResults = await sdk.marketplace.search({ q, type })
       const searchResults = sortListings(rawResults.map((r, i) => parseSearchResult(r, i)))
       set({ searchResults, loadingListings: false })
     } catch (error) {
@@ -337,7 +337,7 @@ export const useMarketStore = create<MarketStore>((set, get) => ({
 
     set({ loadingBids: true, error: undefined })
     try {
-      const rawBids = await sdk.listTaskBids(normalizedTaskId)
+      const rawBids = await sdk.marketplace.listTaskBids(normalizedTaskId)
       const bids = rawBids.map((bid, index) => parseBid(bid, index))
       set((state) => ({
         bidsByTask: { ...state.bidsByTask, [normalizedTaskId]: bids },
@@ -351,37 +351,37 @@ export const useMarketStore = create<MarketStore>((set, get) => ({
   // ── Task actions ────────────────────────────────────────────────────────
 
   publishTask: async (sessionToken, input) => {
-    const result = await getSdk().publishTask(sessionToken, input)
+    const result = await getSdk().marketplace.publishTask(sessionToken, input)
     await get().refreshListings()
     return result
   },
   bid: async (sessionToken, taskId, input) => {
-    const result = await getSdk().bid(sessionToken, taskId, input)
+    const result = await getSdk().marketplace.bid(sessionToken, taskId, input)
     await get().loadBids(taskId)
     return result
   },
   acceptBid: async (sessionToken, taskId, bidId) => {
-    const result = await getSdk().acceptBid(sessionToken, taskId, bidId)
+    const result = await getSdk().marketplace.acceptBid(sessionToken, taskId, bidId)
     await Promise.all([get().refreshListings(), get().loadBids(taskId)])
     return result
   },
   rejectBid: async (sessionToken, taskId, bidId) => {
-    const result = await getSdk().rejectBid(sessionToken, taskId, bidId)
+    const result = await getSdk().marketplace.rejectBid(sessionToken, taskId, bidId)
     await get().loadBids(taskId)
     return result
   },
   withdrawBid: async (sessionToken, taskId, bidId) => {
-    const result = await getSdk().withdrawBid(sessionToken, taskId, bidId)
+    const result = await getSdk().marketplace.withdrawBid(sessionToken, taskId, bidId)
     await get().loadBids(taskId)
     return result
   },
   deliverTask: async (sessionToken, taskId, input) => {
-    const result = await getSdk().deliverTask(sessionToken, taskId, input)
+    const result = await getSdk().marketplace.deliverTask(sessionToken, taskId, input)
     await get().refreshListings()
     return result
   },
   confirmTask: async (sessionToken, taskId) => {
-    const result = await getSdk().confirmTask(sessionToken, taskId)
+    const result = await getSdk().marketplace.confirmTask(sessionToken, taskId)
     await get().refreshListings()
     return result
   },
@@ -389,78 +389,78 @@ export const useMarketStore = create<MarketStore>((set, get) => ({
   // ── Info actions ────────────────────────────────────────────────────────
 
   publishInfo: async (sessionToken, input) => {
-    const result = await getSdk().publishInfo(sessionToken, input)
+    const result = await getSdk().marketplace.publishInfo(sessionToken, input)
     await get().refreshListings()
     return result
   },
   purchaseInfo: async (sessionToken, id) => {
-    const result = await getSdk().purchaseInfo(sessionToken, id)
+    const result = await getSdk().marketplace.purchaseInfo(sessionToken, id)
     await get().refreshListings()
     return result
   },
   deliverInfo: async (sessionToken, id, input) => {
-    const result = await getSdk().deliverInfo(sessionToken, id, input)
+    const result = await getSdk().marketplace.deliverInfo(sessionToken, id, input)
     await get().refreshListings()
     return result
   },
   confirmInfo: async (sessionToken, id) => {
-    const result = await getSdk().confirmInfo(sessionToken, id)
+    const result = await getSdk().marketplace.confirmInfo(sessionToken, id)
     await get().refreshListings()
     return result
   },
   subscribeInfo: async (sessionToken, id) => {
-    return getSdk().subscribeInfo(sessionToken, id)
+    return getSdk().marketplace.subscribeInfo(sessionToken, id)
   },
   unsubscribeInfo: async (sessionToken, id) => {
-    return getSdk().unsubscribeInfo(sessionToken, id)
+    return getSdk().marketplace.unsubscribeInfo(sessionToken, id)
   },
 
   // ── Capability actions ──────────────────────────────────────────────────
 
   publishCapability: async (sessionToken, input) => {
-    const result = await getSdk().publishCapability(sessionToken, input)
+    const result = await getSdk().marketplace.publishCapability(sessionToken, input)
     await get().refreshListings()
     return result
   },
   leaseCapability: async (sessionToken, id, input) => {
-    return getSdk().leaseCapability(sessionToken, id, input)
+    return getSdk().marketplace.leaseCapability(sessionToken, id, input)
   },
   invokeCapability: async (sessionToken, leaseId, payload) => {
-    return getSdk().invokeCapability(sessionToken, leaseId, { payload })
+    return getSdk().marketplace.invokeCapability(sessionToken, leaseId, { payload })
   },
   pauseLease: async (sessionToken, leaseId) => {
-    return getSdk().pauseLease(sessionToken, leaseId)
+    return getSdk().marketplace.pauseLease(sessionToken, leaseId)
   },
   resumeLease: async (sessionToken, leaseId) => {
-    return getSdk().resumeLease(sessionToken, leaseId)
+    return getSdk().marketplace.resumeLease(sessionToken, leaseId)
   },
   terminateLease: async (sessionToken, leaseId) => {
-    return getSdk().terminateLease(sessionToken, leaseId)
+    return getSdk().marketplace.terminateLease(sessionToken, leaseId)
   },
 
   // ── Common ──────────────────────────────────────────────────────────────
 
   submitReview: async (sessionToken, input) => {
-    return getSdk().submitReview(sessionToken, input)
+    return getSdk().marketplace.submitReview(sessionToken, input)
   },
   createServiceContract: async (sessionToken, payload) => {
-    return getSdk().createServiceContract(sessionToken, payload)
+    return getSdk().marketplace.createServiceContract(sessionToken, payload)
   },
 
   // ── Disputes ────────────────────────────────────────────────────────────
 
   openDispute: async (sessionToken, input) => {
-    const result = await getSdk().openDispute(sessionToken, input)
+    const result = await getSdk().marketplace.openDispute(sessionToken, input)
     await get().refreshDisputes()
     return result
   },
   respondDispute: async (sessionToken, disputeId, input) => {
-    const result = await getSdk().respondDispute(sessionToken, disputeId, input)
+    const result = await getSdk().marketplace.respondDispute(sessionToken, disputeId, input)
     await get().refreshDisputes()
     return result
   },
   resolveDispute: async (sessionToken, disputeId, input) => {
-    const result = await getSdk().resolveDispute(sessionToken, disputeId, input)
+    const result = await getSdk().marketplace.resolveDispute(sessionToken, disputeId, input)
     await get().refreshDisputes()
     return result
   },
@@ -470,7 +470,7 @@ export const useMarketStore = create<MarketStore>((set, get) => ({
 
     set({ loadingDisputes: true })
     try {
-      const rawDisputes = await sdk.listDisputes()
+      const rawDisputes = await sdk.marketplace.listDisputes()
       const disputes = rawDisputes.map((d, i) => parseDispute(d, i))
       set({ disputes, loadingDisputes: false })
     } catch (error) {

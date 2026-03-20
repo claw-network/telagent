@@ -134,7 +134,7 @@ export function CreateGroupDialog({
               }
               setPending(true)
               void sdk
-                .createGroup({
+                .groups.create({
                   creatorDid: selfDid,
                   groupId: groupId.trim(),
                   groupDomain: groupDomain.trim(),

@@ -30,7 +30,7 @@ export const useIdentityStore = create<IdentityStore>((set, get) => ({
 
     set({ loading: true, error: undefined })
     try {
-      const self = await sdk.getSelfIdentity()
+      const self = await sdk.identity.getSelfIdentity()
       set({ self, loading: false, error: undefined })
     } catch (error) {
       set({
@@ -44,7 +44,7 @@ export const useIdentityStore = create<IdentityStore>((set, get) => ({
     const sdk = useConnectionStore.getState().sdk
     if (!sdk) return
     try {
-      const selfProfile = await sdk.getSelfProfile()
+      const selfProfile = await sdk.profile.getSelf()
       set({ selfProfile })
     } catch {
       // non-fatal — profile may not be configured yet
@@ -53,15 +53,15 @@ export const useIdentityStore = create<IdentityStore>((set, get) => ({
   updateSelfProfile: async (input) => {
     const sdk = useConnectionStore.getState().sdk
     if (!sdk) throw new Error("SDK not connected")
-    const updated = await sdk.updateSelfProfile(input)
+    const updated = await sdk.profile.updateSelf(input)
     set({ selfProfile: updated })
   },
   uploadAvatar: async (data, mimeType) => {
     const sdk = useConnectionStore.getState().sdk
     if (!sdk) throw new Error("SDK not connected")
-    const { avatarUrl } = await sdk.uploadSelfAvatar(data, mimeType)
+    const { avatarUrl } = await sdk.profile.uploadAvatar(data, mimeType)
     // Refresh profile to get updated avatarUrl
-    const updated = await sdk.getSelfProfile()
+    const updated = await sdk.profile.getSelf()
     set({ selfProfile: updated })
     return avatarUrl
   },

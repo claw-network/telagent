@@ -114,11 +114,11 @@ export const useSessionStore = create<SessionStore>((set, get) => ({
 
     set({ status: "unlocking", error: undefined })
     try {
-      const unlocked = await sdk.unlockSession(input)
+      const unlocked = await sdk.session.unlock(input)
       set({
         token: unlocked.sessionToken,
         expiresAt: unlocked.expiresAt,
-        scope: unlocked.scope,
+        scope: unlocked.scope as SessionOperationScope[],
         status: "unlocked",
         error: undefined,
         unlockDialogOpen: false,
@@ -143,7 +143,7 @@ export const useSessionStore = create<SessionStore>((set, get) => ({
 
     if (sdk && token) {
       try {
-        await sdk.lockSession(token)
+        await sdk.session.lock(token)
       } catch {
         // best effort, local state still needs to be wiped
       }
@@ -168,14 +168,14 @@ export const useSessionStore = create<SessionStore>((set, get) => ({
     }
 
     try {
-      const info = await sdk.getSessionInfo(token)
+      const info = await sdk.session.getInfo(token)
       if (!info.active) {
         await get().lock()
         return
       }
       set({
         expiresAt: info.expiresAt,
-        scope: info.scope,
+        scope: info.scope as SessionOperationScope[],
         status: "unlocked",
         error: undefined,
       })

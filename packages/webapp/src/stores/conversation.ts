@@ -72,7 +72,7 @@ export const useConversationStore = create<ConversationStore>()(
     }
 
     try {
-      const envelope = await sdk.listConversations({
+      const envelope = await sdk.conversations.list({
         page: 1,
         perPage: 100,
         sort: "last_message",
@@ -140,7 +140,7 @@ export const useConversationStore = create<ConversationStore>()(
   deleteConversation: async (conversationId) => {
     const sdk = useConnectionStore.getState().sdk
     if (sdk) {
-      await sdk.deleteConversation(conversationId)
+      await sdk.conversations.delete(conversationId)
     }
     const next = get().conversations.filter((item) => item.conversationId !== conversationId)
     set({

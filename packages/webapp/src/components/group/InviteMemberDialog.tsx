@@ -91,7 +91,7 @@ export function InviteMemberDialog({ groupId, onInvited }: InviteMemberDialogPro
               }
               setPending(true)
               void sdk
-                .inviteMember(groupId, {
+                .groups.invite(groupId, {
                   inviterDid: selfDid,
                   inviteeDid: inviteeDid.trim(),
                   inviteId: inviteId.trim(),

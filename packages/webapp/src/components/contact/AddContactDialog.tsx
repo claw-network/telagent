@@ -235,7 +235,7 @@ export function AddContactDialog({
       await addContact(normalizedDid, nameCandidate)
 
       if (sdk) {
-        await sdk.createConversation({
+        await sdk.conversations.create({
           conversationId,
           conversationType: "direct",
           peerDid: normalizedDid,

@@ -13,6 +13,8 @@ import { homedir } from 'node:os';
 import { resolve } from 'node:path';
 
 import { ClawNetClient, ClawNetError } from '@claw-network/sdk';
+import { getGlobalLogger } from '../logger.js';
+const logger = getGlobalLogger();
 import {
   signBytes, utf8ToBytes, bytesToHex,
   resolveStoragePaths, listKeyRecords, decryptKeyRecord,
@@ -509,8 +511,10 @@ export class ClawNetGatewayService {
 
     // POST to the public faucet (NOT the local node) — per ClawNet team guidance:
     // local embedded nodes don't hold MINTER_ROLE and cannot serve /api/v1/faucet.
+    // The external faucet requires an API key (CLAW_FAUCET_API_KEY) for authentication.
     const faucetBaseUrl = process.env.CLAW_FAUCET_URL ?? 'https://api.clawnetd.com';
-    const faucetClient = new ClawNetClient({ baseUrl: faucetBaseUrl }) as any;
+    const faucetApiKey = process.env.CLAW_FAUCET_API_KEY;
+    const faucetClient = new ClawNetClient({ baseUrl: faucetBaseUrl, apiKey: faucetApiKey }) as any;
     try {
       const result = await faucetClient.faucet.claim({ did, signature, timestamp });
       return result as { did: string; address: string; amount: number; txHash: string | null };

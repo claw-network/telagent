@@ -31,7 +31,7 @@ export const usePermissionStore = create<PermissionStore>((set, get) => ({
     set({ loading: true, error: undefined })
 
     try {
-      const data = (await sdk.getOwnerPermissions()) as OwnerPermissions
+      const data = (await sdk.identity.getOwnerPermissions()) as OwnerPermissions
 
       const mode: OwnerMode = data.mode === "intervener" ? "intervener" : "observer"
       set({
