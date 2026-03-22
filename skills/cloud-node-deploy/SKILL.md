@@ -81,20 +81,41 @@ ssh -i "$SSH_KEY" root@<IP> "cd /opt/telagent && pnpm --filter @telagent/protoco
 
 ### 5. Rebuild ClawNet (required after git clone/pull)
 
-ClawNet's `daemon.js` is a build artifact — it must be rebuilt whenever the code is updated. Without this, the old binary may lack critical P2P fixes.
+ClawNet is a **separate git repository** (`/opt/clawnet`), not part of the telagent monorepo. When ClawNet releases a new version, you must update it separately.
+
+#### 5a. Update ClawNet to new version
 
 ```bash
-# Full rebuild (includes native modules)
-ssh -t -i "$SSH_KEY" root@<IP> "export COREPACK_ENABLE_DOWNLOAD_PROMPT=0 && cd /opt/clawnet && pnpm install && pnpm build 2>&1 | tail -20"
+# Fetch and reset to latest version
+ssh -i "$SSH_KEY" root@<IP> "cd /opt/clawnet && git fetch origin && git reset --hard origin/main && git log --oneline -3"
 
-# Verify binary matches across nodes
+# Verify version
+ssh -i "$SSH_KEY" root@<IP> "cat /opt/clawnet/packages/node/package.json | grep '\"version\"'"
+```
+
+#### 5b. Rebuild ClawNet packages (CRITICAL: build in order)
+
+The `pnpm build` command may fail due to stale `tsconfig.tsbuildinfo` files. Use this exact method:
+
+```bash
+# Build in correct order: protocol -> core -> node
+ssh -t -i "$SSH_KEY" root@<IP> "export COREPACK_ENABLE_DOWNLOAD_PROMPT=0 && \
+  cd /opt/clawnet/packages/protocol && rm -f tsconfig.tsbuildinfo && rm -rf dist && npx tsc && \
+  cd /opt/clawnet/packages/core && rm -f tsconfig.tsbuildinfo && rm -rf dist && npx tsc && \
+  cd /opt/clawnet/packages/node && rm -f tsconfig.tsbuildinfo && rm -rf dist && npx tsc"
+
+# Verify daemon.js was built
 ssh -i "$SSH_KEY" root@<IP> "sha256sum /opt/clawnet/packages/node/dist/daemon.js"
 ```
 
-If only Node.js was upgraded (no code change), rebuild native modules only:
+> **Important**: Do NOT use `pnpm build` directly — it parallelizes builds causing dependency resolution failures. Always build in order.
 
+#### 5c. If pnpm-lock.yaml was removed (slow install)
+
+Removing `pnpm-lock.yaml` triggers full dependency resolution (~5-15 min). To avoid this:
 ```bash
-ssh -t -i "$SSH_KEY" root@<IP> "export COREPACK_ENABLE_DOWNLOAD_PROMPT=0 && cd /opt/clawnet && rm -rf node_modules/.pnpm/better-sqlite3* && pnpm install"
+# Only remove lockfile if necessary for version upgrade
+# Otherwise, use: rm -rf node_modules/.pnpm/better-sqlite3* && pnpm install
 ```
 
 ### 6. Create ClawNet API key (standalone mode)

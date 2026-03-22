@@ -200,3 +200,60 @@ POST /api/v1/messaging/send
 targetDid = did:claw:z8MifVfD6GGBeNE4ThZfM3R8tK1daNvrEHWSjRzQuELPA
 # 预期 delivered = true
 ```
+
+## 验证结果（2026-03-20）
+
+### 环境状态
+| 节点 | IP | 版本 | 状态 |
+|------|----|------|------|
+| Bootstrap | api.clawnetd.com | 2026.1.4 | 正常运行，5 peers |
+| Alex | 173.249.46.252 | 2026.1.4 | 已升级重启，1 peer |
+| Bess | 167.86.93.216 | 2026.1.4 | 已升级重启，1 peer |
+| 本地 | 127.0.0.1 | 2026.1.7 | 正常运行，1 peer |
+
+### didPeerMap 状态
+
+| 查询方 | 包含 Bootstrap DID | 包含 Alex DID | 包含 Bess DID | 包含本地 DID |
+|--------|-------------------|---------------|---------------|--------------|
+| 本地 (127.0.0.1) | ✅ | ❌ | ✅ | N/A |
+| Alex (173.249.46.252) | ✅ | N/A | ✅ | ❌ **缺失** |
+| Bess (167.86.93.216) | ✅ | ✅ | N/A | ✅ |
+
+### 协议级消息测试
+
+**本地 → Alex DID：**
+```json
+{
+  "delivered": false,
+  "messageId": "msg_a4ea2cb485d747a35f525945"
+}
+```
+本地日志：`peer_unknown` — Alex 无法解析本地 DID
+
+**本地 → Bess DID：**
+```json
+{
+  "delivered": false,
+  "messageId": "msg_9075e4dbbe36fce0da9b4d7b"
+}
+```
+本地日志：`direct delivery failed: The dial request has no valid addresses` — NAT 穿透失败
+
+### 问题分析
+
+1. **Bess NAT 穿透失败**：`The dial request has no valid addresses` — Circuit Relay v2 未能建立有效中继
+
+2. **Alex DID 解析部分失败**：本地 DID 未出现在 Alex 的 didPeerMap 中，但 Bess 包含本地 DID — DID-query 协议对 Alex 无效
+
+3. **不对称行为**：Bess 能解析到本地 DID，但 Alex 不能，这表明问题可能与 bootstrap 对不同 NAT 节点的分发策略有关
+
+### 结论
+
+**2026.1.4 的 DID-query 修复部分有效但不完整：**
+- Bootstrap DID 解析：✅ 正常
+- NAT → Bess：DID 解析成功，但实际消息投递失败（NAT 穿透问题）
+- NAT → Alex：DID 解析失败，`peer_unknown` 仍然存在
+
+需要 ClawNet 团队进一步调查：
+1. 为什么 Alex 无法通过 DID-query 获取本地 DID，而 Bess 可以？
+2. NAT 穿透（Circuit Relay v2）在 2026.1.4 中是否实际工作？
