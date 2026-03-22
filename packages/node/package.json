@@ -14,9 +14,9 @@
     "start": "NODE_EXTRA_CA_CERTS=${NODE_EXTRA_CA_CERTS:-$(mkcert -CAROOT 2>/dev/null || echo /dev/null)/rootCA.pem} tsx --env-file=../../.env src/daemon.ts"
   },
   "dependencies": {
-    "@claw-network/core": "^2026.2.8",
-    "@claw-network/node": "^2026.2.8",
-    "@claw-network/sdk": "^2026.2.8",
+    "@claw-network/core": "^2026.2.9",
+    "@claw-network/node": "^2026.2.9",
+    "@claw-network/sdk": "^2026.2.9",
     "@telagent/protocol": "workspace:*",
     "better-sqlite3": "^12.2.0",
     "ethers": "^6.15.0",
