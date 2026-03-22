@@ -77,6 +77,21 @@
 }
 ```
 
+### DID Profile 解析测试
+
+**测试:** 通过 DID 获取节点昵称和头像
+
+```bash
+# 添加 Alex 为联系人
+POST /api/v1/contacts
+{ "did": "did:claw:z8MifVfD6GGBeNE4ThZfM3R8tK1daNvrEHWSjRzQuELPA", "displayName": "Alex" }
+
+# 结果: ✅ 联系添加成功
+# Profile: ❌ 返回 null (需要 P2P profile card 交换)
+```
+
+**说明:** Profile card 交换依赖 P2P 消息投递。E2E 加密消息需要 SDK 配合，CLI 无法直接测试。
+
 **注意:** 消息投递需要 E2E 加密，CLI 测试需要使用 SDK。当前验证了所有节点通过 Bootstrap Push 模型成功获取了完整的 peer directory，这是 P2P 消息投递的前提条件。
 
 ---
