@@ -15,9 +15,9 @@
   },
   "dependencies": {
     "@claw-network/contracts": "^2026.2.10",
-    "@claw-network/core": "^2026.3.0",
-    "@claw-network/node": "^2026.3.0",
-    "@claw-network/sdk": "^2026.3.0",
+    "@claw-network/core": "^2026.3.1",
+    "@claw-network/node": "^2026.3.1",
+    "@claw-network/sdk": "^2026.3.1",
     "@telagent/protocol": "workspace:*",
     "better-sqlite3": "^12.2.0",
     "ethers": "^6.15.0",
