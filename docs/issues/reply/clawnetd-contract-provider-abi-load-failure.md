@@ -3,75 +3,73 @@
 | 字段 | 值 |
 | --- | --- |
 | 原始 Issue | `clawnetd-contract-provider-abi-load-failure.md` |
-| 提出方 | TelAgent 项目组 |
-| 提出日期 | 2026-03-22 |
-| 状态 | **待 ClawNet 团队确认** |
+| 优先级 | **P2** |
+| 状态 | **已修复** |
+| 修复日期 | 2026-03-22 |
+| 修复版本 | **2026.2.10** |
 
 ---
 
-感谢 TelAgent 项目组的问题报告。我们已确认此问题并评估了你们提出的三个方案。
+感谢 TelAgent 项目组详细的问题分析。你们正确指出了两个问题：
 
-## TelAgent 侧修复状态
-
-TelAgent 已在本地创建空的 stub artifact 文件作为临时 workaround：
-
-```bash
-packages/contracts/artifacts/contracts/ClawToken.sol/ClawToken.json   # abi: []
-packages/contracts/artifacts/contracts/ClawIdentity.sol/ClawIdentity.json  # abi: []
-```
-
-这使 `ContractProvider.loadAbi()` 不再抛出 ENOENT，但合约实例无效（abi: []），调用时会报错。这是临时 workaround。
-
-## 方案评估
-
-### 方案 A：内置 fallback ABI
-
-**可接受**，但需要注意：
-
-1. **`ClawIdentity` 最小 ABI 建议**（read-only 函数，足够 TelAgent 日常使用）：
-   ```solidity
-   function getController(bytes32 didHash) view returns (address)
-   function isActive(bytes32 didHash) view returns (bool)
-   function selfRegisterDID(bytes32 didHash, bytes publicKey, uint8 purpose)
-   function getPublicKey(bytes32 didHash) view returns (bytes)
-   ```
-
-2. **`ClawToken` 最小 ABI 建议**（标准 ERC-20）：
-   ```solidity
-   function balanceOf(address owner) view returns (uint256)
-   function decimals() view returns (uint8)
-   function symbol() view returns (string)
-   function name() view returns (string)
-   function totalSupply() view returns (uint256)
-   ```
-
-3. **管理员函数（如 `setController`、`mint` 等）** 不需要包含在 fallback ABI 中 — 嵌入式节点通常只需要 read-only 函数。
-
-### 方案 C：`@claw-network/contracts` npm 包
-
-**不支持作为主要方案**，原因：
-- artifact JSON 文件较大（每个合约 ~50-100KB）
-- 增加了发布和维护负担
-- read-only 场景下 full ABI 不必要
-
-## 待确认
-
-1. 方案 A 是否可接受？预计在哪个版本包含？
-2. `relayReward` 等可选合约是否也需要 fallback ABI？
-3. `artifactsDir` 配置是否可以考虑改为 optional？
+1. **artifact 文件不存在时直接跳过** — 嵌入式节点无法访问 ClawNet 官方合约的 artifact
+2. **日志不够清晰** — "Skipping" 容易被误认为是严重错误
 
 ---
 
-## 验证方法
+## 1. 修复方案
 
-修复上线后，请确认以下场景不再出现 `Skipping` 警告：
+采用你们建议的 **方案 C**：将 `@claw-network/contracts` 从私有包改为可发布的 npm 包，`ContractProvider` 在本地 artifact 缺失时自动从 npm 包加载。
+
+### 变更内容
+
+**`packages/contracts/package.json`**
+- 移除 `"private": true`，包现在可以发布到 npm
+
+**`packages/node/src/services/contract-provider.ts`**
+- 新增 `resolveArtifactPath()` — 先尝试本地 `artifactsDir`，找不到则通过 `require.resolve('@claw-network/contracts/...')` 从 npm 包加载
+- 移除硬编码的 fallback ABI
+
+**`packages/node/src/services/chain-config.ts`**
+- `artifactsDir` 改为 `optional()` — 嵌入方可以不配置此字段
+
+---
+
+## 2. 行为变化
+
+| 场景 | 旧行为（2026.2.9） | 新行为（2026.2.10） |
+|------|---------------------|---------------------|
+| `artifactsDir` 配置 + artifact 存在 | ✅ 正常加载 | ✅ 正常加载（不变） |
+| `artifactsDir` 配置 + artifact 不存在 | ⚠️ Skipping 警告 | ✅ 从 `@claw-network/contracts` npm 包加载 |
+| `artifactsDir` 未配置 | ❌ 报错 | ✅ 直接从 `@claw-network/contracts` npm 包加载 |
+| npm 包也未安装 | — | ⚠️ 跳过合约并打印警告 |
+
+---
+
+## 3. TelAgent 升级步骤
+
+### 选项 A：无需任何配置（推荐）
+
+升级 `@claw-network/node` 到 `2026.2.10` 后，删除 `CLAW_CHAIN_ARTIFACTS_DIR` 环境变量。`ContractProvider` 会自动从 npm 包加载 `ClawToken` 和 `ClawIdentity` 的 ABI。
 
 ```bash
-# 启动节点后检查日志
-grep -i "contractprovider" ~/.telagent/logs/clawnet.log
-# 预期：无 "Skipping" 警告
-
-# 确认合约实例可用
-curl http://127.0.0.1:9528/api/v1/node | python3 -m json.tool | grep version
-# 预期：正常返回版本号
+# .env — 移除这一行
+# CLAW_CHAIN_ARTIFACTS_DIR=../../packages/contracts/artifacts
 ```
+
+### 选项 B：保留本地 artifacts
+
+如果 TelAgent 未来需要使用 `ClawToken`/`ClawIdentity` 的完整 ABI（包括管理员函数），可以在本地保留 artifact 文件。本地 artifacts 优先级高于 npm 包。
+
+---
+
+## 4. 长期可维护性
+
+`@claw-network/contracts` npm 包只包含编译后的 `artifacts/` 目录（不含源码、测试、脚本），每次合约升级时随版本发布：
+
+- `contracts/`, `interfaces/`, `libraries/` — 源码，**不发布**
+- `scripts/`, `test/` — 开发文件，**不发布**
+- `artifacts/build-info/` — 巨大的调试数据，**不发布**
+- `artifacts/contracts/*.json` — 完整 ABI，**发布**
+
+这样嵌入式节点总能获取到与 ClawNet 链上部署版本匹配的官方 ABI。

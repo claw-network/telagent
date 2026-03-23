@@ -85,12 +85,8 @@ export class ManagedClawNetNode {
     }
 
     const rawArtifactsDir = process.env.CLAW_CHAIN_ARTIFACTS_DIR;
-    if (!rawArtifactsDir) {
-      logger.info('[telagent] CLAW_CHAIN_ARTIFACTS_DIR not set — chain services will be unavailable');
-      return undefined;
-    }
-    // Resolve to absolute path so ContractProvider finds artifacts regardless of CWD
-    const artifactsDir = resolve(rawArtifactsDir);
+    // artifactsDir is optional — @claw-network/node 2026.2.10+ falls back to @claw-network/contracts npm
+    const artifactsDir = rawArtifactsDir ? resolve(rawArtifactsDir) : undefined;
 
     const contracts: Record<string, string> = { identity };
     // Optional contracts — chain services degrade gracefully for missing ones
