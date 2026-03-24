@@ -109,7 +109,7 @@ function normalizeBaseUrl(url: string): string {
  * ```typescript
  * import { TelagentSdk } from '@telagent/sdk';
  *
- * const sdk = new TelagentSdk({ baseUrl: 'http://127.0.0.1:9528/api/v1' });
+ * const sdk = new TelagentSdk({ baseUrl: 'http://127.0.0.1:9529' });
  *
  * // Use identity
  * const identity = await sdk.identity.getSelf();

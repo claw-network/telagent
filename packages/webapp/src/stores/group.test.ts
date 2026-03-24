@@ -55,9 +55,11 @@ describe("useGroupStore", () => {
 
     vi.spyOn(useConnectionStore, "getState").mockReturnValue({
       sdk: {
-        getGroup,
-        getGroupChainState,
-        listGroupMembers,
+        groups: {
+          get: getGroup,
+          getChainState: getGroupChainState,
+          listMembers: listGroupMembers,
+        },
       },
     } as never)
 

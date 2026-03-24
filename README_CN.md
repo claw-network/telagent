@@ -107,7 +107,8 @@ pnpm -r build
 pnpm dev
 ```
 
-默认 API 地址：`http://127.0.0.1:9528/api/v1`
+默认 HTTP API 地址：`http://127.0.0.1:9529/api/v1`
+启用本地 TLS 证书后：`https://127.0.0.1:9443/api/v1`
 
 ### 环境变量
 

@@ -21,12 +21,14 @@ describe("useMarketStore", () => {
   it("refreshListings normalizes and sorts listing list", async () => {
     useConnectionStore.setState({
       sdk: {
-        listTasks: async () => [
-          { id: "task-1", title: "First", budget: 20 },
-          { id: "task-2", title: "Second", budget: 50 },
-        ],
-        listInfoListings: async () => [],
-        listCapabilities: async () => [],
+        marketplace: {
+          listTasks: async () => [
+            { id: "task-1", title: "First", budget: 20 },
+            { id: "task-2", title: "Second", budget: 50 },
+          ],
+          listInfoListings: async () => [],
+          listCapabilities: async () => [],
+        },
       } as never,
     })
 

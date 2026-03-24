@@ -42,7 +42,9 @@ pnpm typecheck       # Type check all packages
 
 ## Environment
 
-Default API: `http://127.0.0.1:9528/api/v1`
+Default HTTP API: `http://127.0.0.1:9529/api/v1`
+With local TLS certs: `https://127.0.0.1:9443/api/v1`
+Embedded ClawNet API (when auto-started locally): `http://127.0.0.1:9528`
 
 Key environment variables:
 - `TELAGENT_CHAIN_RPC_URL` — Blockchain RPC endpoint
@@ -72,11 +74,16 @@ Key environment variables:
 
 **Verification**:
 ```bash
+# TelAgent node
+curl http://127.0.0.1:9529/api/v1/node | python3 -m json.tool | grep version
+# → should show the TelAgent node version
+
+# Embedded ClawNet node
 curl http://127.0.0.1:9528/api/v1/node | python3 -m json.tool | grep version
 # → "version": "2026.1.4"
 
 curl http://127.0.0.1:9528/api/v1/messaging/peers
-# → should list all connected peers with their DIDs
+# → ClawNet peer list should include the connected peers
 ```
 
 See [docs/issues/reply/clawnetd-bootstrap-did-resolve-still-fails-after-2026-1-3.md](docs/issues/reply/clawnetd-bootstrap-did-resolve-still-fails-after-2026-1-3.md) for the full ClawNet team response.

@@ -518,10 +518,10 @@ After starting the node, the DID is auto-fetched from the ClawNet node. You can 
 
 ```bash
 # HTTPS (default when mkcert is enabled)
-curl -s https://127.0.0.1:9443/api/v1/node/info
+curl -s https://127.0.0.1:9443/api/v1/node
 
 # Or HTTP (when TLS is not enabled)
-curl -s http://127.0.0.1:9529/api/v1/node/info
+curl -s http://127.0.0.1:9529/api/v1/node
 ```
 
 ### Q: `better-sqlite3` build fails

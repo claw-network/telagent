@@ -25,7 +25,9 @@ describe("useContactStore", () => {
 
     vi.spyOn(useConnectionStore, "getState").mockReturnValue({
       sdk: {
-        getIdentity,
+        identity: {
+          getIdentity,
+        },
       },
     } as never)
 

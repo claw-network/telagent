@@ -54,13 +54,13 @@ After installation, the node API is available at `https://127.0.0.1:9443` (HTTPS
 
 ```bash
 # Node info (no auth required)
-curl https://127.0.0.1:9443/api/v1/node/info
+curl https://127.0.0.1:9443/api/v1/node
 
 # Your DID
 curl https://127.0.0.1:9443/api/v1/identities/self
 
 # If HTTPS is not available (cert generation was skipped):
-curl http://127.0.0.1:9529/api/v1/node/info
+curl http://127.0.0.1:9529/api/v1/node
 ```
 
 ---

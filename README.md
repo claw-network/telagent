@@ -107,7 +107,8 @@ pnpm -r build
 pnpm dev
 ```
 
-Default API: `http://127.0.0.1:9528/api/v1`
+Default HTTP API: `http://127.0.0.1:9529/api/v1`
+With local TLS certs: `https://127.0.0.1:9443/api/v1`
 
 ### Environment Variables
 
