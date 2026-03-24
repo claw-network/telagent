@@ -112,15 +112,12 @@ export class TelagentNode {
 
     if (passphrase) {
       const wasJustStarted = discovery.source === 'auto-started' || discovery.source === 'auto-initialized';
-      let check = await verifyPassphrase(discovery.nodeUrl, passphrase, clawnetApiKey);
-
-      // When we just auto-started ClawNet, its auth layer may not be fully
-      // initialized yet — retry once with a short delay before treating a
-      // mismatch as fatal.
-      if (!check.valid && wasJustStarted) {
-        await new Promise((resolve) => setTimeout(resolve, 2000));
-        check = await verifyPassphrase(discovery.nodeUrl, passphrase, clawnetApiKey);
-      }
+      const check = await this.verifyPassphraseWithRetries(
+        discovery.nodeUrl,
+        passphrase,
+        clawnetApiKey,
+        wasJustStarted,
+      );
 
       if (!check.valid) {
         if (this.managedClawNet) {
@@ -134,7 +131,11 @@ export class TelagentNode {
       if (check.error) {
         logger.warn('[telagent] %s', check.error);
       }
-      logger.info('[telagent] Passphrase verified - DID: %s', check.did);
+      if (check.did) {
+        logger.info('[telagent] Passphrase verified - DID: %s', check.did);
+      } else {
+        logger.info('[telagent] Passphrase accepted, but ClawNet did not return a DID confirmation yet');
+      }
       await savePassphrase(this.paths, passphrase);
     }
 
@@ -486,6 +487,30 @@ export class TelagentNode {
     }
     clearInterval(this.mailboxCleanupTimer);
     this.mailboxCleanupTimer = null;
+  }
+
+  private async verifyPassphraseWithRetries(
+    nodeUrl: string,
+    passphrase: string,
+    apiKey: string | undefined,
+    wasJustStarted: boolean,
+  ): Promise<{ valid: boolean; did?: string; error?: string }> {
+    const maxAttempts = wasJustStarted ? 4 : 2;
+    let check = await verifyPassphrase(nodeUrl, passphrase, apiKey);
+
+    for (let attempt = 2; attempt <= maxAttempts && this.shouldRetryPassphraseVerification(check); attempt++) {
+      await new Promise((resolve) => setTimeout(resolve, 2000 * (attempt - 1)));
+      check = await verifyPassphrase(nodeUrl, passphrase, apiKey);
+    }
+
+    return check;
+  }
+
+  private shouldRetryPassphraseVerification(check: { valid: boolean; did?: string; error?: string }): boolean {
+    if (!check.valid) {
+      return true;
+    }
+    return Boolean(check.error && !check.did);
   }
 
   private createMailboxStore(config: AppConfig): MailboxStore {
