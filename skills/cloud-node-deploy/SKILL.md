@@ -21,6 +21,18 @@ SSH_KEY="$HOME/.ssh/id_ed25519_clawnet"
 ssh -i "$SSH_KEY" root@<IP>
 ```
 
+## Preferred Automation
+
+When the local repo is clean and you are ready to publish a version bump, prefer the repo script:
+
+```bash
+bash scripts/deploy-node.sh alex
+bash scripts/deploy-node.sh bess
+bash scripts/deploy-node.sh all
+```
+
+This wrapper runs `pnpm run version:patch`, commits and pushes the bump, uploads [scripts/redeploy.sh](/Users/xiasenhai/Workspace/OpenClaw/telagent/scripts/redeploy.sh), and executes it remotely. Use the manual steps below when you need partial control, do not want an automatic version bump, or are debugging a failed deployment.
+
 ## Remote Directory Layout
 
 ```
@@ -228,10 +240,10 @@ ssh -i "$SSH_KEY" root@<IP> "journalctl -u telagent-node --no-pager -n 30 | grep
 # Verify auth works — unlock a session (passphrase = CLAW_PASSPHRASE from /opt/clawnet/node.env)
 curl -s -X POST https://<domain>/api/v1/session/unlock \
   -H 'Content-Type: application/json' \
-  -d '{"passphrase":"<CLAW_PASSPHRASE>"}' | jq '.data.token'
+  -d '{"passphrase":"<CLAW_PASSPHRASE>"}' | jq -r '.data.sessionToken'
 ```
 
-> **Auth model**: All API endpoints except `/node/*`, `/identities/self`, and `POST /session/unlock` require a valid `tses_*` session token via `Authorization: Bearer <token>`. WebApp handles this automatically after the user enters the passphrase on the connect page.
+> **Auth model**: Most API endpoints require a valid `tses_*` session token via `Authorization: Bearer <token>`. Common unauthenticated exceptions include `/api/v1/node*`, `/api/v1/identities/self`, `POST /api/v1/session/unlock`, and the public profile / attachment routes. WebApp handles the token automatically after the user enters the passphrase on the connect page.
 
 ### 10. Update localdev deployment docs
 
@@ -302,15 +314,18 @@ Each localdev doc must contain the following sections (in order):
 ### 部署步骤
 <!-- 部署命令记录 -->
 ### 注意事项
-<!-- env-file patch, workspace build, ClawNet pnpm build, DB schema migration -->
+<!-- env-file patch, workspace build, ClawNet ordered rebuild, DB schema migration -->
 ```
 
-#### Key lesson: ClawNet must be rebuilt after git pull
+#### Key lesson: ClawNet must be rebuilt in dependency order after git clone/pull
 
-ClawNet's `packages/node/dist/daemon.js` is a build artifact (gitignored). After `git clone` or `git pull` on `/opt/clawnet`, you **must** run `pnpm build` to produce the current binary. Without this, the old daemon.js may lack critical fixes (e.g. dynamic PeerId resolution in 0.6.16), causing silent P2P bootstrap failure (`aggressive phase complete — 0 peer connection(s)`).
+ClawNet's `packages/node/dist/daemon.js` is a build artifact (gitignored). After `git clone` or `git pull` on `/opt/clawnet`, you must rebuild `protocol -> core -> node` in order so the running daemon matches the checked-out source. A stale daemon can leave you debugging outdated P2P behavior even though the repo is current.
 
 ```bash
-ssh -i "$SSH_KEY" root@<IP> "cd /opt/clawnet && pnpm build 2>&1 | tail -20"
+ssh -t -i "$SSH_KEY" root@<IP> "export COREPACK_ENABLE_DOWNLOAD_PROMPT=0 && \
+  cd /opt/clawnet/packages/protocol && rm -f tsconfig.tsbuildinfo && rm -rf dist && npx tsc && \
+  cd /opt/clawnet/packages/core && rm -f tsconfig.tsbuildinfo && rm -rf dist && npx tsc && \
+  cd /opt/clawnet/packages/node && rm -f tsconfig.tsbuildinfo && rm -rf dist && npx tsc"
 # Verify: sha256sum should match across nodes
 ssh -i "$SSH_KEY" root@<IP> "sha256sum /opt/clawnet/packages/node/dist/daemon.js"
 ```
@@ -411,8 +426,8 @@ ClawNet requires `CLAW_PASSPHRASE` in `/opt/clawnet/node.env`.
 
 ### ClawNet P2P: `aggressive phase complete — 0 peer connection(s)`
 Bootstrap failed silently. Common causes:
-1. **Stale daemon.js** — Code was updated via `git pull` but `pnpm build` was not run. The old binary lacks fixes (e.g. dynamic PeerId resolution). Fix: `cd /opt/clawnet && pnpm build`
-2. **Stale `config.yaml`** — Old config has `bootstrap: []` or hardcoded PeerId. Fix: delete `node-data/config.yaml` and restart (0.6.16+ auto-generates correct bootstrap)
+1. **Stale daemon.js** — Code was updated via `git pull`, but the ordered rebuild from step 5b was not run. Rebuild `protocol -> core -> node`, then restart `clawnetd`.
+2. **Stale `config.yaml`** — Old config has `bootstrap: []` or hardcoded peer data. Delete `/opt/clawnet/node-data/config.yaml`, regenerate it with the manual daemon init flow from `ClawNet data wipe (clean restart)`, then start `clawnetd` again. Do not only `systemctl restart`: this service file has `ExecStartPre=/usr/bin/test -f /opt/clawnet/node-data/config.yaml`.
 3. **Network mismatch** — Node is on `devnet` but bootstrap server is on `testnet` (or vice versa). Check `network` field in both
 
 Verify binary matches across nodes:

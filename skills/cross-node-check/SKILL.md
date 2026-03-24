@@ -16,11 +16,11 @@ Validate bidirectional message delivery between two independent TelAgent cloud n
 
 ## Auth Model
 
-The script calls authenticated endpoints (`/api/v1/keys/register`, `/api/v1/messages`, `/api/v1/messages/pull`). These require a valid `tses_*` session token via `Authorization: Bearer <token>`.
+The global auth gate only exempts a small whitelist. The check script hits `/api/v1/keys/register`, `/api/v1/messages`, and `/api/v1/messages/pull`, so it needs a valid `tses_*` session token via `Authorization: Bearer <token>`.
 
-> **Note**: The current script (`run-cross-node-chat-check.ts`) does NOT include auth headers in its fetch calls. Before running, you must either:
-> 1. Update the script to pass `Authorization: Bearer <token>` headers, or
-> 2. Rely on the auto-session created at node startup (only works for internal `http://127.0.0.1:9529` calls if the auth gate is bypassed — currently it is NOT bypassed for internal calls)
+> **Current limitations**: [packages/node/scripts/run-cross-node-chat-check.ts](/Users/xiasenhai/Workspace/OpenClaw/telagent/packages/node/scripts/run-cross-node-chat-check.ts) still has two blockers against current deployed nodes:
+> 1. `postJson()` / `getJson()` send bare `fetch()` calls without bearer tokens, so protected endpoints return 401.
+> 2. `sendDirectMessage()` posts `targetDomain` but omits `targetDid`, while the current `/api/v1/messages` route and `messageService.send()` require `targetDid` for delivery routing.
 
 To obtain session tokens manually:
 
@@ -39,6 +39,8 @@ TOKEN_B=$(curl -s -X POST https://bess.telagent.org/api/v1/session/unlock \
 The passphrase is the `CLAW_PASSPHRASE` value from `/opt/clawnet/node.env` on each server (same as `TELAGENT_CLAWNET_PASSPHRASE` in `.env.cloud`).
 
 ## Quick Run
+
+Patch the script for auth and `targetDid` first, then run:
 
 From the local repo root:
 
@@ -107,10 +109,10 @@ curl -fsS https://bess.telagent.org/api/v1/node | jq '.data'
 ## Troubleshooting
 
 ### 401 Unauthorized on `/api/v1/keys/register`, `/messages`, or `/messages/pull`
-These endpoints require a valid session token. The script currently does not send `Authorization` headers. Either update the script to include bearer tokens, or verify auto-sessions are active by checking startup logs:
-```bash
-journalctl -u telagent-node --no-pager -n 20 | grep -i "auto-session"
-```
+These endpoints are behind the global auth gate. The current script does not send `Authorization` headers, so the first fix is to patch [packages/node/scripts/run-cross-node-chat-check.ts](/Users/xiasenhai/Workspace/OpenClaw/telagent/packages/node/scripts/run-cross-node-chat-check.ts) to add bearer tokens in `postJson()` and `getJson()`.
+
+### 400 validation error on `/api/v1/messages`
+The current script omits `targetDid` in `sendDirectMessage()`. Patch the request payload so A->B includes `targetDid: TELAGENT_NODE_B_DID` and B->A includes `targetDid: TELAGENT_NODE_A_DID`.
 
 ### Script exits without sending messages
 - Check that environment variables are all set: `env | grep TELAGENT_NODE`

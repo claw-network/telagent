@@ -67,7 +67,7 @@ curl http://127.0.0.1:9529/api/v1/node
 
 ## Configuration Reference
 
-The installer generates `.env` automatically. To customize, edit `~/telagent/.env`. Key variables:
+The installer generates `.env` automatically. To customize, edit `<install dir>/.env` (default: `~/telagent/.env` on Linux/macOS, `%USERPROFILE%\\telagent\\.env` on Windows). Key variables:
 
 | Variable | Default | Description |
 |----------|---------|-------------|
@@ -92,5 +92,5 @@ The installer generates `.env` automatically. To customize, edit `~/telagent/.en
 | `TELAGENT_DATA_DIR is removed` | Remove `TELAGENT_DATA_DIR`, use `TELAGENT_HOME` (defaults to `~/.telagent`) |
 | `better-sqlite3` build failure | Confirm Node.js >=22 <25, then run `pnpm rebuild better-sqlite3` |
 | Reset all data | `rm -rf ~/.telagent` then restart the service |
-| Messages not delivered between nodes | Ensure ClawNet node is running and `AUTO_DISCOVER=true` |
+| Messages not delivered between nodes | If using local ClawNet, keep `TELAGENT_CLAWNET_AUTO_DISCOVER=true` or `TELAGENT_CLAWNET_AUTO_START=true`; if using standalone/cloud ClawNet, set `TELAGENT_CLAWNET_NODE_URL` + `TELAGENT_CLAWNET_API_KEY` and usually keep `TELAGENT_CLAWNET_AUTO_START=false` |
 | WebApp returns 401 | Session expired — re-enter passphrase; 5 consecutive failures trigger a 5-minute lockout |

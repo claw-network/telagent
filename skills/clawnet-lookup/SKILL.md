@@ -22,20 +22,21 @@ Cross-reference ClawNet project docs, APIs, and source code when working on TelA
 The ClawNet project is located at the **parent directory** of the current workspace:
 
 ```
-CLAWNET_ROOT = <workspace root>/../clawnet-dev
+CLAWNET_ROOT = <workspace root>/../clawnet
+# fallback in older workspaces: ../clawnet-dev
 ```
 
-> **路径约定**：下文中所有 clawnet 内的路径均相对于 `CLAWNET_ROOT`，例如 `docs/API_REFERENCE.md` 实际为 `<workspace root>/../clawnet-dev/docs/API_REFERENCE.md`。
-> 使用 `read_file` 时，先用 `list_dir` 确认 workspace root 的父目录下存在 `clawnet-dev/` 文件夹，再拼接完整路径。
+> **路径约定**：下文中所有 clawnet 内的路径均相对于 `CLAWNET_ROOT`，例如 `docs/API_REFERENCE.md` 实际为 `<workspace root>/../clawnet/docs/API_REFERENCE.md`。
+> 先用 shell 命令确认目录：`ls ..`、`test -d ../clawnet`、`test -d ../clawnet-dev`。查文件时优先用 `rg`、`find`、`sed -n`。
 
 ## Project Structure
 
 ```
-clawnet-dev/
+clawnet/
 ├── docs/                        # Architecture, API reference, guides
 │   ├── ARCHITECTURE.md          # System architecture overview
 │   ├── API_REFERENCE.md         # REST API documentation
-│   ├── API_ROUTE_CATALOG.md     # Complete route catalog
+│   ├── IMPLEMENTATION.md        # Implementation overview
 │   ├── SDK_GUIDE.md             # SDK usage guide
 │   ├── IDENTITY.md              # DID & identity system
 │   ├── WALLET.md                # Wallet management
@@ -114,9 +115,9 @@ Determine which ClawNet subsystem is relevant:
 ### Step 2: Resolve CLAWNET_ROOT and read the relevant files
 
 1. 获取当前 workspace 根目录（即 telagent 项目根目录）
-2. 拼接 `../clawnet-dev` 得到 `CLAWNET_ROOT`
-3. 用 `list_dir` 验证目录存在
-4. 用 `read_file` 读取目标文件，路径格式：
+2. 优先尝试 `../clawnet`；如果不存在，再回退到 `../clawnet-dev`
+3. 用 `ls ..` / `test -d` 验证目录存在
+4. 用 `sed -n`、`rg -n`、`find` 读取和定位目标文件，路径格式：
 
 ```
 {CLAWNET_ROOT}/docs/<DOC>.md
@@ -147,8 +148,8 @@ TelAgent's ClawNet integration points:
 
 If the doc/code lookup is insufficient, search the clawnet codebase:
 
-- Use `grep_search` with `includePattern` targeting `../clawnet-dev/**` files
-- Use `read_file` to inspect specific clawnet source files
+- Use `rg -n "<pattern>" "$CLAWNET_ROOT"` for text search
+- Use `sed -n 'start,endp' <file>` to inspect specific source files
 - Check `packages/node/src/api/routes/` for endpoint implementations
 - Check `packages/node/src/api/schemas/` for request/response Zod schemas
 

@@ -32,6 +32,7 @@
 - **rsync 增量同步**：仅同步变更文件，公开仓库保留完整 git 历史
 - **时间门控**：白天（08:00-19:00 CST）push 不触发同步，减少意外暴露窗口；19:00 后自动同步累积变更
 - push 到 `main`（非工作时间）或打 tag 时自动触发同步；手动 `workflow_dispatch` 始终放行
+- tag 模式应匹配项目版本策略：CalVer 项目可用 `20*`，SemVer 项目可用 `v*`
 - 同步前自动运行 secret scan，检测到泄露立即中止
 - copilot-instructions 自动替换为脱敏版本
 
@@ -151,7 +152,7 @@ on:
   push:
     branches: [main]
     tags:
-      - 'v*'
+      - '20*' # CalVer 项目；如果你的仓库用 SemVer，改成 'v*'
   workflow_dispatch:
 
 permissions:
@@ -487,7 +488,7 @@ grep -rn "docs/implementation" packages/ scripts/ --include='*.ts' --include='*.
 
 ### 坑 6：不要忘记 tag 同步
 
-用户 `npm install project@0.6.12` 需要公开仓库有对应的 `v0.6.12` tag。workflow 中需要处理 tag push 事件并同步 tag 到公开仓库。
+用户 `npm install project@1.2.3` 需要公开仓库有对应的 `v1.2.3` tag。workflow 中需要处理 tag push 事件并同步 tag 到公开仓库。
 
 ### 坑 7：从 force-push 切换到增量同步
 
@@ -498,7 +499,7 @@ grep -rn "docs/implementation" packages/ scripts/ --include='*.ts' --include='*.
 
 ### 坑 8：rsync 排除整个父目录后需要单独同步子目录
 
-如果用 `--exclude='docs'` 排除了整个 `docs/` 目录，但其中 `docs/api/` 或 `docs/guides/` 需要公开，必须在 rsync 之后用单独命令同步这些子目录：
+如果用 `--exclude='docs'` 排除了整个 `docs/` 目录，但其中 `docs/api/` 或 `docs/guides/` 这类子目录需要公开，必须在 rsync 之后用单独命令同步这些子目录。只有这些路径真实存在时才需要这一步：
 
 ```bash
 # docs 整体排除后，单独同步公开部分
@@ -540,5 +541,5 @@ rsync -a --delete docs/api/ /tmp/public-repo/docs/api/
 - [ ] PAT 权限最小化（仅 Contents + Workflows，仅限公开仓库）
 - [ ] 同步 workflow 在 push to main（非工作时间）时自动触发
 - [ ] 时间门控正常工作（08:00-19:00 CST 跳过，手动 dispatch 始终放行）
-- [ ] tag 同步正常工作（`v*` 触发器）
+- [ ] tag 同步正常工作（按版本策略设置触发器，例如 CalVer 用 `20*`，SemVer 用 `v*`）
 - [ ] rsync 排除列表 + 防御性 `rm` 双重保障无遗漏

@@ -43,9 +43,9 @@ iwr -useb https://install.telagent.org/setup.ps1 | iex
 curl -fsSL https://install.telagent.org/setup.cmd -o setup.cmd && setup.cmd && del setup.cmd
 ```
 
-This clones the repo, installs dependencies, generates a private key and passphrase, creates `.env`, and builds workspace packages. After completion, run `pnpm dev` to start the node.
+This clones the repo, installs dependencies, generates a private key and passphrase, creates `.env`, builds workspace packages, and installs a background service. After completion the node should already be running; use `pnpm dev` only when you want a foreground local-dev process from the repo checkout.
 
-Set `TELAGENT_INSTALL_DIR` to customize the install directory (default: `~/telagent`).
+Set `TELAGENT_INSTALL_DIR` to customize the install directory (default: `~/telagent` on Linux/macOS, `%USERPROFILE%\\telagent` on Windows).
 
 ## Instruction Files
 
@@ -55,4 +55,4 @@ Detailed instructions are in the following files (read them when needed):
 |------|---------|
 | `skills/telagent/install-and-configure.md` | Node installation, `.env` configuration, key generation, startup |
 | `skills/telagent/messaging-api.md` | REST API for contacts, conversations, messages, attachments, rich content |
-| `docs/guides/local-dev-setup.md` | Full local development setup guide (Chinese, more detailed) |
+| `docs/local-dev-setup.md` | Full local development setup guide |

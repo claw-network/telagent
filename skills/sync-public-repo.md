@@ -28,7 +28,7 @@ TelAgent 采用双仓库架构：`telagent-dev`（私有，日常开发）增量
 | **Exclusion list** | `.public-sync-ignore`（信息性，工作流使用 rsync --exclude + 显式 rm） |
 | **Public copilot instructions** | `.github/copilot-instructions.public.md` |
 | **Auth** | `PUBLIC_REPO_PAT` secret on telagent-dev |
-| **Trigger** | push to `main`（19:00-07:59 CST）、tag push (`v*`)、手动 `workflow_dispatch` |
+| **Trigger** | push to `main`（19:00-07:59 CST）、tag push (`20*`，当前仓库使用 CalVer）、手动 `workflow_dispatch` |
 | **Time gate** | 08:00-19:00 CST skip；其余时段 + 手动 dispatch + tag push 始终同步 |
 | **Public history** | 增量 commit，保留完整 git 历史 |
 | **Sync mode** | rsync 增量同步（仅同步变更文件） |
@@ -39,7 +39,7 @@ TelAgent 采用双仓库架构：`telagent-dev`（私有，日常开发）增量
 
 | Path | Reason |
 |------|--------|
-| `docs/`（保留 `docs/guides/` 和 `docs/README.md`） | 内部文档，仅公开开发指南 |
+| `docs/` | 工作流会先排除整个 `docs/`；只有 `docs/guides/` 和 `docs/README.md` 存在时才会单独同步回来。当前私有仓里这两个路径都不存在，因此 docs 目前等效于整体排除 |
 | `skills/` | 部署技能（含服务器信息） |
 | `localdev/` | 本地开发节点配置（含生产 IP、SSH key、.env.cloud） |
 | `temp/` | 临时文件 |
@@ -54,8 +54,6 @@ TelAgent 采用双仓库架构：`telagent-dev`（私有，日常开发）增量
 ### Public Repo 保留的内容
 
 - 所有 `packages/` 代码（protocol, node, sdk, sdk-python, console, webapp, contracts）
-- `docs/guides/`（开发者指南）
-- `docs/README.md`（文档索引）
 - `scripts/`（公开部分：setup.sh, bump-version.mjs, check-runtime.mjs, faucet-server.mts, ensure-local-certs.sh, mkcert/）
 - `LICENSE`、`README.md`、`README_CN.md`
 - `pnpm-workspace.yaml`、`tsconfig.base.json`、`package.json`
@@ -71,10 +69,10 @@ TelAgent 采用双仓库架构：`telagent-dev`（私有，日常开发）增量
 4. **Configure Git**：设置 bot 用户名和邮箱
 5. **Clone public repo**：`git clone --depth 1` 公开仓库到 `/tmp/public-repo`（空仓库时 fallback 到 `git init`）
 6. **Rsync 增量同步**：`rsync -a --delete` 排除私有路径，仅同步变更文件到 `/tmp/public-repo`
-7. **单独同步 `docs/guides/` 和 `docs/README.md`**：docs 目录整体排除，仅公开部分单独同步
+7. **按需同步公开 docs 子树**：docs 目录整体排除，仅当 `docs/guides/` 和 `docs/README.md` 实际存在时才单独同步
 8. **替换 copilot instructions**：`cp .public.md` → `.md`
 9. **防御性清理**：显式 `rm -rf` 确保 public repo 无私有目录残留
-10. **Secret scan**：检查 9 个已知敏感模式（IP、SSH key、私钥片段、passphrase）
+10. **Secret scan**：检查当前工作流里维护的 10 个已知敏感模式（IP、SSH key、私钥片段、passphrase、私有仓名等）
 11. **Commit & push**：`git add -A && git diff --staged --quiet`（无变更则跳过），使用源 commit message 提交，普通 `git push`（非 force push）
 12. **Tag sync**：如果触发事件是 tag push，同步 tag（`--force`）
 
@@ -164,7 +162,7 @@ gh run view <RUN_ID> --repo claw-network/telagent-dev --log-failed
 - 公开仓库保留增量 git 历史，commit message 来自私有仓库（确保 commit message 不含敏感信息）
 - rsync 排除列表 + 防御性 `rm -rf` 双重保障，确保私有路径不进入公开仓库
 - `.github/copilot-instructions.md` 自动替换为不含服务器 IP、凭据、部署流程的版本
-- 每次同步运行 secret scan，检测 9 个已知敏感模式（IP 段、SSH key 名、私钥片段、passphrase）
+- 每次同步运行 secret scan，检测当前工作流里维护的 10 个已知敏感模式（IP 段、SSH key 名、私钥片段、passphrase、私有仓名等）
 - 所有 `.env` 中的私钥为开发用途（Hardhat 标准账号），生产私钥仅在 `.env.cloud`（不在 git 中）
 - 白天（08:00-19:00 CST）不同步，减少敏感代码意外暴露窗口
 - `localdev/` 包含完整的生产节点配置（IP、SSH、.env.cloud），已在排除列表中
