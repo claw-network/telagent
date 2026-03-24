@@ -6,9 +6,13 @@ import { getGlobalLogger } from '../logger.js';
 
 const logger = getGlobalLogger();
 const DEFAULT_DELEGATION_TTL_SEC = 3600;
-const DELEGATION_TOPICS = ['telagent/envelope', 'telagent/receipt', 'telagent/group-sync'];
+const METADATA_ONLY_TOPICS = ['telagent/envelope', 'telagent/group-sync'];
+const RECEIPT_TOPICS = ['telagent/receipt'];
+const DELEGATION_TOPICS = [...METADATA_ONLY_TOPICS, ...RECEIPT_TOPICS];
 const HEARTBEAT_INTERVAL_MS = 30_000;
 const RECONNECT_DELAY_MS = 3_000;
+
+type DelegationMode = 'metadata' | 'receipt';
 
 // ── SSE client management ────────────────────────────────
 
@@ -21,8 +25,12 @@ interface SseClient {
 // ── Delegation WS state (gateway role) ───────────────────
 
 interface DelegationWsState {
+  key: string;
   delegationId: string;
   targetDid: string;
+  mode: DelegationMode;
+  topics: string[];
+  metadataOnly: boolean;
   ws: WebSocket | null;
   lastSeq: number;
   stopping: boolean;
@@ -100,14 +108,26 @@ export class EventPushService {
    * Create a ClawNet subscription delegation for a gateway.
    * Called when gateway sends POST /api/v1/events/subscribe via API Proxy.
    */
-  async createDelegation(gatewayDid: string): Promise<EventSubscribeResponse> {
+  async createDelegation(
+    gatewayDid: string,
+    options: {
+      topics?: string[];
+      expiresInSec?: number;
+      metadataOnly?: boolean;
+    } = {},
+  ): Promise<EventSubscribeResponse> {
+    const topics = options.topics?.filter((topic) => typeof topic === 'string' && topic.trim().length > 0) ?? DELEGATION_TOPICS;
+    const expiresInSec = options.expiresInSec && options.expiresInSec > 0
+      ? Math.floor(options.expiresInSec)
+      : DEFAULT_DELEGATION_TTL_SEC;
     const result = await this.clawnetGateway.client.messaging.createSubscriptionDelegation({
       delegateDid: gatewayDid,
-      topics: DELEGATION_TOPICS,
-      expiresInSec: DEFAULT_DELEGATION_TTL_SEC,
-      metadataOnly: true,
+      topics,
+      expiresInSec,
+      metadataOnly: options.metadataOnly ?? true,
     });
-    logger.info('[event-push] Created delegation %s for gateway %s', result.delegationId, gatewayDid);
+    logger.info('[event-push] Created delegation %s for gateway %s (topics=%s, metadataOnly=%s)',
+      result.delegationId, gatewayDid, topics.join(','), String(options.metadataOnly ?? true));
     return {
       delegationId: result.delegationId,
       expiresAtMs: result.expiresAtMs,
@@ -151,53 +171,18 @@ export class EventPushService {
 
     const sseClient: SseClient = { id: clientId, res, heartbeatTimer };
 
-    // Check if we already have a delegation connection for this targetDid
-    let conn = this.delegationConnections.get(targetDid);
+    const gatewayDid = (this.clawnetGateway as any).client?.identity?.did
+      ?? await this.clawnetGateway.getSelfIdentity().then(i => i.did);
+    const connections = await this.ensureDelegationConnections(targetDid, gatewayDid);
 
-    if (!conn) {
-      // Create new delegation via API Proxy → Target → ClawNet
-      const proxyResponse = await this.apiProxyService.proxyRequest(
-        targetDid,
-        'POST',
-        '/api/v1/events/subscribe',
-        { 'content-type': 'application/json' },
-        JSON.stringify({
-          gatewayDid: (this.clawnetGateway as any).client?.identity?.did
-            ?? await this.clawnetGateway.getSelfIdentity().then(i => i.did),
-          topics: DELEGATION_TOPICS,
-          expiresInSec: DEFAULT_DELEGATION_TTL_SEC,
-        }),
-      );
-
-      if (proxyResponse.status !== 200 && proxyResponse.status !== 201) {
-        const errText = proxyResponse.bodyBytes ? new TextDecoder().decode(proxyResponse.bodyBytes) : '';
-        throw new Error(`Target refused event subscription: ${proxyResponse.status} ${errText}`);
-      }
-
-      const body = JSON.parse(proxyResponse.bodyBytes ? new TextDecoder().decode(proxyResponse.bodyBytes) : '{}');
-      const delegationId = body.data?.delegationId as string;
-      if (!delegationId) {
-        throw new Error('Target did not return delegation ID');
-      }
-
-      conn = {
-        delegationId,
-        targetDid,
-        ws: null,
-        lastSeq: 0,
-        stopping: false,
-        sseClients: new Set(),
-      };
-      this.delegationConnections.set(targetDid, conn);
-      this.connectDelegationWs(conn);
+    for (const conn of connections) {
+      conn.sseClients.add(clientId);
     }
-
-    conn.sseClients.add(clientId);
     this.gatewayClients.set(clientId, { sseClient, targetDid });
 
     res.on('close', () => this.removeGatewayClient(clientId));
-    logger.info('[event-push] Gateway SSE client %s connected for target %s (delegation: %s)',
-      clientId, targetDid, conn.delegationId);
+    logger.info('[event-push] Gateway SSE client %s connected for target %s (delegations: %s)',
+      clientId, targetDid, connections.map((conn) => `${conn.mode}:${conn.delegationId}`).join(', '));
     return clientId;
   }
 
@@ -211,12 +196,10 @@ export class EventPushService {
     this.gatewayClients.delete(clientId);
 
     // Remove from delegation connection
-    const conn = this.delegationConnections.get(entry.targetDid);
-    if (conn) {
+    for (const conn of this.listDelegationConnections(entry.targetDid)) {
       conn.sseClients.delete(clientId);
-      // If no more SSE clients for this target, tear down delegation
       if (conn.sseClients.size === 0) {
-        this.teardownDelegation(conn);
+        void this.teardownDelegation(conn);
       }
     }
     logger.info('[event-push] Gateway SSE client %s disconnected', clientId);
@@ -282,6 +265,7 @@ export class EventPushService {
           topic: string;
           seq: number;
           receivedAtMs: number;
+          payload?: string;
           metadata?: {
             messageId: string;
             payloadSizeBytes: number;
@@ -328,6 +312,7 @@ export class EventPushService {
       topic: string;
       sourceDid: string;
       receivedAtMs: number;
+      payload?: string;
       metadata?: { messageId: string };
     }>,
   ): EventNotification | null {
@@ -343,6 +328,7 @@ export class EventPushService {
         return {
           type: 'receipt',
           sourceDid: data.sourceDid,
+          envelopeId: this.extractReceiptEnvelopeId(data.payload),
           atMs: data.receivedAtMs,
         };
       case 'telagent/group-sync':
@@ -375,7 +361,7 @@ export class EventPushService {
       conn.ws.close();
       conn.ws = null;
     }
-    this.delegationConnections.delete(conn.targetDid);
+    this.delegationConnections.delete(conn.key);
 
     // Revoke delegation on target via API Proxy
     if (this.apiProxyService) {
@@ -392,7 +378,106 @@ export class EventPushService {
           conn.targetDid, (err as Error).message);
       }
     }
-    logger.info('[event-push] Delegation teardown complete for target %s', conn.targetDid);
+    logger.info('[event-push] Delegation teardown complete for target %s (%s)', conn.targetDid, conn.mode);
+  }
+
+  private async ensureDelegationConnections(targetDid: string, gatewayDid: string): Promise<DelegationWsState[]> {
+    const specs: Array<{ mode: DelegationMode; topics: string[]; metadataOnly: boolean }> = [
+      { mode: 'metadata', topics: METADATA_ONLY_TOPICS, metadataOnly: true },
+      { mode: 'receipt', topics: RECEIPT_TOPICS, metadataOnly: false },
+    ];
+    const ensured: DelegationWsState[] = [];
+    const created: DelegationWsState[] = [];
+
+    try {
+      for (const spec of specs) {
+        const existing = this.delegationConnections.get(this.delegationKey(targetDid, spec.mode));
+        if (existing) {
+          ensured.push(existing);
+          continue;
+        }
+
+        const conn = await this.createGatewayDelegationConnection(targetDid, gatewayDid, spec);
+        ensured.push(conn);
+        created.push(conn);
+      }
+    } catch (err) {
+      await Promise.all(created.map((conn) => this.teardownDelegation(conn)));
+      throw err;
+    }
+
+    return ensured;
+  }
+
+  private async createGatewayDelegationConnection(
+    targetDid: string,
+    gatewayDid: string,
+    spec: { mode: DelegationMode; topics: string[]; metadataOnly: boolean },
+  ): Promise<DelegationWsState> {
+    if (!this.apiProxyService) {
+      throw new Error('API Proxy service not available');
+    }
+
+    const proxyResponse = await this.apiProxyService.proxyRequest(
+      targetDid,
+      'POST',
+      '/api/v1/events/subscribe',
+      { 'content-type': 'application/json' },
+      JSON.stringify({
+        gatewayDid,
+        topics: spec.topics,
+        expiresInSec: DEFAULT_DELEGATION_TTL_SEC,
+        metadataOnly: spec.metadataOnly,
+      }),
+    );
+
+    if (proxyResponse.status !== 200 && proxyResponse.status !== 201) {
+      const errText = proxyResponse.bodyBytes ? new TextDecoder().decode(proxyResponse.bodyBytes) : '';
+      throw new Error(`Target refused event subscription: ${proxyResponse.status} ${errText}`);
+    }
+
+    const body = JSON.parse(proxyResponse.bodyBytes ? new TextDecoder().decode(proxyResponse.bodyBytes) : '{}');
+    const delegationId = body.data?.delegationId as string;
+    if (!delegationId) {
+      throw new Error('Target did not return delegation ID');
+    }
+
+    const conn: DelegationWsState = {
+      key: this.delegationKey(targetDid, spec.mode),
+      delegationId,
+      targetDid,
+      mode: spec.mode,
+      topics: spec.topics,
+      metadataOnly: spec.metadataOnly,
+      ws: null,
+      lastSeq: 0,
+      stopping: false,
+      sseClients: new Set(),
+    };
+    this.delegationConnections.set(conn.key, conn);
+    this.connectDelegationWs(conn);
+    return conn;
+  }
+
+  private listDelegationConnections(targetDid: string): DelegationWsState[] {
+    return [...this.delegationConnections.values()].filter((conn) => conn.targetDid === targetDid);
+  }
+
+  private delegationKey(targetDid: string, mode: DelegationMode): string {
+    return `${targetDid}::${mode}`;
+  }
+
+  private extractReceiptEnvelopeId(payload: string | undefined): string | undefined {
+    if (!payload) {
+      return undefined;
+    }
+    try {
+      const parsed = JSON.parse(payload) as { envelopeId?: unknown };
+      return typeof parsed.envelopeId === 'string' ? parsed.envelopeId : undefined;
+    } catch {
+      logger.warn('[event-push] Failed to parse delegated receipt payload');
+      return undefined;
+    }
   }
 
   // ── SSE helpers ────────────────────────────────────────

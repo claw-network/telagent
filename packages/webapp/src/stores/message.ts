@@ -13,6 +13,7 @@ interface MessageStore {
   upsertLocalMessage: (conversationId: string, message: MessageWithStatus) => void
   markFailed: (conversationId: string, envelopeId: string, errorMessage?: string) => void
   markPending: (conversationId: string, envelopeId: string) => void
+  markSent: (envelopeId: string) => void
   removeConversation: (conversationId: string) => void
   setLoading: (conversationId: string, loading: boolean) => void
   getMessages: (conversationId: string) => MessageWithStatus[]
@@ -37,11 +38,18 @@ function mergeEnvelopes(
 
   for (const rawMessage of incoming) {
     const previous = map.get(rawMessage.envelopeId)
+    const explicitStatus = (rawMessage as MessageWithStatus).deliveryStatus
+    const deliveryStatus = explicitStatus
+      ?? (previous?.deliveryStatus && previous.deliveryStatus !== "sent"
+        ? previous.deliveryStatus
+        : "sent")
     const next = {
       ...(previous ?? {}),
       ...rawMessage,
-      deliveryStatus: "sent" as const,
-      lastError: undefined,
+      deliveryStatus,
+      lastError: deliveryStatus === "failed"
+        ? ((rawMessage as MessageWithStatus).lastError ?? previous?.lastError)
+        : undefined,
       clientRawCiphertext:
         (rawMessage as MessageWithStatus).clientRawCiphertext
         ?? previous?.clientRawCiphertext,
@@ -152,6 +160,35 @@ export const useMessageStore = create<MessageStore>((set, get) => ({
           ...state.messagesByConversation,
           [conversationId]: updated,
         },
+      }
+    })
+  },
+  markSent: (envelopeId) => {
+    set((state) => {
+      let changed = false
+      const messagesByConversation = Object.fromEntries(
+        Object.entries(state.messagesByConversation).map(([conversationId, messages]) => {
+          const updated = messages.map((message) => {
+            if (message.envelopeId !== envelopeId) {
+              return message
+            }
+            changed = true
+            return {
+              ...message,
+              deliveryStatus: "sent" as const,
+              lastError: undefined,
+            }
+          })
+          return [conversationId, updated]
+        }),
+      )
+
+      if (!changed) {
+        return state
+      }
+
+      return {
+        messagesByConversation,
       }
     })
   },

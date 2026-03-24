@@ -1,5 +1,5 @@
 import type { Envelope, RedactedEnvelope } from '@telagent/protocol';
-import type { QueryValue, SendMessageInput, PullMessageInput } from '../types.js';
+import type { QueryValue, SendMessageInput, PullMessageInput, SendMessageResult } from '../types.js';
 import type { ApiClient } from '../client.js';
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -32,13 +32,16 @@ function hydrateEnvelope(raw: unknown): Envelope {
 export class MessagesModule {
   constructor(private client: ApiClient) {}
 
-  async send(input: SendMessageInput): Promise<Envelope> {
-    const envelope = await this.client.requestData<{ envelope: Envelope }>(
+  async send(input: SendMessageInput): Promise<SendMessageResult> {
+    const response = await this.client.requestData<{ envelope: Envelope; p2pDelivered?: boolean }>(
       'POST',
       '/api/v1/messages',
       input,
     );
-    return hydrateEnvelope(envelope.data.envelope);
+    return {
+      envelope: hydrateEnvelope(response.data.envelope),
+      p2pDelivered: response.data.p2pDelivered !== false,
+    };
   }
 
   async pull(input: PullMessageInput = {}): Promise<{ items: Envelope[]; cursor: string | null }> {

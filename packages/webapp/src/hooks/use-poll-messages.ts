@@ -33,6 +33,7 @@ export function usePollMessages() {
 
   const upsertMessages = useMessageStore((state) => state.upsertMessages)
   const mergeGlobalMessages = useMessageStore((state) => state.mergeGlobalMessages)
+  const markSent = useMessageStore((state) => state.markSent)
 
   const activeInFlight = useRef(false)
   const globalInFlight = useRef(false)
@@ -53,6 +54,11 @@ export function usePollMessages() {
         pollGlobalRef.current?.()
         break
       case "receipt":
+        if (event.envelopeId) {
+          markSent(event.envelopeId)
+        }
+        pollGlobalRef.current?.()
+        break
       case "conversation-update":
         pollGlobalRef.current?.()
         break
@@ -72,7 +78,7 @@ export function usePollMessages() {
         }
         break
     }
-  }, [])
+  }, [markSent])
 
   useEventSource(handleSseEvent)
 

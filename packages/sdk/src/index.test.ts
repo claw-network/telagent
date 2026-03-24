@@ -101,6 +101,7 @@ test('TA-P11-008 SDK quickstart covers create-group and send/pull message flow',
     if (req.method === 'POST' && url.pathname === '/api/v1/messages') {
       writeJson(res, 201, {
         data: {
+          p2pDelivered: true,
           envelope: {
             envelopeId: 'env-1',
             conversationId: 'direct:alice-bob',
@@ -172,7 +173,7 @@ test('TA-P11-008 SDK quickstart covers create-group and send/pull message flow',
   });
   assert.equal(group.group.groupId, `0x${'1'.repeat(64)}`);
 
-  const envelope = await sdk.messages.send({
+  const sendResult = await sdk.messages.send({
     envelopeId: 'env-1',
     senderDid: 'did:claw:zAlice',
     conversationId: 'direct:alice-bob',
@@ -185,7 +186,9 @@ test('TA-P11-008 SDK quickstart covers create-group and send/pull message flow',
     contentType: 'text',
     ttlSec: 60,
   });
+  const envelope = sendResult.envelope;
   assert.equal(envelope.seq, 1n);
+  assert.equal(sendResult.p2pDelivered, true);
 
   const mailbox = await sdk.messages.pull({
     conversationId: 'direct:alice-bob',

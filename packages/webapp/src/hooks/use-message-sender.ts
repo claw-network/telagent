@@ -67,6 +67,7 @@ export function useMessageSender() {
   const upsertMessages = useMessageStore((state) => state.upsertMessages)
   const markFailed = useMessageStore((state) => state.markFailed)
   const markPending = useMessageStore((state) => state.markPending)
+  const markSent = useMessageStore((state) => state.markSent)
 
   const helpers = useMemo(() => {
     const resolveConversation = (conversationId?: string) => {
@@ -162,7 +163,7 @@ export function useMessageSender() {
     upsertLocalMessage(params.conversationId, localEnvelope)
 
     try {
-      const saved = await sdk.messages.send({
+      const result = await sdk.messages.send({
         envelopeId,
         senderDid: selfDid,
         conversationId: params.conversationId,
@@ -176,9 +177,15 @@ export function useMessageSender() {
         attachmentManifestHash: params.attachmentManifestHash,
         ttlSec: DEFAULT_TTL_SECONDS,
       })
+      const saved = result.envelope;
 
       const cursor = useMessageStore.getState().cursorsByConversation[params.conversationId] ?? null
       upsertMessages(params.conversationId, [saved], cursor)
+      if (result.p2pDelivered) {
+        markSent(envelopeId)
+      } else {
+        markPending(params.conversationId, envelopeId)
+      }
       mergeConversations([saved])
       markRead(params.conversationId)
       return saved
@@ -291,7 +298,7 @@ export function useMessageSender() {
 
     markPending(message.conversationId, message.envelopeId)
     try {
-      const saved = await sdk.messages.send({
+      const result = await sdk.messages.send({
         envelopeId: message.envelopeId,
         senderDid: selfDid,
         conversationId: message.conversationId,
@@ -307,9 +314,15 @@ export function useMessageSender() {
         attachmentManifestHash: message.attachmentManifestHash,
         ttlSec: message.ttlSec,
       })
+      const saved = result.envelope;
 
       const cursor = useMessageStore.getState().cursorsByConversation[message.conversationId] ?? null
       upsertMessages(message.conversationId, [saved], cursor)
+      if (result.p2pDelivered) {
+        markSent(message.envelopeId)
+      } else {
+        markPending(message.conversationId, message.envelopeId)
+      }
       mergeConversations([saved])
       markRead(message.conversationId)
     } catch (error) {

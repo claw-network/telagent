@@ -22,6 +22,7 @@ export type {
   GroupMemberListInput,
   // Message types
   SendMessageInput,
+  SendMessageResult,
   PullMessageInput,
   // Attachment types
   InitAttachmentUploadInput,

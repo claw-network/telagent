@@ -74,7 +74,7 @@ function deliveryState(
       <div className={cn("mt-1 flex text-[11px] text-muted-foreground", align === "right" ? "justify-end" : "justify-start")}>
         <span className="inline-flex items-center gap-1">
           <Spinner className="size-3" />
-          Sending...
+          Pending delivery...
         </span>
       </div>
     )

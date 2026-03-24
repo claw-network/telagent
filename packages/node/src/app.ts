@@ -331,6 +331,14 @@ export class TelagentNode {
           atMs: Date.now(),
         });
       },
+      onReceipt: async (receipt, sourceDid) => {
+        this.eventPushService?.emitLocal({
+          type: 'receipt',
+          sourceDid,
+          envelopeId: receipt.envelopeId,
+          atMs: receipt.timestampMs,
+        });
+      },
       onAttachment: async (info, data, _sourceDid) => {
         // Binary attachment received directly via P2P — save immediately, no extra download needed.
         try {

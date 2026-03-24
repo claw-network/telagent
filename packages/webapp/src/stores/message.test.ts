@@ -44,4 +44,30 @@ describe("useMessageStore", () => {
     expect(messages[0].ciphertext).toBe("updated")
     expect(messages[1].envelopeId).toBe("env-2")
   })
+
+  it("preserves pending status when the same envelope is pulled back from the node", () => {
+    useMessageStore.getState().upsertLocalMessage("direct:test", {
+      ...makeEnvelope(),
+      deliveryStatus: "pending",
+    })
+
+    useMessageStore.getState().upsertMessages("direct:test", [makeEnvelope({ ciphertext: "updated" })], "1")
+
+    const [message] = useMessageStore.getState().getMessages("direct:test")
+    expect(message.ciphertext).toBe("updated")
+    expect(message.deliveryStatus).toBe("pending")
+  })
+
+  it("marks a message as sent when a delivery signal arrives", () => {
+    useMessageStore.getState().upsertLocalMessage("direct:test", {
+      ...makeEnvelope(),
+      deliveryStatus: "pending",
+    })
+
+    useMessageStore.getState().markSent("env-1")
+
+    const [message] = useMessageStore.getState().getMessages("direct:test")
+    expect(message.deliveryStatus).toBe("sent")
+    expect(message.lastError).toBeUndefined()
+  })
 })

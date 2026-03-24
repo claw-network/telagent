@@ -129,6 +129,11 @@ export interface PullMessageInput {
   conversationId?: string;
 }
 
+export interface SendMessageResult {
+  envelope: Envelope;
+  p2pDelivered: boolean;
+}
+
 // ── Attachments ──────────────────────────────────────────────────────────────
 
 export interface InitAttachmentUploadInput {

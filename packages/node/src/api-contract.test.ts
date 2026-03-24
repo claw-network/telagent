@@ -736,11 +736,12 @@ test('created response returns data envelope and Location header', async (t) => 
   assert.match(response.headers.get('content-type') ?? '', /^application\/json/);
 
   const body = (await response.json()) as {
-    data: { envelope: { envelopeId: string; seq: string } };
+    data: { envelope: { envelopeId: string; seq: string }; p2pDelivered: boolean };
     links: { self: string };
   };
   assert.equal(body.data.envelope.envelopeId, 'env-1');
   assert.equal(body.data.envelope.seq, '1');
+  assert.equal(body.data.p2pDelivered, true);
   assert.match(body.links.self, /^\/api\/v1\/messages\/pull\?/);
 });
 

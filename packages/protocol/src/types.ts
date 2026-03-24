@@ -248,6 +248,7 @@ export interface EventSubscribeRequest {
   gatewayDid: string;
   topics: string[];
   expiresInSec: number;
+  metadataOnly?: boolean;
 }
 
 /**

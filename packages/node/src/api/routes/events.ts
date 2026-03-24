@@ -34,6 +34,15 @@ export function eventRoutes(ctx: RuntimeContext): Router {
 
     const payload = body as Record<string, unknown> | undefined;
     const gatewayDid = payload?.gatewayDid as string;
+    const topics = Array.isArray(payload?.topics) && payload!.topics.every((item) => typeof item === 'string')
+      ? payload!.topics as string[]
+      : undefined;
+    const expiresInSec = typeof payload?.expiresInSec === 'number' && Number.isFinite(payload.expiresInSec) && payload.expiresInSec > 0
+      ? payload.expiresInSec
+      : undefined;
+    const metadataOnly = typeof payload?.metadataOnly === 'boolean'
+      ? payload.metadataOnly
+      : undefined;
     if (!gatewayDid || typeof gatewayDid !== 'string') {
       res.writeHead(400, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ error: 'Missing gatewayDid' }));
@@ -41,7 +50,11 @@ export function eventRoutes(ctx: RuntimeContext): Router {
     }
 
     try {
-      const result = await ctx.eventPushService.createDelegation(gatewayDid);
+      const result = await ctx.eventPushService.createDelegation(gatewayDid, {
+        topics,
+        expiresInSec,
+        metadataOnly,
+      });
       created(res, result, { self: '/api/v1/events/subscribe' });
     } catch (err) {
       handleError(res, err);
