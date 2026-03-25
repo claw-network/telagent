@@ -184,9 +184,8 @@ fi
 
 # ── Step 5: Build workspace packages ─────────────────────────────────
 info "Building workspace packages..."
-pnpm --filter @telagent/protocol build
-pnpm --filter @telagent/sdk build
-ok "Workspace packages built"
+pnpm --filter @telagent/node build
+ok "Node package built"
 
 # ── Step 6: Detect OS and install service ─────────────────────────────
 OS="$(uname -s)"

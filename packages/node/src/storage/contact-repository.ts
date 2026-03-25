@@ -1,6 +1,6 @@
 import Database from 'better-sqlite3';
 
-import type { Contact } from '@telagent/protocol';
+import type { Contact } from '../protocol/index.js';
 
 const SCHEMA = `
 CREATE TABLE IF NOT EXISTS contacts (

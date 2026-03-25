@@ -3,7 +3,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { hashDid, type GroupState } from '@telagent/protocol';
+import { hashDid, type GroupState } from '../src/protocol/index.js';
 
 import { MessageService, type MessageServiceClock } from '../src/services/message-service.js';
 import { MessageRepository } from '../src/storage/message-repository.js';

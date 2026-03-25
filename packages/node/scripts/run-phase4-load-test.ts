@@ -3,7 +3,7 @@ import path from 'node:path';
 import { performance } from 'node:perf_hooks';
 import { fileURLToPath } from 'node:url';
 
-import { hashDid, type AgentDID, type GroupState } from '@telagent/protocol';
+import { hashDid, type AgentDID, type GroupState } from '../src/protocol/index.js';
 
 import { MessageService, type SendMessageInput } from '../src/services/message-service.js';
 

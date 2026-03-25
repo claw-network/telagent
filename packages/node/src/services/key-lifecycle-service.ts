@@ -1,7 +1,7 @@
 import { readdir, readFile, writeFile, unlink, mkdir } from 'node:fs/promises';
 import { resolve } from 'node:path';
 
-import { ErrorCodes, TelagentError, isDidClaw, type AgentDID } from '@telagent/protocol';
+import { ErrorCodes, TelagentError, isDidClaw, type AgentDID } from '../protocol/index.js';
 
 export type KeySuite = 'signal' | 'mls';
 export type KeyLifecycleState = 'ACTIVE' | 'ROTATING' | 'REVOKED' | 'RECOVERED';

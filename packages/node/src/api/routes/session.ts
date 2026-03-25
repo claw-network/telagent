@@ -1,6 +1,6 @@
 import { timingSafeEqual } from 'node:crypto';
 
-import { ErrorCodes, TelagentError } from '@telagent/protocol';
+import { ErrorCodes, TelagentError } from '../../protocol/index.js';
 
 import { Router } from '../router.js';
 import { noContent, ok } from '../response.js';

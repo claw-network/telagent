@@ -1,4 +1,4 @@
-import type { SessionOperationScope } from "@telagent/sdk"
+import type { SessionOperationScope } from "@/lib/telagent-client"
 import { useEffect, useMemo, useState } from "react"
 import { useTranslation } from "react-i18next"
 

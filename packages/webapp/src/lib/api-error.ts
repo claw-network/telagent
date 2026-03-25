@@ -1,4 +1,4 @@
-import { TelagentSdkError } from "@telagent/sdk"
+import { TelagentSdkError } from "@/lib/telagent-client"
 
 export interface ParsedApiError {
   title: string

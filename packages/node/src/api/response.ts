@@ -1,6 +1,6 @@
 import type { ServerResponse } from 'node:http';
 
-import type { ProblemDetail } from '@telagent/protocol';
+import type { ProblemDetail } from '../protocol/index.js';
 
 export interface PaginationMeta {
   page: number;

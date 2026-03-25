@@ -1,6 +1,6 @@
 import type { ServerResponse } from 'node:http';
 
-import { ErrorCodes, TelagentError } from '@telagent/protocol';
+import { ErrorCodes, TelagentError } from '../../protocol/index.js';
 
 import { requireSession } from '../auth.js';
 import { Router } from '../router.js';

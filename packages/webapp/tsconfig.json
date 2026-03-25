@@ -7,8 +7,8 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"],
-      "@telagent/protocol": ["../protocol/src/index.ts"],
-      "@telagent/sdk": ["../sdk/src/index.ts"]
+      "@telagent/node/protocol": ["../node/src/protocol/index.ts"],
+      "@/lib/telagent-client": ["./src/lib/telagent-client/index.ts"]
     },
     "jsx": "react-jsx",
     "strict": true,

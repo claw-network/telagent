@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { ErrorCodes, TelagentError, isDidClaw } from '@telagent/protocol';
+import { ErrorCodes, TelagentError, isDidClaw } from '../../protocol/index.js';
 
 import { Router } from '../router.js';
 import { created, ok } from '../response.js';

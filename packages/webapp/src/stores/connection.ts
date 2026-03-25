@@ -1,4 +1,4 @@
-import { TelagentSdk } from "@telagent/sdk"
+import { TelagentSdk } from "@/lib/telagent-client"
 import { create } from "zustand"
 import { createJSONStorage, persist } from "zustand/middleware"
 

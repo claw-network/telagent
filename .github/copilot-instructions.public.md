@@ -13,8 +13,6 @@ packages/
   protocol/    — shared types, envelopes, FlatBuffers schemas
   node/        — TelAgent node server (Hono, SQLite/PostgreSQL)
   sdk/         — TypeScript SDK for applications
-  sdk-python/  — Python SDK
-  console/     — CLI tool
   webapp/      — React web application (Vite)
   contracts/   — Solidity smart contracts (Hardhat)
 scripts/       — Local dev scripts (setup, cert generation, faucet)

@@ -1,4 +1,4 @@
-import type { ReviewCardPayload } from "@telagent/protocol"
+import type { ReviewCardPayload } from "@telagent/node/protocol"
 
 import { ReputationStars } from "@/components/shared/ReputationStars"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"

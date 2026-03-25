@@ -3,7 +3,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { ErrorCodes, TelagentError, type AgentDID } from '@telagent/protocol';
+import { ErrorCodes, TelagentError, type AgentDID } from '../src/protocol/index.js';
 
 import { KeyLifecycleService, type KeySuite } from '../src/services/key-lifecycle-service.js';
 

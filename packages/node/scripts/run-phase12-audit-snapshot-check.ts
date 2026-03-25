@@ -3,7 +3,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { hashDid } from '@telagent/protocol';
+import { hashDid } from '../src/protocol/index.js';
 
 import { ApiServer } from '../src/api/server.js';
 import type { RuntimeContext } from '../src/api/types.js';

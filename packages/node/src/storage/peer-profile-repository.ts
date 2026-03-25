@@ -3,7 +3,7 @@ import { resolve } from 'node:path';
 import { createHash } from 'node:crypto';
 import Database from 'better-sqlite3';
 
-import type { AgentDID, PeerProfile } from '@telagent/protocol';
+import type { AgentDID, PeerProfile } from '../protocol/index.js';
 
 const SCHEMA = `
 CREATE TABLE IF NOT EXISTS peer_profiles (

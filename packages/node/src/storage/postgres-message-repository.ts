@@ -1,6 +1,6 @@
 import { Pool, type PoolClient } from 'pg';
 
-import type { ConversationSummary, Envelope } from '@telagent/protocol';
+import type { ConversationSummary, Envelope } from '../protocol/index.js';
 
 import type {
   DirectConversationParticipantCheckResult,

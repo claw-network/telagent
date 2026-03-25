@@ -1,7 +1,7 @@
 import { useMemo } from "react"
 import { toast } from "sonner"
 
-import type { BaseContentType, Envelope } from "@telagent/protocol"
+import type { BaseContentType, Envelope } from "@telagent/node/protocol"
 
 import { useConnectionStore } from "@/stores/connection"
 import { useConversationStore } from "@/stores/conversation"

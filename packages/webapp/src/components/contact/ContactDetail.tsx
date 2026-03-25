@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react"
 import { useTranslation } from "react-i18next"
-import type { AgentIdentityView } from "@telagent/sdk"
+import type { AgentIdentityView } from "@/lib/telagent-client"
 
 import { DidLabel } from "@/components/shared/DidLabel"
 import { ReputationStars } from "@/components/shared/ReputationStars"

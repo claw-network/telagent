@@ -1,4 +1,4 @@
-import type { ConversationSummary, Envelope } from '@telagent/protocol';
+import type { ConversationSummary, Envelope } from '../protocol/index.js';
 
 export interface ProvisionalRetractionRecord {
   envelopeId: string;

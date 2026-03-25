@@ -1,4 +1,4 @@
-import { ErrorCodes, TelagentError } from '@telagent/protocol';
+import { ErrorCodes, TelagentError } from '../../protocol/index.js';
 
 import { Router } from '../router.js';
 import { created, ok } from '../response.js';

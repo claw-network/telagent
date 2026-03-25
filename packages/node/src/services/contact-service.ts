@@ -1,4 +1,4 @@
-import { ErrorCodes, TelagentError, type Contact } from '@telagent/protocol';
+import { ErrorCodes, TelagentError, type Contact } from '../protocol/index.js';
 
 import type { ContactRepository } from '../storage/contact-repository.js';
 

@@ -6,7 +6,7 @@ import type {
   GroupRecord,
   GroupState,
   MembershipState,
-} from '@telagent/protocol';
+} from '../protocol/index.js';
 
 const SCHEMA = `
 CREATE TABLE IF NOT EXISTS groups (

@@ -9,7 +9,7 @@ import {
   type GroupRecord,
   type GroupState,
   type MembershipState,
-} from '@telagent/protocol';
+} from '../protocol/index.js';
 
 import type { ContractProvider } from './contract-provider.js';
 import type { IdentityAdapterService } from './identity-adapter-service.js';

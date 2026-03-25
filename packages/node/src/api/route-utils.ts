@@ -1,6 +1,6 @@
 import type { ServerResponse } from 'node:http';
 
-import { asProblemDetail } from '@telagent/protocol';
+import { asProblemDetail } from '../protocol/index.js';
 
 import { problem } from './response.js';
 

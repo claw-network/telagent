@@ -1,4 +1,4 @@
-import { ErrorCodes, SendMessageSchema, TelagentError, type Envelope, type RedactedEnvelope } from '@telagent/protocol';
+import { ErrorCodes, SendMessageSchema, TelagentError, type Envelope, type RedactedEnvelope } from '../../protocol/index.js';
 
 import { getGlobalLogger } from '../../logger.js';
 import { requireScope } from '../auth.js';

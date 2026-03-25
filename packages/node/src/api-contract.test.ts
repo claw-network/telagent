@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import test from 'node:test';
 
-import { ErrorCodes, TelagentError, hashDid } from '@telagent/protocol';
+import { ErrorCodes, TelagentError, hashDid } from './protocol/index.js';
 
 import { ApiServer } from './api/server.js';
 import type { RuntimeContext } from './api/types.js';

@@ -1,5 +1,5 @@
 import type { ServerResponse } from 'node:http';
-import type { EventNotification, EventSubscribeResponse } from '@telagent/protocol';
+import type { EventNotification, EventSubscribeResponse } from '../protocol/index.js';
 import type { ClawNetGatewayService } from '../clawnet/gateway-service.js';
 import type { ApiProxyService } from './api-proxy-service.js';
 import { getGlobalLogger } from '../logger.js';

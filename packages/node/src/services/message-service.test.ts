@@ -5,7 +5,7 @@ import os from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
 
-import { ErrorCodes, TelagentError, hashDid, type GroupState } from '@telagent/protocol';
+import { ErrorCodes, TelagentError, hashDid, type GroupState } from '../protocol/index.js';
 
 import { KeyLifecycleService } from './key-lifecycle-service.js';
 import { MessageService, type MessageIdentityService } from './message-service.js';

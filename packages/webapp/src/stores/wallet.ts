@@ -1,4 +1,4 @@
-import type { CreateEscrowInput, TransferInput } from "@telagent/sdk"
+import type { CreateEscrowInput, TransferInput } from "@/lib/telagent-client"
 import { create } from "zustand"
 
 import { useConnectionStore } from "@/stores/connection"

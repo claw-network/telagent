@@ -1,4 +1,4 @@
-import type { AgentDID, Envelope, GroupID } from "@telagent/protocol"
+import type { AgentDID, Envelope, GroupID } from "@telagent/node/protocol"
 
 export type OwnerMode = "observer" | "intervener"
 

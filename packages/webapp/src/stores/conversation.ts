@@ -1,4 +1,4 @@
-import type { Envelope } from "@telagent/protocol"
+import type { Envelope } from "@telagent/node/protocol"
 import { create } from "zustand"
 
 import { useConnectionStore } from "@/stores/connection"

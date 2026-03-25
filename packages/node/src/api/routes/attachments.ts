@@ -3,7 +3,7 @@ import {
   ErrorCodes,
   InitAttachmentSchema,
   TelagentError,
-} from '@telagent/protocol';
+} from '../../protocol/index.js';
 
 import { Router } from '../router.js';
 import { created, ok } from '../response.js';

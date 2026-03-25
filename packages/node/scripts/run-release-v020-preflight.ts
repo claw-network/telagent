@@ -199,17 +199,13 @@ async function main(): Promise<void> {
       evidence: [
         'package.json',
         'packages/node/package.json',
-        'packages/protocol/package.json',
-        'packages/console/package.json',
-        'packages/sdk/package.json',
+        'packages/webapp/package.json',
       ],
       run: async () => {
         const rootPkg = await readJson<{ version: string }>(path.resolve(repoRoot, 'package.json'));
         const nodePkg = await readJson<{ version: string }>(path.resolve(repoRoot, 'packages/node/package.json'));
-        const protocolPkg = await readJson<{ version: string }>(path.resolve(repoRoot, 'packages/protocol/package.json'));
-        const consolePkg = await readJson<{ version: string }>(path.resolve(repoRoot, 'packages/console/package.json'));
-        const sdkPkg = await readJson<{ version: string }>(path.resolve(repoRoot, 'packages/sdk/package.json'));
-        const versions = [rootPkg.version, nodePkg.version, protocolPkg.version, consolePkg.version, sdkPkg.version];
+        const webappPkg = await readJson<{ version: string }>(path.resolve(repoRoot, 'packages/webapp/package.json'));
+        const versions = [rootPkg.version, nodePkg.version, webappPkg.version];
         ensure(versions.every((item) => item === releaseVersion), `package versions must all equal ${releaseVersion}`);
         return {
           target: releaseVersion,

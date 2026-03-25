@@ -3,7 +3,7 @@ import { createServer as createHttpsServer, type Server as HttpsServer } from 'n
 import { readFileSync } from 'node:fs';
 import { performance } from 'node:perf_hooks';
 
-import { ErrorCodes, TelagentError } from '@telagent/protocol';
+import { ErrorCodes, TelagentError } from '../protocol/index.js';
 
 import { extractBearerToken } from './auth.js';
 import { Router } from './router.js';

@@ -23,8 +23,8 @@ export default defineConfig({
   resolve: {
     alias: {
       "@": path.resolve(dirname, "src"),
-      "@telagent/sdk": path.resolve(dirname, "../sdk/src/index.ts"),
-      "@telagent/protocol": path.resolve(dirname, "../protocol/src/index.ts"),
+      "@/lib/telagent-client": path.resolve(dirname, "src/lib/telagent-client/index.ts"),
+      "@telagent/node/protocol": path.resolve(dirname, "../node/src/protocol/index.ts"),
     },
   },
   define: {

@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from "vitest"
 
-import type { Envelope } from "@telagent/protocol"
+import type { Envelope } from "@telagent/node/protocol"
 
 import { useMessageStore } from "@/stores/message"
 

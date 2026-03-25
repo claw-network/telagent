@@ -1,4 +1,4 @@
-import type { EscrowCreatedPayload } from "@telagent/protocol"
+import type { EscrowCreatedPayload } from "@telagent/node/protocol"
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { formatAmount, shortHash } from "@/components/chat/bubbles/payload-utils"

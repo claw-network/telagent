@@ -9,7 +9,7 @@ import type {
   TaskListingPayload,
   TransferReceiptPayload,
   TransferRequestPayload,
-} from "@telagent/protocol"
+} from "@telagent/node/protocol"
 
 import { ControlNotice } from "@/components/chat/bubbles/ControlNotice"
 import { EscrowCreatedCard } from "@/components/chat/bubbles/EscrowCreatedCard"

@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { basename, join } from 'node:path';
 import { writeFile, readFile } from 'node:fs/promises';
 
-import { ErrorCodes, TelagentError } from '@telagent/protocol';
+import { ErrorCodes, TelagentError } from '../protocol/index.js';
 
 interface PendingUpload {
   objectKey: string;

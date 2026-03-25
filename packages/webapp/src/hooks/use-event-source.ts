@@ -1,6 +1,6 @@
 import { useEffect, useRef, useCallback } from "react"
 
-import type { EventNotification } from "@telagent/protocol"
+import type { EventNotification } from "@telagent/node/protocol"
 import { useConnectionStore } from "@/stores/connection"
 
 /**

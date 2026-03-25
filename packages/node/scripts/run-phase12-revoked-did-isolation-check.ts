@@ -2,7 +2,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { ErrorCodes, TelagentError, hashDid } from '@telagent/protocol';
+import { ErrorCodes, TelagentError, hashDid } from '../src/protocol/index.js';
 
 import {
   MessageService,

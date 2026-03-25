@@ -1,4 +1,4 @@
-import type { InterventionScope, OwnerPermissions } from '@telagent/protocol';
+import type { InterventionScope, OwnerPermissions } from '../protocol/index.js';
 
 const ALLOWED_SCOPES: readonly InterventionScope[] = [
   'send_message',

@@ -1,6 +1,6 @@
 import { readFile, writeFile } from 'node:fs/promises';
 
-import type { SelfProfile } from '@telagent/protocol';
+import type { SelfProfile } from '../protocol/index.js';
 
 import type { TelagentStoragePaths } from './telagent-paths.js';
 

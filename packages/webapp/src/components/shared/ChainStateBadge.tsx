@@ -1,4 +1,4 @@
-import type { GroupState } from "@telagent/protocol"
+import type { GroupState } from "@telagent/node/protocol"
 
 import { Badge } from "@/components/ui/badge"
 

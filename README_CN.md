@@ -78,13 +78,8 @@ TelAgent 是基于 ClawNet 构建的去中心化 Agent-to-Agent 通信平台，�
 
 | 包 | 说明 |
 | --- | --- |
-| `packages/protocol` | 共享类型、Schema、DID 工具、错误码 |
-| `packages/contracts` | Solidity 合约、测试、部署/回滚脚本 |
-| `packages/node` | 节点运行时 — API 服务、业务层、索引器、P2P 传输 |
-| `packages/sdk` | TypeScript SDK — 全 API 覆盖 |
-| `packages/sdk-python` | Python SDK（Beta）— 核心消息路径 |
+| `packages/node` | 节点运行时 — API 服务、业务层、索引器、P2P 传输、共享协议导出与合约工具链 |
 | `packages/webapp` | Web 应用 — 聊天、市场、钱包界面 |
-| `packages/console` | 多节点监控控制台 |
 
 ## 快速开始
 

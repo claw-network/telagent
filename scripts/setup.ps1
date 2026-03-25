@@ -296,11 +296,9 @@ $tlsEnabled = Install-LocalCerts
 # ── Step 5: Build workspace packages ─────────────────────────────────
 
 Write-Info "Building workspace packages..."
-pnpm --filter @telagent/protocol build
-if ($LASTEXITCODE -ne 0) { Write-Fail "Failed to build @telagent/protocol" }
-pnpm --filter @telagent/sdk build
-if ($LASTEXITCODE -ne 0) { Write-Fail "Failed to build @telagent/sdk" }
-Write-Ok "Workspace packages built"
+pnpm --filter @telagent/node build
+if ($LASTEXITCODE -ne 0) { Write-Fail "Failed to build @telagent/node" }
+Write-Ok "Node package built"
 
 # ── Step 6: Install Windows service (NSSM) ───────────────────────────
 

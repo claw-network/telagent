@@ -1,6 +1,6 @@
 import Database from 'better-sqlite3';
 
-import type { ConversationSummary, Envelope } from '@telagent/protocol';
+import type { ConversationSummary, Envelope } from '../protocol/index.js';
 
 import type {
   DirectConversationParticipantCheckResult,

@@ -1,4 +1,4 @@
-import type { SessionOperationScope } from "@telagent/sdk"
+import type { SessionOperationScope } from "@/lib/telagent-client"
 import { useCallback } from "react"
 
 import { useSessionStore } from "@/stores/session"

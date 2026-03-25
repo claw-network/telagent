@@ -3,7 +3,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { hashDid, type AgentDID } from '@telagent/protocol';
+import { hashDid, type AgentDID } from '../src/protocol/index.js';
 
 import { MessageService } from '../src/services/message-service.js';
 

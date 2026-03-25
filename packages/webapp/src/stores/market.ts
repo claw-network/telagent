@@ -9,7 +9,7 @@ import type {
   RespondDisputeInput,
   ResolveDisputeInput,
   ReviewInput,
-} from "@telagent/sdk"
+} from "@/lib/telagent-client"
 import { create } from "zustand"
 
 import { useConnectionStore } from "@/stores/connection"

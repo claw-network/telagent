@@ -25,5 +25,14 @@ Node runtime for TelAgent v1.
 pnpm --filter @telagent/node start
 ```
 
+## Contract Tooling
+
+```bash
+pnpm --filter @telagent/node contracts:build
+pnpm --filter @telagent/node contracts:test
+```
+
+Shared protocol exports are available from `@telagent/node/protocol`.
+
 Required environment variables are listed in the repository `.env.example`.
 Local startup requires `$TELAGENT_HOME/.env` (default: `~/.telagent/.env`), and shell environment variables override file values.

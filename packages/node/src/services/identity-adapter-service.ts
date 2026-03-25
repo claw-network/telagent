@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 
-import { ErrorCodes, TelagentError, hashDid, isDidClaw, type AgentDID } from '@telagent/protocol';
+import { ErrorCodes, TelagentError, hashDid, isDidClaw, type AgentDID } from '../protocol/index.js';
 import { publicKeyFromDid, bytesToHex } from '@claw-network/core';
 import { ethers } from 'ethers';
 

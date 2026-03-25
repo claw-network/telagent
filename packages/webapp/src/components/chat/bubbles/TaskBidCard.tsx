@@ -1,4 +1,4 @@
-import type { TaskBidPayload } from "@telagent/protocol"
+import type { TaskBidPayload } from "@telagent/node/protocol"
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { formatAmount } from "@/components/chat/bubbles/payload-utils"

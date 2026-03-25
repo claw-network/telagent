@@ -83,7 +83,6 @@ clawnet/
 │   │       ├── node.ts          # client.node.*
 │   │       ├── http.ts          # HTTP transport layer
 │   │       └── types.ts         # Shared types
-│   ├── sdk-python/              # Python SDK
 │   ├── protocol/                # Protocol definitions
 │   ├── cli/                     # CLI tool
 │   ├── contracts/               # Solidity smart contracts

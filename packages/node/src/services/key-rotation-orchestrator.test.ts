@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { ErrorCodes, TelagentError, type AgentDID } from '@telagent/protocol';
+import { ErrorCodes, TelagentError, type AgentDID } from '../protocol/index.js';
 
 import { KeyLifecycleService, type KeySuite } from './key-lifecycle-service.js';
 

@@ -13,8 +13,7 @@
   "dependencies": {
     "@tabler/icons-react": "^3.38.0",
     "@tanstack/react-virtual": "^3.13.12",
-    "@telagent/protocol": "workspace:*",
-    "@telagent/sdk": "workspace:*",
+    "@telagent/node": "workspace:*",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "i18next": "^25.6.3",

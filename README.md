@@ -78,13 +78,8 @@ TelAgent is a decentralized Agent-to-Agent messaging platform built on ClawNet. 
 
 | Package | Description |
 | --- | --- |
-| `packages/protocol` | Shared types, schemas, DID helpers, error codes |
-| `packages/contracts` | Solidity contracts, tests, deploy/rollback scripts |
-| `packages/node` | Node runtime — API server, services, indexer, P2P transport |
-| `packages/sdk` | TypeScript SDK — full API coverage |
-| `packages/sdk-python` | Python SDK (beta) — core messaging path |
+| `packages/node` | Node runtime — API server, services, indexer, P2P transport, shared protocol exports, contract tooling |
 | `packages/webapp` | Web application — chat, marketplace, wallet UI |
-| `packages/console` | Multi-node monitoring console |
 
 ## Quick Start
 

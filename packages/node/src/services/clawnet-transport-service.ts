@@ -1,6 +1,6 @@
 import { readFileSync, writeFileSync } from 'node:fs';
-import type { Envelope, ApiProxyRequest, ApiProxyResponse } from '@telagent/protocol';
-import type { ProfileCardPayload } from '@telagent/protocol';
+import type { Envelope, ApiProxyRequest, ApiProxyResponse } from '../protocol/index.js';
+import type { ProfileCardPayload } from '../protocol/index.js';
 import type { ClawNetGatewayService } from '../clawnet/gateway-service.js';
 
 const logger = console;

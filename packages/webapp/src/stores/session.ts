@@ -1,4 +1,4 @@
-import type { SessionOperationScope, UnlockSessionInput } from "@telagent/sdk"
+import type { SessionOperationScope, UnlockSessionInput } from "@/lib/telagent-client"
 import { create } from "zustand"
 
 import { useConnectionStore } from "@/stores/connection"

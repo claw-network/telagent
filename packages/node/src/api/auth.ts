@@ -1,4 +1,4 @@
-import { ErrorCodes, TelagentError, type InterventionScope } from '@telagent/protocol';
+import { ErrorCodes, TelagentError, type InterventionScope } from '../protocol/index.js';
 
 import type { RuntimeContext } from './types.js';
 

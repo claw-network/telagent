@@ -7,7 +7,7 @@ import {
   hashDid,
   isDidClaw,
   type Envelope,
-} from '@telagent/protocol';
+} from '../protocol/index.js';
 
 import { getGlobalLogger } from '../logger.js';
 import type { ContactService } from './contact-service.js';

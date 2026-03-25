@@ -2,7 +2,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { ErrorCodes, TelagentError } from '@telagent/protocol';
+import { ErrorCodes, TelagentError } from '../src/protocol/index.js';
 
 import { KeyLifecycleService } from '../src/services/key-lifecycle-service.js';
 import { MessageService } from '../src/services/message-service.js';

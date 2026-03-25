@@ -39,11 +39,9 @@ log "Step 4: Start script already uses service-provided env; no patch needed"
 ok "Start script left unchanged"
 
 # ── Step 5: Build workspace packages ─────────────────────────────────────────
-log "Step 5: Build @telagent/protocol"
-pnpm --filter @telagent/protocol build 2>&1 | tail -3
-log "Step 5: Build @telagent/sdk"
-pnpm --filter @telagent/sdk build 2>&1 | tail -3
-ok "Packages built"
+log "Step 5: Build @telagent/node"
+pnpm --filter @telagent/node build 2>&1 | tail -3
+ok "Node package built"
 
 # ── Step 6: Restart clawnetd ─────────────────────────────────────────────────
 log "Step 6: Restart clawnetd"

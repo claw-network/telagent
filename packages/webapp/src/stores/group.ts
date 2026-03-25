@@ -1,5 +1,5 @@
-import type { GroupChainState, GroupMemberRecord, GroupRecord } from "@telagent/protocol"
-import type { PaginationMeta } from "@telagent/sdk"
+import type { GroupChainState, GroupMemberRecord, GroupRecord } from "@telagent/node/protocol"
+import type { PaginationMeta } from "@/lib/telagent-client"
 import { create } from "zustand"
 
 import { useConnectionStore } from "@/stores/connection"

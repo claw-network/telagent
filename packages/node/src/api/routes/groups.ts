@@ -6,7 +6,7 @@ import {
   RemoveMemberSchema,
   TelagentError,
   type MembershipState,
-} from '@telagent/protocol';
+} from '../../protocol/index.js';
 
 import { requireScope } from '../auth.js';
 import { Router } from '../router.js';

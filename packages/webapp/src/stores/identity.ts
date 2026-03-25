@@ -1,5 +1,5 @@
-import type { AgentIdentityView } from "@telagent/sdk"
-import type { SelfProfile, PeerProfile } from "@telagent/protocol"
+import type { AgentIdentityView } from "@/lib/telagent-client"
+import type { SelfProfile, PeerProfile } from "@telagent/node/protocol"
 import { create } from "zustand"
 
 import { useConnectionStore } from "@/stores/connection"

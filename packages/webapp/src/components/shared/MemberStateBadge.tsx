@@ -1,4 +1,4 @@
-import type { MembershipState } from "@telagent/protocol"
+import type { MembershipState } from "@telagent/node/protocol"
 
 import { Badge } from "@/components/ui/badge"
 

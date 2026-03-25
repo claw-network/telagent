@@ -1,4 +1,4 @@
-import type { ApiProxyRequest, ApiProxyResponse } from '@telagent/protocol';
+import type { ApiProxyRequest, ApiProxyResponse } from '../protocol/index.js';
 import type { ClawNetTransportService } from './clawnet-transport-service.js';
 import { getGlobalLogger } from '../logger.js';
 

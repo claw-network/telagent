@@ -2,7 +2,7 @@ import { useEffect, useRef, useCallback } from "react"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 
-import type { EventNotification } from "@telagent/protocol"
+import type { EventNotification } from "@telagent/node/protocol"
 import { formatApiError, isLikelyNetworkError } from "@/lib/api-error"
 import { useConnectionStore } from "@/stores/connection"
 import { useConversationStore } from "@/stores/conversation"

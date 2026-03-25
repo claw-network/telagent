@@ -1,4 +1,4 @@
-import type { MilestoneUpdatePayload } from "@telagent/protocol"
+import type { MilestoneUpdatePayload } from "@telagent/node/protocol"
 
 import { Progress } from "@/components/ui/progress"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"

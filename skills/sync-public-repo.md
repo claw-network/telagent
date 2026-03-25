@@ -53,7 +53,7 @@ TelAgent 采用双仓库架构：`telagent-dev`（私有，日常开发）增量
 
 ### Public Repo 保留的内容
 
-- 所有 `packages/` 代码（protocol, node, sdk, sdk-python, console, webapp, contracts）
+- 所有 `packages/` 代码（node, webapp）
 - `scripts/`（公开部分：setup.sh, bump-version.mjs, check-runtime.mjs, faucet-server.mts, ensure-local-certs.sh, mkcert/）
 - `LICENSE`、`README.md`、`README_CN.md`
 - `pnpm-workspace.yaml`、`tsconfig.base.json`、`package.json`

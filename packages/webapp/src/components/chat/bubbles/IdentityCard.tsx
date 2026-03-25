@@ -1,4 +1,4 @@
-import type { IdentityCardPayload } from "@telagent/protocol"
+import type { IdentityCardPayload } from "@telagent/node/protocol"
 
 import { DidAvatar } from "@/components/shared/DidAvatar"
 import { ReputationStars } from "@/components/shared/ReputationStars"
