@@ -10,7 +10,7 @@
 1. [One-Click Install (Recommended)](#1-one-click-install-recommended)
 2. [Prerequisites](#2-prerequisites)
 3. [Install Dependencies](#3-install-dependencies)
-4. [Generate `.env` File](#4-generate-env-file)
+4. [Generate `$TELAGENT_HOME/.env` File](#4-generate-telagenthomeenv-file)
 5. [Configuration Reference](#5-configuration-reference)
    - [5.1 API Server](#51-api-server)
    - [5.2 Storage Paths](#52-storage-paths)
@@ -22,7 +22,7 @@
    - [5.8 Mailbox Storage](#58-mailbox-storage)
    - [5.9 Monitoring Thresholds](#59-monitoring-thresholds)
    - [5.10 TLS / HTTPS (Local Development)](#510-tls--https-local-development)
-6. [Minimal Local `.env` Example](#6-minimal-local-env-example)
+6. [Minimal Local `$TELAGENT_HOME/.env` Example](#6-minimal-local-telagenthomeenv-example)
 7. [Start the Node](#7-start-the-node)
 8. [Start the WebApp](#8-start-the-webapp)
 9. [FAQ](#9-faq)
@@ -48,7 +48,7 @@ iwr -useb https://install.telagent.org/setup.ps1 | iex
 curl -fsSL https://install.telagent.org/setup.cmd -o setup.cmd && setup.cmd && del setup.cmd
 ```
 
-The one-click installer automatically: clones the repo, installs dependencies, generates an encrypted keyfile and passphrase, creates `.env`, generates mkcert certificates, builds workspace packages, and installs & starts a system service.
+The one-click installer automatically: clones the repo, installs dependencies, generates an encrypted keyfile and passphrase, creates `$TELAGENT_HOME/.env` (default: `~/.telagent/.env`), generates mkcert certificates, builds workspace packages, and installs & starts a system service.
 
 Set `TELAGENT_INSTALL_DIR` to customize the install directory (default `~/telagent` or `%USERPROFILE%\telagent`).
 
@@ -87,13 +87,15 @@ This installs dependencies for all workspace packages, including the `better-sql
 
 ---
 
-## 4. Generate `.env` File
+## 4. Generate `$TELAGENT_HOME/.env` File
 
 ```bash
-cp .env.example .env
+export TELAGENT_HOME="${TELAGENT_HOME:-$HOME/.telagent}"
+mkdir -p "$TELAGENT_HOME"
+cp .env.example "$TELAGENT_HOME/.env"
 ```
 
-Then configure each item according to Section 5.
+Then configure each item according to Section 5. Local startup requires this file, and shell environment variables override values loaded from it.
 
 ---
 
@@ -146,7 +148,7 @@ cd packages/node
 node --input-type=module -e "import { Wallet } from 'ethers'; const w = Wallet.createRandom(); console.log('Private Key:', w.privateKey); console.log('Address:', w.address)"
 ```
 
-Then set in `.env`:
+Then set in `$TELAGENT_HOME/.env`:
 
 ```env
 TELAGENT_SIGNER_TYPE=env
@@ -186,7 +188,7 @@ The generated `signer-key.json` looks like:
 }
 ```
 
-Then set in `.env`:
+Then set in `$TELAGENT_HOME/.env`:
 
 ```env
 TELAGENT_SIGNER_TYPE=keyfile
@@ -221,7 +223,7 @@ Account 0 Address: 0x1234...
 Account 0 Private Key: 0xabcd...
 ```
 
-Then set in `.env`:
+Then set in `$TELAGENT_HOME/.env`:
 
 ```env
 TELAGENT_SIGNER_TYPE=mnemonic
@@ -237,7 +239,7 @@ TELAGENT_SIGNER_INDEX=0
 
 > **Security warning**: Always generate mnemonics from a cryptographically secure random source (such as `crypto.getRandomValues` above). **Never make up words manually.** Store the mnemonic securely — leaking it means losing all derived accounts.
 
-> **Security warning**: The `.env` file is in `.gitignore`, but for production environments it is still recommended to use a keyfile or a key management service rather than storing private keys directly in environment variables.
+> **Security warning**: The env file lives at `$TELAGENT_HOME/.env` (default: `~/.telagent/.env`). If you use a custom `TELAGENT_HOME`, set it in the shell or service environment before starting so the node can resolve the correct env-file path.
 
 ### 5.4 Chain Configuration
 
@@ -388,10 +390,10 @@ For local development, TelAgent uses [mkcert](https://github.com/FiloSottile/mkc
 **How it works**:
 
 1. `pnpm dev` automatically runs `scripts/ensure-local-certs.sh` on startup
-2. The script downloads mkcert (saved to `~/.telagent/bin/mkcert`)
+2. The script downloads mkcert (saved to `$TELAGENT_HOME/bin/mkcert`, default: `~/.telagent/bin/mkcert`)
 3. Runs `mkcert -install` to add the local CA to the system trust store (macOS will prompt for Keychain password)
-4. Generates `~/.telagent/tls/cert.pem` and `key.pem` (skipped if they already exist)
-5. The node auto-detects certificates under `~/.telagent/tls/` and enables HTTPS
+4. Generates `$TELAGENT_HOME/tls/cert.pem` and `key.pem` (default: `~/.telagent/tls/...`; skipped if they already exist)
+5. The node auto-detects certificates under `$TELAGENT_HOME/tls/` and enables HTTPS
 
 **Manual operations**:
 
@@ -400,8 +402,9 @@ For local development, TelAgent uses [mkcert](https://github.com/FiloSottile/mkc
 pnpm ensure-certs
 
 # Or run mkcert manually
+export TELAGENT_HOME="${TELAGENT_HOME:-$HOME/.telagent}"
 mkcert -install
-mkcert -cert-file ~/.telagent/tls/cert.pem -key-file ~/.telagent/tls/key.pem localhost 127.0.0.1 ::1
+mkcert -cert-file "$TELAGENT_HOME/tls/cert.pem" -key-file "$TELAGENT_HOME/tls/key.pem" localhost 127.0.0.1 ::1
 ```
 
 **Notes**:
@@ -411,9 +414,9 @@ mkcert -cert-file ~/.telagent/tls/cert.pem -key-file ~/.telagent/tls/key.pem loc
 
 ---
 
-## 6. Minimal Local `.env` Example
+## 6. Minimal Local `$TELAGENT_HOME/.env` Example
 
-Below is the minimal configuration needed for local development. **You need to change `TELAGENT_PRIVATE_KEY` and `TELAGENT_CLAWNET_PASSPHRASE`**; keep the rest as defaults:
+Below is the minimal configuration needed for local development in `$TELAGENT_HOME/.env`. **You need to change `TELAGENT_PRIVATE_KEY` and `TELAGENT_CLAWNET_PASSPHRASE`**; keep the rest as defaults:
 
 ```env
 # ── API ──────────────────────────────────────────────

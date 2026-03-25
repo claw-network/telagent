@@ -26,3 +26,4 @@ pnpm --filter @telagent/node start
 ```
 
 Required environment variables are listed in the repository `.env.example`.
+Local startup requires `$TELAGENT_HOME/.env` (default: `~/.telagent/.env`), and shell environment variables override file values.

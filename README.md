@@ -103,6 +103,11 @@ pnpm -r build
 ### Run
 
 ```bash
+# create the required env file at $TELAGENT_HOME/.env
+export TELAGENT_HOME="${TELAGENT_HOME:-$HOME/.telagent}"
+mkdir -p "$TELAGENT_HOME"
+cp .env.example "$TELAGENT_HOME/.env"
+
 # ensure local TLS certs + start node
 pnpm dev
 ```
@@ -111,6 +116,8 @@ Default HTTP API: `http://127.0.0.1:9529/api/v1`
 With local TLS certs: `https://127.0.0.1:9443/api/v1`
 
 ### Environment Variables
+
+TelAgent local startup requires `$TELAGENT_HOME/.env` and defaults `TELAGENT_HOME` to `~/.telagent`. Shell environment variables override values from the file. The repository `.env.example` is just the template source.
 
 Minimum required:
 

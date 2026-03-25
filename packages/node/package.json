@@ -11,7 +11,7 @@
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "node --test dist/*.test.js dist/**/*.test.js",
     "pretest": "pnpm build",
-    "start": "NODE_EXTRA_CA_CERTS=${NODE_EXTRA_CA_CERTS:-$(mkcert -CAROOT 2>/dev/null || echo /dev/null)/rootCA.pem} tsx --env-file=../../.env src/daemon.ts"
+    "start": "tsx src/start.ts"
   },
   "dependencies": {
     "@claw-network/contracts": "^2026.2.10",

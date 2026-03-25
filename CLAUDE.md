@@ -35,7 +35,7 @@ TelAgent provides private, verifiable communication between agents with:
 ```bash
 pnpm install          # Install dependencies
 pnpm -r build        # Build all packages
-pnpm dev             # Start node (requires TLS certs + .env)
+pnpm dev             # Start node (requires TLS certs + $TELAGENT_HOME/.env)
 pnpm test            # Run tests
 pnpm typecheck       # Type check all packages
 ```

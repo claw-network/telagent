@@ -27,9 +27,9 @@ This will:
 1. Check prerequisites (Node.js >=22, pnpm >=10, git)
 2. Clone the repo
 3. Install dependencies
-4. Generate an encrypted keyfile (`~/.telagent/secrets/signer-key.json`) and passphrase
-5. Create `.env` with generated credentials
-6. Generate local HTTPS certificates via mkcert (`~/.telagent/tls/cert.pem` + `key.pem`)
+4. Generate an encrypted keyfile (`$TELAGENT_HOME/secrets/signer-key.json`, default: `~/.telagent/secrets/signer-key.json`) and passphrase
+5. Create `$TELAGENT_HOME/.env` with generated credentials
+6. Generate local HTTPS certificates via mkcert (`$TELAGENT_HOME/tls/cert.pem` + `key.pem`, default: `~/.telagent/tls/...`)
 7. Build workspace packages
 8. Install and start TelAgent as a system service:
    - **Linux**: systemd user service (`~/.config/systemd/user/telagent.service`)
@@ -67,18 +67,18 @@ curl http://127.0.0.1:9529/api/v1/node
 
 ## Configuration Reference
 
-The installer generates `.env` automatically. To customize, edit `<install dir>/.env` (default: `~/telagent/.env` on Linux/macOS, `%USERPROFILE%\\telagent\\.env` on Windows). Key variables:
+The installer generates `$TELAGENT_HOME/.env` automatically (default: `~/.telagent/.env`; Windows default: `%USERPROFILE%\\.telagent\\.env`). Shell environment variables override values loaded from that file. If you use a custom `TELAGENT_HOME`, set it in the shell or service environment before starting. Key variables:
 
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `TELAGENT_API_HOST` | `127.0.0.1` | HTTP listen address |
 | `TELAGENT_API_PORT` | `9529` | HTTP listen port |
-| `TELAGENT_TLS_CERT` | _(auto-detected)_ | TLS certificate path (auto: `~/.telagent/tls/cert.pem`) |
-| `TELAGENT_TLS_KEY` | _(auto-detected)_ | TLS private key path (auto: `~/.telagent/tls/key.pem`) |
+| `TELAGENT_TLS_CERT` | _(auto-detected)_ | TLS certificate path (auto: `$TELAGENT_HOME/tls/cert.pem`) |
+| `TELAGENT_TLS_KEY` | _(auto-detected)_ | TLS private key path (auto: `$TELAGENT_HOME/tls/key.pem`) |
 | `TELAGENT_TLS_PORT` | `9443` | HTTPS listen port |
 | `NODE_EXTRA_CA_CERTS` | _(auto-set)_ | mkcert root CA path (required for Node.js to trust local certs) |
 | `TELAGENT_HOME` | `~/.telagent` | Data root directory |
-| `TELAGENT_SIGNER_PATH` | `~/.telagent/secrets/signer-key.json` | Path to encrypted keyfile |
+| `TELAGENT_SIGNER_PATH` | `$TELAGENT_HOME/secrets/signer-key.json` | Path to encrypted keyfile |
 | `TELAGENT_SIGNER_PASSWORD` | _(generated)_ | Keyfile decryption password |
 | `TELAGENT_CLAWNET_PASSPHRASE` | _(generated)_ | ClawNet passphrase (also WebApp auth credential) |
 | `TELAGENT_OWNER_MODE` | `observer` | `observer` (read-only) / `intervener` (read-write) |

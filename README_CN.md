@@ -103,6 +103,11 @@ pnpm -r build
 ### 启动
 
 ```bash
+# 在 $TELAGENT_HOME/.env 创建必需的环境文件
+export TELAGENT_HOME="${TELAGENT_HOME:-$HOME/.telagent}"
+mkdir -p "$TELAGENT_HOME"
+cp .env.example "$TELAGENT_HOME/.env"
+
 # 确保本地 TLS 证书 + 启动节点
 pnpm dev
 ```
@@ -111,6 +116,8 @@ pnpm dev
 启用本地 TLS 证书后：`https://127.0.0.1:9443/api/v1`
 
 ### 环境变量
+
+TelAgent 本地启动要求存在 `$TELAGENT_HOME/.env`，且 `TELAGENT_HOME` 默认是 `~/.telagent`。Shell 环境变量会覆盖文件中的同名值，仓库里的 `.env.example` 仅作为模板来源。
 
 最小必须配置：
 

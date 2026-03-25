@@ -74,13 +74,10 @@ ssh -i "$SSH_KEY" root@<IP> "
 "
 ```
 
-### 4. Install dependencies, patch start script, build workspace packages
+### 4. Install dependencies and build workspace packages
 
 ```bash
 ssh -i "$SSH_KEY" root@<IP> "cd /opt/telagent && pnpm install --frozen-lockfile"
-
-# Remove --env-file flag (only for local dev; server uses systemd EnvironmentFile)
-ssh -i "$SSH_KEY" root@<IP> "sed -i 's|tsx --env-file=../../.env src/daemon.ts|tsx src/daemon.ts|' /opt/telagent/packages/node/package.json"
 
 # Build workspace dependency packages (dist/ is gitignored)
 ssh -i "$SSH_KEY" root@<IP> "cd /opt/telagent && pnpm --filter @telagent/protocol build && pnpm --filter @telagent/sdk build"
@@ -88,7 +85,7 @@ ssh -i "$SSH_KEY" root@<IP> "cd /opt/telagent && pnpm --filter @telagent/protoco
 
 **Important**:
 - `package.json` must include `pnpm.onlyBuiltDependencies: ["better-sqlite3"]` to allow native module build scripts.
-- The `--env-file=../../.env` in `packages/node/package.json` start script is for local dev only. On the server, systemd provides env vars via `EnvironmentFile=/opt/telagent/.env.cloud`, so the flag must be removed.
+- The local dev start script now requires `$TELAGENT_HOME/.env` (default: `~/.telagent/.env`). Shell environment variables override file values. On the server, systemd still provides env vars via `EnvironmentFile=/opt/telagent/.env.cloud`, so no package.json patching is needed.
 - `@telagent/protocol` and `@telagent/sdk` must be built before starting, as their `dist/` directories are not committed to git.
 
 ### 5. Rebuild ClawNet (required after git clone/pull)
@@ -498,11 +495,8 @@ Workspace packages need to be compiled. Their `dist/` is gitignored.
 cd /opt/telagent && pnpm --filter @telagent/protocol build && pnpm --filter @telagent/sdk build
 ```
 
-### `node: ../../.env: not found` (exit code 9)
-The start script has `--env-file=../../.env` for local dev. Remove it on the server:
-```bash
-sed -i 's|tsx --env-file=../../.env src/daemon.ts|tsx src/daemon.ts|' /opt/telagent/packages/node/package.json
-```
+### Start script and env-file behavior
+Local development now requires `$TELAGENT_HOME/.env` (default: `~/.telagent/.env`). Cloud deployments continue to rely on `EnvironmentFile=/opt/telagent/.env.cloud`, so no package.json start-script patching is required.
 
 ## Log Viewing
 

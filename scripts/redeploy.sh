@@ -34,11 +34,9 @@ cd "$DEPLOY_DIR"
 pnpm install --frozen-lockfile 2>&1 | tail -3
 ok "Dependencies installed"
 
-# ── Step 4: Patch start script ───────────────────────────────────────────────
-log "Step 4: Patch start script (remove --env-file flag)"
-sed -i 's|tsx --env-file=../../.env src/daemon.ts|tsx src/daemon.ts|' \
-    packages/node/package.json
-ok "Start script patched"
+# ── Step 4: Start script check ───────────────────────────────────────────────
+log "Step 4: Start script already uses service-provided env; no patch needed"
+ok "Start script left unchanged"
 
 # ── Step 5: Build workspace packages ─────────────────────────────────────────
 log "Step 5: Build @telagent/protocol"
